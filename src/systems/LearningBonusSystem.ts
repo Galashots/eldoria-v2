@@ -1,4 +1,4 @@
-import { makeLearningPrompt, type BonusContext, type LearningPrompt } from '../data/curriculum';
+import { makeLearningPrompt, type AnswerValue, type BonusContext, type LearningPrompt } from '../data/curriculum';
 import { PROFILES, type ProfileId } from '../data/profiles';
 
 export type BonusResult = {
@@ -22,7 +22,7 @@ export class LearningBonusSystem {
     return makeLearningPrompt(PROFILES[this.profileId], context);
   }
 
-  resolve(prompt: LearningPrompt, selected: number): BonusResult {
+  resolve(prompt: LearningPrompt, selected: AnswerValue): BonusResult {
     const correct = selected === prompt.answer;
 
     if (correct) {
@@ -36,7 +36,7 @@ export class LearningBonusSystem {
     return {
       correct,
       rewardKind: prompt.rewardKind,
-      message: 'No bonus this time. Keep adventuring.'
+      message: prompt.hint ? `No bonus this time. Hint: ${prompt.hint}` : 'No bonus this time. Keep adventuring.'
     };
   }
 
