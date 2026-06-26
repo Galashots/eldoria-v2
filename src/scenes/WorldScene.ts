@@ -95,6 +95,7 @@ export class WorldScene extends Phaser.Scene {
 
     this.createHud();
     this.createTouchControls();
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.stopPromptReadAloud());
   }
 
   update(): void {
@@ -258,31 +259,52 @@ export class WorldScene extends Phaser.Scene {
     this.player.setVelocity(0, 0);
 
     const prompt = this.learning.makePrompt(context);
+    const isAudioFirst = PROFILES[this.profileId].readingMode === 'audio-first';
     const panel = this.add.container(GAME_WIDTH / 2, GAME_HEIGHT / 2).setScrollFactor(0);
+    const panelHeight = isAudioFirst ? 200 : 170;
+    const titleY = isAudioFirst ? -76 : -62;
+    const promptY = isAudioFirst ? -48 : -34;
+    const choicesY = isAudioFirst ? 30 : 22;
+    const skipY = isAudioFirst ? 82 : 72;
 
-    const bg = this.add.rectangle(0, 0, 360, 170, 0x2a1a08, 0.96)
+    const bg = this.add.rectangle(0, 0, 360, panelHeight, 0x2a1a08, 0.96)
       .setStrokeStyle(3, 0xffd666);
     panel.add(bg);
 
-    panel.add(this.add.text(0, -62, `${label}: optional learning bonus`, {
+    panel.add(this.add.text(0, titleY, `${label}: optional learning bonus`, {
       fontFamily: 'system-ui',
       fontSize: '14px',
       color: '#ffd666'
     }).setOrigin(0.5));
 
-    panel.add(this.add.text(0, -34, prompt.text, {
+    panel.add(this.add.text(0, promptY, prompt.text, {
       fontFamily: 'system-ui',
       fontSize: '22px',
       color: '#ffffff'
     }).setOrigin(0.5));
 
+    if (isAudioFirst) {
+      const readButton = this.add.rectangle(0, -12, 132, 28, 0x3a4f8f)
+        .setStrokeStyle(2, 0x99c7ff)
+        .setInteractive({ useHandCursor: true });
+      const readText = this.add.text(0, -12, 'READ ALOUD', {
+        fontFamily: 'system-ui',
+        fontSize: '11px',
+        color: '#ffffff'
+      }).setOrigin(0.5);
+
+      readButton.on('pointerdown', () => this.readPromptAloud(label, prompt));
+      panel.add(readButton);
+      panel.add(readText);
+    }
+
     prompt.choices.forEach((choice, index) => {
       const x = -100 + index * 100;
-      const btn = this.add.rectangle(x, 22, 72, 42, 0x5f3d12)
+      const btn = this.add.rectangle(x, choicesY, 72, 42, 0x5f3d12)
         .setStrokeStyle(2, 0xffd666)
         .setInteractive({ useHandCursor: true });
 
-      const txt = this.add.text(x, 22, String(choice), {
+      const txt = this.add.text(x, choicesY, String(choice), {
         fontFamily: 'system-ui',
         fontSize: '18px',
         color: '#ffffff'
@@ -290,6 +312,7 @@ export class WorldScene extends Phaser.Scene {
 
       btn.on('pointerdown', () => {
         const result = this.learning.resolve(prompt, choice);
+        this.stopPromptReadAloud();
         panel.destroy();
 
         if (result.correct) {
@@ -305,19 +328,58 @@ export class WorldScene extends Phaser.Scene {
       panel.add(txt);
     });
 
-    const skip = this.add.text(0, 72, 'Skip bonus', {
+    const skip = this.add.text(0, skipY, 'Skip bonus', {
       fontFamily: 'system-ui',
       fontSize: '12px',
       color: '#c9a66b'
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
     skip.on('pointerdown', () => {
+      this.stopPromptReadAloud();
       panel.destroy();
       this.showToast('Skipped. Adventure continues.');
       this.busy = false;
     });
 
     panel.add(skip);
+  }
+
+  private readPromptAloud(label: string, prompt: LearningPrompt): void {
+    if (!this.hasPromptReadAloudSupport()) {
+      this.showToast('Read aloud is not available here.');
+      return;
+    }
+
+    this.stopPromptReadAloud();
+
+    const utterance = new SpeechSynthesisUtterance(this.makeReadAloudText(label, prompt));
+    utterance.rate = 0.85;
+    utterance.pitch = 1.05;
+    window.speechSynthesis.speak(utterance);
+  }
+
+  private stopPromptReadAloud(): void {
+    if (this.hasPromptReadAloudSupport()) {
+      window.speechSynthesis.cancel();
+    }
+  }
+
+  private hasPromptReadAloudSupport(): boolean {
+    return typeof window !== 'undefined'
+      && 'speechSynthesis' in window
+      && 'SpeechSynthesisUtterance' in window;
+  }
+
+  private makeReadAloudText(label: string, prompt: LearningPrompt): string {
+    const readablePrompt = prompt.text
+      .replaceAll('−', ' minus ')
+      .replaceAll('×', ' times ')
+      .replace(/\s*=\s*\?/g, ' equals what?')
+      .replace(/\s+/g, ' ')
+      .trim();
+    const choices = prompt.choices.join(', ');
+
+    return `${label} optional learning bonus. ${readablePrompt}. Choices are: ${choices}. Tap the answer to try for a bonus.`;
   }
 
   private applyReward(prompt: LearningPrompt): void {
