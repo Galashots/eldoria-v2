@@ -28,6 +28,8 @@ type PromptCloseResult = {
   correct: boolean;
 };
 
+type PromptCloseHandler = (result: PromptCloseResult) => string | undefined;
+
 export class WorldScene extends Phaser.Scene {
   private player!: Phaser.Physics.Arcade.Sprite;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
@@ -299,8 +301,9 @@ export class WorldScene extends Phaser.Scene {
       this.openBonusPrompt(target.kind, target.label, () => {
         if (this.firstQuestStep === 'try-crop-bonus') {
           this.setFirstQuestStep('find-slime');
-          this.showToast('Crop checked. Now find the Practice Slime.');
+          return 'Objective updated: find the Practice Slime.';
         }
+        return undefined;
       });
       return;
     }
@@ -309,8 +312,9 @@ export class WorldScene extends Phaser.Scene {
       this.openBonusPrompt(target.kind, target.label, () => {
         if (this.firstQuestStep === 'find-slime') {
           this.setFirstQuestStep('return-to-mira');
-          this.showToast('The slime poofs away. Return to Mira.');
+          return 'Practice complete. Return to Mira.';
         }
+        return undefined;
       });
       return;
     }
@@ -351,7 +355,7 @@ export class WorldScene extends Phaser.Scene {
   private openBonusPrompt(
     context: BonusContext,
     label: string,
-    onClose?: (result: PromptCloseResult) => void
+    onClose?: PromptCloseHandler
   ): void {
     this.busy = true;
     this.player.setVelocity(0, 0);
@@ -422,9 +426,9 @@ export class WorldScene extends Phaser.Scene {
           this.applyReward(prompt);
         }
 
-        this.showToast(result.message);
         this.busy = false;
-        onClose?.({ answered: true, correct: result.correct });
+        const progressMessage = onClose?.({ answered: true, correct: result.correct });
+        this.showToast(progressMessage ? `${result.message} ${progressMessage}` : result.message);
         this.save();
       });
 
@@ -441,9 +445,9 @@ export class WorldScene extends Phaser.Scene {
     skip.on('pointerdown', () => {
       this.stopPromptReadAloud();
       panel.destroy();
-      this.showToast('Skipped. Adventure continues.');
       this.busy = false;
-      onClose?.({ answered: false, correct: false });
+      const progressMessage = onClose?.({ answered: false, correct: false });
+      this.showToast(progressMessage ? `Skipped. ${progressMessage}` : 'Skipped. Adventure continues.');
       this.save();
     });
 
@@ -512,7 +516,7 @@ export class WorldScene extends Phaser.Scene {
       targets: toast,
       y: 54,
       alpha: 0,
-      duration: 1800,
+      duration: 2200,
       ease: 'Sine.easeInOut',
       onComplete: () => toast.destroy()
     });
