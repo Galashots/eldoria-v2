@@ -2,6 +2,26 @@
 
 This file records repository changes made through ChatGPT so future work can see what changed, who made it, and when.
 
+## 2026-06-26 — Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
+- Branch: `codex/playwright-smoke-infra`
+- Files changed:
+  - `.gitignore`
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `package-lock.json`
+  - `package.json`
+  - `playwright.config.ts`
+  - `src/main.ts`
+  - `src/vite-env.d.ts`
+  - `tests/vertical-slice.spec.ts`
+- Summary: Added Playwright smoke-test coverage for the current vertical slice.
+- Implementation notes:
+  - Added `@playwright/test`, a `npm run smoke` script, and a Chromium Playwright config that starts or reuses the local Vite server.
+  - Exposed the Phaser game instance in dev/e2e mode so tests can inspect canvas-only scene state without adding player-visible UI.
+  - Added Grade 2 smoke coverage for movement in all four directions, ACTION with Mira, objective progress, Grade 2 read-aloud prompt visibility, Mira reward completion, and save reload.
+  - Added Grade 5 smoke coverage that verifies reader-mode prompts do not show the Grade 2 `READ ALOUD` control.
+- Reason: Browser-game QA needs repeatable Playwright checks for the canvas vertical slice before adding new gameplay features.
+
 ## 2026-06-26 — GPT-5.5 Thinking via ChatGPT GitHub Connector
 
 - Branch: `chatgpt/dynamic-joystick-current`
