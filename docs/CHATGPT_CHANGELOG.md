@@ -4,6 +4,22 @@ This file records repository changes made through ChatGPT so future work can see
 
 ## 2026-06-26 — GPT-5.5 Thinking via ChatGPT GitHub Connector
 
+- Branch: `chatgpt/starter-quest-objectives`
+- Files changed:
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `src/scenes/WorldScene.ts`
+  - `src/systems/SaveSystem.ts`
+- Summary: Added the first playable quest/objective loop using Mira, the crop bonus, and the Practice Slime.
+- Implementation notes:
+  - Added a persistent `firstQuestStep` save field and a `miraFirstErrandComplete` quest flag.
+  - Added an objective HUD below the main gold/profile HUD.
+  - Added Mira interaction states that direct the player through the first errand.
+  - Progress advances after the player checks the crop bonus and interacts with the Practice Slime, regardless of whether the optional learning bonus is answered correctly or skipped.
+  - Updated prompt layout to better support longer answer choices from the curriculum-aware question engine.
+- Reason: The deep design research recommends one excellent vertical slice with a clear 10-15 minute progress loop before expanding systems or content.
+
+## 2026-06-26 — GPT-5.5 Thinking via ChatGPT GitHub Connector
+
 - Branch: `chatgpt/curriculum-question-engine`
 - Files changed:
   - `docs/CURRICULUM_QUESTION_ENGINE.md`
