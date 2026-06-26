@@ -1,0 +1,24 @@
+{
+  "name": "eldoria-v2",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Realm of Eldoria v2 - Phaser + Vite + Tiled educational RPG prototype.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm run build"
+  },
+  "dependencies": {
+    "phaser": "^4.2.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.0",
+    "vite": "^8.1.0"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  }
+}
