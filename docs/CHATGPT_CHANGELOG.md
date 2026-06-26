@@ -4,6 +4,20 @@ This file records repository changes made through ChatGPT so future work can see
 
 ## 2026-06-26 — GPT-5.5 Thinking via ChatGPT GitHub Connector
 
+- Branch: `chatgpt/dynamic-joystick-current`
+- Files changed:
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `src/scenes/WorldScene.ts`
+- Summary: Rebuilt the dynamic lower-left virtual joystick on the current `main` after the curriculum engine and starter quest loop were merged.
+- Implementation notes:
+  - Closed stale PR #2 as superseded because it was based on an older `WorldScene.ts` and was no longer mergeable.
+  - Replaced the fixed lower-left D-pad with an all-direction joystick that appears under the thumb when a touch starts in the lower-left quadrant.
+  - Preserved the objective HUD, Mira starter quest loop, curriculum prompt layout, and read-aloud support.
+  - The joystick resets on release, when a learning prompt opens, and when the scene shuts down.
+- Reason: Tablet/mobile movement should feel natural before adding more gameplay complexity.
+
+## 2026-06-26 — GPT-5.5 Thinking via ChatGPT GitHub Connector
+
 - Branch: `chatgpt/starter-quest-objectives`
 - Files changed:
   - `docs/CHATGPT_CHANGELOG.md`
