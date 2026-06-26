@@ -1,10 +1,14 @@
 import type { ProfileId } from '../data/profiles';
 
+export type StarterQuestStep = 'talk-to-mira' | 'try-crop-bonus' | 'find-slime' | 'return-to-mira' | 'complete';
+
 export type SaveState = {
   version: 1;
   profileId: ProfileId;
   gold: number;
   lastArea: string;
+  firstQuestStep?: StarterQuestStep;
+  questFlags?: Record<string, boolean>;
   player: {
     x: number;
     y: number;
