@@ -4,6 +4,20 @@ This file records repository changes made through ChatGPT so future work can see
 
 ## 2026-06-26 — Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
+- Branch: `codex/agent-reference-docs`
+- Files changed:
+  - `AGENTS.md`
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `docs/reference/Design-Guide-for-a-Beautiful-Deep-Addictive-Immersive-Curriculum-Aligned-2D-RPG.pdf`
+- Summary: Added the deep design guide PDF to repo references and expanded project agent instructions.
+- Implementation notes:
+  - Created `docs/reference/` for durable project reference materials.
+  - Copied the attached design guide PDF into the reference folder with a descriptive filename.
+  - Replaced the shorter `AGENTS.md` with full Eldoria-V2 operating instructions covering product rules, current baseline, target player assumptions, roadmap, Codex/ChatGPT split, workflow, changelog requirements, testing expectations, and response format.
+- Reason: Future Codex work needs durable project context, a local design reference, and explicit rules that preserve the current vertical slice and bonus-only learning model.
+
+## 2026-06-26 — Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
 - Branch: `codex/playwright-smoke-infra`
 - Files changed:
   - `.gitignore`
