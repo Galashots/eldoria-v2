@@ -16,6 +16,7 @@ This file records repository changes made through ChatGPT so future work can see
   - Added Mira interaction states that direct the player through the first errand.
   - Progress advances after the player checks the crop bonus and interacts with the Practice Slime, regardless of whether the optional learning bonus is answered correctly or skipped.
   - Updated prompt layout to better support longer answer choices from the curriculum-aware question engine.
+  - Incorporated PR audit findings by consolidating result/objective toasts into one message and avoiding prototype wording that implied the slime marker disappears visually.
 - Reason: The deep design research recommends one excellent vertical slice with a clear 10-15 minute progress loop before expanding systems or content.
 
 ## 2026-06-26 — GPT-5.5 Thinking via ChatGPT GitHub Connector
