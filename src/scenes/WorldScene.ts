@@ -1,9 +1,9 @@
 import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../gameConfig';
-import type { BonusContext, LearningPrompt } from '../data/curriculum';
+import type { AnswerValue, BonusContext, LearningPrompt } from '../data/curriculum';
 import { PROFILES, type ProfileId } from '../data/profiles';
 import { LearningBonusSystem } from '../systems/LearningBonusSystem';
-import { SaveSystem } from '../systems/SaveSystem';
+import { SaveSystem, type StarterQuestStep } from '../systems/SaveSystem';
 
 type SceneInitData = {
   profileId?: ProfileId;
@@ -23,6 +23,11 @@ type InteractionTarget = {
   label: string;
 };
 
+type PromptCloseResult = {
+  answered: boolean;
+  correct: boolean;
+};
+
 export class WorldScene extends Phaser.Scene {
   private player!: Phaser.Physics.Arcade.Sprite;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
@@ -32,8 +37,10 @@ export class WorldScene extends Phaser.Scene {
   private profileId: ProfileId = 'grade5-adventurer';
   private learning!: LearningBonusSystem;
   private gold = 0;
+  private firstQuestStep: StarterQuestStep = 'talk-to-mira';
   private busy = false;
   private hudText!: Phaser.GameObjects.Text;
+  private objectiveText!: Phaser.GameObjects.Text;
   private hintText!: Phaser.GameObjects.Text;
 
   constructor() {
@@ -91,6 +98,7 @@ export class WorldScene extends Phaser.Scene {
     if (saved) {
       this.gold = saved.gold;
       this.player.setPosition(saved.player.x, saved.player.y);
+      this.firstQuestStep = saved.firstQuestStep ?? 'talk-to-mira';
     }
 
     this.createHud();
@@ -162,6 +170,17 @@ export class WorldScene extends Phaser.Scene {
       color: '#ffd666'
     }).setScrollFactor(0);
 
+    this.add.rectangle(GAME_WIDTH / 2, 42, GAME_WIDTH - 20, 28, 0x162a12, 0.9)
+      .setScrollFactor(0)
+      .setStrokeStyle(1, 0x5e9f3a);
+
+    this.objectiveText = this.add.text(16, 34, '', {
+      fontFamily: 'system-ui',
+      fontSize: '11px',
+      color: '#d7ffb8',
+      wordWrap: { width: GAME_WIDTH - 32 }
+    }).setScrollFactor(0);
+
     this.hintText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 18, '', {
       fontFamily: 'system-ui',
       fontSize: '11px',
@@ -171,6 +190,7 @@ export class WorldScene extends Phaser.Scene {
     }).setOrigin(0.5).setScrollFactor(0);
 
     this.refreshHud();
+    this.refreshObjective();
   }
 
   private refreshHud(): void {
@@ -178,9 +198,28 @@ export class WorldScene extends Phaser.Scene {
     this.hudText.setText(`${profile.label}  |  Gold: ${this.gold}`);
   }
 
+  private refreshObjective(): void {
+    this.objectiveText.setText(`Objective: ${this.firstQuestObjective()}`);
+  }
+
+  private firstQuestObjective(): string {
+    switch (this.firstQuestStep) {
+      case 'talk-to-mira':
+        return 'Talk to Mira near the path.';
+      case 'try-crop-bonus':
+        return 'Check the crop patch and try an optional bonus.';
+      case 'find-slime':
+        return 'Find the Practice Slime and test a combat bonus.';
+      case 'return-to-mira':
+        return 'Return to Mira for your reward.';
+      case 'complete':
+        return 'Mira\'s first errand complete. Keep exploring.';
+    }
+  }
+
   private updateHint(): void {
     const target = this.nearestTarget();
-    this.hintText.setText(target ? `Action: ${target.label} bonus` : 'Explore. Learning bonuses are optional.');
+    this.hintText.setText(target ? `Action: ${target.label}` : 'Explore. Learning bonuses are optional.');
   }
 
   private createTouchControls(): void {
@@ -251,21 +290,80 @@ export class WorldScene extends Phaser.Scene {
       return;
     }
 
+    if (target.label === 'Mira') {
+      this.handleMiraInteraction();
+      return;
+    }
+
+    if (target.label === 'CropBonus') {
+      this.openBonusPrompt(target.kind, target.label, () => {
+        if (this.firstQuestStep === 'try-crop-bonus') {
+          this.setFirstQuestStep('find-slime');
+          this.showToast('Crop checked. Now find the Practice Slime.');
+        }
+      });
+      return;
+    }
+
+    if (target.label === 'Practice Slime') {
+      this.openBonusPrompt(target.kind, target.label, () => {
+        if (this.firstQuestStep === 'find-slime') {
+          this.setFirstQuestStep('return-to-mira');
+          this.showToast('The slime poofs away. Return to Mira.');
+        }
+      });
+      return;
+    }
+
     this.openBonusPrompt(target.kind, target.label);
   }
 
-  private openBonusPrompt(context: BonusContext, label: string): void {
+  private handleMiraInteraction(): void {
+    switch (this.firstQuestStep) {
+      case 'talk-to-mira':
+        this.setFirstQuestStep('try-crop-bonus');
+        this.showToast('Mira: Check the crop patch for a bonus!');
+        return;
+      case 'try-crop-bonus':
+        this.showToast('Mira: The crop patch is southwest of here.');
+        return;
+      case 'find-slime':
+        this.showToast('Mira: The Practice Slime is east of the farm.');
+        return;
+      case 'return-to-mira':
+        this.gold += 10;
+        this.setFirstQuestStep('complete');
+        this.refreshHud();
+        this.showToast('Mira rewards you with 10 gold!');
+        return;
+      case 'complete':
+        this.showToast('Mira: Great work. Keep exploring Eldoria!');
+        return;
+    }
+  }
+
+  private setFirstQuestStep(step: StarterQuestStep): void {
+    this.firstQuestStep = step;
+    this.refreshObjective();
+    this.save();
+  }
+
+  private openBonusPrompt(
+    context: BonusContext,
+    label: string,
+    onClose?: (result: PromptCloseResult) => void
+  ): void {
     this.busy = true;
     this.player.setVelocity(0, 0);
 
     const prompt = this.learning.makePrompt(context);
     const isAudioFirst = PROFILES[this.profileId].readingMode === 'audio-first';
     const panel = this.add.container(GAME_WIDTH / 2, GAME_HEIGHT / 2).setScrollFactor(0);
-    const panelHeight = isAudioFirst ? 200 : 170;
-    const titleY = isAudioFirst ? -76 : -62;
-    const promptY = isAudioFirst ? -48 : -34;
-    const choicesY = isAudioFirst ? 30 : 22;
-    const skipY = isAudioFirst ? 82 : 72;
+    const panelHeight = isAudioFirst ? 220 : 190;
+    const titleY = isAudioFirst ? -84 : -72;
+    const promptY = isAudioFirst ? -52 : -42;
+    const choicesY = isAudioFirst ? 38 : 34;
+    const skipY = isAudioFirst ? 94 : 82;
 
     const bg = this.add.rectangle(0, 0, 360, panelHeight, 0x2a1a08, 0.96)
       .setStrokeStyle(3, 0xffd666);
@@ -279,8 +377,10 @@ export class WorldScene extends Phaser.Scene {
 
     panel.add(this.add.text(0, promptY, prompt.text, {
       fontFamily: 'system-ui',
-      fontSize: '22px',
-      color: '#ffffff'
+      fontSize: prompt.text.length > 55 ? '13px' : '17px',
+      color: '#ffffff',
+      align: 'center',
+      wordWrap: { width: 324 }
     }).setOrigin(0.5));
 
     if (isAudioFirst) {
@@ -299,19 +399,22 @@ export class WorldScene extends Phaser.Scene {
     }
 
     prompt.choices.forEach((choice, index) => {
-      const x = -100 + index * 100;
-      const btn = this.add.rectangle(x, choicesY, 72, 42, 0x5f3d12)
+      const x = -110 + index * 110;
+      const choiceLabel = String(choice);
+      const btn = this.add.rectangle(x, choicesY, 102, 46, 0x5f3d12)
         .setStrokeStyle(2, 0xffd666)
         .setInteractive({ useHandCursor: true });
 
-      const txt = this.add.text(x, choicesY, String(choice), {
+      const txt = this.add.text(x, choicesY, choiceLabel, {
         fontFamily: 'system-ui',
-        fontSize: '18px',
-        color: '#ffffff'
+        fontSize: choiceLabel.length > 12 ? '9px' : '17px',
+        color: '#ffffff',
+        align: 'center',
+        wordWrap: { width: 92 }
       }).setOrigin(0.5);
 
       btn.on('pointerdown', () => {
-        const result = this.learning.resolve(prompt, choice);
+        const result = this.learning.resolve(prompt, choice as AnswerValue);
         this.stopPromptReadAloud();
         panel.destroy();
 
@@ -321,6 +424,7 @@ export class WorldScene extends Phaser.Scene {
 
         this.showToast(result.message);
         this.busy = false;
+        onClose?.({ answered: true, correct: result.correct });
         this.save();
       });
 
@@ -339,6 +443,8 @@ export class WorldScene extends Phaser.Scene {
       panel.destroy();
       this.showToast('Skipped. Adventure continues.');
       this.busy = false;
+      onClose?.({ answered: false, correct: false });
+      this.save();
     });
 
     panel.add(skip);
@@ -371,13 +477,13 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private makeReadAloudText(label: string, prompt: LearningPrompt): string {
-    const readablePrompt = prompt.text
+    const readablePrompt = (prompt.readAloudText ?? prompt.text)
       .replaceAll('−', ' minus ')
       .replaceAll('×', ' times ')
       .replace(/\s*=\s*\?/g, ' equals what?')
       .replace(/\s+/g, ' ')
       .trim();
-    const choices = prompt.choices.join(', ');
+    const choices = prompt.choices.map(String).join(', ');
 
     return `${label} optional learning bonus. ${readablePrompt}. Choices are: ${choices}. Tap the answer to try for a bonus.`;
   }
@@ -392,19 +498,21 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private showToast(message: string): void {
-    const toast = this.add.text(GAME_WIDTH / 2, 48, message, {
+    const toast = this.add.text(GAME_WIDTH / 2, 66, message, {
       fontFamily: 'system-ui',
       fontSize: '13px',
       color: '#ffffff',
       backgroundColor: '#3a2208',
-      padding: { x: 8, y: 5 }
+      padding: { x: 8, y: 5 },
+      align: 'center',
+      wordWrap: { width: GAME_WIDTH - 40 }
     }).setOrigin(0.5).setScrollFactor(0);
 
     this.tweens.add({
       targets: toast,
-      y: 36,
+      y: 54,
       alpha: 0,
-      duration: 1600,
+      duration: 1800,
       ease: 'Sine.easeInOut',
       onComplete: () => toast.destroy()
     });
@@ -416,6 +524,10 @@ export class WorldScene extends Phaser.Scene {
       profileId: this.profileId,
       gold: this.gold,
       lastArea: 'farm',
+      firstQuestStep: this.firstQuestStep,
+      questFlags: {
+        miraFirstErrandComplete: this.firstQuestStep === 'complete'
+      },
       player: {
         x: this.player.x,
         y: this.player.y
