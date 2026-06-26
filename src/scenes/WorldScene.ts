@@ -9,11 +9,9 @@ type SceneInitData = {
   profileId?: ProfileId;
 };
 
-type HeldDirections = {
-  up: boolean;
-  down: boolean;
-  left: boolean;
-  right: boolean;
+type TouchMoveVector = {
+  x: number;
+  y: number;
 };
 
 type InteractionTarget = {
@@ -27,7 +25,12 @@ export class WorldScene extends Phaser.Scene {
   private player!: Phaser.Physics.Arcade.Sprite;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private keys!: Record<'W' | 'A' | 'S' | 'D' | 'SPACE' | 'E', Phaser.Input.Keyboard.Key>;
-  private held: HeldDirections = { up: false, down: false, left: false, right: false };
+  private touchMove: TouchMoveVector = { x: 0, y: 0 };
+  private joystickOrigin: TouchMoveVector = { x: 0, y: 0 };
+  private joystickPointerId: number | null = null;
+  private joystickBase!: Phaser.GameObjects.Arc;
+  private joystickKnob!: Phaser.GameObjects.Arc;
+  private readonly joystickRadius = 42;
   private targets: InteractionTarget[] = [];
   private profileId: ProfileId = 'grade5-adventurer';
   private learning!: LearningBonusSystem;
@@ -95,7 +98,10 @@ export class WorldScene extends Phaser.Scene {
 
     this.createHud();
     this.createTouchControls();
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.stopPromptReadAloud());
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.stopPromptReadAloud();
+      this.resetJoystick();
+    });
   }
 
   update(): void {
@@ -105,18 +111,21 @@ export class WorldScene extends Phaser.Scene {
     }
 
     const speed = 125;
-    const left = this.cursors.left.isDown || this.keys.A.isDown || this.held.left;
-    const right = this.cursors.right.isDown || this.keys.D.isDown || this.held.right;
-    const up = this.cursors.up.isDown || this.keys.W.isDown || this.held.up;
-    const down = this.cursors.down.isDown || this.keys.S.isDown || this.held.down;
+    const keyX = (this.cursors.right.isDown || this.keys.D.isDown ? 1 : 0)
+      - (this.cursors.left.isDown || this.keys.A.isDown ? 1 : 0);
+    const keyY = (this.cursors.down.isDown || this.keys.S.isDown ? 1 : 0)
+      - (this.cursors.up.isDown || this.keys.W.isDown ? 1 : 0);
+    const rawX = keyX + this.touchMove.x;
+    const rawY = keyY + this.touchMove.y;
+    const rawLength = Math.hypot(rawX, rawY);
+    const inputX = rawLength > 1 ? rawX / rawLength : rawX;
+    const inputY = rawLength > 1 ? rawY / rawLength : rawY;
+    const isMoving = Math.abs(inputX) > 0.01 || Math.abs(inputY) > 0.01;
 
-    const vx = (right ? speed : 0) - (left ? speed : 0);
-    const vy = (down ? speed : 0) - (up ? speed : 0);
-    this.player.setVelocity(vx, vy);
-    this.player.body?.velocity.normalize().scale(vx || vy ? speed : 0);
+    this.player.setVelocity(inputX * speed, inputY * speed);
 
-    if (vx !== 0 || vy !== 0) {
-      this.player.setFrame(vx < 0 ? 2 : vx > 0 ? 3 : vy < 0 ? 1 : 0);
+    if (isMoving) {
+      this.player.setFrame(inputX < -0.35 ? 2 : inputX > 0.35 ? 3 : inputY < 0 ? 1 : 0);
     }
 
     if (Phaser.Input.Keyboard.JustDown(this.keys.SPACE) || Phaser.Input.Keyboard.JustDown(this.keys.E)) {
@@ -184,31 +193,7 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private createTouchControls(): void {
-    const makeButton = (x: number, y: number, label: string, onDown: () => void, onUp: () => void): void => {
-      const bg = this.add.rectangle(x, y, 36, 36, 0x5f3d12, 0.76)
-        .setStrokeStyle(2, 0xffd666)
-        .setScrollFactor(0)
-        .setInteractive({ useHandCursor: true });
-
-      this.add.text(x, y, label, {
-        fontFamily: 'system-ui',
-        fontSize: '18px',
-        color: '#ffd666'
-      }).setOrigin(0.5).setScrollFactor(0);
-
-      bg.on('pointerdown', onDown);
-      bg.on('pointerup', onUp);
-      bg.on('pointerout', onUp);
-    };
-
-    const reset = (): void => {
-      this.held = { up: false, down: false, left: false, right: false };
-    };
-
-    makeButton(64, GAME_HEIGHT - 86, '▲', () => { this.held.up = true; }, reset);
-    makeButton(64, GAME_HEIGHT - 42, '▼', () => { this.held.down = true; }, reset);
-    makeButton(22, GAME_HEIGHT - 42, '◀', () => { this.held.left = true; }, reset);
-    makeButton(106, GAME_HEIGHT - 42, '▶', () => { this.held.right = true; }, reset);
+    this.createDynamicJoystick();
 
     const action = this.add.circle(GAME_WIDTH - 54, GAME_HEIGHT - 52, 34, 0x5f3d12, 0.82)
       .setStrokeStyle(3, 0xffd666)
@@ -222,6 +207,76 @@ export class WorldScene extends Phaser.Scene {
     }).setOrigin(0.5).setScrollFactor(0);
 
     action.on('pointerdown', () => this.tryInteract());
+  }
+
+  private createDynamicJoystick(): void {
+    this.joystickBase = this.add.circle(0, 0, this.joystickRadius, 0x5f3d12, 0.5)
+      .setStrokeStyle(3, 0xffd666, 0.75)
+      .setScrollFactor(0)
+      .setVisible(false);
+    this.joystickKnob = this.add.circle(0, 0, 16, 0xffd666, 0.82)
+      .setStrokeStyle(2, 0x2a1a08)
+      .setScrollFactor(0)
+      .setVisible(false);
+
+    this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.startJoystick(pointer));
+    this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => this.updateJoystick(pointer));
+    this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => this.resetJoystick(pointer));
+    this.input.on('pointerupoutside', (pointer: Phaser.Input.Pointer) => this.resetJoystick(pointer));
+  }
+
+  private startJoystick(pointer: Phaser.Input.Pointer): void {
+    if (this.busy || this.joystickPointerId !== null || !this.isLowerLeftTouch(pointer)) {
+      return;
+    }
+
+    this.joystickPointerId = pointer.id;
+    this.joystickOrigin = { x: pointer.x, y: pointer.y };
+    this.joystickBase.setPosition(pointer.x, pointer.y).setVisible(true);
+    this.joystickKnob.setPosition(pointer.x, pointer.y).setVisible(true);
+    this.updateJoystick(pointer);
+  }
+
+  private updateJoystick(pointer: Phaser.Input.Pointer): void {
+    if (this.joystickPointerId !== pointer.id) {
+      return;
+    }
+
+    const dx = pointer.x - this.joystickOrigin.x;
+    const dy = pointer.y - this.joystickOrigin.y;
+    const distance = Math.hypot(dx, dy);
+    const clampedDistance = Math.min(distance, this.joystickRadius);
+    const angle = Math.atan2(dy, dx);
+    const knobX = this.joystickOrigin.x + Math.cos(angle) * clampedDistance;
+    const knobY = this.joystickOrigin.y + Math.sin(angle) * clampedDistance;
+
+    this.joystickKnob.setPosition(knobX, knobY);
+
+    if (distance <= 0) {
+      this.touchMove = { x: 0, y: 0 };
+      return;
+    }
+
+    const inputStrength = clampedDistance / this.joystickRadius;
+    this.touchMove = {
+      x: Math.cos(angle) * inputStrength,
+      y: Math.sin(angle) * inputStrength
+    };
+  }
+
+  private resetJoystick(pointer?: Phaser.Input.Pointer): void {
+    if (pointer && this.joystickPointerId !== pointer.id) {
+      return;
+    }
+
+    this.joystickPointerId = null;
+    this.touchMove = { x: 0, y: 0 };
+    this.joystickBase?.setVisible(false);
+    this.joystickKnob?.setVisible(false);
+  }
+
+  private isLowerLeftTouch(pointer: Phaser.Input.Pointer): boolean {
+    return pointer.x <= GAME_WIDTH / 2 && pointer.y >= GAME_HEIGHT / 2;
   }
 
   private nearestTarget(): InteractionTarget | null {
@@ -256,6 +311,7 @@ export class WorldScene extends Phaser.Scene {
 
   private openBonusPrompt(context: BonusContext, label: string): void {
     this.busy = true;
+    this.resetJoystick();
     this.player.setVelocity(0, 0);
 
     const prompt = this.learning.makePrompt(context);
