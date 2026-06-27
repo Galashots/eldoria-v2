@@ -24,7 +24,7 @@
       "background": {
         "mode": "edge_flood_color_key",
         "color": "#FB03F9",
-        "tolerance": 10
+        "tolerance": 64
       }
     }
   },
