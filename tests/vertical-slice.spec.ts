@@ -27,6 +27,14 @@ type GameState = {
   questStep: StarterQuestStep;
 };
 
+type PreviewPrompt = {
+  id: string;
+  answer: number | string | boolean;
+  context: string;
+  skill: string;
+  text: string;
+};
+
 const CANVAS = 'canvas';
 
 async function boot(page: Page): Promise<void> {
@@ -227,6 +235,34 @@ async function useDeterministicCorrectPrompt(page: Page): Promise<void> {
   });
 }
 
+async function previewPrompt(page: Page, templateId: string): Promise<PreviewPrompt> {
+  return page.evaluate((id) => {
+    const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
+      previewPrompt: (templateId: string) => PreviewPrompt;
+    };
+
+    return scene.previewPrompt(id);
+  }, templateId);
+}
+
+async function chooseOpenPrompt(page: Page, choice: PreviewPrompt['answer']): Promise<void> {
+  await page.evaluate((selectedChoice) => {
+    const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
+      children: {
+        list: Array<{
+          list?: Array<{ text?: string; emit?: (event: string) => void }>;
+        }>;
+      };
+    };
+    const promptPanel = scene.children.list.find((child) => Array.isArray(child.list));
+    const selected = promptPanel?.list?.find((child) => child.text === String(selectedChoice));
+
+    if (!selected?.emit) throw new Error(`Prompt choice was not found: ${selectedChoice}`);
+    selected.emit('pointerdown');
+  }, choice);
+  await page.waitForTimeout(200);
+}
+
 async function hasCanvasText(page: Page, text: string): Promise<boolean> {
   return page.evaluate((expectedText) => {
     const hasText = (item: { active?: boolean; visible?: boolean; text?: unknown; list?: unknown[] }): boolean => {
@@ -420,4 +456,46 @@ test('new contextual templates preserve grade-specific prompt contracts', async 
     { context: 'farm', rewardKind: 'bonus-harvest', skill: 'fractions' },
     { context: 'combat', rewardKind: 'critical-hit', skill: 'energy-resources' }
   ]);
+});
+
+test('prompt preview renders a chosen template without gameplay or save effects', async ({ page }) => {
+  await boot(page);
+  await startProfile(page, 120);
+
+  const grade2Before = await state(page);
+  const grade2SaveBefore = await page.evaluate(() => localStorage.getItem('eldoria_v2_save_grade2-mage'));
+  const grade2Prompt = await previewPrompt(page, 'grade2-farm-place-value-basket');
+
+  expect(grade2Prompt.id).toBe('farm-grade2-place-value-basket');
+  expect(grade2Prompt.context).toBe('farm');
+  expect(grade2Prompt.skill).toBe('place-value');
+  await expect.poll(async () => hasCanvasText(page, grade2Prompt.text)).toBe(true);
+  await expect.poll(async () => hasCanvasText(page, 'READ ALOUD')).toBe(true);
+  await skipOpenPrompt(page);
+
+  const grade2After = await state(page);
+  expect(grade2After.gold).toBe(grade2Before.gold);
+  expect(grade2After.mastery).toEqual(grade2Before.mastery);
+  expect(grade2After.questStep).toBe(grade2Before.questStep);
+  expect(await page.evaluate(() => localStorage.getItem('eldoria_v2_save_grade2-mage'))).toBe(grade2SaveBefore);
+
+  await page.reload();
+  await startProfile(page, 190);
+
+  const grade5Before = await state(page);
+  const grade5SaveBefore = await page.evaluate(() => localStorage.getItem('eldoria_v2_save_grade5-adventurer'));
+  const grade5Prompt = await previewPrompt(page, 'grade5-combat-science-energy-transfer');
+
+  expect(grade5Prompt.id).toBe('combat-grade5-energy-transfer-rune');
+  expect(grade5Prompt.context).toBe('combat');
+  expect(grade5Prompt.skill).toBe('energy-resources');
+  await expect.poll(async () => hasCanvasText(page, grade5Prompt.text)).toBe(true);
+  await expect.poll(async () => hasCanvasText(page, 'READ ALOUD')).toBe(false);
+  await chooseOpenPrompt(page, grade5Prompt.answer);
+
+  const grade5After = await state(page);
+  expect(grade5After.gold).toBe(grade5Before.gold);
+  expect(grade5After.mastery).toEqual(grade5Before.mastery);
+  expect(grade5After.questStep).toBe(grade5Before.questStep);
+  expect(await page.evaluate(() => localStorage.getItem('eldoria_v2_save_grade5-adventurer'))).toBe(grade5SaveBefore);
 });

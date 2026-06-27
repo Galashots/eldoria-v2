@@ -4,6 +4,22 @@ This file records repository changes made through ChatGPT so future work can see
 
 ## 2026-06-27 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
+- Branch: `codex/deterministic-prompt-preview`
+- Files changed:
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `src/scenes/WorldScene.ts`
+  - `src/systems/LearningBonusSystem.ts`
+  - `src/systems/QuestionEngine.ts`
+  - `tests/vertical-slice.spec.ts`
+- Summary: Added a development/test-only utility that renders a chosen question template by ID in the existing prompt panel.
+- Implementation notes:
+  - Added strict template lookup that validates the active profile band and uses the template's first declared context and minimum difficulty.
+  - Added a guarded `WorldScene.previewPrompt` entry point with no reward, mastery, quest, or save side effects.
+  - Added smoke coverage for exact Grade 2 and Grade 5 template selection, profile-specific read-aloud behavior, and side-effect-free skip and answer paths.
+- Reason: Make prompt visual QA deterministic and repeatable without changing player-facing behavior or relying on random template selection.
+
+## 2026-06-27 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
 - Branch: `codex/four-contextual-question-templates`
 - Files changed:
   - `docs/CHATGPT_CHANGELOG.md`
