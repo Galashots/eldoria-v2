@@ -354,13 +354,15 @@ export class WorldScene extends Phaser.Scene {
     const py = this.player.y;
 
     let best: InteractionTarget | null = null;
-    let bestDistance = Number.POSITIVE_INFINITY;
+    let bestDistanceSq = Number.POSITIVE_INFINITY;
 
     for (const target of this.targets) {
-      const d = Phaser.Math.Distance.Between(px, py, target.x, target.y);
-      if (d < 42 && d < bestDistance) {
+      const dx = px - target.x;
+      const dy = py - target.y;
+      const dSq = dx * dx + dy * dy;
+      if (dSq < 1764 && dSq < bestDistanceSq) {
         best = target;
-        bestDistance = d;
+        bestDistanceSq = dSq;
       }
     }
 
