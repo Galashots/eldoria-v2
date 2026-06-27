@@ -4,6 +4,18 @@ This file records repository changes made through ChatGPT so future work can see
 
 ## 2026-06-26 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
+- Branch: `codex/title-profile-layout-polish`
+- Files changed:
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `src/scenes/TitleScene.ts`
+- Summary: Adjusted the title and profile-selection vertical spacing so all text and panels remain readable without overlap.
+- Implementation notes:
+  - Moved the title and North Star subtitle upward and added clear space above and between the Grade 2 Mage and Grade 5 Adventurer panels.
+  - Kept both existing profile hit areas compatible with the current smoke-test interaction points.
+- Reason: Live browser inspection found the subtitle partially hidden behind the Mage panel on the current title screen.
+
+## 2026-06-26 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
 - Branch: `codex/mastery-tracking-foundation`
 - Files changed:
   - `docs/CHATGPT_CHANGELOG.md`
