@@ -5,6 +5,7 @@ type StarterQuestStep = 'talk-to-mira' | 'try-crop-bonus' | 'find-slime' | 'retu
 type GameState = {
   gold: number;
   hint: string;
+  inventory: Record<string, number>;
   objective: string;
   player: { x: number; y: number };
   questStep: StarterQuestStep;
@@ -44,6 +45,7 @@ async function state(page: Page): Promise<GameState> {
     const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
       gold: number;
       hintText: { text: string };
+      inventory: Record<string, number>;
       objectiveText: { text: string };
       player: { x: number; y: number };
       firstQuestStep: StarterQuestStep;
@@ -54,6 +56,7 @@ async function state(page: Page): Promise<GameState> {
     return {
       gold: scene.gold,
       hint: scene.hintText.text,
+      inventory: { ...scene.inventory },
       objective: scene.objectiveText.text,
       player: { x: scene.player.x, y: scene.player.y },
       questStep: scene.firstQuestStep
@@ -72,6 +75,7 @@ async function setPlayer(page: Page, x: number, y: number): Promise<GameState> {
     const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
       gold: number;
       hintText: { text: string };
+      inventory: Record<string, number>;
       objectiveText: { text: string };
       cursors: Record<string, { reset?: () => void }>;
       keys: Record<string, { reset?: () => void }>;
@@ -89,6 +93,7 @@ async function setPlayer(page: Page, x: number, y: number): Promise<GameState> {
     return {
       gold: scene.gold,
       hint: scene.hintText.text,
+      inventory: { ...scene.inventory },
       objective: scene.objectiveText.text,
       player: { x: nextX, y: nextY },
       questStep: scene.firstQuestStep
@@ -221,21 +226,39 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   await skipOpenPrompt(page);
   await setQuestStep(page, 'return-to-mira');
   await expect.poll(async () => (await state(page)).questStep).toBe('return-to-mira');
+  await expect.poll(async () => (await state(page)).gold).toBe(0);
 
   expect((await setPlayer(page, 416, 256)).hint).toContain('Mira');
   await sceneInteract(page);
   await expect.poll(async () => (await state(page)).questStep).toBe('complete');
   await expect.poll(async () => (await state(page)).gold).toBe(10);
+  await expect.poll(async () => (await state(page)).inventory.sunberryCharm).toBe(1);
+  await expect.poll(async () => hasCanvasText(page, 'Received: Sunberry Charm')).toBe(true);
 
   await page.reload();
   await startProfile(page, 120);
   await expect.poll(async () => (await state(page)).questStep).toBe('complete');
   await expect.poll(async () => (await state(page)).gold).toBe(10);
+  await expect.poll(async () => (await state(page)).inventory.sunberryCharm).toBe(1);
+
+  await setPlayer(page, 416, 256);
+  await sceneInteract(page);
+  await expect.poll(async () => (await state(page)).gold).toBe(10);
+  await expect.poll(async () => (await state(page)).inventory.sunberryCharm).toBe(1);
 });
 
 test('Grade 5 prompts keep reader profile without the Grade 2 read-aloud control', async ({ page }) => {
   await boot(page);
   await startProfile(page, 190);
+
+  await page.evaluate(() => {
+    const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
+      applyReward: (prompt: { rewardKind: 'bonus-harvest' }) => void;
+    };
+    scene.applyReward({ rewardKind: 'bonus-harvest' });
+  });
+  await expect.poll(async () => (await state(page)).gold).toBe(3);
+  await expect.poll(async () => hasCanvasText(page, '+3 Gold')).toBe(true);
 
   await setQuestStep(page, 'try-crop-bonus');
   await openQuestPrompt(page, 'farm', 'CropBonus', 'find-slime', 'Objective updated: find the Practice Slime.');
