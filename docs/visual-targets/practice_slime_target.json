@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "sourceContract": "docs/VISUAL_ASSET_CONTRACT.md",
+  "targets": [
+    {
+      "id": "mob_slime_practice_base",
+      "displayName": "Practice Slime Base",
+      "category": "mob",
+      "status": "target_only",
+      "canvasPx": [32, 32],
+      "footprintPx": [16, 16],
+      "pivotPx": [16, 31],
+      "ppu": 16,
+      "directions": ["front"],
+      "directionPolicy": "single_front_view_until_locomotion_or_combat_requires_more",
+      "paletteFamilies": ["arcane", "forest"],
+      "materialStory": "friendly translucent slime body with soft magical jelly volume",
+      "accentRule": "one readable blue-purple arcane highlight; avoid noisy internal detail",
+      "lightDirection": "upper_left",
+      "atlasFamily": "characters",
+      "renderLayers": ["actors_body", "vfx_low"],
+      "runtimeExport": "png",
+      "preferredSource": "aseprite",
+      "requiredClips": [
+        { "name": "idle", "frames": [4, 6], "loop": true },
+        { "name": "hop", "frames": [6, 8], "loop": true },
+        { "name": "hurt", "frames": [2, 4], "loop": false },
+        { "name": "poof", "frames": [6, 8], "loop": false }
+      ],
+      "deferredClips": ["attack", "cast", "death"],
+      "collision": {
+        "body": [9, 15, 14, 12],
+        "hurtbox": [8, 12, 16, 16],
+        "hitboxes": [],
+        "interaction": [6, 10, 20, 20]
+      },
+      "gameplayPolicy": {
+        "combatStats": "not_defined",
+        "aiBehavior": "not_defined",
+        "damageHitboxes": "none",
+        "learningGate": "never"
+      },
+      "visualRules": [
+        "Must read as friendly practice target, not a scary enemy.",
+        "Silhouette must remain readable at 1x and 3x.",
+        "Face or eye marks, if used later, must remain simple and non-threatening.",
+        "Poof animation is visual-only target spec; no runtime defeat behavior is added here."
+      ],
+      "notes": [
+        "Specification only; no art is included.",
+        "No runtime combat, stats, AI, or quest behavior is included.",
+        "Practice Slime remains compatible with the current optional learning/combat-bonus loop."
+      ]
+    }
+  ]
+}

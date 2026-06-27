@@ -4,6 +4,20 @@ This file records repository changes made through ChatGPT so future work can see
 
 ## 2026-06-27 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
+- Branch: `codex/practice-slime-target-spec`
+- Files changed:
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `docs/visual-targets/PRACTICE_SLIME_TARGET.md`
+  - `docs/visual-targets/practice_slime_target.json`
+- Summary: Added the production target specification for the friendly Practice Slime.
+- Implementation notes:
+  - Defined `mob_slime_practice_base` as a front-view `32x32` visual target with idle, hop, hurt, and poof clips.
+  - Recorded palette, silhouette, collision, interaction, atlas, layer, and child-friendly readability requirements.
+  - Explicitly left combat stats, AI, hitboxes, and runtime defeat behavior undefined.
+- Reason: Establish a reviewable Practice Slime target before generating or replacing art.
+
+## 2026-06-27 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
 - Branch: `codex/mage-starter-equipment-targets`
 - Files changed:
   - `docs/CHATGPT_CHANGELOG.md`
