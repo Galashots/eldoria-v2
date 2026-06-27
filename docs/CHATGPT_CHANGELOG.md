@@ -4,6 +4,21 @@ This file records repository changes made through ChatGPT so future work can see
 
 ## 2026-06-27 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
+- Branch: `codex/four-contextual-question-templates`
+- Files changed:
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `src/data/questionTemplates.ts`
+  - `tests/vertical-slice.spec.ts`
+- Summary: Added exactly four contextual learning templates for the existing farm and combat bonus moments.
+- Implementation notes:
+  - Added two short Grade 2 math prompts with explicit read-aloud text: farm place value and combat addition.
+  - Added two Grade 5 reader-mode prompts with richer reasoning: farm fraction simplification and combat energy transfer.
+  - Reused existing reward kinds and adjusted Grade 2 mastery smoke assertions to allow valid random skill selection without weakening skip and progression coverage.
+  - Added focused smoke coverage for template presence, answer choices, Grade 2 audio support, and context/reward/skill contracts.
+- Reason: Expand curriculum variety in a small, testable PR while keeping learning optional and embedded in existing gameplay actions.
+
+## 2026-06-27 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
 - Branch: `codex/sunberry-charm-hud-keepsake`
 - Files changed:
   - `docs/CHATGPT_CHANGELOG.md`

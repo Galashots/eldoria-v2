@@ -85,6 +85,11 @@ async function state(page: Page): Promise<GameState> {
   });
 }
 
+async function masteryTotal(page: Page, field: 'seen' | 'attempted' | 'skipped'): Promise<number> {
+  const records = Object.values((await state(page)).mastery);
+  return records.reduce((total, record) => total + record[field], 0);
+}
+
 async function holdKey(page: Page, key: string, ms = 300): Promise<void> {
   await page.keyboard.down(key);
   await page.waitForTimeout(ms);
@@ -267,14 +272,14 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   await expect.poll(async () => hasCanvasText(page, 'READ ALOUD')).toBe(true);
   await skipOpenPrompt(page);
   await expect.poll(async () => (await state(page)).questStep).toBe('find-slime');
-  await expect.poll(async () => (await state(page)).mastery['grade2:math:subtraction']?.skipped).toBe(1);
+  await expect.poll(async () => masteryTotal(page, 'skipped')).toBe(1);
 
   await openQuestPrompt(page, 'combat', 'Practice Slime', 'return-to-mira', 'Practice complete. Return to Mira.');
   await expect.poll(async () => hasCanvasText(page, 'READ ALOUD')).toBe(true);
   await skipOpenPrompt(page);
   await expect.poll(async () => (await state(page)).questStep).toBe('return-to-mira');
   await expect.poll(async () => (await state(page)).gold).toBe(0);
-  await expect.poll(async () => (await state(page)).mastery['grade2:math:subtraction']?.skipped).toBe(2);
+  await expect.poll(async () => masteryTotal(page, 'skipped')).toBe(2);
 
   expect((await setPlayer(page, 416, 256)).hint).toContain('Mira');
   await sceneInteract(page);
@@ -283,8 +288,8 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   await expect.poll(async () => (await state(page)).inventory.sunberryCharm).toBe(1);
   await expect.poll(async () => (await state(page)).hud).toContain('Keepsake: Sunberry Charm');
   await expect.poll(async () => (await state(page)).hudWidth).toBeLessThanOrEqual(448);
-  await expect.poll(async () => (await state(page)).mastery['grade2:math:subtraction']?.seen).toBe(2);
-  await expect.poll(async () => (await state(page)).mastery['grade2:math:subtraction']?.attempted).toBe(0);
+  await expect.poll(async () => masteryTotal(page, 'seen')).toBe(2);
+  await expect.poll(async () => masteryTotal(page, 'attempted')).toBe(0);
   await expect.poll(async () => hasCanvasText(page, 'Received: Sunberry Charm')).toBe(true);
 
   await page.reload();
@@ -347,4 +352,72 @@ test('Grade 5 prompts keep reader profile without the Grade 2 read-aloud control
   await expect.poll(async () => (await state(page)).mastery['grade5:math:area-perimeter']?.correct).toBe(1);
   await expect.poll(async () => (await state(page)).mastery['grade5:math:area-perimeter']?.wrong).toBe(1);
   await expect.poll(async () => (await state(page)).gold).toBe(3);
+});
+
+test('new contextual templates preserve grade-specific prompt contracts', async ({ page }) => {
+  await boot(page);
+
+  const prompts = await page.evaluate(async () => {
+    const { QUESTION_TEMPLATES } = await import('/src/data/questionTemplates.ts');
+    const targets = [
+      { id: 'grade2-farm-place-value-basket', context: 'farm', difficulty: 1, band: 'grade2' },
+      { id: 'grade2-combat-addition-sparks', context: 'combat', difficulty: 1, band: 'grade2' },
+      { id: 'grade5-farm-fractions-sunberry-rows', context: 'farm', difficulty: 1, band: 'grade5' },
+      { id: 'grade5-combat-science-energy-transfer', context: 'combat', difficulty: 1, band: 'grade5' }
+    ] as const;
+
+    return targets.map(({ id, context, difficulty, band }) => {
+      const template = QUESTION_TEMPLATES.find((candidate) => candidate.id === id);
+      if (!template) throw new Error(`Missing question template: ${id}`);
+
+      const prompt = template.makePrompt({
+        profile: {
+          id: band === 'grade2' ? 'grade2-mage' : 'grade5-adventurer',
+          label: band === 'grade2' ? 'Mage' : 'Adventurer',
+          subtitle: '',
+          readingMode: band === 'grade2' ? 'audio-first' : 'reader',
+          curriculumBand: band
+        },
+        context,
+        difficulty
+      });
+
+      return { templateId: id, minDifficulty: template.minDifficulty, ...prompt };
+    });
+  });
+
+  expect(prompts.map((prompt) => prompt.templateId)).toEqual([
+    'grade2-farm-place-value-basket',
+    'grade2-combat-addition-sparks',
+    'grade5-farm-fractions-sunberry-rows',
+    'grade5-combat-science-energy-transfer'
+  ]);
+
+  for (const prompt of prompts) {
+    expect(prompt.minDifficulty).toBe(1);
+    expect(prompt.choices).toContain(prompt.answer);
+    expect(new Set(prompt.choices).size).toBe(prompt.choices.length);
+    expect(prompt.choices.length).toBeGreaterThanOrEqual(2);
+    expect(prompt.choices.length).toBeLessThanOrEqual(3);
+  }
+
+  const grade2Prompts = prompts.filter((prompt) => prompt.band === 'grade2');
+  expect(grade2Prompts).toHaveLength(2);
+  for (const prompt of grade2Prompts) {
+    expect(prompt.readAloudText).toBeTruthy();
+    expect(prompt.text.length).toBeLessThanOrEqual(55);
+  }
+
+  const grade5Prompts = prompts.filter((prompt) => prompt.band === 'grade5');
+  expect(grade5Prompts).toHaveLength(2);
+  for (const prompt of grade5Prompts) {
+    expect(prompt.readAloudText).toBeUndefined();
+  }
+
+  expect(prompts.map(({ context, rewardKind, skill }) => ({ context, rewardKind, skill }))).toEqual([
+    { context: 'farm', rewardKind: 'bonus-harvest', skill: 'place-value' },
+    { context: 'combat', rewardKind: 'critical-hit', skill: 'addition' },
+    { context: 'farm', rewardKind: 'bonus-harvest', skill: 'fractions' },
+    { context: 'combat', rewardKind: 'critical-hit', skill: 'energy-resources' }
+  ]);
 });
