@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "sourceContract": "docs/VISUAL_ASSET_CONTRACT.md",
+  "targets": [
+    {
+      "id": "char_mage_boy_base",
+      "displayName": "Grade 2 Mage Hero Base",
+      "profileId": "grade2-mage",
+      "category": "char",
+      "status": "target_only",
+      "canvasPx": [32, 48],
+      "footprintPx": [16, 16],
+      "pivotPx": [16, 47],
+      "ppu": 16,
+      "directions": ["front", "back", "left", "right"],
+      "paletteFamilies": ["skin_hair", "arcane"],
+      "lightDirection": "upper_left",
+      "atlasFamily": "characters",
+      "runtimeExport": "png",
+      "preferredSource": "aseprite",
+      "requiredClips": [
+        { "name": "idle", "frames": [4, 6], "loop": true },
+        { "name": "walk", "frames": [6, 8], "loop": true },
+        { "name": "cast", "frames": [6, 10], "loop": false },
+        { "name": "hurt", "frames": [2, 4], "loop": false }
+      ],
+      "deferredClips": ["attack_light", "attack_heavy", "death", "special"],
+      "slices": [
+        "base_body",
+        "head",
+        "torso",
+        "legs",
+        "weapon_socket_main",
+        "armor_torso",
+        "armor_head",
+        "cape_back"
+      ],
+      "collision": {
+        "hurtbox": [10, 25, 12, 22],
+        "hitboxes": [],
+        "interaction": [8, 30, 16, 18]
+      },
+      "notes": [
+        "Specification only; no art is included.",
+        "Armor and weapon overlays must match this canvas, pivot, directions, and frame timing in future PRs.",
+        "Grade 2 readability and audio-first gameplay remain protected."
+      ]
+    }
+  ]
+}
