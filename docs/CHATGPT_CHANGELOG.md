@@ -4,6 +4,22 @@ This file records repository changes made through ChatGPT so future work can see
 
 ## 2026-06-27 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
+- Branch: `codex/practice-slime-v001-asset`
+- Files changed:
+  - `assets/source/generated/mob_slime_practice_v001/source_sheet.png`
+  - `assets/manifests/mob_slime_practice_v001.manifest.json`
+  - `assets/sprites/mob_slime_practice_v001.png`
+  - `docs/CHATGPT_CHANGELOG.md`
+- Summary: Added the approved Practice Slime v001 source art and deterministic runtime spritesheet.
+- Implementation notes:
+  - Preserved the original lossless `1536x1024` PNG as a `6x4` source sheet with `256x256` source cells.
+  - Used the asset manifest and normalizer to generate the exact `192x128` RGBA runtime sheet with `32x32` cells.
+  - Tuned edge-flood color-key tolerance for this source after enlarged inspection exposed anti-aliased magenta fringe; enclosed poof colors remain protected.
+  - Validated transparent unused cells, color-key cleanup, sprite readability, and poof-particle preservation without loading the asset in Phaser.
+- Reason: Establish the first production-ready Practice Slime art asset while keeping runtime integration in a separate PR.
+
+## 2026-06-27 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
 - Branch: `manual/asset-sheet-normalizer`
 - Files changed:
   - `.gitignore`
