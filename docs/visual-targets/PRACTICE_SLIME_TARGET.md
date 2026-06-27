@@ -4,7 +4,11 @@ Source contract: [`docs/VISUAL_ASSET_CONTRACT.md`](../VISUAL_ASSET_CONTRACT.md)
 
 ## Purpose
 
-Define the first production Practice Slime visual target before any art generation or replacement work.
+Record the production Practice Slime visual target and acceptance contract for asset and runtime work.
+
+## Current Asset Status
+
+The approved v001 source sheet, normalization manifest, and `192x128` runtime sheet are committed. Runtime loading and world display remain pending; combat, AI, stats, and defeat behavior are still undefined.
 
 ## Scope
 

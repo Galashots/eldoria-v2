@@ -29,8 +29,16 @@ Current `main` includes:
 - Dynamic lower-left virtual joystick.
 - Lower-right ACTION button.
 - Playwright vertical-slice smoke-test coverage.
+- Data-driven Mira first-errand quest content.
+- Floating reward text, sparkle feedback, and the persistent Sunberry Charm keepsake.
+- Per-skill mastery tracking for seen, attempted, correct, wrong, skipped, and streak outcomes.
+- Contextual Grade 2 and Grade 5 prompt templates plus a development/test-only deterministic preview.
+- A validated visual asset contract, production target specs, and generated-art normalization tooling.
+- The normalized Practice Slime v001 asset, not yet loaded into the world.
 
 Before adding new features, preserve all of the above unless the task explicitly says otherwise.
+
+Read [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) for the active milestone and current next step. Keep volatile roadmap status there instead of duplicating it in this file.
 
 ## Target player assumptions
 
@@ -67,29 +75,6 @@ Use the deep-research findings as direction:
 
 Visual asset work must follow [`docs/VISUAL_ASSET_CONTRACT.md`](docs/VISUAL_ASSET_CONTRACT.md).
 
-## Current best near-term roadmap
-
-Work in this order unless the user gives a different priority:
-
-1. Stabilize the current vertical slice.
-   - Run install/check/build/smoke/dev.
-   - Fix TypeScript/runtime errors.
-   - Confirm title screen, profile select, movement, joystick, ACTION, Mira quest loop, prompt choices, read-aloud, and save/load.
-2. Add reward juice.
-   - Floating +Gold.
-   - Sparkle burst on correct bonus.
-   - Better crop/combat feedback.
-   - Clearer Practice Slime completion feedback.
-3. Improve quest/content data structure.
-   - Move hardcoded Mira quest/dialogue toward data-driven structures.
-   - Keep implementation small.
-4. Add mastery tracking.
-   - Track attempts/correct/streak/difficulty per skill.
-   - Do not add parent dashboards yet until local data is reliable.
-5. Expand curriculum templates.
-   - Add only a few high-quality templates per PR.
-   - Keep prompts contextual to game mechanics.
-
 ## ChatGPT vs Codex split
 
 Use Codex for:
@@ -102,6 +87,7 @@ Use Codex for:
 - Inspecting changed files and command output.
 - Refactoring code.
 - Validating game behavior locally.
+- Planning and self-merging routine, previously agreed, narrowly scoped PRs after full verification.
 
 Tell the user to switch back to ChatGPT when the task needs:
 
@@ -110,11 +96,13 @@ Tell the user to switch back to ChatGPT when the task needs:
 - Alberta curriculum mapping.
 - 2D RPG design synthesis.
 - Kid UX/accessibility judgment.
-- PR audit before merge.
+- Milestone audit after a related run of routine PRs.
 - Sprite/image prompt design.
 - Story, quest, dialogue, naming, or worldbuilding.
 - Larger architectural tradeoff decisions.
 - Any question where the right answer is not mainly in the codebase.
+
+Routine PRs may be squash-merged by Codex without a separate ChatGPT audit when they remain within an agreed objective, all targeted and standard checks pass, gameplay/UI changes receive browser inspection, and the final diff contains no unrelated work. Stop for user or ChatGPT review if scope expands or the work changes curriculum direction, kid UX, story, asset-generation direction, save compatibility, economy, quest design, major dependencies, or architecture.
 
 ## Required workflow
 
@@ -129,6 +117,7 @@ For each task:
 7. Preserve Grade 2 audio-first support.
 8. Preserve current save compatibility unless explicitly migrating saves.
 9. Record meaningful repository changes in `docs/CHATGPT_CHANGELOG.md`.
+10. Update `docs/CURRENT_STATE.md` when a merge changes the active milestone, current capabilities, or next planned step.
 
 ## Changelog rule
 
@@ -168,6 +157,8 @@ npm run dev
 ```
 
 Then manually inspect the browser game when possible.
+
+For generated asset changes, also run the relevant manifest normalization/validation command and `npm run test:asset-pipeline`.
 
 Report clearly:
 

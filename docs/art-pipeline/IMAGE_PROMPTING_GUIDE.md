@@ -207,7 +207,7 @@ Art is good, but the intended runtime size is too small.
 
 ### Practice Slime
 
-Status: approved source candidate.
+Status: approved source and normalized runtime asset committed; runtime display is pending.
 
 Prompting lesson:
 
@@ -215,6 +215,7 @@ Prompting lesson:
 - no grid lines appeared
 - background still required color-key tolerance
 - final runtime target remains 32x32 cells in a 6x4 sheet
+- edge-flood cleanup with asset-specific tolerance removed the generated magenta fringe while preserving enclosed poof colors
 
 ### Crop overlays
 
