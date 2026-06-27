@@ -2,10 +2,24 @@ import { expect, test, type Page } from '@playwright/test';
 
 type StarterQuestStep = 'talk-to-mira' | 'try-crop-bonus' | 'find-slime' | 'return-to-mira' | 'complete';
 
+type MasteryRecord = {
+  seen: number;
+  attempted: number;
+  correct: number;
+  wrong: number;
+  skipped: number;
+  currentCorrectStreak: number;
+  bestCorrectStreak: number;
+  lastPromptId: string;
+  lastContext: string;
+  lastOutcome: 'correct' | 'wrong' | 'skipped';
+};
+
 type GameState = {
   gold: number;
   hint: string;
   inventory: Record<string, number>;
+  mastery: Record<string, MasteryRecord>;
   objective: string;
   player: { x: number; y: number };
   questStep: StarterQuestStep;
@@ -46,6 +60,7 @@ async function state(page: Page): Promise<GameState> {
       gold: number;
       hintText: { text: string };
       inventory: Record<string, number>;
+      mastery: Record<string, MasteryRecord>;
       objectiveText: { text: string };
       player: { x: number; y: number };
       firstQuestStep: StarterQuestStep;
@@ -57,6 +72,7 @@ async function state(page: Page): Promise<GameState> {
       gold: scene.gold,
       hint: scene.hintText.text,
       inventory: { ...scene.inventory },
+      mastery: structuredClone(scene.mastery),
       objective: scene.objectiveText.text,
       player: { x: scene.player.x, y: scene.player.y },
       questStep: scene.firstQuestStep
@@ -76,6 +92,7 @@ async function setPlayer(page: Page, x: number, y: number): Promise<GameState> {
       gold: number;
       hintText: { text: string };
       inventory: Record<string, number>;
+      mastery: Record<string, MasteryRecord>;
       objectiveText: { text: string };
       cursors: Record<string, { reset?: () => void }>;
       keys: Record<string, { reset?: () => void }>;
@@ -94,6 +111,7 @@ async function setPlayer(page: Page, x: number, y: number): Promise<GameState> {
       gold: scene.gold,
       hint: scene.hintText.text,
       inventory: { ...scene.inventory },
+      mastery: structuredClone(scene.mastery),
       objective: scene.objectiveText.text,
       player: { x: nextX, y: nextY },
       questStep: scene.firstQuestStep
@@ -159,20 +177,41 @@ async function openQuestPrompt(
 async function skipOpenPrompt(page: Page): Promise<void> {
   await page.evaluate(() => {
     const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
-      busy: boolean;
       children: {
-        list: Array<{ destroy?: () => void; list?: unknown[] }>;
+        list: Array<{
+          list?: Array<{ text?: string; emit?: (event: string) => void }>;
+        }>;
       };
-      stopPromptReadAloud: () => void;
+    };
+    const promptPanel = scene.children.list.find((child) => Array.isArray(child.list));
+    const skip = promptPanel?.list?.find((child) => child.text === 'Skip bonus');
+
+    if (!skip?.emit) throw new Error('Skip bonus control was not found.');
+    skip.emit('pointerdown');
+  });
+  await page.waitForTimeout(200);
+}
+
+async function useDeterministicCorrectPrompt(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
+      learning: {
+        makePrompt: () => unknown;
+      };
     };
 
-    const promptPanel = scene.children.list.find((child) => Array.isArray(child.list));
-    scene.stopPromptReadAloud();
-    promptPanel?.destroy?.();
-    scene.busy = false;
+    scene.learning.makePrompt = () => ({
+      id: 'e2e-grade5-area',
+      band: 'grade5',
+      subject: 'math',
+      skill: 'area-perimeter',
+      context: 'farm',
+      text: 'What is the area of a 3 by 4 garden?',
+      answer: 12,
+      choices: [12, 10, 14],
+      rewardKind: 'bonus-harvest'
+    });
   });
-
-  await page.waitForTimeout(100);
 }
 
 async function hasCanvasText(page: Page, text: string): Promise<boolean> {
@@ -218,21 +257,23 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   await openQuestPrompt(page, 'farm', 'CropBonus', 'find-slime', 'Objective updated: find the Practice Slime.');
   await expect.poll(async () => hasCanvasText(page, 'READ ALOUD')).toBe(true);
   await skipOpenPrompt(page);
-  await setQuestStep(page, 'find-slime');
   await expect.poll(async () => (await state(page)).questStep).toBe('find-slime');
+  await expect.poll(async () => (await state(page)).mastery['grade2:math:subtraction']?.skipped).toBe(1);
 
   await openQuestPrompt(page, 'combat', 'Practice Slime', 'return-to-mira', 'Practice complete. Return to Mira.');
   await expect.poll(async () => hasCanvasText(page, 'READ ALOUD')).toBe(true);
   await skipOpenPrompt(page);
-  await setQuestStep(page, 'return-to-mira');
   await expect.poll(async () => (await state(page)).questStep).toBe('return-to-mira');
   await expect.poll(async () => (await state(page)).gold).toBe(0);
+  await expect.poll(async () => (await state(page)).mastery['grade2:math:subtraction']?.skipped).toBe(2);
 
   expect((await setPlayer(page, 416, 256)).hint).toContain('Mira');
   await sceneInteract(page);
   await expect.poll(async () => (await state(page)).questStep).toBe('complete');
   await expect.poll(async () => (await state(page)).gold).toBe(10);
   await expect.poll(async () => (await state(page)).inventory.sunberryCharm).toBe(1);
+  await expect.poll(async () => (await state(page)).mastery['grade2:math:subtraction']?.seen).toBe(2);
+  await expect.poll(async () => (await state(page)).mastery['grade2:math:subtraction']?.attempted).toBe(0);
   await expect.poll(async () => hasCanvasText(page, 'Received: Sunberry Charm')).toBe(true);
 
   await page.reload();
@@ -249,20 +290,48 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
 
 test('Grade 5 prompts keep reader profile without the Grade 2 read-aloud control', async ({ page }) => {
   await boot(page);
+  await page.evaluate(() => {
+    localStorage.setItem('eldoria_v2_save_grade5-adventurer', JSON.stringify({
+      version: 1,
+      profileId: 'grade5-adventurer',
+      gold: 0,
+      lastArea: 'farm',
+      player: { x: 240, y: 160 }
+    }));
+  });
+  await page.reload();
   await startProfile(page, 190);
 
-  await page.evaluate(() => {
-    const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
-      applyReward: (prompt: { rewardKind: 'bonus-harvest' }) => void;
-    };
-    scene.applyReward({ rewardKind: 'bonus-harvest' });
-  });
-  await expect.poll(async () => (await state(page)).gold).toBe(3);
-  await expect.poll(async () => hasCanvasText(page, '+3 Gold')).toBe(true);
+  expect((await state(page)).mastery).toEqual({});
 
   await setQuestStep(page, 'try-crop-bonus');
+  await useDeterministicCorrectPrompt(page);
   await openQuestPrompt(page, 'farm', 'CropBonus', 'find-slime', 'Objective updated: find the Practice Slime.');
 
   await expect.poll(async () => hasCanvasText(page, 'optional learning bonus')).toBe(true);
   await expect.poll(async () => hasCanvasText(page, 'READ ALOUD')).toBe(false);
+  await clickGame(page, 130, 194);
+
+  await expect.poll(async () => (await state(page)).gold).toBe(3);
+  await expect.poll(async () => hasCanvasText(page, '+3 Gold')).toBe(true);
+  await expect.poll(async () => (await state(page)).mastery['grade5:math:area-perimeter']?.correct).toBe(1);
+  await expect.poll(async () => (await state(page)).mastery['grade5:math:area-perimeter']?.attempted).toBe(1);
+  await expect.poll(async () => (await state(page)).mastery['grade5:math:area-perimeter']?.currentCorrectStreak).toBe(1);
+
+  await setQuestStep(page, 'try-crop-bonus');
+  await openQuestPrompt(page, 'farm', 'CropBonus', 'find-slime', 'Objective updated: find the Practice Slime.');
+  await clickGame(page, 240, 194);
+
+  await expect.poll(async () => (await state(page)).questStep).toBe('find-slime');
+  await expect.poll(async () => (await state(page)).gold).toBe(3);
+  await expect.poll(async () => (await state(page)).mastery['grade5:math:area-perimeter']?.wrong).toBe(1);
+  await expect.poll(async () => (await state(page)).mastery['grade5:math:area-perimeter']?.attempted).toBe(2);
+  await expect.poll(async () => (await state(page)).mastery['grade5:math:area-perimeter']?.currentCorrectStreak).toBe(0);
+  await expect.poll(async () => (await state(page)).mastery['grade5:math:area-perimeter']?.bestCorrectStreak).toBe(1);
+
+  await page.reload();
+  await startProfile(page, 190);
+  await expect.poll(async () => (await state(page)).mastery['grade5:math:area-perimeter']?.correct).toBe(1);
+  await expect.poll(async () => (await state(page)).mastery['grade5:math:area-perimeter']?.wrong).toBe(1);
+  await expect.poll(async () => (await state(page)).gold).toBe(3);
 });

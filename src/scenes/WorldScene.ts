@@ -4,6 +4,7 @@ import type { AnswerValue, BonusContext, LearningPrompt } from '../data/curricul
 import { PROFILES, type ProfileId } from '../data/profiles';
 import { MIRA_FIRST_ERRAND } from '../data/quests';
 import { LearningBonusSystem } from '../systems/LearningBonusSystem';
+import { MasterySystem, type LearningMastery } from '../systems/MasterySystem';
 import { SaveSystem, type StarterQuestStep } from '../systems/SaveSystem';
 
 type SceneInitData = {
@@ -44,6 +45,7 @@ export class WorldScene extends Phaser.Scene {
   private learning!: LearningBonusSystem;
   private gold = 0;
   private inventory: Record<string, number> = {};
+  private mastery: LearningMastery = {};
   private firstQuestStep: StarterQuestStep = MIRA_FIRST_ERRAND.steps.talkToMira;
   private busy = false;
   private hudText!: Phaser.GameObjects.Text;
@@ -105,6 +107,7 @@ export class WorldScene extends Phaser.Scene {
     if (saved) {
       this.gold = saved.gold;
       this.inventory = { ...(saved.inventory ?? {}) };
+      this.mastery = { ...(saved.mastery ?? {}) };
       this.player.setPosition(saved.player.x, saved.player.y);
       this.firstQuestStep = saved.firstQuestStep ?? MIRA_FIRST_ERRAND.steps.talkToMira;
     }
@@ -480,6 +483,12 @@ export class WorldScene extends Phaser.Scene {
           this.applyReward(prompt);
         }
 
+        this.mastery = MasterySystem.recordOutcome(
+          this.mastery,
+          prompt,
+          result.correct ? 'correct' : 'wrong'
+        );
+
         this.busy = false;
         const progressMessage = onClose?.({ answered: true, correct: result.correct });
         this.showToast(progressMessage ? `${result.message} ${progressMessage}` : result.message);
@@ -500,6 +509,7 @@ export class WorldScene extends Phaser.Scene {
       this.stopPromptReadAloud();
       panel.destroy();
       this.busy = false;
+      this.mastery = MasterySystem.recordOutcome(this.mastery, prompt, 'skipped');
       const progressMessage = onClose?.({ answered: false, correct: false });
       this.showToast(progressMessage ? `Skipped. ${progressMessage}` : 'Skipped. Adventure continues.');
       this.save();
@@ -627,6 +637,7 @@ export class WorldScene extends Phaser.Scene {
       profileId: this.profileId,
       gold: this.gold,
       inventory: this.inventory,
+      mastery: this.mastery,
       lastArea: 'farm',
       firstQuestStep: this.firstQuestStep,
       questFlags: {

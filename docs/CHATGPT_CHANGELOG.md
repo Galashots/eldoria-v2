@@ -4,6 +4,23 @@ This file records repository changes made through ChatGPT so future work can see
 
 ## 2026-06-26 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
+- Branch: `codex/mastery-tracking-foundation`
+- Files changed:
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `src/scenes/WorldScene.ts`
+  - `src/systems/MasterySystem.ts`
+  - `src/systems/SaveSystem.ts`
+  - `tests/vertical-slice.spec.ts`
+- Summary: Added invisible, save-backed mastery tracking for optional learning prompt outcomes.
+- Implementation notes:
+  - Records seen, attempted, correct, wrong, skipped, current streak, best streak, and last prompt metadata under stable curriculum keys.
+  - Keeps mastery optional in version-1 saves so existing saves load without migration.
+  - Treats skips as non-punitive: they advance existing quest callbacks, award no learning bonus, and do not reset a correct streak.
+  - Extended smoke coverage to exercise the real Grade 2 skip action, deterministic Grade 5 correct and wrong answers, old-save loading, and mastery persistence after reload.
+- Reason: Reliable local learning telemetry is the next foundation for later adaptive content and summaries, without surfacing UI or changing player-facing gameplay.
+
+## 2026-06-26 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
 - Branch: `codex/data-driven-mira-quest`
 - Files changed:
   - `docs/CHATGPT_CHANGELOG.md`
