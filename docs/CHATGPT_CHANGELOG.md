@@ -378,3 +378,14 @@ This file records repository changes made through ChatGPT so future work can see
   - Cancels active speech when the prompt is answered, skipped, or the scene shuts down.
   - Added no new dependencies.
 - Reason: The Grade 2 Mage profile is defined as audio-first, but the prompt UI previously required reading the question and choices.
+
+## 2024-05-18 - Jules via default_api
+
+- Branch: `fix/save-system-catch`
+- Files changed:
+  - `src/systems/SaveSystem.ts`
+- Summary: Improved code health by logging errors caught in the save system.
+- Implementation notes:
+  - Changed empty `catch {` blocks in `SaveSystem.load` and `SaveSystem.save` to `catch (error) {`.
+  - Added `console.error` logs to output the error while retaining the original behavior of not crashing or interrupting gameplay.
+- Reason: Empty catch blocks can silently swallow important errors, making debugging difficult. Logging improves maintainability without changing gameplay.
