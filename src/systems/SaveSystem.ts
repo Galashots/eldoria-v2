@@ -6,6 +6,7 @@ export type SaveState = {
   version: 1;
   profileId: ProfileId;
   gold: number;
+  inventory?: Record<string, number>;
   lastArea: string;
   firstQuestStep?: StarterQuestStep;
   questFlags?: Record<string, boolean>;

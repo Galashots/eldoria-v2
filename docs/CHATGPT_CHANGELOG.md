@@ -2,6 +2,22 @@
 
 This file records repository changes made through ChatGPT so future work can see what changed, who made it, and when.
 
+## 2026-06-26 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
+- Branch: `codex/mira-reward-juice-sunberry-charm`
+- Files changed:
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `src/scenes/WorldScene.ts`
+  - `src/systems/SaveSystem.ts`
+  - `tests/vertical-slice.spec.ts`
+- Summary: Added lightweight reward feedback and a persistent Sunberry Charm reward to Mira's first errand.
+- Implementation notes:
+  - Preserved the existing 10 gold quest reward and added a one-time `inventory.sunberryCharm` reward when the errand transitions to complete.
+  - Added floating gold/item text and a small Phaser primitive sparkle burst for quest completion and correct optional-learning bonuses.
+  - Kept inventory optional in version 1 save data so existing saves continue to load without migration.
+  - Extended the vertical-slice smoke test to verify charm feedback, save/reload persistence, and protection against duplicate rewards after completion.
+- Reason: The starter quest needs immediate feedback and permanent progress so its completion feels like an RPG reward loop without making learning mandatory.
+
 ## 2026-06-26 — Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
 - Branch: `codex/agent-reference-docs`

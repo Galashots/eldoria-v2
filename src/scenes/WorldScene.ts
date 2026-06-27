@@ -42,6 +42,7 @@ export class WorldScene extends Phaser.Scene {
   private profileId: ProfileId = 'grade5-adventurer';
   private learning!: LearningBonusSystem;
   private gold = 0;
+  private inventory: Record<string, number> = {};
   private firstQuestStep: StarterQuestStep = 'talk-to-mira';
   private busy = false;
   private hudText!: Phaser.GameObjects.Text;
@@ -102,6 +103,7 @@ export class WorldScene extends Phaser.Scene {
     const saved = SaveSystem.load(this.profileId);
     if (saved) {
       this.gold = saved.gold;
+      this.inventory = { ...(saved.inventory ?? {}) };
       this.player.setPosition(saved.player.x, saved.player.y);
       this.firstQuestStep = saved.firstQuestStep ?? 'talk-to-mira';
     }
@@ -391,9 +393,13 @@ export class WorldScene extends Phaser.Scene {
         return;
       case 'return-to-mira':
         this.gold += 10;
+        this.inventory.sunberryCharm = (this.inventory.sunberryCharm ?? 0) + 1;
         this.setFirstQuestStep('complete');
         this.refreshHud();
-        this.showToast('Mira rewards you with 10 gold!');
+        this.showFloatingReward('+10 Gold', this.player.x, this.player.y - 26, '#ffd666');
+        this.showFloatingReward('Received: Sunberry Charm', this.player.x, this.player.y - 44, '#d7ffb8');
+        this.createSparkleBurst(this.player.x, this.player.y - 14);
+        this.showToast('Quest Complete: Mira\'s First Errand\nReceived: Sunberry Charm');
         return;
       case 'complete':
         this.showToast('Mira: Great work. Keep exploring Eldoria!');
@@ -549,12 +555,57 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private applyReward(prompt: LearningPrompt): void {
-    if (prompt.rewardKind === 'bonus-gold') this.gold += 5;
-    if (prompt.rewardKind === 'bonus-harvest') this.gold += 3;
-    if (prompt.rewardKind === 'critical-hit') this.gold += 2;
-    if (prompt.rewardKind === 'bonus-xp') this.gold += 1;
+    let goldReward = 0;
+    if (prompt.rewardKind === 'bonus-gold') goldReward = 5;
+    if (prompt.rewardKind === 'bonus-harvest') goldReward = 3;
+    if (prompt.rewardKind === 'critical-hit') goldReward = 2;
+    if (prompt.rewardKind === 'bonus-xp') goldReward = 1;
+
+    this.gold += goldReward;
 
     this.refreshHud();
+
+    if (goldReward > 0) {
+      this.showFloatingReward(`+${goldReward} Gold`, this.player.x, this.player.y - 26, '#ffd666');
+      this.createSparkleBurst(this.player.x, this.player.y - 12);
+    }
+  }
+
+  private showFloatingReward(message: string, x: number, y: number, color: string): void {
+    const text = this.add.text(x, y, message, {
+      fontFamily: 'system-ui',
+      fontSize: '12px',
+      color,
+      stroke: '#1a1208',
+      strokeThickness: 3
+    }).setOrigin(0.5).setDepth(20);
+
+    this.tweens.add({
+      targets: text,
+      y: y - 22,
+      alpha: 0,
+      duration: 1200,
+      ease: 'Sine.easeOut',
+      onComplete: () => text.destroy()
+    });
+  }
+
+  private createSparkleBurst(x: number, y: number): void {
+    const sparkleCount = 8;
+    for (let index = 0; index < sparkleCount; index += 1) {
+      const angle = (Math.PI * 2 * index) / sparkleCount;
+      const sparkle = this.add.circle(x, y, 2, 0xfff0a3, 0.95).setDepth(19);
+      this.tweens.add({
+        targets: sparkle,
+        x: x + Math.cos(angle) * 22,
+        y: y + Math.sin(angle) * 16,
+        alpha: 0,
+        scale: 0.2,
+        duration: 520,
+        ease: 'Sine.easeOut',
+        onComplete: () => sparkle.destroy()
+      });
+    }
   }
 
   private showToast(message: string): void {
@@ -583,6 +634,7 @@ export class WorldScene extends Phaser.Scene {
       version: 1,
       profileId: this.profileId,
       gold: this.gold,
+      inventory: this.inventory,
       lastArea: 'farm',
       firstQuestStep: this.firstQuestStep,
       questFlags: {
