@@ -24,6 +24,7 @@ It supports:
 - source rectangles,
 - transparent PNG sources,
 - pure color-key backgrounds such as `#ff00ff`,
+- edge-flood color-key cleanup that removes only matching pixels connected to a frame edge,
 - nearest-neighbor scaling,
 - alpha trimming,
 - empty unused cells.
@@ -32,7 +33,7 @@ It is intentionally manifest-driven. Do not hardcode Practice Slime, hero, tile,
 
 ## What the normalizer does not do
 
-This first pipeline does **not** do smart cleanup.
+This pipeline deliberately limits cleanup to deterministic alpha and color-key operations.
 
 Out of scope:
 
@@ -43,7 +44,7 @@ Out of scope:
 - animation timing,
 - Phaser runtime integration.
 
-For reliable cleanup, source art must use either true transparency or a deliberate pure color key.
+For reliable cleanup, source art must use either true transparency or a deliberate pure color key. Use `color_key` to remove every matching pixel. Use `edge_flood_color_key` when matching colors enclosed inside the sprite must remain visible; it flood-fills each source frame or rectangle from its edges.
 
 ## Prompting rules for ChatGPT source sheets
 
@@ -107,6 +108,14 @@ npm run test:asset-pipeline
 
 A manifest declares the target sheet, the source art, and the exact source-to-destination frame mapping.
 
+Manifest paths are resolved relative to the manifest file. A source can define a uniform `grid` for `sourceCell` extraction, while individual frames can instead declare an exact `sourceRect`. Every frame maps to one `destCell` and may choose alpha trimming plus `center`, `center_bottom`, or `top_left` placement.
+
+Background modes are:
+
+- `alpha`: preserve source alpha.
+- `color_key`: remove every pixel matching the configured color and tolerance.
+- `edge_flood_color_key`: remove matching pixels connected to the source frame/rectangle edge while preserving enclosed matches.
+
 Target dimensions are computed from:
 
 ```text
@@ -134,4 +143,4 @@ Larger trees, buildings, bosses, VFX, or multi-cell sheets should use the same m
 
 ## Practice Slime
 
-Practice Slime art should be produced in a later asset PR using this pipeline. The example manifest under `docs/art-pipeline/examples/` is illustrative only and references future placeholder paths.
+Practice Slime art should be produced in a later asset PR using this pipeline. The real draft manifest at `assets/manifests/mob_slime_practice_v001.manifest.json` is intentionally dormant until its PNG source is committed; standard project checks do not execute asset manifests. The example manifest under `docs/art-pipeline/examples/` is illustrative only and references future placeholder paths.

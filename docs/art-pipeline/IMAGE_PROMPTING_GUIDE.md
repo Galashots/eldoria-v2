@@ -109,7 +109,7 @@ Suggested starting values:
 }
 ```
 
-For noisy backgrounds or edge artifacts, prefer a future cleanup mode:
+For noisy backgrounds or edge artifacts, use edge-flood cleanup when enclosed key-colored sprite pixels must be preserved:
 
 ```json
 {

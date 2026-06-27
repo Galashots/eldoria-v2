@@ -22,7 +22,7 @@
         "rows": 4
       },
       "background": {
-        "mode": "color_key",
+        "mode": "edge_flood_color_key",
         "color": "#FB03F9",
         "tolerance": 10
       }

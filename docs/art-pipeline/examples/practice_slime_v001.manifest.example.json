@@ -2,7 +2,7 @@
   "version": 1,
   "id": "mob_slime_practice_v001",
   "target": {
-    "outputPath": "assets/sprites/mob_slime_practice_v001.png",
+    "outputPath": "../../../assets/sprites/mob_slime_practice_v001.png",
     "cellPx": [32, 32],
     "cols": 6,
     "rows": 4,
@@ -10,7 +10,7 @@
   },
   "sources": {
     "source_sheet": {
-      "path": "assets/source/generated/mob_slime_practice_v001/source_sheet.png",
+      "path": "../../../assets/source/generated/mob_slime_practice_v001/source_sheet.png",
       "grid": { "cols": 6, "rows": 4 },
       "background": {
         "mode": "color_key",

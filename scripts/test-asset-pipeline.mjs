@@ -38,6 +38,18 @@ function hasOpaque(img) {
   return false;
 }
 
+function pixel(img, x, y) {
+  const index = (y * img.width + x) * 4;
+  return Array.from(img.data.slice(index, index + 4));
+}
+
+function hasOpaqueColor(img, color) {
+  for (let i = 0; i < img.data.length; i += 4) {
+    if (img.data[i] === color[0] && img.data[i + 1] === color[1] && img.data[i + 2] === color[2] && img.data[i + 3] > 0) return true;
+  }
+  return false;
+}
+
 function cellTransparent(img, cellPx, cell) {
   const [cw, ch] = cellPx;
   for (let y = cell[1] * ch; y < (cell[1] + 1) * ch; y += 1) for (let x = cell[0] * cw; x < (cell[0] + 1) * cw; x += 1) {
@@ -95,6 +107,7 @@ fs.mkdirSync(ROOT, { recursive: true });
   assert.equal(png.height, 128);
   assert.equal(cellTransparent(png, [32, 32], [3, 2]), true);
   assert.equal(hasOpaque(png), true);
+  assert.equal(hasOpaqueColor(png, [255, 0, 255]), false);
 }
 
 {
@@ -105,13 +118,53 @@ fs.mkdirSync(ROOT, { recursive: true });
   rect(building, 32, 24, 192, 144, [120, 85, 50, 255]);
   rect(building, 72, 96, 48, 72, [80, 50, 30, 255]);
   writePng(src, building);
-  writeJson(manifest, { version: 1, id: 'test_large_building_asset', target: { outputPath: out, cellPx: [128, 96], cols: 1, rows: 1 }, sources: { building: { path: src, background: { mode: 'alpha' } } }, frames: [{ sourceRef: 'building', destCell: [0, 0], trim: 'alpha', fit: 'contain', anchor: 'center_bottom' }] });
+  writeJson(manifest, { version: 1, id: 'test_large_building_asset', target: { outputPath: out, cellPx: [128, 96], cols: 1, rows: 1 }, sources: { building: { path: src, background: { mode: 'alpha' } } }, frames: [{ sourceRef: 'building', sourceRect: [32, 24, 192, 144], destCell: [0, 0], trim: 'none', fit: 'contain', anchor: 'center_bottom' }] });
   normalizeAssetSheet(manifest);
   requireOk(validateAssetSheet(manifest));
   const png = readPng(out);
   assert.equal(png.width, 128);
   assert.equal(png.height, 96);
   assert.equal(hasOpaque(png), true);
+}
+
+{
+  const src = path.join(ROOT, 'edge-flood-source.png');
+  const out = path.join(ROOT, 'edge-flood-output.png');
+  const manifest = path.join(ROOT, 'edge-flood-manifest.json');
+  const keyed = image(16, 16, [255, 0, 255, 255]);
+  rect(keyed, 3, 3, 10, 10, [20, 180, 200, 255]);
+  rect(keyed, 7, 7, 2, 2, [255, 0, 255, 255]);
+  writePng(src, keyed, { colorType: 2 });
+  writeJson(manifest, {
+    version: 1,
+    id: 'test_edge_flood_color_key',
+    target: { outputPath: out, cellPx: [16, 16], cols: 1, rows: 1 },
+    sources: { sheet: { path: src, background: { mode: 'edge_flood_color_key', color: '#ff00ff', tolerance: 0 } } },
+    frames: [{ sourceRef: 'sheet', sourceRect: [0, 0, 16, 16], destCell: [0, 0], trim: 'none', fit: 'contain', anchor: 'top_left' }]
+  });
+  normalizeAssetSheet(manifest);
+  requireOk(validateAssetSheet(manifest));
+  const png = readPng(out);
+  assert.equal(pixel(png, 0, 0)[3], 0);
+  assert.deepEqual(pixel(png, 7, 7), [255, 0, 255, 255]);
+}
+
+{
+  const manifest = path.join(ROOT, 'invalid-manifest.json');
+  writeJson(manifest, {
+    version: 2,
+    id: 'Invalid ID',
+    target: { outputPath: 'missing.png', cellPx: [32, 32], cols: 1, rows: 1, expectedEmptyCells: [[2, 2]] },
+    sources: { sheet: { path: 'missing-source.png', grid: { cols: 0, rows: 1 }, background: { mode: 'unknown' } } },
+    frames: [
+      { sourceRef: 'missing', destCell: [0, 0], fit: 'cover' },
+      { sourceRef: 'sheet', destCell: [0, 0] },
+      { sourcePath: 'missing-direct.png', destCell: [2, 0] }
+    ]
+  });
+  const result = validateAssetSheet(manifest);
+  assert.equal(result.ok, false);
+  assert.ok(result.errors.length >= 8, `expected aggregated errors, got ${result.errors.length}`);
 }
 
 console.log('Asset pipeline test passed.');

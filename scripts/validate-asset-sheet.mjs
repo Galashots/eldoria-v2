@@ -19,7 +19,12 @@ function readJson(filePath) {
 }
 
 export function validateAssetSheet(manifestPath) {
-  const errors = collectManifestErrors(manifestPath, { checkOutput: true });
+  let errors;
+  try {
+    errors = collectManifestErrors(manifestPath, { checkOutput: true });
+  } catch (error) {
+    errors = [`${manifestPath}: validation failed: ${error.message}`];
+  }
   if (errors.length) return { ok: false, errors };
   const manifest = readJson(manifestPath);
   const manifestDir = path.dirname(path.resolve(manifestPath));

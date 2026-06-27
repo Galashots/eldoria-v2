@@ -4,6 +4,29 @@ This file records repository changes made through ChatGPT so future work can see
 
 ## 2026-06-27 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
+- Branch: `manual/asset-sheet-normalizer`
+- Files changed:
+  - `.gitignore`
+  - `assets/manifests/mob_slime_practice_v001.manifest.json`
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `docs/art-pipeline/IMAGE_PROMPTING_GUIDE.md`
+  - `docs/art-pipeline/SPRITE_ASSET_PIPELINE.md`
+  - `docs/art-pipeline/examples/practice_slime_v001.manifest.example.json`
+  - `package.json`
+  - `scripts/normalize-asset-sheet.mjs`
+  - `scripts/test-asset-pipeline.mjs`
+  - `scripts/validate-asset-sheet.mjs`
+- Summary: Added and stabilized a dependency-free asset-sheet normalization pipeline for generated source art.
+- Implementation notes:
+  - Added manifest-driven PNG normalization with exact target dimensions, nearest-neighbor scaling, uniform-grid and source-rectangle extraction, alpha trimming, configurable anchoring, and transparent unused cells.
+  - Added alpha, full color-key, and per-frame edge-flood color-key cleanup; the edge-flood mode preserves matching colors enclosed inside a sprite.
+  - Added aggregated manifest/output validation and synthetic coverage for alpha sheets, color-key sheets, edge-flood behavior, source rectangles, expected empty cells, malformed manifests, and variable cell sizes.
+  - Added pipeline and prompting guidance plus an illustrative manifest and a dormant real Practice Slime manifest for the later source-asset PR.
+  - Folded the temporary connector-authored pipeline note into this canonical changelog and removed the temporary note.
+- Reason: Convert approved AI-generated source art into deterministic, reviewable Phaser-ready PNG sheets without changing runtime or gameplay behavior.
+
+## 2026-06-27 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
 - Branch: `codex/visual-target-validation-check`
 - Files changed:
   - `docs/CHATGPT_CHANGELOG.md`
