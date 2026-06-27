@@ -4,6 +4,21 @@ This file records repository changes made through ChatGPT so future work can see
 
 ## 2026-06-27 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
+- Branch: `codex/visual-target-validator`
+- Files changed:
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `docs/visual-targets/README.md`
+  - `package.json`
+  - `scripts/validate-visual-targets.mjs`
+- Summary: Added dependency-free validation for all checked-in visual target JSON files.
+- Implementation notes:
+  - Validates shared fields, canonical unique IDs, contract references, target-only/no-runtime intent, geometry shapes, clip shapes, and inheritance references.
+  - Aggregates all errors with file/target context and builds only an in-memory target index.
+  - Added `npm run validate:visual-targets` and documented its use without changing existing scripts.
+- Reason: Keep visual target manifests enforceable before future art generation or runtime integration.
+
+## 2026-06-27 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
 - Branch: `codex/farm-village-tile-targets`
 - Files changed:
   - `docs/CHATGPT_CHANGELOG.md`
