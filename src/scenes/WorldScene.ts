@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../gameConfig';
 import type { AnswerValue, BonusContext, LearningPrompt } from '../data/curriculum';
 import { PROFILES, type ProfileId } from '../data/profiles';
+import { MIRA_FIRST_ERRAND } from '../data/quests';
 import { LearningBonusSystem } from '../systems/LearningBonusSystem';
 import { SaveSystem, type StarterQuestStep } from '../systems/SaveSystem';
 
@@ -43,7 +44,7 @@ export class WorldScene extends Phaser.Scene {
   private learning!: LearningBonusSystem;
   private gold = 0;
   private inventory: Record<string, number> = {};
-  private firstQuestStep: StarterQuestStep = 'talk-to-mira';
+  private firstQuestStep: StarterQuestStep = MIRA_FIRST_ERRAND.steps.talkToMira;
   private busy = false;
   private hudText!: Phaser.GameObjects.Text;
   private objectiveText!: Phaser.GameObjects.Text;
@@ -105,7 +106,7 @@ export class WorldScene extends Phaser.Scene {
       this.gold = saved.gold;
       this.inventory = { ...(saved.inventory ?? {}) };
       this.player.setPosition(saved.player.x, saved.player.y);
-      this.firstQuestStep = saved.firstQuestStep ?? 'talk-to-mira';
+      this.firstQuestStep = saved.firstQuestStep ?? MIRA_FIRST_ERRAND.steps.talkToMira;
     }
 
     this.createHud();
@@ -216,18 +217,7 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private firstQuestObjective(): string {
-    switch (this.firstQuestStep) {
-      case 'talk-to-mira':
-        return 'Talk to Mira near the path.';
-      case 'try-crop-bonus':
-        return 'Check the crop patch and try an optional bonus.';
-      case 'find-slime':
-        return 'Find the Practice Slime and test a combat bonus.';
-      case 'return-to-mira':
-        return 'Return to Mira for your reward.';
-      case 'complete':
-        return 'Mira\'s first errand complete. Keep exploring.';
-    }
+    return MIRA_FIRST_ERRAND.objectives[this.firstQuestStep];
   }
 
   private updateHint(): void {
@@ -349,27 +339,27 @@ export class WorldScene extends Phaser.Scene {
       return;
     }
 
-    if (target.label === 'Mira') {
+    if (target.label === MIRA_FIRST_ERRAND.targets.mira) {
       this.handleMiraInteraction();
       return;
     }
 
-    if (target.label === 'CropBonus') {
+    if (target.label === MIRA_FIRST_ERRAND.targets.cropBonus) {
       this.openBonusPrompt(target.kind, target.label, () => {
-        if (this.firstQuestStep === 'try-crop-bonus') {
-          this.setFirstQuestStep('find-slime');
-          return 'Objective updated: find the Practice Slime.';
+        if (this.firstQuestStep === MIRA_FIRST_ERRAND.steps.tryCropBonus) {
+          this.setFirstQuestStep(MIRA_FIRST_ERRAND.steps.findSlime);
+          return MIRA_FIRST_ERRAND.progress.cropComplete;
         }
         return undefined;
       });
       return;
     }
 
-    if (target.label === 'Practice Slime') {
+    if (target.label === MIRA_FIRST_ERRAND.targets.practiceSlime) {
       this.openBonusPrompt(target.kind, target.label, () => {
-        if (this.firstQuestStep === 'find-slime') {
-          this.setFirstQuestStep('return-to-mira');
-          return 'Practice complete. Return to Mira.';
+        if (this.firstQuestStep === MIRA_FIRST_ERRAND.steps.findSlime) {
+          this.setFirstQuestStep(MIRA_FIRST_ERRAND.steps.returnToMira);
+          return MIRA_FIRST_ERRAND.progress.slimeComplete;
         }
         return undefined;
       });
@@ -381,28 +371,30 @@ export class WorldScene extends Phaser.Scene {
 
   private handleMiraInteraction(): void {
     switch (this.firstQuestStep) {
-      case 'talk-to-mira':
-        this.setFirstQuestStep('try-crop-bonus');
-        this.showToast('Mira: Check the crop patch for a bonus!');
+      case MIRA_FIRST_ERRAND.steps.talkToMira:
+        this.setFirstQuestStep(MIRA_FIRST_ERRAND.steps.tryCropBonus);
+        this.showToast(MIRA_FIRST_ERRAND.dialogue.start);
         return;
-      case 'try-crop-bonus':
-        this.showToast('Mira: The crop patch is southwest of here.');
+      case MIRA_FIRST_ERRAND.steps.tryCropBonus:
+        this.showToast(MIRA_FIRST_ERRAND.dialogue.cropReminder);
         return;
-      case 'find-slime':
-        this.showToast('Mira: The Practice Slime is east of the farm.');
+      case MIRA_FIRST_ERRAND.steps.findSlime:
+        this.showToast(MIRA_FIRST_ERRAND.dialogue.slimeReminder);
         return;
-      case 'return-to-mira':
-        this.gold += 10;
-        this.inventory.sunberryCharm = (this.inventory.sunberryCharm ?? 0) + 1;
-        this.setFirstQuestStep('complete');
+      case MIRA_FIRST_ERRAND.steps.returnToMira: {
+        const { gold, charm } = MIRA_FIRST_ERRAND.rewards;
+        this.gold += gold;
+        this.inventory[charm.key] = (this.inventory[charm.key] ?? 0) + 1;
+        this.setFirstQuestStep(MIRA_FIRST_ERRAND.steps.complete);
         this.refreshHud();
-        this.showFloatingReward('+10 Gold', this.player.x, this.player.y - 26, '#ffd666');
-        this.showFloatingReward('Received: Sunberry Charm', this.player.x, this.player.y - 44, '#d7ffb8');
+        this.showFloatingReward(`+${gold} Gold`, this.player.x, this.player.y - 26, '#ffd666');
+        this.showFloatingReward(`Received: ${charm.name}`, this.player.x, this.player.y - 44, '#d7ffb8');
         this.createSparkleBurst(this.player.x, this.player.y - 14);
-        this.showToast('Quest Complete: Mira\'s First Errand\nReceived: Sunberry Charm');
+        this.showToast(MIRA_FIRST_ERRAND.completionToast);
         return;
-      case 'complete':
-        this.showToast('Mira: Great work. Keep exploring Eldoria!');
+      }
+      case MIRA_FIRST_ERRAND.steps.complete:
+        this.showToast(MIRA_FIRST_ERRAND.dialogue.complete);
         return;
     }
   }
@@ -638,7 +630,7 @@ export class WorldScene extends Phaser.Scene {
       lastArea: 'farm',
       firstQuestStep: this.firstQuestStep,
       questFlags: {
-        miraFirstErrandComplete: this.firstQuestStep === 'complete'
+        miraFirstErrandComplete: this.firstQuestStep === MIRA_FIRST_ERRAND.steps.complete
       },
       player: {
         x: this.player.x,

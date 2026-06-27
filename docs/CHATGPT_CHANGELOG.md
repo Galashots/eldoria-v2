@@ -4,6 +4,20 @@ This file records repository changes made through ChatGPT so future work can see
 
 ## 2026-06-26 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
+- Branch: `codex/data-driven-mira-quest`
+- Files changed:
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `src/data/quests.ts`
+  - `src/scenes/WorldScene.ts`
+- Summary: Extracted the existing Mira first-errand content into a small typed quest definition without changing gameplay.
+- Implementation notes:
+  - Centralized the quest id and name, existing save-compatible step ids, objective text, target labels, Mira dialogue, progress messages, completion toast, and completion rewards.
+  - Updated `WorldScene` to use the typed definition while retaining quest orchestration and all learning, control, save, and rendering behavior.
+  - Left the Playwright tests unchanged so the existing vertical-slice suite continues to lock the player-visible behavior.
+- Reason: The starter quest content needs a small data boundary before later content expansion, without introducing a generalized quest engine or feature scope.
+
+## 2026-06-26 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
 - Branch: `codex/mira-reward-juice-sunberry-charm`
 - Files changed:
   - `docs/CHATGPT_CHANGELOG.md`
