@@ -28,6 +28,7 @@ Current `main` includes:
 - Persistent `firstQuestStep` save data.
 - Dynamic lower-left virtual joystick.
 - Lower-right ACTION button.
+- Playwright vertical-slice smoke-test coverage.
 
 Before adding new features, preserve all of the above unless the task explicitly says otherwise.
 
@@ -69,7 +70,7 @@ Use the deep-research findings as direction:
 Work in this order unless the user gives a different priority:
 
 1. Stabilize the current vertical slice.
-   - Run install/check/build/dev.
+   - Run install/check/build/smoke/dev.
    - Fix TypeScript/runtime errors.
    - Confirm title screen, profile select, movement, joystick, ACTION, Mira quest loop, prompt choices, read-aloud, and save/load.
 2. Add reward juice.
@@ -93,6 +94,7 @@ Use Codex for:
 
 - Reading and editing repo files.
 - Running `npm install`, `npm run check`, `npm run build`, and `npm run dev`.
+- Running `npm run smoke` for repeatable browser-game regression coverage.
 - Debugging TypeScript/runtime issues.
 - Implementing scoped PRs.
 - Inspecting changed files and command output.
@@ -154,6 +156,7 @@ Before opening or merging a PR, attempt:
 npm install
 npm run check
 npm run build
+npm run smoke
 ```
 
 For gameplay/UI changes, also run:
