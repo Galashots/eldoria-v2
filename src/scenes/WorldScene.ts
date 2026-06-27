@@ -212,7 +212,12 @@ export class WorldScene extends Phaser.Scene {
 
   private refreshHud(): void {
     const profile = PROFILES[this.profileId];
-    this.hudText.setText(`${profile.label}  |  Gold: ${this.gold}`);
+    const charm = MIRA_FIRST_ERRAND.rewards.charm;
+    const keepsake = (this.inventory[charm.key] ?? 0) > 0
+      ? `  |  Keepsake: ${charm.name}`
+      : '';
+
+    this.hudText.setText(`${profile.label}  |  Gold: ${this.gold}${keepsake}`);
   }
 
   private refreshObjective(): void {

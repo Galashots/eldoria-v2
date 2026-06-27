@@ -18,6 +18,8 @@ type MasteryRecord = {
 type GameState = {
   gold: number;
   hint: string;
+  hud: string;
+  hudWidth: number;
   inventory: Record<string, number>;
   mastery: Record<string, MasteryRecord>;
   objective: string;
@@ -59,6 +61,7 @@ async function state(page: Page): Promise<GameState> {
     const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
       gold: number;
       hintText: { text: string };
+      hudText: { text: string; width: number };
       inventory: Record<string, number>;
       mastery: Record<string, MasteryRecord>;
       objectiveText: { text: string };
@@ -71,6 +74,8 @@ async function state(page: Page): Promise<GameState> {
     return {
       gold: scene.gold,
       hint: scene.hintText.text,
+      hud: scene.hudText.text,
+      hudWidth: scene.hudText.width,
       inventory: { ...scene.inventory },
       mastery: structuredClone(scene.mastery),
       objective: scene.objectiveText.text,
@@ -91,6 +96,7 @@ async function setPlayer(page: Page, x: number, y: number): Promise<GameState> {
     const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
       gold: number;
       hintText: { text: string };
+      hudText: { text: string; width: number };
       inventory: Record<string, number>;
       mastery: Record<string, MasteryRecord>;
       objectiveText: { text: string };
@@ -110,6 +116,8 @@ async function setPlayer(page: Page, x: number, y: number): Promise<GameState> {
     return {
       gold: scene.gold,
       hint: scene.hintText.text,
+      hud: scene.hudText.text,
+      hudWidth: scene.hudText.width,
       inventory: { ...scene.inventory },
       mastery: structuredClone(scene.mastery),
       objective: scene.objectiveText.text,
@@ -237,6 +245,7 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   await startProfile(page, 120);
 
   await expect.poll(async () => (await state(page)).objective).toContain('Talk to Mira');
+  await expect.poll(async () => (await state(page)).hud).not.toContain('Sunberry Charm');
 
   const start = (await state(page)).player;
   await holdKey(page, 'KeyD');
@@ -272,6 +281,8 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   await expect.poll(async () => (await state(page)).questStep).toBe('complete');
   await expect.poll(async () => (await state(page)).gold).toBe(10);
   await expect.poll(async () => (await state(page)).inventory.sunberryCharm).toBe(1);
+  await expect.poll(async () => (await state(page)).hud).toContain('Keepsake: Sunberry Charm');
+  await expect.poll(async () => (await state(page)).hudWidth).toBeLessThanOrEqual(448);
   await expect.poll(async () => (await state(page)).mastery['grade2:math:subtraction']?.seen).toBe(2);
   await expect.poll(async () => (await state(page)).mastery['grade2:math:subtraction']?.attempted).toBe(0);
   await expect.poll(async () => hasCanvasText(page, 'Received: Sunberry Charm')).toBe(true);
@@ -281,11 +292,13 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   await expect.poll(async () => (await state(page)).questStep).toBe('complete');
   await expect.poll(async () => (await state(page)).gold).toBe(10);
   await expect.poll(async () => (await state(page)).inventory.sunberryCharm).toBe(1);
+  await expect.poll(async () => (await state(page)).hud).toContain('Keepsake: Sunberry Charm');
 
   await setPlayer(page, 416, 256);
   await sceneInteract(page);
   await expect.poll(async () => (await state(page)).gold).toBe(10);
   await expect.poll(async () => (await state(page)).inventory.sunberryCharm).toBe(1);
+  expect((await state(page)).hud.split('Sunberry Charm')).toHaveLength(2);
 });
 
 test('Grade 5 prompts keep reader profile without the Grade 2 read-aloud control', async ({ page }) => {
