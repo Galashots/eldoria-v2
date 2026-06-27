@@ -4,6 +4,18 @@ This file records repository changes made through ChatGPT so future work can see
 
 ## 2026-06-27 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
+- Branch: `codex/visual-target-validation-check`
+- Files changed:
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `package.json`
+- Summary: Wired visual target validation into the existing `npm run check` path.
+- Implementation notes:
+  - Prepends `npm run validate:visual-targets` before the unchanged typecheck and build chain.
+  - Uses the validator's aggregated errors and nonzero exit code without custom failure handling.
+- Reason: Make visual target drift fail automatically anywhere the standard project check runs.
+
+## 2026-06-27 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
 - Branch: `codex/visual-target-validator`
 - Files changed:
   - `docs/CHATGPT_CHANGELOG.md`

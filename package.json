@@ -10,7 +10,7 @@
     "preview": "vite preview --host 0.0.0.0",
     "typecheck": "tsc --noEmit",
     "smoke": "playwright test",
-    "check": "npm run typecheck && npm run build",
+    "check": "npm run validate:visual-targets && npm run typecheck && npm run build",
     "validate:visual-targets": "node scripts/validate-visual-targets.mjs"
   },
   "dependencies": {
