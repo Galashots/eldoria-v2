@@ -4,6 +4,20 @@ This file records repository changes made through ChatGPT so future work can see
 
 ## 2026-06-27 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
+- Branch: `codex/mage-starter-equipment-targets`
+- Files changed:
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `docs/visual-targets/MAGE_STARTER_EQUIPMENT_TARGETS.md`
+  - `docs/visual-targets/mage_starter_equipment_targets.json`
+- Summary: Added Grade 2 Mage starter robe, hat, cape, and staff overlay target specifications.
+- Implementation notes:
+  - Declared four target-only cosmetic entries inheriting `char_mage_boy_base` canvas, pivot, directions, and clip timing.
+  - Recorded palette, render-layer, slice/socket, atlas, and no-collision ownership rules for each overlay.
+  - Added a future art PR alignment checklist without generating art or adding equipment gameplay.
+- Reason: Lock overlay compatibility to the approved hero base before any starter equipment art is generated.
+
+## 2026-06-27 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
 - Branch: `codex/hero-actor-target-spec`
 - Files changed:
   - `docs/CHATGPT_CHANGELOG.md`
