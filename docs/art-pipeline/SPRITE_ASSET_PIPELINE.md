@@ -151,4 +151,4 @@ assets/manifests/mob_slime_practice_v001.manifest.json
 assets/sprites/mob_slime_practice_v001.png
 ```
 
-The runtime sheet is `192x128` with `32x32` cells in a `6x4` grid. Runtime loading and world display remain separate work. The example manifest under `docs/art-pipeline/examples/` remains illustrative only.
+The runtime sheet is `192x128` with `32x32` cells in a `6x4` grid. See [`docs/CURRENT_STATE.md`](../CURRENT_STATE.md) for current runtime-integration status. The example manifest under `docs/art-pipeline/examples/` remains illustrative only.

@@ -30,6 +30,9 @@ type PromptCloseResult = {
 
 type PromptCloseHandler = (result: PromptCloseResult) => string | undefined;
 
+const PRACTICE_SLIME_TEXTURE_KEY = 'practice-slime-v001';
+const PRACTICE_SLIME_IDLE_ANIMATION = 'practice-slime-idle';
+
 export class WorldScene extends Phaser.Scene {
   private player!: Phaser.Physics.Arcade.Sprite;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
@@ -51,6 +54,7 @@ export class WorldScene extends Phaser.Scene {
   private hudText!: Phaser.GameObjects.Text;
   private objectiveText!: Phaser.GameObjects.Text;
   private hintText!: Phaser.GameObjects.Text;
+  private practiceSlimeSprite?: Phaser.GameObjects.Sprite;
 
   constructor() {
     super('WorldScene');
@@ -92,6 +96,7 @@ export class WorldScene extends Phaser.Scene {
     }
 
     this.targets = this.makeTargets(objectLayer?.objects ?? []);
+    this.createPracticeSlimeAnimation();
     this.drawTargetMarkers();
 
     this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
@@ -164,6 +169,19 @@ export class WorldScene extends Phaser.Scene {
 
   private drawTargetMarkers(): void {
     for (const target of this.targets) {
+      if (target.label === MIRA_FIRST_ERRAND.targets.practiceSlime) {
+        this.practiceSlimeSprite = this.add.sprite(
+          target.x,
+          target.y,
+          PRACTICE_SLIME_TEXTURE_KEY,
+          0
+        )
+          .setOrigin(0.5, 1)
+          .setDepth(2)
+          .play(PRACTICE_SLIME_IDLE_ANIMATION);
+        continue;
+      }
+
       const color = target.kind === 'combat' ? 0xaa3344 : target.kind === 'farm' ? 0x55aa33 : 0x4488cc;
       this.add.circle(target.x, target.y - 12, 6, color).setStrokeStyle(2, 0x1a1208);
       this.add.text(target.x, target.y - 30, target.label, {
@@ -174,6 +192,17 @@ export class WorldScene extends Phaser.Scene {
         strokeThickness: 3
       }).setOrigin(0.5);
     }
+  }
+
+  private createPracticeSlimeAnimation(): void {
+    if (this.anims.exists(PRACTICE_SLIME_IDLE_ANIMATION)) return;
+
+    this.anims.create({
+      key: PRACTICE_SLIME_IDLE_ANIMATION,
+      frames: this.anims.generateFrameNumbers(PRACTICE_SLIME_TEXTURE_KEY, { start: 0, end: 3 }),
+      frameRate: 3,
+      repeat: -1
+    });
   }
 
   private createHud(): void {
