@@ -11,6 +11,19 @@ export class QuestionEngine {
     return selected.makePrompt({ profile, context, difficulty });
   }
 
+  static makePromptById(profile: PlayerProfile, templateId: string): LearningPrompt {
+    const template = QUESTION_TEMPLATES.find((candidate) => candidate.id === templateId);
+    if (!template) throw new Error(`Unknown question template: ${templateId}`);
+    if (template.band !== profile.curriculumBand) {
+      throw new Error(`Question template ${templateId} is not available for ${profile.curriculumBand}`);
+    }
+
+    const context = template.contexts[0];
+    if (!context) throw new Error(`Question template ${templateId} has no context`);
+
+    return template.makePrompt({ profile, context, difficulty: template.minDifficulty });
+  }
+
   private static templatesFor(
     profile: PlayerProfile,
     context: BonusContext,

@@ -1,5 +1,6 @@
 import { makeLearningPrompt, type AnswerValue, type BonusContext, type LearningPrompt } from '../data/curriculum';
 import { PROFILES, type ProfileId } from '../data/profiles';
+import { QuestionEngine } from './QuestionEngine';
 
 export type BonusResult = {
   correct: boolean;
@@ -20,6 +21,10 @@ export class LearningBonusSystem {
 
   makePrompt(context: BonusContext): LearningPrompt {
     return makeLearningPrompt(PROFILES[this.profileId], context);
+  }
+
+  makePromptById(templateId: string): LearningPrompt {
+    return QuestionEngine.makePromptById(PROFILES[this.profileId], templateId);
   }
 
   resolve(prompt: LearningPrompt, selected: AnswerValue): BonusResult {

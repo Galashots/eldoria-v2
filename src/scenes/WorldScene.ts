@@ -413,16 +413,29 @@ export class WorldScene extends Phaser.Scene {
     this.save();
   }
 
+  previewPrompt(templateId: string): LearningPrompt {
+    if (!import.meta.env.DEV && !window.__ELDORIA_E2E__) {
+      throw new Error('Prompt preview is available only in development and tests.');
+    }
+    if (this.busy) throw new Error('Cannot preview a prompt while another interaction is open.');
+
+    const prompt = this.learning.makePromptById(templateId);
+    this.openBonusPrompt(prompt.context, 'Prompt Preview', undefined, prompt);
+    return prompt;
+  }
+
   private openBonusPrompt(
     context: BonusContext,
     label: string,
-    onClose?: PromptCloseHandler
+    onClose?: PromptCloseHandler,
+    previewPrompt?: LearningPrompt
   ): void {
     this.busy = true;
     this.resetJoystick();
     this.player.setVelocity(0, 0);
 
-    const prompt = this.learning.makePrompt(context);
+    const isPreview = previewPrompt !== undefined;
+    const prompt = previewPrompt ?? this.learning.makePrompt(context);
     const isAudioFirst = PROFILES[this.profileId].readingMode === 'audio-first';
     const panel = this.add.container(GAME_WIDTH / 2, GAME_HEIGHT / 2).setScrollFactor(0);
     const panelHeight = isAudioFirst ? 220 : 190;
@@ -484,6 +497,11 @@ export class WorldScene extends Phaser.Scene {
         this.stopPromptReadAloud();
         panel.destroy();
 
+        if (isPreview) {
+          this.busy = false;
+          return;
+        }
+
         if (result.correct) {
           this.applyReward(prompt);
         }
@@ -514,6 +532,8 @@ export class WorldScene extends Phaser.Scene {
       this.stopPromptReadAloud();
       panel.destroy();
       this.busy = false;
+      if (isPreview) return;
+
       this.mastery = MasterySystem.recordOutcome(this.mastery, prompt, 'skipped');
       const progressMessage = onClose?.({ answered: false, correct: false });
       this.showToast(progressMessage ? `Skipped. ${progressMessage}` : 'Skipped. Adventure continues.');
