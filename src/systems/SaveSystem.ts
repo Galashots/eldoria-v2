@@ -1,4 +1,5 @@
 import type { ProfileId } from '../data/profiles';
+import type { LearningMastery } from './MasterySystem';
 
 export type StarterQuestStep = 'talk-to-mira' | 'try-crop-bonus' | 'find-slime' | 'return-to-mira' | 'complete';
 
@@ -7,6 +8,7 @@ export type SaveState = {
   profileId: ProfileId;
   gold: number;
   inventory?: Record<string, number>;
+  mastery?: LearningMastery;
   lastArea: string;
   firstQuestStep?: StarterQuestStep;
   questFlags?: Record<string, boolean>;
