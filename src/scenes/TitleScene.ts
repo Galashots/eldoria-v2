@@ -12,7 +12,7 @@ export class TitleScene extends Phaser.Scene {
   create(): void {
     this.cameras.main.setBackgroundColor('#1a1208');
 
-    this.add.text(GAME_WIDTH / 2, 58, 'Realm of Eldoria v2', {
+    this.add.text(GAME_WIDTH / 2, 44, 'Realm of Eldoria v2', {
       fontFamily: 'system-ui',
       fontSize: '24px',
       color: '#ffd666',
@@ -20,15 +20,15 @@ export class TitleScene extends Phaser.Scene {
       strokeThickness: 4
     }).setOrigin(0.5);
 
-    this.add.text(GAME_WIDTH / 2, 94, 'Learning gives bonuses. Adventure never gets gated.', {
+    this.add.text(GAME_WIDTH / 2, 76, 'Learning gives bonuses. Adventure never gets gated.', {
       fontFamily: 'system-ui',
       fontSize: '12px',
       color: '#f5e6c8',
       align: 'center'
     }).setOrigin(0.5);
 
-    this.addProfileButton(120, 'grade2-mage');
-    this.addProfileButton(190, 'grade5-adventurer');
+    this.addProfileButton(116, 'grade2-mage');
+    this.addProfileButton(184, 'grade5-adventurer');
 
     this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 34, 'Tap a hero to start', {
       fontFamily: 'system-ui',
