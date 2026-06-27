@@ -11,7 +11,10 @@
     "typecheck": "tsc --noEmit",
     "smoke": "playwright test",
     "check": "npm run validate:visual-targets && npm run typecheck && npm run build",
-    "validate:visual-targets": "node scripts/validate-visual-targets.mjs"
+    "validate:visual-targets": "node scripts/validate-visual-targets.mjs",
+    "normalize:asset": "node scripts/normalize-asset-sheet.mjs",
+    "validate:asset": "node scripts/validate-asset-sheet.mjs",
+    "test:asset-pipeline": "node scripts/test-asset-pipeline.mjs"
   },
   "dependencies": {
     "phaser": "^4.2.0"
