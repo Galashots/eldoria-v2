@@ -1,6 +1,6 @@
 # Eldoria-V2 Current State
 
-Last refreshed after PR #23 on 2026-06-27. This file records volatile project status; `AGENTS.md` remains the durable operating contract.
+Last refreshed on 2026-06-27. This file records volatile project status; `AGENTS.md` remains the durable operating contract.
 
 ## Playable Vertical Slice
 
@@ -18,24 +18,16 @@ Last refreshed after PR #23 on 2026-06-27. This file records volatile project st
 - Visual asset contract and validated hero, starter-equipment, Practice Slime, and farm/village target specs.
 - Manifest-driven PNG normalization and validation pipeline with alpha, color-key, and edge-flood cleanup.
 - Practice Slime v001 source and normalized `192x128` runtime sheet are committed.
-- Practice Slime runtime loading and world display are not implemented yet.
+- Practice Slime v001 is preloaded, displayed at its Tiled interaction coordinates, and plays its four-frame idle loop.
 - Hero, equipment, farm/village, crop, building, and UI production art remain target specifications only.
 
 ## Active Milestone
 
-Display the Practice Slime v001 asset in the existing world without changing interaction, quest, learning, save, combat, or AI behavior.
-
-The runtime PR should:
-
-- preload the existing `32x32` spritesheet,
-- replace only the Practice Slime placeholder marker with a bottom-centered sprite,
-- play the four-frame idle loop,
-- preserve the Tiled interaction coordinates, ACTION flow, prompt behavior, and quest progression,
-- add focused smoke coverage and desktop/mobile screenshot verification.
+Practice Slime world display is complete. The production sprite replaces only its former circle/text marker, while interaction, quest, learning, save, combat, and AI behavior remain unchanged.
 
 ## Next Checkpoint
 
-Return to ChatGPT after the Practice Slime display PR is merged. Decide there whether the next milestone is animation feedback, combat design, farming, or broader visual replacement. Do not begin combat, AI, rewards, curriculum expansion, or additional asset generation before that checkpoint.
+Return to ChatGPT before starting another implementation milestone. Decide there whether the next milestone is animation feedback, combat design, farming, or broader visual replacement. Do not begin combat, AI, rewards, curriculum expansion, or additional asset generation before that checkpoint.
 
 ## Routine Merge Policy
 

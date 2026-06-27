@@ -8,7 +8,7 @@ Record the production Practice Slime visual target and acceptance contract for a
 
 ## Current Asset Status
 
-The approved v001 source sheet, normalization manifest, and `192x128` runtime sheet are committed. Runtime loading and world display remain pending; combat, AI, stats, and defeat behavior are still undefined.
+The approved v001 source sheet, normalization manifest, and `192x128` runtime sheet are committed. See [`docs/CURRENT_STATE.md`](../CURRENT_STATE.md) for current runtime-integration status. Combat, AI, stats, and defeat behavior remain undefined.
 
 ## Scope
 

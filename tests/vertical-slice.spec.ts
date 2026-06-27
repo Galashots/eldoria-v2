@@ -35,6 +35,19 @@ type PreviewPrompt = {
   text: string;
 };
 
+type SlimePresentation = {
+  animation: string | null;
+  displayHeight: number;
+  displayWidth: number;
+  frame: string | number;
+  originX: number;
+  originY: number;
+  texture: string;
+  visible: boolean;
+  x: number;
+  y: number;
+};
+
 const CANVAS = 'canvas';
 
 async function boot(page: Page): Promise<void> {
@@ -96,6 +109,40 @@ async function state(page: Page): Promise<GameState> {
 async function masteryTotal(page: Page, field: 'seen' | 'attempted' | 'skipped'): Promise<number> {
   const records = Object.values((await state(page)).mastery);
   return records.reduce((total, record) => total + record[field], 0);
+}
+
+async function slimePresentation(page: Page): Promise<SlimePresentation> {
+  return page.evaluate(() => {
+    const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
+      practiceSlimeSprite?: {
+        anims: { currentAnim?: { key: string } };
+        displayHeight: number;
+        displayWidth: number;
+        frame: { name: string | number };
+        originX: number;
+        originY: number;
+        texture: { key: string };
+        visible: boolean;
+        x: number;
+        y: number;
+      };
+    };
+    const sprite = scene.practiceSlimeSprite;
+    if (!sprite) throw new Error('Practice Slime sprite was not created.');
+
+    return {
+      animation: sprite.anims.currentAnim?.key ?? null,
+      displayHeight: sprite.displayHeight,
+      displayWidth: sprite.displayWidth,
+      frame: sprite.frame.name,
+      originX: sprite.originX,
+      originY: sprite.originY,
+      texture: sprite.texture.key,
+      visible: sprite.visible,
+      x: sprite.x,
+      y: sprite.y
+    };
+  });
 }
 
 async function holdKey(page: Page, key: string, ms = 300): Promise<void> {
@@ -167,6 +214,27 @@ async function sceneInteract(page: Page): Promise<void> {
     scene.tryInteract();
   });
   await page.waitForTimeout(200);
+}
+
+async function interactAt(page: Page, x: number, y: number): Promise<string> {
+  const hint = await page.evaluate(([nextX, nextY]) => {
+    const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
+      hintText: { text: string };
+      player: { setPosition: (x: number, y: number) => void; setVelocity: (x: number, y: number) => void };
+      tryInteract: () => void;
+      updateHint: () => void;
+    };
+
+    scene.player.setPosition(nextX, nextY);
+    scene.player.setVelocity(0, 0);
+    scene.updateHint();
+    const currentHint = scene.hintText.text;
+    scene.tryInteract();
+    return currentHint;
+  }, [x, y]);
+
+  await page.waitForTimeout(200);
+  return hint;
 }
 
 async function openQuestPrompt(
@@ -287,6 +355,20 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
 
   await expect.poll(async () => (await state(page)).objective).toContain('Talk to Mira');
   await expect.poll(async () => (await state(page)).hud).not.toContain('Sunberry Charm');
+  const slime = await slimePresentation(page);
+  expect(slime).toMatchObject({
+    animation: 'practice-slime-idle',
+    displayHeight: 32,
+    displayWidth: 32,
+    originX: 0.5,
+    originY: 1,
+    texture: 'practice-slime-v001',
+    visible: true,
+    x: 704,
+    y: 320
+  });
+  expect(Number(slime.frame)).toBeGreaterThanOrEqual(0);
+  expect(Number(slime.frame)).toBeLessThanOrEqual(3);
 
   const start = (await state(page)).player;
   await holdKey(page, 'KeyD');
@@ -310,7 +392,7 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   await expect.poll(async () => (await state(page)).questStep).toBe('find-slime');
   await expect.poll(async () => masteryTotal(page, 'skipped')).toBe(1);
 
-  await openQuestPrompt(page, 'combat', 'Practice Slime', 'return-to-mira', 'Practice complete. Return to Mira.');
+  expect(await interactAt(page, 704, 320)).toContain('Practice Slime');
   await expect.poll(async () => hasCanvasText(page, 'READ ALOUD')).toBe(true);
   await skipOpenPrompt(page);
   await expect.poll(async () => (await state(page)).questStep).toBe('return-to-mira');

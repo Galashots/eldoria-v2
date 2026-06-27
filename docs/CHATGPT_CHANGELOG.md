@@ -4,6 +4,25 @@ This file records repository changes made through ChatGPT so future work can see
 
 ## 2026-06-27 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
+- Branch: `codex/display-practice-slime`
+- Files changed:
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `docs/CURRENT_STATE.md`
+  - `docs/art-pipeline/SPRITE_ASSET_PIPELINE.md`
+  - `docs/visual-targets/PRACTICE_SLIME_TARGET.md`
+  - `src/scenes/PreloadScene.ts`
+  - `src/scenes/WorldScene.ts`
+  - `tests/vertical-slice.spec.ts`
+- Summary: Displayed the production Practice Slime v001 sprite in the existing farm world.
+- Implementation notes:
+  - Imported the committed runtime sheet through Vite, preloaded it as a `32x32` spritesheet, and added a four-frame idle loop.
+  - Replaced only the Practice Slime circle/text marker with a bottom-centered sprite at the unchanged Tiled interaction coordinates.
+  - Strengthened smoke coverage to verify sprite geometry/animation and exercise the real Practice Slime interaction path.
+  - Preserved optional learning, quest progression, saves, mastery, controls, rewards, combat state, and AI behavior.
+- Reason: Complete the first production-asset runtime presentation without expanding gameplay scope.
+
+## 2026-06-27 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
 - Branch: `codex/project-memory-refresh`
 - Files changed:
   - `AGENTS.md`
