@@ -2,6 +2,20 @@
 
 This file records repository changes made through ChatGPT so future work can see what changed, who made it, and when.
 
+## 2026-06-27 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
+- Branch: `codex/sunberry-charm-hud-keepsake`
+- Files changed:
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `src/scenes/WorldScene.ts`
+  - `tests/vertical-slice.spec.ts`
+- Summary: Made the earned Sunberry Charm persistently visible as a compact keepsake in the existing top HUD.
+- Implementation notes:
+  - Appends `Keepsake: Sunberry Charm` only when the saved inventory contains the one-time charm reward.
+  - Reuses the typed charm key and name from the Mira quest definition rather than adding item metadata or a new inventory surface.
+  - Extended smoke coverage for pre-reward absence, immediate visibility, HUD fit, reload persistence, and single rendering after repeated Mira interaction.
+- Reason: The starter quest's permanent reward should remain visible after its completion toast without expanding into an inventory or equipment system.
+
 ## 2026-06-26 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
 - Branch: `codex/title-profile-layout-polish`
