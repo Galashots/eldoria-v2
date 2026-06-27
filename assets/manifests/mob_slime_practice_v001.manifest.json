@@ -1,0 +1,204 @@
+{
+  "version": 1,
+  "id": "mob_slime_practice_v001",
+  "target": {
+    "outputPath": "../sprites/mob_slime_practice_v001.png",
+    "cellPx": [32, 32],
+    "cols": 6,
+    "rows": 4,
+    "expectedEmptyCells": [
+      [4, 0],
+      [5, 0],
+      [3, 2],
+      [4, 2],
+      [5, 2]
+    ]
+  },
+  "sources": {
+    "source_sheet": {
+      "path": "../source/generated/mob_slime_practice_v001/source_sheet.png",
+      "grid": {
+        "cols": 6,
+        "rows": 4
+      },
+      "background": {
+        "mode": "edge_flood_color_key",
+        "color": "#FB03F9",
+        "tolerance": 10
+      }
+    }
+  },
+  "frames": [
+    {
+      "clip": "idle",
+      "sourceRef": "source_sheet",
+      "sourceCell": [0, 0],
+      "destCell": [0, 0],
+      "trim": "alpha",
+      "fit": "contain",
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "idle",
+      "sourceRef": "source_sheet",
+      "sourceCell": [1, 0],
+      "destCell": [1, 0],
+      "trim": "alpha",
+      "fit": "contain",
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "idle",
+      "sourceRef": "source_sheet",
+      "sourceCell": [2, 0],
+      "destCell": [2, 0],
+      "trim": "alpha",
+      "fit": "contain",
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "idle",
+      "sourceRef": "source_sheet",
+      "sourceCell": [3, 0],
+      "destCell": [3, 0],
+      "trim": "alpha",
+      "fit": "contain",
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "hop",
+      "sourceRef": "source_sheet",
+      "sourceCell": [0, 1],
+      "destCell": [0, 1],
+      "trim": "alpha",
+      "fit": "contain",
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "hop",
+      "sourceRef": "source_sheet",
+      "sourceCell": [1, 1],
+      "destCell": [1, 1],
+      "trim": "alpha",
+      "fit": "contain",
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "hop",
+      "sourceRef": "source_sheet",
+      "sourceCell": [2, 1],
+      "destCell": [2, 1],
+      "trim": "alpha",
+      "fit": "contain",
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "hop",
+      "sourceRef": "source_sheet",
+      "sourceCell": [3, 1],
+      "destCell": [3, 1],
+      "trim": "alpha",
+      "fit": "contain",
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "hop",
+      "sourceRef": "source_sheet",
+      "sourceCell": [4, 1],
+      "destCell": [4, 1],
+      "trim": "alpha",
+      "fit": "contain",
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "hop",
+      "sourceRef": "source_sheet",
+      "sourceCell": [5, 1],
+      "destCell": [5, 1],
+      "trim": "alpha",
+      "fit": "contain",
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "hurt",
+      "sourceRef": "source_sheet",
+      "sourceCell": [0, 2],
+      "destCell": [0, 2],
+      "trim": "alpha",
+      "fit": "contain",
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "hurt",
+      "sourceRef": "source_sheet",
+      "sourceCell": [1, 2],
+      "destCell": [1, 2],
+      "trim": "alpha",
+      "fit": "contain",
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "hurt",
+      "sourceRef": "source_sheet",
+      "sourceCell": [2, 2],
+      "destCell": [2, 2],
+      "trim": "alpha",
+      "fit": "contain",
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "poof",
+      "sourceRef": "source_sheet",
+      "sourceCell": [0, 3],
+      "destCell": [0, 3],
+      "trim": "alpha",
+      "fit": "contain",
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "poof",
+      "sourceRef": "source_sheet",
+      "sourceCell": [1, 3],
+      "destCell": [1, 3],
+      "trim": "alpha",
+      "fit": "contain",
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "poof",
+      "sourceRef": "source_sheet",
+      "sourceCell": [2, 3],
+      "destCell": [2, 3],
+      "trim": "alpha",
+      "fit": "contain",
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "poof",
+      "sourceRef": "source_sheet",
+      "sourceCell": [3, 3],
+      "destCell": [3, 3],
+      "trim": "alpha",
+      "fit": "contain",
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "poof",
+      "sourceRef": "source_sheet",
+      "sourceCell": [4, 3],
+      "destCell": [4, 3],
+      "trim": "alpha",
+      "fit": "contain",
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "poof",
+      "sourceRef": "source_sheet",
+      "sourceCell": [5, 3],
+      "destCell": [5, 3],
+      "trim": "alpha",
+      "fit": "contain",
+      "anchor": "center_bottom"
+    }
+  ]
+}
