@@ -4,6 +4,20 @@ This file records repository changes made through ChatGPT so future work can see
 
 ## 2026-06-27 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
+- Branch: `codex/farm-village-tile-targets`
+- Files changed:
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `docs/visual-targets/FARM_VILLAGE_TILE_TARGETS.md`
+  - `docs/visual-targets/farm_village_tile_targets.json`
+- Summary: Added the first eight Farm/Village production tile target specifications.
+- Implementation notes:
+  - Defined grass, path, soil, crop, shop, door, and interaction-marker targets using the `16x16` tile grammar.
+  - Recorded variants, palettes, layers, collision/interaction metadata, and `environment_farm` atlas ownership.
+  - Kept crop, door, sign, farming, map, and collision behavior explicitly unimplemented.
+- Reason: Establish reviewable tile targets before generating art or changing the current map/runtime pipeline.
+
+## 2026-06-27 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
 - Branch: `codex/practice-slime-target-spec`
 - Files changed:
   - `docs/CHATGPT_CHANGELOG.md`
