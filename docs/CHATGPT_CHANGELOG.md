@@ -4,6 +4,20 @@ This file records repository changes made through ChatGPT so future work can see
 
 ## 2026-06-27 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
+- Branch: `codex/hero-actor-target-spec`
+- Files changed:
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `docs/visual-targets/HERO_ACTOR_TARGETS.md`
+  - `docs/visual-targets/hero_actor_targets.json`
+- Summary: Added the first production hero actor target specification and machine-readable manifest entry.
+- Implementation notes:
+  - Defined `char_mage_boy_base` as a `32x48`, four-direction Grade 2 Mage target aligned to the visual asset contract.
+  - Recorded required animation ranges, palette families, slices, collision/interaction boxes, atlas family, and deferred art scope.
+  - Added a future art PR checklist without generating art or changing runtime behavior.
+- Reason: Establish a reviewable production target before any hero sprite generation or replacement work begins.
+
+## 2026-06-27 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
 - Branch: `codex/visual-asset-contract`
 - Files changed:
   - `AGENTS.md`
