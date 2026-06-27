@@ -4,6 +4,23 @@ This file records repository changes made through ChatGPT so future work can see
 
 ## 2026-06-27 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
+- Branch: `codex/project-memory-refresh`
+- Files changed:
+  - `AGENTS.md`
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `docs/CURRENT_STATE.md`
+  - `docs/art-pipeline/IMAGE_PROMPTING_GUIDE.md`
+  - `docs/art-pipeline/SPRITE_ASSET_PIPELINE.md`
+  - `docs/visual-targets/PRACTICE_SLIME_TARGET.md`
+- Summary: Refreshed project memory and established the milestone-checkpoint collaboration workflow.
+- Implementation notes:
+  - Updated the merged implementation baseline and moved volatile roadmap status into a concise current-state document.
+  - Recorded the normalized Practice Slime asset as complete while keeping runtime display explicitly pending.
+  - Defined routine Codex self-merge gates and the product/design decisions that still require a user or ChatGPT checkpoint.
+- Reason: Reduce repetitive cross-chat context transfer while preserving small PRs, verification discipline, and strategic design review.
+
+## 2026-06-27 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
 - Branch: `codex/practice-slime-v001-asset`
 - Files changed:
   - `assets/source/generated/mob_slime_practice_v001/source_sheet.png`

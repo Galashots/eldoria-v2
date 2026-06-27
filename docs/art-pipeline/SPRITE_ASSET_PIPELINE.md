@@ -143,4 +143,12 @@ Larger trees, buildings, bosses, VFX, or multi-cell sheets should use the same m
 
 ## Practice Slime
 
-Practice Slime art should be produced in a later asset PR using this pipeline. The real draft manifest at `assets/manifests/mob_slime_practice_v001.manifest.json` is intentionally dormant until its PNG source is committed; standard project checks do not execute asset manifests. The example manifest under `docs/art-pipeline/examples/` is illustrative only and references future placeholder paths.
+Practice Slime v001 has been produced with this pipeline. Its committed files are:
+
+```text
+assets/source/generated/mob_slime_practice_v001/source_sheet.png
+assets/manifests/mob_slime_practice_v001.manifest.json
+assets/sprites/mob_slime_practice_v001.png
+```
+
+The runtime sheet is `192x128` with `32x32` cells in a `6x4` grid. Runtime loading and world display remain separate work. The example manifest under `docs/art-pipeline/examples/` remains illustrative only.
