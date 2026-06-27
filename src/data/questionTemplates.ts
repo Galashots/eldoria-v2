@@ -76,6 +76,64 @@ export const QUESTION_TEMPLATES: QuestionTemplate[] = [
     }
   },
   {
+    id: 'grade2-farm-place-value-basket',
+    band: 'grade2',
+    subject: 'math',
+    skill: 'place-value',
+    contexts: ['farm'],
+    minDifficulty: 1,
+    maxDifficulty: 3,
+    makePrompt: ({ context }) => {
+      const tens = Phaser.Math.Between(2, 8);
+      const ones = Phaser.Math.Between(0, 9);
+      const berries = tens * 10 + ones;
+
+      return {
+        id: `${context}-grade2-place-value-basket`,
+        band: 'grade2',
+        subject: 'math',
+        skill: 'place-value',
+        context,
+        text: `A basket holds ${berries} berries. Which digit shows the tens?`,
+        readAloudText: `A basket holds ${berries} berries. Which digit tells how many tens there are?`,
+        answer: tens,
+        choices: shuffledChoices(tens, [ones, Math.min(9, tens + 1), Math.max(0, tens - 1)]),
+        rewardKind: 'bonus-harvest',
+        hint: 'The tens digit is the first digit in a two-digit number.',
+        explanation: `${berries} has ${tens} tens and ${ones} ones.`
+      };
+    }
+  },
+  {
+    id: 'grade2-combat-addition-sparks',
+    band: 'grade2',
+    subject: 'math',
+    skill: 'addition',
+    contexts: ['combat'],
+    minDifficulty: 1,
+    maxDifficulty: 3,
+    makePrompt: ({ context }) => {
+      const sparks = Phaser.Math.Between(4, 10);
+      const gained = Phaser.Math.Between(2, 9);
+      const answer = sparks + gained;
+
+      return {
+        id: `${context}-grade2-addition-sparks`,
+        band: 'grade2',
+        subject: 'math',
+        skill: 'addition',
+        context,
+        text: `Your wand has ${sparks} sparks and gains ${gained}. How many now?`,
+        readAloudText: `Your wand has ${sparks} sparks and gains ${gained} more. How many sparks does it have now?`,
+        answer,
+        choices: shuffledChoices(answer, [answer + 1, answer + 2, Math.max(0, answer - 1)]),
+        rewardKind: 'critical-hit',
+        hint: 'Add the new sparks to the sparks already in the wand.',
+        explanation: `${sparks} plus ${gained} equals ${answer}.`
+      };
+    }
+  },
+  {
     id: 'grade2-shop-addition-supplies',
     band: 'grade2',
     subject: 'math',
@@ -205,6 +263,55 @@ export const QUESTION_TEMPLATES: QuestionTemplate[] = [
         explanation: `${price.toFixed(2)} rounds to ${Math.round(price)}, and ${Math.round(price)} × ${quantity} = ${answer}.`
       };
     }
+  },
+  {
+    id: 'grade5-farm-fractions-sunberry-rows',
+    band: 'grade5',
+    subject: 'math',
+    skill: 'fractions',
+    contexts: ['farm'],
+    minDifficulty: 1,
+    maxDifficulty: 5,
+    makePrompt: ({ context }) => {
+      const plantedRows = Phaser.Math.Between(2, 5);
+      const totalRows = plantedRows * 4;
+
+      return {
+        id: `${context}-grade5-fractions-sunberry-rows`,
+        band: 'grade5',
+        subject: 'math',
+        skill: 'fractions',
+        context,
+        text: `${plantedRows} of ${totalRows} garden rows have sunberries. What fraction is that in simplest form?`,
+        answer: '1/4',
+        choices: shuffledChoices('1/4', ['1/3', '3/4']),
+        rewardKind: 'bonus-harvest',
+        hint: `Divide both ${plantedRows} and ${totalRows} by ${plantedRows}.`,
+        explanation: `${plantedRows}/${totalRows} simplifies to 1/4.`
+      };
+    }
+  },
+  {
+    id: 'grade5-combat-science-energy-transfer',
+    band: 'grade5',
+    subject: 'science',
+    skill: 'energy-resources',
+    contexts: ['combat'],
+    minDifficulty: 1,
+    maxDifficulty: 5,
+    makePrompt: ({ context }) => ({
+      id: `${context}-grade5-energy-transfer-rune`,
+      band: 'grade5',
+      subject: 'science',
+      skill: 'energy-resources',
+      context,
+      text: 'A rune stores energy, then releases it to launch a stone. Which change best describes what happens?',
+      answer: 'stored energy to motion',
+      choices: shuffledChoices('stored energy to motion', ['motion to stored energy', 'energy disappears']),
+      rewardKind: 'critical-hit',
+      hint: 'Compare the energy before and after the stone launches.',
+      explanation: 'The rune transfers stored energy into the stone\'s motion.'
+    })
   },
   {
     id: 'grade5-combat-science-forces',
