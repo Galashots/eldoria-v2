@@ -1,0 +1,188 @@
+# Eldoria-V2 Visual Asset Contract
+
+Source reference: [Executable 2D RPG Visual Design Guide for Eldoria V2](research/visual-design/Executable_2D_RPG_Visual_Design_Guide_for_Eldoria_V2.pdf)
+
+## 1. Purpose
+
+Eldoria-V2 is a fantasy-learning RPG first. This contract prevents visual drift and gives Codex, Claude, artists, and asset-generation tools one consistent specification for sprites, tiles, UI, VFX, buildings, and related metadata.
+
+This contract does not override the product rule that learning never gates adventure. It also protects the Grade 2 audio-first experience and keeps the current vertical slice ahead of broad asset expansion.
+
+## 2. Current Production Posture
+
+- Immediate production remains Phaser, Vite, TypeScript, and Tiled.
+- These rules are engine-agnostic enough to inform later Godot or Unity planning, but current repo work stays Phaser unless explicitly changed.
+- This PR does not rewrite the asset pipeline, add atlas loading, or change runtime behavior.
+
+## 3. Canonical Visual Baseline
+
+- Style: readable 3/4 top-down fantasy pixel-art RPG.
+- Presentation: mobile-friendly, low-friction, and readable before decorative.
+- World tile grammar: `16x16` pixels.
+- Standard human actor canvas: `32x48` pixels.
+- Standard actor footprint: `16x16` pixels.
+- Pivot: center-bottom of the footprint unless the category contract explicitly differs.
+- Directions: front, back, left, and right are the minimum production set.
+- Eight directions are a later enhancement for heroes, bosses, or combat-critical enemies only.
+- Runtime export: PNG by default.
+- Editable source: `.aseprite` or `.ase` when available.
+- Gameplay rendering: nearest/point sampling; avoid smoothing and mipmaps unless specifically justified.
+- Do not mix ad hoc gameplay sprite resolutions. Larger assets must remain multiples of the `16x16` grammar and declare their canvas, footprint, and pivot.
+
+## 4. Palette And Lighting
+
+- Target one limited master palette of roughly 48-64 colors.
+- Declare one named sub-palette for every asset. Initial names are `forest`, `ruins`, `arcane`, `lava`, `ui_neutral`, `metal`, `wood_leather`, and `skin_hair`.
+- Use a consistent upper-left, slightly front-facing key light; default shadows fall down-right/back.
+- Establish a readable silhouette and major color clusters before adding shading detail.
+- Avoid noisy dithering on actors, combat-readable elements, icons, and UI. Reserve restrained dithering for broad environmental surfaces when useful.
+
+## 5. Asset Naming Contract
+
+Use lowercase `snake_case` only. Do not use spaces, mixed separators, vague generated names, or engine defaults such as `sprite_12`.
+
+Canonical long-form ID:
+
+```text
+<domain>_<entity>_<variant>_<view>_<state>_<part>_<frame>_v###
+```
+
+Allowed domains:
+
+```text
+char npc armor weapon mob boss env bld ui fx cut port icon tile sfx
+```
+
+Use the long form for animated or directional assets. Static assets may omit fields that genuinely do not apply, but must preserve field order. Controlled multiword states such as `attack_light` are valid; metadata remains authoritative.
+
+Examples:
+
+```text
+char_mage_boy_front_idle_body_f00_v001
+armor_mage_starter_front_walk_torso_f03_v001
+weapon_sword_crystal_right_attack_light_blade_f02_v001
+mob_slime_practice_front_idle_body_f00_v001
+tile_forest_grass_a_base_v001
+ui_hud_panel_idle_base_v001
+fx_sparkle_gold_loop_core_f03_v001
+```
+
+## 6. Asset Metadata Contract
+
+Every exported sheet or loose gameplay asset should eventually have a JSON sidecar. Coordinates use a top-left canvas origin; the standard actor pivot below is bottom-center.
+
+```json
+{
+  "id": "char_mage_boy_front_walk",
+  "category": "char",
+  "canvasPx": [32, 48],
+  "footprintPx": [16, 16],
+  "pivotPx": [16, 47],
+  "palette": "skin_hair",
+  "ppu": 16,
+  "view": "front",
+  "loop": true,
+  "tags": ["walk", "front", "base_body"],
+  "slices": ["weapon_socket_main", "armor_torso", "armor_head"],
+  "collision": {
+    "hurtbox": [10, 25, 12, 22],
+    "hitboxes": [],
+    "interaction": [8, 30, 16, 18]
+  },
+  "atlasFamily": "characters"
+}
+```
+
+## 7. Category Rules
+
+- **Hero sprites:** Use the standard actor canvas, footprint, pivot, and four-direction set. Favor a heroic, readable silhouette with chunky forms and stable attachment slices. Reserve eight directions for a justified later pass.
+- **NPCs:** Reuse the human actor grammar and compatible rigs where possible. Differentiate NPCs with costume accents, props, idle/emote/talk states, and clear silhouettes.
+- **Armor overlays:** Inherit the base body canvas, pivot, direction set, frame count, and per-frame timing exactly. No independent drift is permitted. Layers must remain compatible with future armor, cape, helm, and weapon overlays.
+- **Weapons:** Declare hand/holster sockets, view, foreground/background layer, and attack timing. Weapon motion must align with the owning actor and its hit windows.
+- **Monsters:** Give each monster one readable silhouette, one dominant material story, and one accent hue. Standard mobs usually occupy `32x32` to `64x64` canvases and declare their footprint separately.
+- **Bosses:** Prioritize readable anticipation and telegraphs. Split assets larger than roughly `96x96` into declared modules when that improves reuse, culling, or layering.
+- **Landscape tiles:** Build on `16x16` cells or clear multiples. Group by biome, favor large readable masses over micro-detail, and keep walkability and interaction cues visible.
+- **Buildings:** Match the world projection and upper-left light. Block from tile modules first, mark entrances clearly, then add trim and limited ambient motion.
+- **UI:** Use high-contrast, low-noise panels and icons. Prefer 9-slice panels where scaling is needed. Preserve touch readability and Grade 2 audio-first/non-reading-friendly presentation.
+- **VFX:** Current primitive Phaser bursts are acceptable for low-cost feedback. Future flipbook VFX use `16x16`, `32x32`, or `64x64` cells. VFX must reinforce, not replace, readable combat animation.
+- **Cutscenes and portraits:** Reuse gameplay palette and light rules unless an intentional scene override is documented. Use `cut` and `port` domains and keep portrait swaps, mouth frames, and overlay effects separately named.
+
+## 8. Animation Rules
+
+| Animation | Production target |
+| --- | --- |
+| Idle | 4-6 frames |
+| Walk | 6-8 frames |
+| Light attack | 6-8 frames |
+| Heavy attack | 8-12 frames |
+| Cast | 6-10 frames |
+| Hurt | 2-4 frames |
+| Death | 8-12 frames |
+| Item idle | 4-6 frames |
+
+- Record intended per-frame timing, loop behavior, and tag names in source/metadata.
+- Attacks must identify anticipation, contact, and recovery timing; combat clips must declare hitbox windows.
+- Prototype frame counts may be reduced, but the intended production timing and direction set must still be documented.
+
+## 9. Layering And Render Order
+
+Use this canonical order:
+
+```text
+background -> terrain -> decals_low -> actors_feet -> actors_body -> actors_head -> armor_overlays -> weapons_front -> vfx_low -> vfx_high -> weather -> world_ui -> screen_ui
+```
+
+Use explicit layer groups first, then local offsets or Y-sorting within a group. Assets that cross groups must declare their slices or attachment points.
+
+## 10. Atlas And Folder Direction
+
+Do not implement atlas loading as part of this contract. The future target is feature/scene atlases, not one mega-atlas.
+
+Likely atlas families:
+
+```text
+characters
+combat_fx
+environment_farm
+environment_village
+ui
+```
+
+Keep source, runtime exports, and metadata separate:
+
+```text
+assets/art/<category>/<entity>/src/
+assets/art/<category>/<entity>/export/
+assets/art/<category>/<entity>/meta/
+assets/atlases/<family>/
+assets/manifests/
+```
+
+This is a future folder direction, not a request to move current files.
+
+## 11. Validation Checklist
+
+Every future visual asset PR should confirm:
+
+- [ ] Canonical lowercase `snake_case` name and domain.
+- [ ] Declared canvas, footprint, and pivot.
+- [ ] Declared palette family and consistent upper-left light.
+- [ ] Readable silhouette at 1x and 3x scale.
+- [ ] Animation tags, loop behavior, frame counts, and intended timing.
+- [ ] Armor/weapon overlays align exactly with the base actor.
+- [ ] Collision, hitbox, hurtbox, interaction, or socket metadata when relevant.
+- [ ] Declared atlas family.
+- [ ] Nearest/point rendering expectation for gameplay pixel art.
+- [ ] No unrelated runtime changes.
+
+## 12. Near-Term Eldoria Application
+
+The next practical visual milestones, each requiring its own reviewed scope, are:
+
+1. Production-spec hero actor target.
+2. Matching armor overlay target.
+3. Consistent Practice Slime target.
+4. Farm/village tile polish.
+5. UI panel/icon polish.
+
+None of those assets or runtime changes are implemented by this contract.

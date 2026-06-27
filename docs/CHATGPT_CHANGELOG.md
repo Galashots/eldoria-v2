@@ -4,6 +4,21 @@ This file records repository changes made through ChatGPT so future work can see
 
 ## 2026-06-27 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
+- Branch: `codex/visual-asset-contract`
+- Files changed:
+  - `AGENTS.md`
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `docs/VISUAL_ASSET_CONTRACT.md`
+  - `docs/research/visual-design/Executable_2D_RPG_Visual_Design_Guide_for_Eldoria_V2.pdf`
+- Summary: Added a concise visual asset contract and stored its source research guide at the canonical repo path.
+- Implementation notes:
+  - Defined the production baseline for scale, pivots, palettes, lighting, naming, metadata, category rules, animation, layering, atlas direction, and validation.
+  - Added a minimal `AGENTS.md` link so future asset work discovers the contract before generating or replacing art.
+  - Preserved the supplied PDF unchanged; no images were extracted and no runtime asset pipeline was added.
+- Reason: Give human and AI contributors an enforceable visual specification that prevents asset drift while the current Phaser vertical slice remains the priority.
+
+## 2026-06-27 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
 - Branch: `codex/deterministic-prompt-preview`
 - Files changed:
   - `docs/CHATGPT_CHANGELOG.md`
