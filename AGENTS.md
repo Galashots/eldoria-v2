@@ -65,6 +65,8 @@ Use the deep-research findings as direction:
 7. Preserve child-friendly safety and accessibility defaults.
 8. Prefer visible curiosity, clear objectives, and low-friction traversal.
 
+Visual asset work must follow [`docs/VISUAL_ASSET_CONTRACT.md`](docs/VISUAL_ASSET_CONTRACT.md).
+
 ## Current best near-term roadmap
 
 Work in this order unless the user gives a different priority:
