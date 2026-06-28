@@ -4,6 +4,23 @@ This file records repository changes made through ChatGPT so future work can see
 
 ## 2026-06-28 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
+- Branch: `codex/display-grade2-mage-hero-idle`
+- Files changed:
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `docs/CURRENT_STATE.md`
+  - `src/scenes/PreloadScene.ts`
+  - `src/scenes/WorldScene.ts`
+  - `tests/vertical-slice.spec.ts`
+- Summary: Displayed the four-direction Grade 2 Mage idle asset without changing player physics or Grade 5 presentation.
+- Implementation notes:
+  - Preloaded the committed `32x48` runtime sheet and registered guarded front, back, left, and right idle loops.
+  - Added a bottom-centered presentation sprite that follows the unchanged Grade 2 physics actor, preserving collision, camera follow, interaction distance, controls, and save coordinates.
+  - Kept the Grade 5 adventurer placeholder visible and behaviorally unchanged.
+  - Extended browser smoke coverage for texture, dimensions, pivot, profile isolation, and directional transitions.
+- Reason: Put the first production hero art into the playable vertical slice while keeping the visual change isolated from gameplay systems.
+
+## 2026-06-28 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
 - Branch: `codex/grade2-mage-hero-idle-asset`
 - Files changed:
   - `assets/manifests/char_mage_boy_base_idle_v001.manifest.json`

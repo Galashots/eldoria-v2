@@ -50,6 +50,21 @@ type SlimePresentation = {
   y: number;
 };
 
+type HeroPresentation = {
+  animation: string | null;
+  displayHeight: number | null;
+  displayWidth: number | null;
+  frame: string | number | null;
+  heroVisible: boolean;
+  originX: number | null;
+  originY: number | null;
+  physicsTexture: string;
+  physicsVisible: boolean;
+  texture: string | null;
+  x: number | null;
+  y: number | null;
+};
+
 const CANVAS = 'canvas';
 
 async function boot(page: Page): Promise<void> {
@@ -146,6 +161,45 @@ async function slimePresentation(page: Page): Promise<SlimePresentation> {
       visible: sprite.visible,
       x: sprite.x,
       y: sprite.y
+    };
+  });
+}
+
+async function heroPresentation(page: Page): Promise<HeroPresentation> {
+  return page.evaluate(() => {
+    const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
+      grade2HeroSprite?: {
+        anims: { currentAnim?: { key: string } };
+        displayHeight: number;
+        displayWidth: number;
+        frame: { name: string | number };
+        originX: number;
+        originY: number;
+        texture: { key: string };
+        visible: boolean;
+        x: number;
+        y: number;
+      };
+      player: {
+        texture: { key: string };
+        visible: boolean;
+      };
+    };
+    const hero = scene.grade2HeroSprite;
+
+    return {
+      animation: hero?.anims.currentAnim?.key ?? null,
+      displayHeight: hero?.displayHeight ?? null,
+      displayWidth: hero?.displayWidth ?? null,
+      frame: hero?.frame.name ?? null,
+      heroVisible: hero?.visible === true,
+      originX: hero?.originX ?? null,
+      originY: hero?.originY ?? null,
+      physicsTexture: scene.player.texture.key,
+      physicsVisible: scene.player.visible,
+      texture: hero?.texture.key ?? null,
+      x: hero?.x ?? null,
+      y: hero?.y ?? null
     };
   });
 }
@@ -371,6 +425,17 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
 
   await expect.poll(async () => (await state(page)).objective).toContain('Talk to Mira');
   await expect.poll(async () => (await state(page)).hud).not.toContain('Sunberry Charm');
+  expect(await heroPresentation(page)).toMatchObject({
+    animation: 'grade2-mage-idle-front',
+    displayHeight: 48,
+    displayWidth: 32,
+    heroVisible: true,
+    originX: 0.5,
+    originY: 1,
+    physicsTexture: 'adventurer',
+    physicsVisible: false,
+    texture: 'grade2-mage-idle-v001'
+  });
   const slime = await slimePresentation(page);
   expect(slime).toMatchObject({
     animation: 'practice-slime-idle',
@@ -391,12 +456,16 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   const start = (await state(page)).player;
   await holdKey(page, 'KeyD');
   expect((await state(page)).player.x).toBeGreaterThan(start.x);
+  expect((await heroPresentation(page)).animation).toBe('grade2-mage-idle-right');
   await holdKey(page, 'KeyA');
   expect((await state(page)).player.x).toBeLessThan(start.x + 20);
+  expect((await heroPresentation(page)).animation).toBe('grade2-mage-idle-left');
   await holdKey(page, 'KeyS');
   expect((await state(page)).player.y).toBeGreaterThan(start.y);
+  expect((await heroPresentation(page)).animation).toBe('grade2-mage-idle-front');
   await holdKey(page, 'KeyW');
   expect((await state(page)).player.y).toBeLessThan(start.y + 20);
+  expect((await heroPresentation(page)).animation).toBe('grade2-mage-idle-back');
 
   await setPlayer(page, 416, 256);
   await expect.poll(async () => (await state(page)).hint).toContain('Mira');
@@ -461,6 +530,13 @@ test('Grade 5 prompts keep reader profile without the Grade 2 read-aloud control
   await startProfile(page, 190);
 
   expect((await state(page)).mastery).toEqual({});
+  expect(await heroPresentation(page)).toMatchObject({
+    animation: null,
+    heroVisible: false,
+    physicsTexture: 'adventurer',
+    physicsVisible: true,
+    texture: null
+  });
 
   await setQuestStep(page, 'try-crop-bonus');
   await useDeterministicCorrectPrompt(page);

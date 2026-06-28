@@ -30,10 +30,19 @@ type PromptCloseResult = {
 
 type PromptCloseHandler = (result: PromptCloseResult) => string | undefined;
 
+type HeroFacing = 'front' | 'back' | 'left' | 'right';
+
 const PRACTICE_SLIME_TEXTURE_KEY = 'practice-slime-v001';
 const PRACTICE_SLIME_IDLE_ANIMATION = 'practice-slime-idle';
 const PRACTICE_SLIME_HOP_ANIMATION = 'practice-slime-hop';
 const CROP_BONUS_FEEDBACK_NAME = 'crop-bonus-feedback';
+const GRADE2_MAGE_TEXTURE_KEY = 'grade2-mage-idle-v001';
+const GRADE2_MAGE_IDLE_ANIMATIONS: Record<HeroFacing, string> = {
+  front: 'grade2-mage-idle-front',
+  back: 'grade2-mage-idle-back',
+  left: 'grade2-mage-idle-left',
+  right: 'grade2-mage-idle-right'
+};
 
 export class WorldScene extends Phaser.Scene {
   private player!: Phaser.Physics.Arcade.Sprite;
@@ -57,6 +66,8 @@ export class WorldScene extends Phaser.Scene {
   private objectiveText!: Phaser.GameObjects.Text;
   private hintText!: Phaser.GameObjects.Text;
   private practiceSlimeSprite?: Phaser.GameObjects.Sprite;
+  private grade2HeroSprite?: Phaser.GameObjects.Sprite;
+  private heroFacing: HeroFacing = 'front';
 
   constructor() {
     super('WorldScene');
@@ -65,6 +76,8 @@ export class WorldScene extends Phaser.Scene {
   init(data: SceneInitData): void {
     this.profileId = data.profileId ?? 'grade5-adventurer';
     this.learning = new LearningBonusSystem(this.profileId);
+    this.grade2HeroSprite = undefined;
+    this.heroFacing = 'front';
   }
 
   create(): void {
@@ -119,6 +132,8 @@ export class WorldScene extends Phaser.Scene {
       this.firstQuestStep = saved.firstQuestStep ?? MIRA_FIRST_ERRAND.steps.talkToMira;
     }
 
+    this.createGrade2HeroPresentation();
+
     this.createHud();
     this.createTouchControls();
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
@@ -128,6 +143,8 @@ export class WorldScene extends Phaser.Scene {
   }
 
   update(): void {
+    this.syncGrade2HeroPresentation();
+
     if (this.busy) {
       this.player.setVelocity(0, 0);
       return;
@@ -148,7 +165,19 @@ export class WorldScene extends Phaser.Scene {
     this.player.setVelocity(inputX * speed, inputY * speed);
 
     if (isMoving) {
-      this.player.setFrame(inputX < -0.35 ? 2 : inputX > 0.35 ? 3 : inputY < 0 ? 1 : 0);
+      const facing: HeroFacing = inputX < -0.35
+        ? 'left'
+        : inputX > 0.35
+          ? 'right'
+          : inputY < 0
+            ? 'back'
+            : 'front';
+
+      if (this.grade2HeroSprite) {
+        this.setGrade2HeroFacing(facing);
+      } else {
+        this.player.setFrame(facing === 'left' ? 2 : facing === 'right' ? 3 : facing === 'back' ? 1 : 0);
+      }
     }
 
     if (Phaser.Input.Keyboard.JustDown(this.keys.SPACE) || Phaser.Input.Keyboard.JustDown(this.keys.E)) {
@@ -167,6 +196,54 @@ export class WorldScene extends Phaser.Scene {
         y: obj.y ?? 0,
         label: obj.name || obj.type || 'Target'
       }));
+  }
+
+  private createGrade2HeroPresentation(): void {
+    if (this.profileId !== 'grade2-mage') return;
+
+    const clips: Array<{ facing: HeroFacing; start: number; end: number }> = [
+      { facing: 'front', start: 0, end: 3 },
+      { facing: 'back', start: 4, end: 7 },
+      { facing: 'left', start: 8, end: 11 },
+      { facing: 'right', start: 12, end: 15 }
+    ];
+
+    for (const clip of clips) {
+      const key = GRADE2_MAGE_IDLE_ANIMATIONS[clip.facing];
+      if (!this.anims.exists(key)) {
+        this.anims.create({
+          key,
+          frames: this.anims.generateFrameNumbers(GRADE2_MAGE_TEXTURE_KEY, {
+            start: clip.start,
+            end: clip.end
+          }),
+          frameRate: 3,
+          repeat: -1
+        });
+      }
+    }
+
+    this.player.setVisible(false);
+    this.grade2HeroSprite = this.add.sprite(
+      this.player.x,
+      this.player.y + 16,
+      GRADE2_MAGE_TEXTURE_KEY,
+      0
+    )
+      .setOrigin(0.5, 1)
+      .setDepth(3)
+      .play(GRADE2_MAGE_IDLE_ANIMATIONS.front);
+  }
+
+  private setGrade2HeroFacing(facing: HeroFacing): void {
+    if (!this.grade2HeroSprite || facing === this.heroFacing) return;
+
+    this.heroFacing = facing;
+    this.grade2HeroSprite.play(GRADE2_MAGE_IDLE_ANIMATIONS[facing]);
+  }
+
+  private syncGrade2HeroPresentation(): void {
+    this.grade2HeroSprite?.setPosition(this.player.x, this.player.y + 16);
   }
 
   private drawTargetMarkers(): void {
