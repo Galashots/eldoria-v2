@@ -20,16 +20,17 @@ Last refreshed on 2026-06-28. This file records volatile project status; `AGENTS
 - Manifest-driven PNG normalization and validation pipeline with alpha, color-key, and edge-flood cleanup.
 - Practice Slime v001 source and normalized `192x128` runtime sheet are committed.
 - Practice Slime v001 is preloaded, displayed at its Tiled interaction coordinates, plays its four-frame idle loop, and gives short hop feedback when interacted with.
-- Grade 2 Mage hero idle v001 has an asset-only four-direction source sheet and normalized `128x192` runtime sheet with `32x48` cells; it is not loaded in Phaser yet.
+- Grade 2 Mage hero idle v001 is preloaded and displayed for the Grade 2 profile with four directional idle loops from its normalized `32x48` cells.
+- Grade 5 continues to use the existing adventurer placeholder; its presentation is unchanged.
 - Walk, cast, hurt, equipment, farm/village, crop, building, and UI production art remain target specifications only.
 
 ## Active Milestone
 
-Starter-errand interaction feedback is complete. The first Grade 2 Mage hero art pass now establishes four aligned idle directions without changing the displayed player or runtime behavior.
+Starter-errand interaction feedback is complete. The Grade 2 profile now displays the production-direction Mage idle art while retaining the existing invisible physics actor for unchanged movement, collision, camera, interaction, and save behavior.
 
 ## Next Checkpoint
 
-Audit the hero idle sheet at game scale before deciding whether to integrate it or extend the same identity into walk, cast, and hurt sheets. Keep asset production and runtime integration in separate PRs.
+Decide whether to extend the approved Mage identity into walk animation next or shift visual production to Mira/farm-village art. Keep each asset-production pass separate from its runtime integration.
 
 ## Routine Merge Policy
 
