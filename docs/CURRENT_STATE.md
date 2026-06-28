@@ -18,12 +18,12 @@ Last refreshed on 2026-06-27. This file records volatile project status; `AGENTS
 - Visual asset contract and validated hero, starter-equipment, Practice Slime, and farm/village target specs.
 - Manifest-driven PNG normalization and validation pipeline with alpha, color-key, and edge-flood cleanup.
 - Practice Slime v001 source and normalized `192x128` runtime sheet are committed.
-- Practice Slime v001 is preloaded, displayed at its Tiled interaction coordinates, and plays its four-frame idle loop.
+- Practice Slime v001 is preloaded, displayed at its Tiled interaction coordinates, plays its four-frame idle loop, and gives short hop feedback when interacted with.
 - Hero, equipment, farm/village, crop, building, and UI production art remain target specifications only.
 
 ## Active Milestone
 
-Practice Slime world display is complete. The production sprite replaces only its former circle/text marker, while interaction, quest, learning, save, combat, and AI behavior remain unchanged.
+Practice Slime interaction animation feedback is complete. The production sprite briefly hops when its existing optional prompt opens, then returns to idle while interaction, quest, learning, save, combat, and AI behavior remain unchanged.
 
 ## Next Checkpoint
 

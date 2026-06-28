@@ -32,6 +32,7 @@ type PromptCloseHandler = (result: PromptCloseResult) => string | undefined;
 
 const PRACTICE_SLIME_TEXTURE_KEY = 'practice-slime-v001';
 const PRACTICE_SLIME_IDLE_ANIMATION = 'practice-slime-idle';
+const PRACTICE_SLIME_HOP_ANIMATION = 'practice-slime-hop';
 
 export class WorldScene extends Phaser.Scene {
   private player!: Phaser.Physics.Arcade.Sprite;
@@ -96,7 +97,7 @@ export class WorldScene extends Phaser.Scene {
     }
 
     this.targets = this.makeTargets(objectLayer?.objects ?? []);
-    this.createPracticeSlimeAnimation();
+    this.createPracticeSlimeAnimations();
     this.drawTargetMarkers();
 
     this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
@@ -194,14 +195,39 @@ export class WorldScene extends Phaser.Scene {
     }
   }
 
-  private createPracticeSlimeAnimation(): void {
-    if (this.anims.exists(PRACTICE_SLIME_IDLE_ANIMATION)) return;
+  private createPracticeSlimeAnimations(): void {
+    if (!this.anims.exists(PRACTICE_SLIME_IDLE_ANIMATION)) {
+      this.anims.create({
+        key: PRACTICE_SLIME_IDLE_ANIMATION,
+        frames: this.anims.generateFrameNumbers(PRACTICE_SLIME_TEXTURE_KEY, { start: 0, end: 3 }),
+        frameRate: 3,
+        repeat: -1
+      });
+    }
 
-    this.anims.create({
-      key: PRACTICE_SLIME_IDLE_ANIMATION,
-      frames: this.anims.generateFrameNumbers(PRACTICE_SLIME_TEXTURE_KEY, { start: 0, end: 3 }),
-      frameRate: 3,
-      repeat: -1
+    if (!this.anims.exists(PRACTICE_SLIME_HOP_ANIMATION)) {
+      this.anims.create({
+        key: PRACTICE_SLIME_HOP_ANIMATION,
+        frames: this.anims.generateFrameNumbers(PRACTICE_SLIME_TEXTURE_KEY, { start: 6, end: 11 }),
+        frameRate: 10,
+        repeat: 0
+      });
+    }
+  }
+
+  private playPracticeSlimeFeedback(kind: 'hop' | 'poof', onComplete?: () => void): void {
+    const sprite = this.practiceSlimeSprite;
+    if (!sprite || kind !== 'hop') {
+      onComplete?.();
+      return;
+    }
+
+    sprite.play(PRACTICE_SLIME_HOP_ANIMATION);
+    sprite.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+      if (sprite.active) {
+        sprite.play(PRACTICE_SLIME_IDLE_ANIMATION);
+      }
+      onComplete?.();
     });
   }
 
@@ -393,12 +419,17 @@ export class WorldScene extends Phaser.Scene {
     }
 
     if (target.label === MIRA_FIRST_ERRAND.targets.practiceSlime) {
-      this.openBonusPrompt(target.kind, target.label, () => {
-        if (this.firstQuestStep === MIRA_FIRST_ERRAND.steps.findSlime) {
-          this.setFirstQuestStep(MIRA_FIRST_ERRAND.steps.returnToMira);
-          return MIRA_FIRST_ERRAND.progress.slimeComplete;
-        }
-        return undefined;
+      this.busy = true;
+      this.resetJoystick();
+      this.player.setVelocity(0, 0);
+      this.playPracticeSlimeFeedback('hop', () => {
+        this.openBonusPrompt(target.kind, target.label, () => {
+          if (this.firstQuestStep === MIRA_FIRST_ERRAND.steps.findSlime) {
+            this.setFirstQuestStep(MIRA_FIRST_ERRAND.steps.returnToMira);
+            return MIRA_FIRST_ERRAND.progress.slimeComplete;
+          }
+          return undefined;
+        });
       });
       return;
     }
