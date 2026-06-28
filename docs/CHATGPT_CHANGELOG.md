@@ -379,13 +379,15 @@ This file records repository changes made through ChatGPT so future work can see
   - Added no new dependencies.
 - Reason: The Grade 2 Mage profile is defined as audio-first, but the prompt UI previously required reading the question and choices.
 
-## 2026-06-27 - Jules via Google Jules
+## 2026-06-27 - Jules via Google Jules, cleaned after branch-contamination recovery
 
-- Branch: `fix/save-system-catch`
+- Branch: `fix-empty-catch-savesystem-11470811441622972167`
 - Files changed:
   - `src/systems/SaveSystem.ts`
-- Summary: Improved code health by logging errors caught in the save system.
+  - `docs/CHATGPT_CHANGELOG.md`
+- Summary: Logged SaveSystem load/save failures as warnings while preserving non-interrupting save behavior.
 - Implementation notes:
-  - Changed empty `catch {` blocks in `SaveSystem.load` and `SaveSystem.save` to `catch (error) {`.
-  - Added `console.warn` logs to output the error while retaining the original behavior of not crashing or interrupting gameplay.
-- Reason: Empty catch blocks can silently swallow important errors, making debugging difficult. Logging improves maintainability without changing gameplay.
+  - Changed empty save/load catch blocks to catch (error).
+  - Used console.warn, not console.error.
+  - Preserved failed-load return value and failed-save non-blocking behavior.
+- Reason: Avoid silently swallowed localStorage/save errors without turning save failures into gameplay blockers.

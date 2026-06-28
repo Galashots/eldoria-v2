@@ -28,7 +28,7 @@ export class SaveSystem {
       const parsed = JSON.parse(raw) as SaveState;
       return parsed.version === 1 ? parsed : null;
     } catch (error) {
-      console.warn('Failed to load save:', error);
+      console.warn('Failed to load game state:', error);
       return null;
     }
   }
@@ -37,8 +37,8 @@ export class SaveSystem {
     try {
       localStorage.setItem(SAVE_PREFIX + state.profileId, JSON.stringify(state));
     } catch (error) {
-      console.warn('Failed to save game:', error);
       // Save failure should never interrupt gameplay.
+      console.warn('Failed to save game state:', error);
     }
   }
 }
