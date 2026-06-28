@@ -4,6 +4,22 @@ This file records repository changes made through ChatGPT so future work can see
 
 ## 2026-06-28 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
+- Branch: `codex/grade2-mage-hero-walk-asset`
+- Files changed:
+  - `assets/manifests/char_mage_boy_base_walk_v001.manifest.json`
+  - `assets/source/generated/char_mage_boy_base_walk_v001/source_sheet.png`
+  - `assets/sprites/char_mage_boy_base_walk_v001.png`
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `docs/CURRENT_STATE.md`
+- Summary: Added a matching four-direction, six-frame Grade 2 Mage walk asset without runtime wiring.
+- Implementation notes:
+  - Used the approved idle source as the identity reference for one strict `6x4` walk source sheet.
+  - Converted the flat chroma background to true alpha locally, then normalized the sheet to an exact `192x192` PNG with `32x48` bottom-centered cells.
+  - Kept the runtime, movement, controls, collisions, saves, quests, learning, and Grade 5 profile unchanged.
+- Reason: Establish production movement art as a separately reviewable asset before changing the live player animation state machine.
+
+## 2026-06-28 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
 - Branch: `codex/display-grade2-mage-hero-idle`
 - Files changed:
   - `docs/CHATGPT_CHANGELOG.md`
