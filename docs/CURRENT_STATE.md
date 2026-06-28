@@ -1,6 +1,6 @@
 # Eldoria-V2 Current State
 
-Last refreshed on 2026-06-27. This file records volatile project status; `AGENTS.md` remains the durable operating contract.
+Last refreshed on 2026-06-28. This file records volatile project status; `AGENTS.md` remains the durable operating contract.
 
 ## Playable Vertical Slice
 
@@ -12,6 +12,7 @@ Last refreshed on 2026-06-27. This file records volatile project status; `AGENTS
 - Floating gold/item feedback, primitive sparkle bursts, and per-skill mastery records.
 - Contextual Grade 2/Grade 5 templates and development/E2E-only deterministic prompt preview.
 - Four Playwright vertical-slice smoke tests covering both profiles, quest/save behavior, mastery, templates, and preview side-effect safety.
+- Crop Bonus and Practice Slime interactions now provide short, readable visual feedback before their unchanged optional prompts open.
 
 ## Visual And Asset State
 
@@ -23,7 +24,7 @@ Last refreshed on 2026-06-27. This file records volatile project status; `AGENTS
 
 ## Active Milestone
 
-Practice Slime interaction animation feedback is complete. The production sprite briefly hops when its existing optional prompt opens, then returns to idle while interaction, quest, learning, save, combat, and AI behavior remain unchanged.
+Starter-errand interaction feedback is complete. Crop Bonus gives a brief primitive pulse/rustle, and Practice Slime briefly hops before their existing optional prompts open. Both preserve quest, learning, save, combat, farming, and AI behavior.
 
 ## Next Checkpoint
 

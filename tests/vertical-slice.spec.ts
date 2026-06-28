@@ -150,6 +150,17 @@ async function slimePresentation(page: Page): Promise<SlimePresentation> {
   });
 }
 
+async function cropFeedbackVisible(page: Page): Promise<boolean> {
+  return page.evaluate(() => {
+    const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
+      children: { getByName: (name: string) => { active: boolean; visible: boolean } | null };
+    };
+
+    const feedback = scene.children.getByName('crop-bonus-feedback');
+    return feedback?.active === true && feedback.visible === true;
+  });
+}
+
 async function holdKey(page: Page, key: string, ms = 300): Promise<void> {
   await page.keyboard.down(key);
   await page.waitForTimeout(ms);
@@ -393,8 +404,10 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   await expect.poll(async () => (await state(page)).questStep).toBe('try-crop-bonus');
   await expect.poll(async () => (await state(page)).objective).toContain('crop patch');
 
-  await openQuestPrompt(page, 'farm', 'CropBonus', 'find-slime', 'Objective updated: find the Practice Slime.');
+  expect(await interactAt(page, 240, 416)).toContain('CropBonus');
+  await expect.poll(async () => cropFeedbackVisible(page)).toBe(true);
   await expect.poll(async () => hasCanvasText(page, 'READ ALOUD')).toBe(true);
+  await expect.poll(async () => cropFeedbackVisible(page)).toBe(false);
   await skipOpenPrompt(page);
   await expect.poll(async () => (await state(page)).questStep).toBe('find-slime');
   await expect.poll(async () => masteryTotal(page, 'skipped')).toBe(1);

@@ -4,6 +4,22 @@ This file records repository changes made through ChatGPT so future work can see
 
 ## 2026-06-28 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
+- Branch: `codex/crop-bonus-interaction-feedback`
+- Files changed:
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `docs/CURRENT_STATE.md`
+  - `src/scenes/WorldScene.ts`
+  - `tests/vertical-slice.spec.ts`
+- Summary: Added lightweight Crop Bonus interaction feedback before its existing optional prompt.
+- Implementation notes:
+  - Added a short primitive pulse and four leaf-like motes at the unchanged Crop Bonus target coordinate.
+  - Held input only for the visual beat, then opened the existing prompt and preserved its original quest callback.
+  - Updated the Grade 2 smoke flow to exercise the real crop interaction and verify feedback appears, clears, and leaves read-aloud and quest progression intact.
+  - Added no assets, maps, farming systems, inventory, timers, curriculum, mastery, save, combat, AI, or reward changes.
+- Reason: Give both interactions in Mira's starter errand a responsive RPG presentation without expanding gameplay scope.
+
+## 2026-06-28 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
 - Branch: `codex/practice-slime-animation-feedback`
 - Files changed:
   - `docs/CHATGPT_CHANGELOG.md`
