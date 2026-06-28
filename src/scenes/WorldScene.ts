@@ -33,6 +33,7 @@ type PromptCloseHandler = (result: PromptCloseResult) => string | undefined;
 const PRACTICE_SLIME_TEXTURE_KEY = 'practice-slime-v001';
 const PRACTICE_SLIME_IDLE_ANIMATION = 'practice-slime-idle';
 const PRACTICE_SLIME_HOP_ANIMATION = 'practice-slime-hop';
+const CROP_BONUS_FEEDBACK_NAME = 'crop-bonus-feedback';
 
 export class WorldScene extends Phaser.Scene {
   private player!: Phaser.Physics.Arcade.Sprite;
@@ -231,6 +232,49 @@ export class WorldScene extends Phaser.Scene {
     });
   }
 
+  private playCropBonusFeedback(target: InteractionTarget, onComplete: () => void): void {
+    const centerY = target.y - 12;
+    const pulse = this.add.circle(target.x, centerY, 8, 0x8fd14f, 0.08)
+      .setName(CROP_BONUS_FEEDBACK_NAME)
+      .setStrokeStyle(2, 0xd7ff8f, 0.95)
+      .setDepth(3);
+
+    for (let index = 0; index < 4; index += 1) {
+      const direction = index % 2 === 0 ? -1 : 1;
+      const leaf = this.add.ellipse(
+        target.x + direction * (4 + index * 2),
+        centerY + 2,
+        5,
+        3,
+        index < 2 ? 0x8fd14f : 0xffd666,
+        0.95
+      ).setDepth(3).setAngle(direction * 22);
+
+      this.tweens.add({
+        targets: leaf,
+        x: leaf.x + direction * (8 + index * 2),
+        y: leaf.y - 12 - index * 2,
+        angle: leaf.angle + direction * 55,
+        alpha: 0,
+        duration: 420 + index * 20,
+        ease: 'Sine.easeOut',
+        onComplete: () => leaf.destroy()
+      });
+    }
+
+    this.tweens.add({
+      targets: pulse,
+      scale: 2.4,
+      alpha: 0,
+      duration: 480,
+      ease: 'Sine.easeOut',
+      onComplete: () => {
+        pulse.destroy();
+        onComplete();
+      }
+    });
+  }
+
   private createHud(): void {
     this.add.rectangle(GAME_WIDTH / 2, 14, GAME_WIDTH - 20, 24, 0x2a1a08, 0.9)
       .setScrollFactor(0)
@@ -408,12 +452,17 @@ export class WorldScene extends Phaser.Scene {
     }
 
     if (target.label === MIRA_FIRST_ERRAND.targets.cropBonus) {
-      this.openBonusPrompt(target.kind, target.label, () => {
-        if (this.firstQuestStep === MIRA_FIRST_ERRAND.steps.tryCropBonus) {
-          this.setFirstQuestStep(MIRA_FIRST_ERRAND.steps.findSlime);
-          return MIRA_FIRST_ERRAND.progress.cropComplete;
-        }
-        return undefined;
+      this.busy = true;
+      this.resetJoystick();
+      this.player.setVelocity(0, 0);
+      this.playCropBonusFeedback(target, () => {
+        this.openBonusPrompt(target.kind, target.label, () => {
+          if (this.firstQuestStep === MIRA_FIRST_ERRAND.steps.tryCropBonus) {
+            this.setFirstQuestStep(MIRA_FIRST_ERRAND.steps.findSlime);
+            return MIRA_FIRST_ERRAND.progress.cropComplete;
+          }
+          return undefined;
+        });
       });
       return;
     }
