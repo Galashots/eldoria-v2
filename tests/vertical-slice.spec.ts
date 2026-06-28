@@ -215,10 +215,23 @@ async function cropFeedbackVisible(page: Page): Promise<boolean> {
   });
 }
 
-async function holdKey(page: Page, key: string, ms = 300): Promise<void> {
+async function moveGrade2Hero(
+  page: Page,
+  key: string,
+  facing: 'front' | 'back' | 'left' | 'right',
+  ms = 300
+): Promise<void> {
   await page.keyboard.down(key);
+  await expect.poll(async () => {
+    const hero = await heroPresentation(page);
+    return [hero.animation, hero.texture];
+  }).toEqual([`grade2-mage-walk-${facing}`, 'grade2-mage-walk-v001']);
   await page.waitForTimeout(ms);
   await page.keyboard.up(key);
+  await expect.poll(async () => {
+    const hero = await heroPresentation(page);
+    return [hero.animation, hero.texture];
+  }).toEqual([`grade2-mage-idle-${facing}`, 'grade2-mage-idle-v001']);
 }
 
 async function setPlayer(page: Page, x: number, y: number): Promise<GameState> {
@@ -454,18 +467,14 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   expect(Number(slime.frame)).toBeLessThanOrEqual(3);
 
   const start = (await state(page)).player;
-  await holdKey(page, 'KeyD');
+  await moveGrade2Hero(page, 'KeyD', 'right');
   expect((await state(page)).player.x).toBeGreaterThan(start.x);
-  expect((await heroPresentation(page)).animation).toBe('grade2-mage-idle-right');
-  await holdKey(page, 'KeyA');
+  await moveGrade2Hero(page, 'KeyA', 'left');
   expect((await state(page)).player.x).toBeLessThan(start.x + 20);
-  expect((await heroPresentation(page)).animation).toBe('grade2-mage-idle-left');
-  await holdKey(page, 'KeyS');
+  await moveGrade2Hero(page, 'KeyS', 'front');
   expect((await state(page)).player.y).toBeGreaterThan(start.y);
-  expect((await heroPresentation(page)).animation).toBe('grade2-mage-idle-front');
-  await holdKey(page, 'KeyW');
+  await moveGrade2Hero(page, 'KeyW', 'back');
   expect((await state(page)).player.y).toBeLessThan(start.y + 20);
-  expect((await heroPresentation(page)).animation).toBe('grade2-mage-idle-back');
 
   await setPlayer(page, 416, 256);
   await expect.poll(async () => (await state(page)).hint).toContain('Mira');
