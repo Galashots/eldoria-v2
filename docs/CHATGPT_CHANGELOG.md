@@ -4,6 +4,23 @@ This file records repository changes made through ChatGPT so future work can see
 
 ## 2026-06-28 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
+- Branch: `codex/display-grade2-mage-hero-walk`
+- Files changed:
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `docs/CURRENT_STATE.md`
+  - `src/scenes/PreloadScene.ts`
+  - `src/scenes/WorldScene.ts`
+  - `tests/vertical-slice.spec.ts`
+- Summary: Added directional Grade 2 Mage walk animation during existing movement input.
+- Implementation notes:
+  - Preloaded the committed walk sheet and registered guarded six-frame front, back, left, and right loops.
+  - Switched the existing presentation sprite to walk while keyboard or joystick movement is active and back to the matching idle loop on release or busy state.
+  - Preserved the invisible physics actor, speed, collision, camera, interaction distance, save coordinates, and Grade 5 presentation.
+  - Added smoke coverage for walk-sheet transitions in all four directions and verified mid-stride desktop/mobile captures.
+- Reason: Replace the Grade 2 hero's sliding idle presentation with readable movement animation without changing gameplay mechanics.
+
+## 2026-06-28 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
 - Branch: `codex/grade2-mage-hero-walk-asset`
 - Files changed:
   - `assets/manifests/char_mage_boy_base_walk_v001.manifest.json`

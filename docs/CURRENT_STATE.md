@@ -21,17 +21,17 @@ Last refreshed on 2026-06-28. This file records volatile project status; `AGENTS
 - Practice Slime v001 source and normalized `192x128` runtime sheet are committed.
 - Practice Slime v001 is preloaded, displayed at its Tiled interaction coordinates, plays its four-frame idle loop, and gives short hop feedback when interacted with.
 - Grade 2 Mage hero idle v001 is preloaded and displayed for the Grade 2 profile with four directional idle loops from its normalized `32x48` cells.
-- Grade 2 Mage walk v001 has an asset-only four-direction, six-frame source/runtime sheet; it is not loaded in Phaser yet.
+- Grade 2 Mage walk v001 is preloaded and plays six-frame directional loops while keyboard or joystick movement is active, returning to the matching idle loop on release.
 - Grade 5 continues to use the existing adventurer placeholder; its presentation is unchanged.
 - Walk, cast, hurt, equipment, farm/village, crop, building, and UI production art remain target specifications only.
 
 ## Active Milestone
 
-Starter-errand interaction feedback is complete. The Grade 2 profile displays production-direction Mage idle art, and a matching walk sheet is ready for a separate runtime-integration pass.
+Starter-errand interaction feedback is complete. The Grade 2 profile now has production-direction idle and walk presentation while retaining the unchanged physics actor beneath it.
 
 ## Next Checkpoint
 
-Audit and integrate the Mage walk sheet if its motion remains clear in-engine, then decide whether the next visual target is cast/hurt animation, Mira, or farm-village art.
+Choose the next focused visual target: Mage cast/hurt animation, a production Mira NPC, or farm-village environment art. Keep generation and runtime integration in separate PRs.
 
 ## Routine Merge Policy
 
