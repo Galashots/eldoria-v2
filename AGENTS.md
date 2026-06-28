@@ -119,6 +119,16 @@ For each task:
 9. Record meaningful repository changes in `docs/CHATGPT_CHANGELOG.md`.
 10. Update `docs/CURRENT_STATE.md` when a merge changes the active milestone, current capabilities, or next planned step.
 
+## Jules and automated review
+
+Follow [`docs/AI_COLLABORATION_WORKFLOW.md`](docs/AI_COLLABORATION_WORKFLOW.md) when work is delegated to Jules or reviewed by Gemini.
+
+- Give Jules one approved, narrowly scoped task based on latest `main`.
+- Review the Jules plan before execution; Jules may publish a draft PR but must not merge it.
+- Do not ask Jules for broad cleanup, open-ended optimization, or unrelated audit fixes.
+- Use `Jules via Google, coordinated by Codex` for Jules changelog entries.
+- Treat Gemini as an advisory reviewer. Codex owns finding triage, verification, and merge judgment.
+
 ## Changelog rule
 
 Every meaningful repo change must include an entry in:

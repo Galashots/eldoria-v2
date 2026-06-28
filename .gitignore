@@ -7,3 +7,5 @@ dist/
 playwright-report/
 test-results/
 .tmp/
+.gemini/
+gha-creds-*.json

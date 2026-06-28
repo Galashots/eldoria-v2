@@ -1,0 +1,99 @@
+name: Gemini Pull Request Review
+
+on:
+  workflow_call:
+    inputs:
+      additional_context:
+        type: string
+        required: false
+        default: ''
+
+concurrency:
+  group: gemini-review-${{ github.event.pull_request.number || github.event.issue.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+        with:
+          persist-credentials: false
+
+      - name: Prepare Eldoria review context
+        env:
+          REPOSITORY: ${{ github.repository }}
+          PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
+          ADDITIONAL_CONTEXT: ${{ inputs.additional_context }}
+          PROJECT_CONTEXT: >-
+            Eldoria-V2 is a Phaser, Vite, TypeScript, and Tiled fantasy-learning RPG.
+            Learning must never gate adventure; wrong answers and skipped prompts cannot block progress.
+            Protect the Grade 2 audio-first experience, Grade 5 reader-mode experience, read-aloud support,
+            save compatibility, current controls, quest loop, and existing smoke coverage. Review for concrete
+            correctness, security, regression, test, and scope problems. Treat unrelated refactors and feature
+            expansion as scope risks. AGENTS.md and docs/CURRENT_STATE.md are the repository authorities.
+        run: |
+          mkdir -p .gemini
+          jq -n \
+            --arg repo "$REPOSITORY" \
+            --arg pr "$PULL_REQUEST_NUMBER" \
+            --arg project "$PROJECT_CONTEXT" \
+            --arg requested "$ADDITIONAL_CONTEXT" \
+            '{repository: $repo, pull_request_number: $pr, additional_context: ($project + " " + $requested)}' \
+            > .gemini/context.json
+
+      - name: Run Gemini pull request review
+        id: gemini_review
+        uses: google-github-actions/run-gemini-cli@f77273f4c914e4bf38440cf36a0369cb64a37489 # v0.1.22
+        env:
+          GEMINI_CLI_TRUST_WORKSPACE: 'true'
+          GITHUB_TOKEN: ${{ github.token }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        with:
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          github_pr_number: ${{ github.event.pull_request.number || github.event.issue.number }}
+          upload_artifacts: 'false'
+          workflow_name: gemini-review
+          settings: |-
+            {
+              "model": {
+                "maxSessionTurns": 25
+              },
+              "telemetry": {
+                "enabled": false
+              },
+              "mcpServers": {
+                "github": {
+                  "command": "docker",
+                  "args": [
+                    "run",
+                    "-i",
+                    "--rm",
+                    "-e",
+                    "GITHUB_PERSONAL_ACCESS_TOKEN",
+                    "ghcr.io/github/github-mcp-server:v0.27.0"
+                  ],
+                  "includeTools": [
+                    "add_comment_to_pending_review",
+                    "pull_request_read",
+                    "pull_request_review_write"
+                  ],
+                  "env": {
+                    "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+                  }
+                }
+              },
+              "tools": {
+                "core": []
+              }
+            }
+          extensions: |-
+            [
+              "https://github.com/gemini-cli-extensions/code-review"
+            ]
+          prompt: /pr-code-review

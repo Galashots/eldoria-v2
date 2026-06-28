@@ -1,0 +1,53 @@
+name: Gemini Review Dispatch
+
+on:
+  pull_request:
+    types: [opened, reopened]
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  pull_request_review:
+    types: [submitted]
+
+permissions: {}
+
+jobs:
+  dispatch:
+    if: >-
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.head.repo.fork == false) ||
+      (github.event.sender.type == 'User' &&
+       startsWith(github.event.comment.body || github.event.review.body || '', '@gemini-cli /review') &&
+       contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'),
+         github.event.comment.author_association || github.event.review.author_association) &&
+       (github.event_name != 'issue_comment' || github.event.issue.pull_request))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      command: ${{ steps.command.outputs.command }}
+      additional_context: ${{ steps.command.outputs.additional_context }}
+    steps:
+      - name: Extract review command
+        id: command
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        env:
+          REQUEST: ${{ github.event.comment.body || github.event.review.body || '' }}
+        with:
+          script: |
+            const request = process.env.REQUEST || '';
+            const automatic = context.eventName === 'pull_request';
+            core.setOutput('command', automatic || request.startsWith('@gemini-cli /review') ? 'review' : 'ignore');
+            core.setOutput('additional_context', request.replace(/^@gemini-cli \/review/, '').trim());
+
+  review:
+    needs: dispatch
+    if: needs.dispatch.outputs.command == 'review'
+    uses: ./.github/workflows/gemini-review.yml
+    permissions:
+      contents: read
+      pull-requests: write
+    with:
+      additional_context: ${{ needs.dispatch.outputs.additional_context }}
+    secrets: inherit

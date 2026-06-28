@@ -4,6 +4,24 @@ This file records repository changes made through ChatGPT so future work can see
 
 ## 2026-06-27 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
+- Branch: `codex/jules-gemini-collaboration`
+- Files changed:
+  - `.github/workflows/gemini-dispatch.yml`
+  - `.github/workflows/gemini-review.yml`
+  - `.gitignore`
+  - `AGENTS.md`
+  - `docs/AI_COLLABORATION_WORKFLOW.md`
+  - `docs/CHATGPT_CHANGELOG.md`
+- Summary: Added a controlled Jules implementation workflow and an automatic advisory Gemini pull-request reviewer.
+- Implementation notes:
+  - Defined Codex as task dispatcher and merge gate, Jules as a single-scope implementer, and Gemini as an independent advisory reviewer.
+  - Added same-repository automatic review on PR open or reopen plus owner/collaborator-triggered re-review with `@gemini-cli /review`.
+  - Pinned the official Gemini CLI action, limited GitHub permissions, disabled telemetry and artifact upload, and excluded code-execution tools.
+  - Documented Jules probation, prompt structure, review triage, changelog identity, and API-key handling.
+- Reason: Increase implementation throughput while preserving Eldoria's product rules, test discipline, and small-PR boundaries.
+
+## 2026-06-27 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
 - Branch: `codex/display-practice-slime`
 - Files changed:
   - `docs/CHATGPT_CHANGELOG.md`
