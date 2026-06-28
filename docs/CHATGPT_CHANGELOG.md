@@ -4,6 +4,23 @@ This file records repository changes made through ChatGPT so future work can see
 
 ## 2026-06-28 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
+- Branch: `codex/grade2-mage-hero-idle-asset`
+- Files changed:
+  - `assets/manifests/char_mage_boy_base_idle_v001.manifest.json`
+  - `assets/source/generated/char_mage_boy_base_idle_v001/source_sheet.png`
+  - `assets/sprites/char_mage_boy_base_idle_v001.png`
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `docs/CURRENT_STATE.md`
+- Summary: Added the first asset-only Grade 2 Mage hero idle sheet for all four production directions.
+- Implementation notes:
+  - Generated one strict `4x4` source sheet with front, back, left, and right rows and four subtle idle phases per direction, then converted its flat chroma field to true alpha with local soft-matte cleanup.
+  - Normalized the source through the existing manifest pipeline into an exact `128x192` RGBA runtime PNG with `32x48` cells and bottom-center anchoring.
+  - Kept the asset out of Phaser so player presentation, controls, collision, saves, quests, learning, and gameplay remain unchanged.
+  - This is the idle foundation only; walk, cast, hurt, equipment overlays, and runtime integration remain separate work.
+- Reason: Establish a consistent, Grade 2-readable hero identity and directional baseline before producing synchronized animation and equipment layers.
+
+## 2026-06-28 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
 - Branch: `codex/crop-bonus-interaction-feedback`
 - Files changed:
   - `docs/CHATGPT_CHANGELOG.md`
