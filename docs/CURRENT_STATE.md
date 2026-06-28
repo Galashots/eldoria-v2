@@ -20,15 +20,16 @@ Last refreshed on 2026-06-28. This file records volatile project status; `AGENTS
 - Manifest-driven PNG normalization and validation pipeline with alpha, color-key, and edge-flood cleanup.
 - Practice Slime v001 source and normalized `192x128` runtime sheet are committed.
 - Practice Slime v001 is preloaded, displayed at its Tiled interaction coordinates, plays its four-frame idle loop, and gives short hop feedback when interacted with.
-- Hero, equipment, farm/village, crop, building, and UI production art remain target specifications only.
+- Grade 2 Mage hero idle v001 has an asset-only four-direction source sheet and normalized `128x192` runtime sheet with `32x48` cells; it is not loaded in Phaser yet.
+- Walk, cast, hurt, equipment, farm/village, crop, building, and UI production art remain target specifications only.
 
 ## Active Milestone
 
-Starter-errand interaction feedback is complete. Crop Bonus gives a brief primitive pulse/rustle, and Practice Slime briefly hops before their existing optional prompts open. Both preserve quest, learning, save, combat, farming, and AI behavior.
+Starter-errand interaction feedback is complete. The first Grade 2 Mage hero art pass now establishes four aligned idle directions without changing the displayed player or runtime behavior.
 
 ## Next Checkpoint
 
-Return to ChatGPT before starting another implementation milestone. Decide there whether the next milestone is animation feedback, combat design, farming, or broader visual replacement. Do not begin combat, AI, rewards, curriculum expansion, or additional asset generation before that checkpoint.
+Audit the hero idle sheet at game scale before deciding whether to integrate it or extend the same identity into walk, cast, and hurt sheets. Keep asset production and runtime integration in separate PRs.
 
 ## Routine Merge Policy
 
