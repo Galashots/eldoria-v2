@@ -1,7 +1,6 @@
 import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../gameConfig';
 import { DEFAULT_PROFILE, PROFILES, type ProfileId } from '../data/profiles';
-import { UI_TEXT } from '../data/i18n';
 
 export class TitleScene extends Phaser.Scene {
   private selectedProfile: ProfileId = DEFAULT_PROFILE;
@@ -13,7 +12,7 @@ export class TitleScene extends Phaser.Scene {
   create(): void {
     this.cameras.main.setBackgroundColor('#1a1208');
 
-    this.add.text(GAME_WIDTH / 2, 44, UI_TEXT.title.gameName, {
+    this.add.text(GAME_WIDTH / 2, 44, 'Realm of Eldoria v2', {
       fontFamily: 'system-ui',
       fontSize: '24px',
       color: '#ffd666',
@@ -21,7 +20,7 @@ export class TitleScene extends Phaser.Scene {
       strokeThickness: 4
     }).setOrigin(0.5);
 
-    this.add.text(GAME_WIDTH / 2, 76, UI_TEXT.title.northStar, {
+    this.add.text(GAME_WIDTH / 2, 76, 'Learning gives bonuses. Adventure never gets gated.', {
       fontFamily: 'system-ui',
       fontSize: '12px',
       color: '#f5e6c8',
@@ -31,7 +30,7 @@ export class TitleScene extends Phaser.Scene {
     this.addProfileButton(116, 'grade2-mage');
     this.addProfileButton(184, 'grade5-adventurer');
 
-    this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 34, UI_TEXT.title.startPrompt, {
+    this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 34, 'Tap a hero to start', {
       fontFamily: 'system-ui',
       fontSize: '13px',
       color: '#c9a66b'
