@@ -4,7 +4,7 @@ This file records repository changes made through ChatGPT so future work can see
 
 ## 2026-06-28 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
-- Branch: `codex/display-grade2-mage-hero-walk`
+- Branch: `codex/integrate-grade2-mage-walk`
 - Files changed:
   - `docs/CHATGPT_CHANGELOG.md`
   - `docs/CURRENT_STATE.md`

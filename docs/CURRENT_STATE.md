@@ -23,7 +23,7 @@ Last refreshed on 2026-06-28. This file records volatile project status; `AGENTS
 - Grade 2 Mage hero idle v001 is preloaded and displayed for the Grade 2 profile with four directional idle loops from its normalized `32x48` cells.
 - Grade 2 Mage walk v001 is preloaded and plays six-frame directional loops while keyboard or joystick movement is active, returning to the matching idle loop on release.
 - Grade 5 continues to use the existing adventurer placeholder; its presentation is unchanged.
-- Walk, cast, hurt, equipment, farm/village, crop, building, and UI production art remain target specifications only.
+- Cast, hurt, equipment, farm/village, crop, building, and UI production art remain target specifications only; Grade 2 Mage idle and walk runtime presentation are integrated.
 
 ## Active Milestone
 
@@ -31,7 +31,7 @@ Starter-errand interaction feedback is complete. The Grade 2 profile now has pro
 
 ## Next Checkpoint
 
-Choose the next focused visual target: Mage cast/hurt animation, a production Mira NPC, or farm-village environment art. Keep generation and runtime integration in separate PRs.
+After this integration is audited, select and scope one subsequent visual target in a separate PR.
 
 ## Routine Merge Policy
 
