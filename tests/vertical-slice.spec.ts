@@ -40,6 +40,8 @@ type SlimePresentation = {
   displayHeight: number;
   displayWidth: number;
   frame: string | number;
+  idleAnimationExists: boolean;
+  hopAnimationExists: boolean;
   originX: number;
   originY: number;
   texture: string;
@@ -114,6 +116,7 @@ async function masteryTotal(page: Page, field: 'seen' | 'attempted' | 'skipped')
 async function slimePresentation(page: Page): Promise<SlimePresentation> {
   return page.evaluate(() => {
     const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
+      anims: { exists: (key: string) => boolean };
       practiceSlimeSprite?: {
         anims: { currentAnim?: { key: string } };
         displayHeight: number;
@@ -135,6 +138,8 @@ async function slimePresentation(page: Page): Promise<SlimePresentation> {
       displayHeight: sprite.displayHeight,
       displayWidth: sprite.displayWidth,
       frame: sprite.frame.name,
+      idleAnimationExists: scene.anims.exists('practice-slime-idle'),
+      hopAnimationExists: scene.anims.exists('practice-slime-hop'),
       originX: sprite.originX,
       originY: sprite.originY,
       texture: sprite.texture.key,
@@ -360,6 +365,8 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
     animation: 'practice-slime-idle',
     displayHeight: 32,
     displayWidth: 32,
+    hopAnimationExists: true,
+    idleAnimationExists: true,
     originX: 0.5,
     originY: 1,
     texture: 'practice-slime-v001',
@@ -393,8 +400,10 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   await expect.poll(async () => masteryTotal(page, 'skipped')).toBe(1);
 
   expect(await interactAt(page, 704, 320)).toContain('Practice Slime');
+  await expect.poll(async () => (await slimePresentation(page)).animation).toBe('practice-slime-hop');
   await expect.poll(async () => hasCanvasText(page, 'READ ALOUD')).toBe(true);
   await skipOpenPrompt(page);
+  await expect.poll(async () => (await slimePresentation(page)).animation).toBe('practice-slime-idle');
   await expect.poll(async () => (await state(page)).questStep).toBe('return-to-mira');
   await expect.poll(async () => (await state(page)).gold).toBe(0);
   await expect.poll(async () => masteryTotal(page, 'skipped')).toBe(2);

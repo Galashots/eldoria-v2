@@ -2,6 +2,22 @@
 
 This file records repository changes made through ChatGPT so future work can see what changed, who made it, and when.
 
+## 2026-06-28 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
+- Branch: `codex/practice-slime-animation-feedback`
+- Files changed:
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `docs/CURRENT_STATE.md`
+  - `src/scenes/WorldScene.ts`
+  - `tests/vertical-slice.spec.ts`
+- Summary: Added short Practice Slime hop feedback to its existing optional-prompt interaction.
+- Implementation notes:
+  - Added a guarded six-frame hop animation using the committed runtime sheet and a one-shot completion listener that restores idle.
+  - Triggered feedback only from the existing Practice Slime interaction path and opened the unchanged prompt after the hop so the creature remains visible during feedback.
+  - Extended smoke coverage to verify the texture, idle and hop registrations, interaction transition, and return to idle.
+  - Preserved prompt behavior, quest progression, mastery, saves, rewards, controls, combat state, and AI behavior.
+- Reason: Give the first production creature a more responsive RPG interaction moment without expanding gameplay scope.
+
 ## 2026-06-27 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
 - Branch: `codex/display-practice-slime`
