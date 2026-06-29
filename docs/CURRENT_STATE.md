@@ -1,6 +1,6 @@
 # Eldoria-V2 Current State
 
-Last refreshed on 2026-06-28. This file records volatile project status; `AGENTS.md` remains the durable operating contract.
+Last refreshed on 2026-06-29. This file records volatile project status; `AGENTS.md` remains the durable operating contract.
 
 ## Playable Vertical Slice
 
@@ -24,16 +24,17 @@ Last refreshed on 2026-06-28. This file records volatile project status; `AGENTS
 - Grade 2 Mage walk v001 is preloaded and plays six-frame directional loops while keyboard or joystick movement is active, returning to the matching idle loop on release.
 - Grade 2 Mage cast v001 is preloaded and plays a brief directional presentation-only clip when ACTION is pressed away from interaction targets, returning to matching walk or idle.
 - Grade 2 Mage hurt v001 is preloaded and can be triggered only from a development/test-safe path as a brief directional presentation-only clip that preserves movement underneath, cancels cast cleanly, and recovers to matching walk or idle with no combat, damage, reward, quest, or save effects.
+- Grade 5 Adventurer production actor target specs are defined as target-only docs/JSON; no Grade 5 art or runtime integration is included yet.
 - Grade 5 continues to use the existing adventurer placeholder; its presentation is unchanged.
 - Equipment, farm/village, crop, building, and UI production art remain target specifications only; Grade 2 Mage idle, walk, cast, and hurt runtime presentation are integrated.
 
 ## Active Milestone
 
-Starter-errand interaction feedback is complete. Grade 2 Mage idle, walk, cast, and hurt presentation are live, while Grade 5 remains on the existing placeholder presentation.
+Starter-errand interaction feedback is complete. Grade 2 Mage idle, walk, cast, and hurt presentation are live, and Grade 5 production actor target specs are now defined without changing the placeholder runtime presentation.
 
 ## Next Checkpoint
 
-Define the Grade 5 production actor target specs before any Grade 5 asset-generation or runtime-integration work.
+Generate or source the Grade 5 Adventurer idle asset in a separate asset-only PR before any Grade 5 runtime-integration work.
 
 ## Routine Merge Policy
 
