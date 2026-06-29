@@ -4,6 +4,25 @@ This file records repository changes made through ChatGPT so future work can see
 
 ## 2026-06-28 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
+- Branch: `codex/grade2-mage-cast-hurt-assets`
+- Files changed:
+  - `assets/manifests/char_mage_boy_base_cast_v001.manifest.json`
+  - `assets/source/generated/char_mage_boy_base_cast_v001/source_sheet.png`
+  - `assets/sprites/char_mage_boy_base_cast_v001.png`
+  - `assets/manifests/char_mage_boy_base_hurt_v001.manifest.json`
+  - `assets/source/generated/char_mage_boy_base_hurt_v001/source_sheet.png`
+  - `assets/sprites/char_mage_boy_base_hurt_v001.png`
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `docs/CURRENT_STATE.md`
+- Summary: Added Grade 2 Mage cast and hurt source/runtime assets without runtime wiring.
+- Implementation notes:
+  - Added manifest-driven cast and hurt sheets using the existing Mage identity.
+  - Normalized to exact `32x48` runtime cells.
+  - Kept runtime, controls, collision, quests, learning, saves, rewards, combat, AI, and Grade 5 unchanged.
+- Reason: Extend the production Mage animation set while preserving asset/runtime separation.
+
+## 2026-06-28 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
 - Branch: `codex/integrate-grade2-mage-walk`
 - Files changed:
   - `docs/CHATGPT_CHANGELOG.md`
