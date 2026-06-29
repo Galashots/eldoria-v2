@@ -31,7 +31,7 @@ type PromptCloseResult = {
 type PromptCloseHandler = (result: PromptCloseResult) => string | undefined;
 
 type HeroFacing = 'front' | 'back' | 'left' | 'right';
-type HeroMotion = 'idle' | 'walk';
+type HeroMotion = 'idle' | 'walk' | 'cast';
 
 const PRACTICE_SLIME_TEXTURE_KEY = 'practice-slime-v001';
 const PRACTICE_SLIME_IDLE_ANIMATION = 'practice-slime-idle';
@@ -39,6 +39,7 @@ const PRACTICE_SLIME_HOP_ANIMATION = 'practice-slime-hop';
 const CROP_BONUS_FEEDBACK_NAME = 'crop-bonus-feedback';
 const GRADE2_MAGE_IDLE_TEXTURE_KEY = 'grade2-mage-idle-v001';
 const GRADE2_MAGE_WALK_TEXTURE_KEY = 'grade2-mage-walk-v001';
+const GRADE2_MAGE_CAST_TEXTURE_KEY = 'grade2-mage-cast-v001';
 const GRADE2_MAGE_IDLE_ANIMATIONS: Record<HeroFacing, string> = {
   front: 'grade2-mage-idle-front',
   back: 'grade2-mage-idle-back',
@@ -50,6 +51,12 @@ const GRADE2_MAGE_WALK_ANIMATIONS: Record<HeroFacing, string> = {
   back: 'grade2-mage-walk-back',
   left: 'grade2-mage-walk-left',
   right: 'grade2-mage-walk-right'
+};
+const GRADE2_MAGE_CAST_ANIMATIONS: Record<HeroFacing, string> = {
+  front: 'grade2-mage-cast-front',
+  back: 'grade2-mage-cast-back',
+  left: 'grade2-mage-cast-left',
+  right: 'grade2-mage-cast-right'
 };
 
 export class WorldScene extends Phaser.Scene {
@@ -77,6 +84,7 @@ export class WorldScene extends Phaser.Scene {
   private grade2HeroSprite?: Phaser.GameObjects.Sprite;
   private heroFacing: HeroFacing = 'front';
   private heroMotion: HeroMotion = 'idle';
+  private grade2CastActive = false;
 
   constructor() {
     super('WorldScene');
@@ -88,6 +96,7 @@ export class WorldScene extends Phaser.Scene {
     this.grade2HeroSprite = undefined;
     this.heroFacing = 'front';
     this.heroMotion = 'idle';
+    this.grade2CastActive = false;
   }
 
   create(): void {
@@ -157,6 +166,7 @@ export class WorldScene extends Phaser.Scene {
 
     if (this.busy) {
       this.player.setVelocity(0, 0);
+      this.cancelGrade2Cast();
       this.setGrade2HeroAnimation(this.heroFacing, 'idle');
       return;
     }
@@ -185,16 +195,16 @@ export class WorldScene extends Phaser.Scene {
             : 'front';
 
       if (this.grade2HeroSprite) {
-        this.setGrade2HeroAnimation(facing, 'walk');
+        if (!this.grade2CastActive) this.setGrade2HeroAnimation(facing, 'walk');
       } else {
         this.player.setFrame(facing === 'left' ? 2 : facing === 'right' ? 3 : facing === 'back' ? 1 : 0);
       }
-    } else {
+    } else if (!this.grade2CastActive) {
       this.setGrade2HeroAnimation(this.heroFacing, 'idle');
     }
 
     if (Phaser.Input.Keyboard.JustDown(this.keys.SPACE) || Phaser.Input.Keyboard.JustDown(this.keys.E)) {
-      this.tryInteract();
+      this.handleActionInput();
     }
 
     this.updateHint();
@@ -258,6 +268,28 @@ export class WorldScene extends Phaser.Scene {
       }
     }
 
+    const castClips: Array<{ facing: HeroFacing; start: number; end: number }> = [
+      { facing: 'front', start: 0, end: 3 },
+      { facing: 'back', start: 4, end: 7 },
+      { facing: 'left', start: 8, end: 11 },
+      { facing: 'right', start: 12, end: 15 }
+    ];
+
+    for (const clip of castClips) {
+      const key = GRADE2_MAGE_CAST_ANIMATIONS[clip.facing];
+      if (!this.anims.exists(key)) {
+        this.anims.create({
+          key,
+          frames: this.anims.generateFrameNumbers(GRADE2_MAGE_CAST_TEXTURE_KEY, {
+            start: clip.start,
+            end: clip.end
+          }),
+          frameRate: 8,
+          repeat: 0
+        });
+      }
+    }
+
     this.player.setVisible(false);
     this.grade2HeroSprite = this.add.sprite(
       this.player.x,
@@ -275,8 +307,33 @@ export class WorldScene extends Phaser.Scene {
 
     this.heroFacing = facing;
     this.heroMotion = motion;
-    const animations = motion === 'walk' ? GRADE2_MAGE_WALK_ANIMATIONS : GRADE2_MAGE_IDLE_ANIMATIONS;
+    const animations = motion === 'walk'
+      ? GRADE2_MAGE_WALK_ANIMATIONS
+      : motion === 'cast'
+        ? GRADE2_MAGE_CAST_ANIMATIONS
+        : GRADE2_MAGE_IDLE_ANIMATIONS;
     this.grade2HeroSprite.play(animations[facing]);
+  }
+
+  private playGrade2Cast(): void {
+    if (!this.grade2HeroSprite || this.busy || this.grade2CastActive) return;
+
+    this.grade2CastActive = true;
+    const castKey = GRADE2_MAGE_CAST_ANIMATIONS[this.heroFacing];
+    this.setGrade2HeroAnimation(this.heroFacing, 'cast');
+    this.grade2HeroSprite.once(
+      Phaser.Animations.Events.ANIMATION_COMPLETE_KEY + castKey,
+      () => { this.grade2CastActive = false; }
+    );
+  }
+
+  private cancelGrade2Cast(): void {
+    if (!this.grade2CastActive) return;
+
+    this.grade2HeroSprite?.off(
+      Phaser.Animations.Events.ANIMATION_COMPLETE_KEY + GRADE2_MAGE_CAST_ANIMATIONS[this.heroFacing]
+    );
+    this.grade2CastActive = false;
   }
 
   private syncGrade2HeroPresentation(): void {
@@ -460,7 +517,7 @@ export class WorldScene extends Phaser.Scene {
       color: '#ffd666'
     }).setOrigin(0.5).setScrollFactor(0);
 
-    action.on('pointerdown', () => this.tryInteract());
+    action.on('pointerdown', () => this.handleActionInput());
   }
 
   private createDynamicJoystick(): void {
@@ -551,18 +608,22 @@ export class WorldScene extends Phaser.Scene {
     return best;
   }
 
-  private tryInteract(): void {
-    if (this.busy) return;
+  private handleActionInput(): void {
+    if (!this.tryInteract()) this.playGrade2Cast();
+  }
+
+  private tryInteract(): boolean {
+    if (this.busy) return false;
 
     const target = this.nearestTarget();
     if (!target) {
       this.showToast('Nothing to use here yet.');
-      return;
+      return false;
     }
 
     if (target.label === MIRA_FIRST_ERRAND.targets.mira) {
       this.handleMiraInteraction();
-      return;
+      return true;
     }
 
     if (target.label === MIRA_FIRST_ERRAND.targets.cropBonus) {
@@ -578,7 +639,7 @@ export class WorldScene extends Phaser.Scene {
           return undefined;
         });
       });
-      return;
+      return true;
     }
 
     if (target.label === MIRA_FIRST_ERRAND.targets.practiceSlime) {
@@ -594,10 +655,11 @@ export class WorldScene extends Phaser.Scene {
           return undefined;
         });
       });
-      return;
+      return true;
     }
 
     this.openBonusPrompt(target.kind, target.label);
+    return true;
   }
 
   private handleMiraInteraction(): void {
