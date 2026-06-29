@@ -268,6 +268,16 @@ async function castGrade2Hero(
   }
 }
 
+async function triggerGrade2Hurt(page: Page): Promise<boolean> {
+  return page.evaluate(() => {
+    const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
+      triggerGrade2HurtForTest: () => boolean;
+    };
+
+    return scene.triggerGrade2HurtForTest();
+  });
+}
+
 async function setPlayer(page: Page, x: number, y: number): Promise<GameState> {
   const nextState = await page.evaluate(([nextX, nextY]) => {
     const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
@@ -521,6 +531,45 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
     questStep: beforeCast.questStep
   });
 
+  await moveGrade2Hero(page, 'KeyW', 'back');
+  const beforeHurt = await state(page);
+  const beforeHurtSave = await page.evaluate(() => localStorage.getItem('eldoria_v2_save_grade2-mage'));
+  expect(await triggerGrade2Hurt(page)).toBe(true);
+  await expect.poll(async () => {
+    const hero = await heroPresentation(page);
+    return [hero.animation, hero.texture];
+  }).toEqual(['grade2-mage-hurt-back', 'grade2-mage-hurt-v001']);
+  await expect.poll(async () => {
+    const hero = await heroPresentation(page);
+    return [hero.animation, hero.texture];
+  }).toEqual(['grade2-mage-idle-back', 'grade2-mage-idle-v001']);
+  expect(await state(page)).toMatchObject({
+    gold: beforeHurt.gold,
+    inventory: beforeHurt.inventory,
+    mastery: beforeHurt.mastery,
+    questStep: beforeHurt.questStep
+  });
+  expect(await page.evaluate(() => localStorage.getItem('eldoria_v2_save_grade2-mage'))).toBe(beforeHurtSave);
+
+  await page.keyboard.down('KeyD');
+  await expect.poll(async () => (await heroPresentation(page)).animation).toBe('grade2-mage-walk-right');
+  await page.keyboard.down('Space');
+  await page.waitForTimeout(50);
+  await page.keyboard.up('Space');
+  await expect.poll(async () => (await heroPresentation(page)).animation).toBe('grade2-mage-cast-right');
+  expect(await triggerGrade2Hurt(page)).toBe(true);
+  await expect.poll(async () => {
+    const hero = await heroPresentation(page);
+    return [hero.animation, hero.texture];
+  }).toEqual(['grade2-mage-hurt-right', 'grade2-mage-hurt-v001']);
+  await expect.poll(async () => {
+    const hero = await heroPresentation(page);
+    return [hero.animation, hero.texture];
+  }).toEqual(['grade2-mage-walk-right', 'grade2-mage-walk-v001']);
+  await page.keyboard.up('KeyD');
+  await expect.poll(async () => (await heroPresentation(page)).animation).toBe('grade2-mage-idle-right');
+  await castGrade2Hero(page, 'right');
+
   await setPlayer(page, 416, 256);
   await expect.poll(async () => (await state(page)).hint).toContain('Mira');
   await interact(page);
@@ -591,6 +640,7 @@ test('Grade 5 prompts keep reader profile without the Grade 2 read-aloud control
     physicsVisible: true,
     texture: null
   });
+  expect(await triggerGrade2Hurt(page)).toBe(false);
 
   await setQuestStep(page, 'try-crop-bonus');
   await useDeterministicCorrectPrompt(page);

@@ -4,6 +4,22 @@ This file records repository changes made through ChatGPT so future work can see
 
 ## 2026-06-28 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
+- Branch: `codex/integrate-grade2-mage-hurt`
+- Files changed:
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `docs/CURRENT_STATE.md`
+  - `src/scenes/PreloadScene.ts`
+  - `src/scenes/WorldScene.ts`
+  - `tests/vertical-slice.spec.ts`
+- Summary: Integrated the Grade 2 Mage hurt sheet as a presentation-only recovery animation on a development/test-safe trigger.
+- Implementation notes:
+  - Preloaded the committed hurt sheet and registered guarded three-frame directional clips using the merged manifest row order.
+  - Added a development/test-only hurt trigger that preserves facing, leaves movement and physics running underneath, cancels cast cleanly, and recovers to matching walk or idle after the one-shot completes.
+  - Kept hurt disconnected from combat, damage, hitboxes, rewards, quests, mastery, saves, controls, collision, maps, and Grade 5 behavior.
+- Reason: Complete the Grade 2 production actor baseline while preserving the separation between presentation work and future gameplay systems.
+
+## 2026-06-28 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
 - Branch: `codex/integrate-grade2-mage-cast`
 - Files changed:
   - `docs/CHATGPT_CHANGELOG.md`
