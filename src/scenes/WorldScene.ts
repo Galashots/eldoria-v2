@@ -31,7 +31,7 @@ type PromptCloseResult = {
 type PromptCloseHandler = (result: PromptCloseResult) => string | undefined;
 
 type HeroFacing = 'front' | 'back' | 'left' | 'right';
-type HeroMotion = 'idle' | 'walk' | 'cast';
+type HeroMotion = 'idle' | 'walk' | 'cast' | 'hurt';
 
 const PRACTICE_SLIME_TEXTURE_KEY = 'practice-slime-v001';
 const PRACTICE_SLIME_IDLE_ANIMATION = 'practice-slime-idle';
@@ -40,6 +40,7 @@ const CROP_BONUS_FEEDBACK_NAME = 'crop-bonus-feedback';
 const GRADE2_MAGE_IDLE_TEXTURE_KEY = 'grade2-mage-idle-v001';
 const GRADE2_MAGE_WALK_TEXTURE_KEY = 'grade2-mage-walk-v001';
 const GRADE2_MAGE_CAST_TEXTURE_KEY = 'grade2-mage-cast-v001';
+const GRADE2_MAGE_HURT_TEXTURE_KEY = 'grade2-mage-hurt-v001';
 const GRADE2_MAGE_IDLE_ANIMATIONS: Record<HeroFacing, string> = {
   front: 'grade2-mage-idle-front',
   back: 'grade2-mage-idle-back',
@@ -57,6 +58,12 @@ const GRADE2_MAGE_CAST_ANIMATIONS: Record<HeroFacing, string> = {
   back: 'grade2-mage-cast-back',
   left: 'grade2-mage-cast-left',
   right: 'grade2-mage-cast-right'
+};
+const GRADE2_MAGE_HURT_ANIMATIONS: Record<HeroFacing, string> = {
+  front: 'grade2-mage-hurt-front',
+  back: 'grade2-mage-hurt-back',
+  left: 'grade2-mage-hurt-left',
+  right: 'grade2-mage-hurt-right'
 };
 
 export class WorldScene extends Phaser.Scene {
@@ -85,6 +92,7 @@ export class WorldScene extends Phaser.Scene {
   private heroFacing: HeroFacing = 'front';
   private heroMotion: HeroMotion = 'idle';
   private grade2CastActive = false;
+  private grade2HurtActive = false;
 
   constructor() {
     super('WorldScene');
@@ -97,6 +105,7 @@ export class WorldScene extends Phaser.Scene {
     this.heroFacing = 'front';
     this.heroMotion = 'idle';
     this.grade2CastActive = false;
+    this.grade2HurtActive = false;
   }
 
   create(): void {
@@ -167,6 +176,7 @@ export class WorldScene extends Phaser.Scene {
     if (this.busy) {
       this.player.setVelocity(0, 0);
       this.cancelGrade2Cast();
+      this.cancelGrade2Hurt();
       this.setGrade2HeroAnimation(this.heroFacing, 'idle');
       return;
     }
@@ -195,11 +205,11 @@ export class WorldScene extends Phaser.Scene {
             : 'front';
 
       if (this.grade2HeroSprite) {
-        if (!this.grade2CastActive) this.setGrade2HeroAnimation(facing, 'walk');
+        if (!this.isGrade2HeroOneShotActive()) this.setGrade2HeroAnimation(facing, 'walk');
       } else {
         this.player.setFrame(facing === 'left' ? 2 : facing === 'right' ? 3 : facing === 'back' ? 1 : 0);
       }
-    } else if (!this.grade2CastActive) {
+    } else if (!this.isGrade2HeroOneShotActive()) {
       this.setGrade2HeroAnimation(this.heroFacing, 'idle');
     }
 
@@ -290,6 +300,28 @@ export class WorldScene extends Phaser.Scene {
       }
     }
 
+    const hurtClips: Array<{ facing: HeroFacing; start: number; end: number }> = [
+      { facing: 'front', start: 0, end: 2 },
+      { facing: 'back', start: 3, end: 5 },
+      { facing: 'left', start: 6, end: 8 },
+      { facing: 'right', start: 9, end: 11 }
+    ];
+
+    for (const clip of hurtClips) {
+      const key = GRADE2_MAGE_HURT_ANIMATIONS[clip.facing];
+      if (!this.anims.exists(key)) {
+        this.anims.create({
+          key,
+          frames: this.anims.generateFrameNumbers(GRADE2_MAGE_HURT_TEXTURE_KEY, {
+            start: clip.start,
+            end: clip.end
+          }),
+          frameRate: 10,
+          repeat: 0
+        });
+      }
+    }
+
     this.player.setVisible(false);
     this.grade2HeroSprite = this.add.sprite(
       this.player.x,
@@ -311,19 +343,24 @@ export class WorldScene extends Phaser.Scene {
       ? GRADE2_MAGE_WALK_ANIMATIONS
       : motion === 'cast'
         ? GRADE2_MAGE_CAST_ANIMATIONS
+        : motion === 'hurt'
+          ? GRADE2_MAGE_HURT_ANIMATIONS
         : GRADE2_MAGE_IDLE_ANIMATIONS;
     this.grade2HeroSprite.play(animations[facing]);
   }
 
   private playGrade2Cast(): void {
-    if (!this.grade2HeroSprite || this.busy || this.grade2CastActive) return;
+    if (!this.grade2HeroSprite || this.busy || this.isGrade2HeroOneShotActive()) return;
 
     this.grade2CastActive = true;
     const castKey = GRADE2_MAGE_CAST_ANIMATIONS[this.heroFacing];
     this.setGrade2HeroAnimation(this.heroFacing, 'cast');
     this.grade2HeroSprite.once(
       Phaser.Animations.Events.ANIMATION_COMPLETE_KEY + castKey,
-      () => { this.grade2CastActive = false; }
+      () => {
+        this.grade2CastActive = false;
+        this.recoverGrade2HeroPresentation();
+      }
     );
   }
 
@@ -334,6 +371,60 @@ export class WorldScene extends Phaser.Scene {
       Phaser.Animations.Events.ANIMATION_COMPLETE_KEY + GRADE2_MAGE_CAST_ANIMATIONS[this.heroFacing]
     );
     this.grade2CastActive = false;
+  }
+
+  private playGrade2Hurt(): boolean {
+    if (!this.grade2HeroSprite || this.busy || this.grade2HurtActive) return false;
+
+    this.cancelGrade2Cast();
+    this.grade2HurtActive = true;
+    const hurtKey = GRADE2_MAGE_HURT_ANIMATIONS[this.heroFacing];
+    this.setGrade2HeroAnimation(this.heroFacing, 'hurt');
+    this.grade2HeroSprite.once(
+      Phaser.Animations.Events.ANIMATION_COMPLETE_KEY + hurtKey,
+      () => {
+        this.grade2HurtActive = false;
+        this.recoverGrade2HeroPresentation();
+      }
+    );
+
+    return true;
+  }
+
+  private cancelGrade2Hurt(): void {
+    if (!this.grade2HurtActive) return;
+
+    this.grade2HeroSprite?.off(
+      Phaser.Animations.Events.ANIMATION_COMPLETE_KEY + GRADE2_MAGE_HURT_ANIMATIONS[this.heroFacing]
+    );
+    this.grade2HurtActive = false;
+  }
+
+  private isGrade2HeroOneShotActive(): boolean {
+    return this.grade2CastActive || this.grade2HurtActive;
+  }
+
+  private recoverGrade2HeroPresentation(): void {
+    if (!this.grade2HeroSprite || this.busy || this.isGrade2HeroOneShotActive()) return;
+
+    const body = this.player.body as Phaser.Physics.Arcade.Body | null;
+    const velocityX = body?.velocity.x ?? 0;
+    const velocityY = body?.velocity.y ?? 0;
+    const isMoving = Math.abs(velocityX) > 0.01 || Math.abs(velocityY) > 0.01;
+
+    if (!isMoving) {
+      this.setGrade2HeroAnimation(this.heroFacing, 'idle');
+      return;
+    }
+
+    const facing: HeroFacing = velocityX < -0.35
+      ? 'left'
+      : velocityX > 0.35
+        ? 'right'
+        : velocityY < 0
+          ? 'back'
+          : 'front';
+    this.setGrade2HeroAnimation(facing, 'walk');
   }
 
   private syncGrade2HeroPresentation(): void {
@@ -609,6 +700,7 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private handleActionInput(): void {
+    if (this.grade2HurtActive) return;
     if (!this.tryInteract()) this.playGrade2Cast();
   }
 
@@ -707,6 +799,14 @@ export class WorldScene extends Phaser.Scene {
     const prompt = this.learning.makePromptById(templateId);
     this.openBonusPrompt(prompt.context, 'Prompt Preview', undefined, prompt);
     return prompt;
+  }
+
+  triggerGrade2HurtForTest(): boolean {
+    if (!import.meta.env.DEV && !window.__ELDORIA_E2E__) {
+      throw new Error('Grade 2 hurt preview is available only in development and tests.');
+    }
+
+    return this.playGrade2Hurt();
   }
 
   private openBonusPrompt(

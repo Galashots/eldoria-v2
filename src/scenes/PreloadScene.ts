@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import grade2MageCastSheetUrl from '../../assets/sprites/char_mage_boy_base_cast_v001.png?url';
+import grade2MageHurtSheetUrl from '../../assets/sprites/char_mage_boy_base_hurt_v001.png?url';
 import grade2MageIdleSheetUrl from '../../assets/sprites/char_mage_boy_base_idle_v001.png?url';
 import grade2MageWalkSheetUrl from '../../assets/sprites/char_mage_boy_base_walk_v001.png?url';
 import practiceSlimeSheetUrl from '../../assets/sprites/mob_slime_practice_v001.png?url';
@@ -24,6 +25,10 @@ export class PreloadScene extends Phaser.Scene {
       frameHeight: 48
     });
     this.load.spritesheet('grade2-mage-cast-v001', grade2MageCastSheetUrl, {
+      frameWidth: 32,
+      frameHeight: 48
+    });
+    this.load.spritesheet('grade2-mage-hurt-v001', grade2MageHurtSheetUrl, {
       frameWidth: 32,
       frameHeight: 48
     });
