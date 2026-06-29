@@ -4,6 +4,22 @@ This file records repository changes made through ChatGPT so future work can see
 
 ## 2026-06-28 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
+- Branch: `codex/integrate-grade2-mage-cast`
+- Files changed:
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `docs/CURRENT_STATE.md`
+  - `src/scenes/PreloadScene.ts`
+  - `src/scenes/WorldScene.ts`
+  - `tests/vertical-slice.spec.ts`
+- Summary: Integrated the Grade 2 Mage cast sheet as a presentation-only ACTION animation in safe, no-target contexts.
+- Implementation notes:
+  - Preloaded the committed cast sheet and registered guarded four-frame directional clips.
+  - Preserved the active facing direction, underlying movement/physics actor, and return to the matching walk or idle state after casting.
+  - Kept hurt asset-only and left Grade 5, interactions, controls, collision, quests, learning, saves, rewards, combat, AI, and maps unchanged.
+- Reason: Add readable Grade 2 Mage casting presentation without introducing combat or combining the separate hurt-integration milestone.
+
+## 2026-06-28 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
 - Branch: `codex/grade2-mage-cast-hurt-assets`
 - Files changed:
   - `assets/manifests/char_mage_boy_base_cast_v001.manifest.json`

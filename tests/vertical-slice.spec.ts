@@ -234,6 +234,40 @@ async function moveGrade2Hero(
   }).toEqual([`grade2-mage-idle-${facing}`, 'grade2-mage-idle-v001']);
 }
 
+async function castGrade2Hero(
+  page: Page,
+  facing: 'front' | 'back' | 'left' | 'right',
+  movingKey?: string
+): Promise<void> {
+  if (movingKey) {
+    await page.keyboard.down(movingKey);
+    await expect.poll(async () => (await heroPresentation(page)).animation)
+      .toBe(`grade2-mage-walk-${facing}`);
+  }
+
+  await page.keyboard.down('Space');
+  await page.waitForTimeout(50);
+  await page.keyboard.up('Space');
+  await expect.poll(async () => {
+    const hero = await heroPresentation(page);
+    return [hero.animation, hero.texture];
+  }).toEqual([`grade2-mage-cast-${facing}`, 'grade2-mage-cast-v001']);
+
+  await expect.poll(async () => {
+    const hero = await heroPresentation(page);
+    return [hero.animation, hero.texture];
+  }).toEqual([
+    `grade2-mage-${movingKey ? 'walk' : 'idle'}-${facing}`,
+    `grade2-mage-${movingKey ? 'walk' : 'idle'}-v001`
+  ]);
+
+  if (movingKey) {
+    await page.keyboard.up(movingKey);
+    await expect.poll(async () => (await heroPresentation(page)).animation)
+      .toBe(`grade2-mage-idle-${facing}`);
+  }
+}
+
 async function setPlayer(page: Page, x: number, y: number): Promise<GameState> {
   const nextState = await page.evaluate(([nextX, nextY]) => {
     const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
@@ -475,6 +509,17 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   expect((await state(page)).player.y).toBeGreaterThan(start.y);
   await moveGrade2Hero(page, 'KeyW', 'back');
   expect((await state(page)).player.y).toBeLessThan(start.y + 20);
+
+  await setPlayer(page, 160, 160);
+  const beforeCast = await state(page);
+  await castGrade2Hero(page, 'back');
+  await castGrade2Hero(page, 'right', 'KeyD');
+  expect(await state(page)).toMatchObject({
+    gold: beforeCast.gold,
+    inventory: beforeCast.inventory,
+    mastery: beforeCast.mastery,
+    questStep: beforeCast.questStep
+  });
 
   await setPlayer(page, 416, 256);
   await expect.poll(async () => (await state(page)).hint).toContain('Mira');
