@@ -7,6 +7,22 @@ This file records repository changes made through ChatGPT so future work can see
 - Branch: `main`
 - Files changed:
   - `docs/CHATGPT_CHANGELOG.md`
+  - `docs/CURRENT_STATE.md`
+  - `src/scenes/WorldScene.ts`
+  - `tests/vertical-slice.spec.ts`
+- Summary: Fixed the playtest-blocking farm traversal bounds and optional-prompt Skip control.
+- Implementation notes:
+  - Expanded Arcade Physics world bounds from the viewport default to the existing Tiled map dimensions so normal movement can reach the crop/scarecrow and Practice Slime interaction points.
+  - Raised optional prompt panels above the actor presentation and replaced the text-only Skip hit area with a visible button-sized pointer target.
+  - Changed smoke coverage to activate Skip through the rendered canvas control instead of directly emitting its internal event.
+  - Added movement coverage proving the Grade 2 actor can travel below the original 320-pixel viewport boundary.
+- Reason: The screenshot-assisted playtest found that the map camera exposed targets outside the default physics bounds and that the visible Skip label did not respond to pointer input, preventing a child from completing the quest normally.
+
+## 2026-06-29 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
+- Branch: `main`
+- Files changed:
+  - `docs/CHATGPT_CHANGELOG.md`
   - `src/data/quests.ts`
   - `src/scenes/WorldScene.ts`
   - `tests/vertical-slice.spec.ts`

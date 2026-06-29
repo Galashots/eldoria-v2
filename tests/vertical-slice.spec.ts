@@ -391,20 +391,14 @@ async function openQuestPrompt(
 }
 
 async function skipOpenPrompt(page: Page): Promise<void> {
-  await page.evaluate(() => {
+  const profileId = await page.evaluate(() => {
     const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
-      children: {
-        list: Array<{
-          list?: Array<{ text?: string; emit?: (event: string) => void }>;
-        }>;
-      };
+      profileId: 'grade2-mage' | 'grade5-adventurer';
     };
-    const promptPanel = scene.children.list.find((child) => Array.isArray(child.list));
-    const skip = promptPanel?.list?.find((child) => child.text === 'Skip bonus');
-
-    if (!skip?.emit) throw new Error('Skip bonus control was not found.');
-    skip.emit('pointerdown');
+    return scene.profileId;
   });
+
+  await clickGame(page, 240, profileId === 'grade2-mage' ? 254 : 242);
   await page.waitForTimeout(200);
 }
 
@@ -518,6 +512,11 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   await moveGrade2Hero(page, 'KeyS', 'front');
   expect((await state(page)).player.y).toBeGreaterThan(start.y);
   await moveGrade2Hero(page, 'KeyW', 'back');
+  expect((await state(page)).player.y).toBeLessThan(start.y + 20);
+
+  await moveGrade2Hero(page, 'KeyS', 'front', 700);
+  expect((await state(page)).player.y).toBeGreaterThan(320);
+  await moveGrade2Hero(page, 'KeyW', 'back', 700);
   expect((await state(page)).player.y).toBeLessThan(start.y + 20);
 
   await setPlayer(page, 160, 160);

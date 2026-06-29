@@ -136,6 +136,7 @@ export class WorldScene extends Phaser.Scene {
     const objectLayer = map.getObjectLayer('Objects');
     const spawn = objectLayer?.objects.find((obj) => obj.name === 'PlayerSpawn');
 
+    this.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
     this.player = this.physics.add.sprite(spawn?.x ?? 160, spawn?.y ?? 160, 'adventurer', 0);
     this.player.setCollideWorldBounds(true);
     this.player.body?.setSize(18, 18).setOffset(7, 12);
@@ -920,7 +921,9 @@ export class WorldScene extends Phaser.Scene {
     const isPreview = previewPrompt !== undefined;
     const prompt = previewPrompt ?? this.learning.makePrompt(context);
     const isAudioFirst = PROFILES[this.profileId].readingMode === 'audio-first';
-    const panel = this.add.container(GAME_WIDTH / 2, GAME_HEIGHT / 2).setScrollFactor(0);
+    const panel = this.add.container(GAME_WIDTH / 2, GAME_HEIGHT / 2)
+      .setScrollFactor(0)
+      .setDepth(30);
     const panelHeight = isAudioFirst ? 220 : 190;
     const titleY = isAudioFirst ? -84 : -72;
     const promptY = isAudioFirst ? -52 : -42;
@@ -960,6 +963,22 @@ export class WorldScene extends Phaser.Scene {
       panel.add(readText);
     }
 
+    const skipButton = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2 + skipY, 132, 28, 0x3a2208)
+      .setStrokeStyle(2, 0xc9a66b)
+      .setScrollFactor(0)
+      .setDepth(31)
+      .setInteractive({ useHandCursor: true });
+    const skipText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + skipY, 'Skip bonus', {
+      fontFamily: 'system-ui',
+      fontSize: '12px',
+      color: '#c9a66b'
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(32);
+    const destroyPrompt = (): void => {
+      panel.destroy();
+      skipButton.destroy();
+      skipText.destroy();
+    };
+
     prompt.choices.forEach((choice, index) => {
       const x = -110 + index * 110;
       const choiceLabel = String(choice);
@@ -978,7 +997,7 @@ export class WorldScene extends Phaser.Scene {
       btn.on('pointerdown', () => {
         const result = this.learning.resolve(prompt, choice as AnswerValue);
         this.stopPromptReadAloud();
-        panel.destroy();
+        destroyPrompt();
 
         if (isPreview) {
           this.busy = false;
@@ -1005,15 +1024,9 @@ export class WorldScene extends Phaser.Scene {
       panel.add(txt);
     });
 
-    const skip = this.add.text(0, skipY, 'Skip bonus', {
-      fontFamily: 'system-ui',
-      fontSize: '12px',
-      color: '#c9a66b'
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-
-    skip.on('pointerdown', () => {
+    skipButton.on('pointerdown', () => {
       this.stopPromptReadAloud();
-      panel.destroy();
+      destroyPrompt();
       this.busy = false;
       if (isPreview) return;
 
@@ -1022,8 +1035,6 @@ export class WorldScene extends Phaser.Scene {
       this.showToast(progressMessage ? `Skipped. ${progressMessage}` : 'Skipped. Adventure continues.');
       this.save();
     });
-
-    panel.add(skip);
   }
 
   private readPromptAloud(label: string, prompt: LearningPrompt): void {

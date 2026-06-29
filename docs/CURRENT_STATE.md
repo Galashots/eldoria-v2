@@ -14,6 +14,8 @@ Last refreshed on 2026-06-29. This file records volatile project status; `AGENTS
 - Contextual Grade 2/Grade 5 templates and development/E2E-only deterministic prompt preview.
 - Four Playwright vertical-slice smoke tests covering both profiles, quest/save behavior, mastery, templates, and preview side-effect safety.
 - Crop Bonus and Practice Slime interactions now provide short, readable visual feedback before their unchanged optional prompts open.
+- Arcade Physics bounds now cover the full farm map, so the crop/scarecrow and Practice Slime targets are reachable through normal movement rather than only test positioning.
+- Optional prompt panels render above the actor and provide a button-sized pointer target for `Skip bonus`.
 
 ## Visual And Asset State
 
@@ -34,7 +36,7 @@ The starter farm slice now includes Mira's first errand plus the optional Whispe
 
 ## Next Checkpoint
 
-Run a focused kid/browser playtest pass on the expanded farm slice, then return to Grade 5 production actor target specs.
+Run a short real-child clarity pass on the expanded farm slice, then return to Grade 5 production actor target specs.
 
 ## Routine Merge Policy
 
