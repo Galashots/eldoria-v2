@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../gameConfig';
 import type { AnswerValue, BonusContext, LearningPrompt } from '../data/curriculum';
 import { PROFILES, type ProfileId } from '../data/profiles';
-import { MIRA_FIRST_ERRAND } from '../data/quests';
+import { MIRA_FIRST_ERRAND, MIRA_SECOND_ERRAND } from '../data/quests';
 import { LearningBonusSystem } from '../systems/LearningBonusSystem';
 import { MasterySystem, type LearningMastery } from '../systems/MasterySystem';
 import { SaveSystem, type StarterQuestStep } from '../systems/SaveSystem';
@@ -83,6 +83,8 @@ export class WorldScene extends Phaser.Scene {
   private inventory: Record<string, number> = {};
   private mastery: LearningMastery = {};
   private firstQuestStep: StarterQuestStep = MIRA_FIRST_ERRAND.steps.talkToMira;
+  private secondErrandAccepted = false;
+  private secondErrandComplete = false;
   private busy = false;
   private hudText!: Phaser.GameObjects.Text;
   private objectiveText!: Phaser.GameObjects.Text;
@@ -106,6 +108,8 @@ export class WorldScene extends Phaser.Scene {
     this.heroMotion = 'idle';
     this.grade2CastActive = false;
     this.grade2HurtActive = false;
+    this.secondErrandAccepted = false;
+    this.secondErrandComplete = false;
   }
 
   create(): void {
@@ -158,6 +162,8 @@ export class WorldScene extends Phaser.Scene {
       this.mastery = { ...(saved.mastery ?? {}) };
       this.player.setPosition(saved.player.x, saved.player.y);
       this.firstQuestStep = saved.firstQuestStep ?? MIRA_FIRST_ERRAND.steps.talkToMira;
+      this.secondErrandAccepted = saved.questFlags?.miraSecondErrandAccepted === true;
+      this.secondErrandComplete = saved.questFlags?.miraSecondErrandComplete === true;
     }
 
     this.createGrade2HeroPresentation();
@@ -582,11 +588,25 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private refreshObjective(): void {
-    this.objectiveText.setText(`Objective: ${this.firstQuestObjective()}`);
+    this.objectiveText.setText(`Objective: ${this.currentObjective()}`);
   }
 
   private firstQuestObjective(): string {
     return MIRA_FIRST_ERRAND.objectives[this.firstQuestStep];
+  }
+
+  private currentObjective(): string {
+    if (this.firstQuestStep !== MIRA_FIRST_ERRAND.steps.complete) {
+      return this.firstQuestObjective();
+    }
+
+    if (this.secondErrandComplete) {
+      return MIRA_SECOND_ERRAND.objectives.complete;
+    }
+
+    return this.secondErrandAccepted
+      ? MIRA_SECOND_ERRAND.objectives.accepted
+      : MIRA_SECOND_ERRAND.objectives.available;
   }
 
   private updateHint(): void {
@@ -728,6 +748,10 @@ export class WorldScene extends Phaser.Scene {
             this.setFirstQuestStep(MIRA_FIRST_ERRAND.steps.findSlime);
             return MIRA_FIRST_ERRAND.progress.cropComplete;
           }
+          if (this.canCompleteSecondErrand()) {
+            this.completeSecondErrand();
+            return `${MIRA_SECOND_ERRAND.progress.complete} +${MIRA_SECOND_ERRAND.rewards.gold} Gold.`;
+          }
           return undefined;
         });
       });
@@ -779,7 +803,20 @@ export class WorldScene extends Phaser.Scene {
         return;
       }
       case MIRA_FIRST_ERRAND.steps.complete:
-        this.showToast(MIRA_FIRST_ERRAND.dialogue.complete);
+        if (this.secondErrandComplete) {
+          this.showToast(MIRA_SECOND_ERRAND.dialogue.complete);
+          return;
+        }
+
+        if (!this.secondErrandAccepted) {
+          this.secondErrandAccepted = true;
+          this.refreshObjective();
+          this.save();
+          this.showToast(MIRA_SECOND_ERRAND.dialogue.start);
+          return;
+        }
+
+        this.showToast(MIRA_SECOND_ERRAND.dialogue.reminder);
         return;
     }
   }
@@ -787,6 +824,26 @@ export class WorldScene extends Phaser.Scene {
   private setFirstQuestStep(step: StarterQuestStep): void {
     this.firstQuestStep = step;
     this.refreshObjective();
+    this.save();
+  }
+
+  private canCompleteSecondErrand(): boolean {
+    return this.firstQuestStep === MIRA_FIRST_ERRAND.steps.complete
+      && this.secondErrandAccepted
+      && !this.secondErrandComplete;
+  }
+
+  private completeSecondErrand(): void {
+    if (!this.canCompleteSecondErrand()) return;
+
+    const { gold } = MIRA_SECOND_ERRAND.rewards;
+    this.secondErrandAccepted = false;
+    this.secondErrandComplete = true;
+    this.gold += gold;
+    this.refreshHud();
+    this.refreshObjective();
+    this.showFloatingReward(`+${gold} Gold`, this.player.x, this.player.y - 26, '#ffd666');
+    this.createSparkleBurst(this.player.x, this.player.y - 14);
     this.save();
   }
 
@@ -1051,7 +1108,9 @@ export class WorldScene extends Phaser.Scene {
       lastArea: 'farm',
       firstQuestStep: this.firstQuestStep,
       questFlags: {
-        miraFirstErrandComplete: this.firstQuestStep === MIRA_FIRST_ERRAND.steps.complete
+        miraFirstErrandComplete: this.firstQuestStep === MIRA_FIRST_ERRAND.steps.complete,
+        miraSecondErrandAccepted: this.secondErrandAccepted,
+        miraSecondErrandComplete: this.secondErrandComplete
       },
       player: {
         x: this.player.x,

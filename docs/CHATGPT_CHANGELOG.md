@@ -2,6 +2,23 @@
 
 This file records repository changes made through ChatGPT so future work can see what changed, who made it, and when.
 
+## 2026-06-29 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
+- Branch: `codex/optional-second-farm-errand`
+- Files changed:
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `docs/CURRENT_STATE.md`
+  - `src/data/quests.ts`
+  - `src/scenes/WorldScene.ts`
+  - `tests/vertical-slice.spec.ts`
+- Summary: Added one optional second Mira farm errand that reuses the existing crop patch interaction and reward patterns.
+- Implementation notes:
+  - Added a small typed follow-up errand definition with one acceptance step from Mira, one crop-check completion step, and a small gold-only payout.
+  - Stored the follow-up errand only in optional `questFlags`, preserving version-1 save compatibility and leaving the existing first-errand step ids unchanged.
+  - Reused the current crop bonus prompt, HUD objective, toast, floating reward, sparkle, and save/load paths so no new maps, art, systems, combat, AI, economy, or Grade 5 presentation work was introduced.
+  - Extended the vertical-slice smoke flow to verify second-errand availability, optional-prompt completion on skip, reward persistence, and protection against duplicate charm rewards.
+- Reason: Give the farm slice one more short, kid-playtestable adventure loop without expanding scope beyond the current map and existing interaction systems.
+
 ## 2026-06-28 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
 - Branch: `codex/integrate-grade2-mage-hurt`

@@ -36,6 +36,27 @@ type MiraFirstErrandDefinition = {
   };
 };
 
+type MiraSecondErrandDefinition = {
+  id: string;
+  name: string;
+  objectives: {
+    available: string;
+    accepted: string;
+    complete: string;
+  };
+  dialogue: {
+    start: string;
+    reminder: string;
+    complete: string;
+  };
+  progress: {
+    complete: string;
+  };
+  rewards: {
+    gold: number;
+  };
+};
+
 export const MIRA_FIRST_ERRAND = {
   id: 'mira-first-errand',
   name: 'Mira\'s First Errand',
@@ -77,3 +98,24 @@ export const MIRA_FIRST_ERRAND = {
     }
   }
 } as const satisfies MiraFirstErrandDefinition;
+
+export const MIRA_SECOND_ERRAND = {
+  id: 'mira-second-errand',
+  name: 'Mira\'s Crop Check',
+  objectives: {
+    available: 'Optional: Talk to Mira for one more farm favor.',
+    accepted: 'Optional: Check the crop patch for Mira one more time.',
+    complete: 'Optional farm favor complete. Keep exploring.'
+  },
+  dialogue: {
+    start: 'Mira: Could you check the crop patch one more time? The learning bonus is still optional.',
+    reminder: 'Mira: The crop patch is ready when you are.',
+    complete: 'Mira: Thanks. That extra crop check really helped.'
+  },
+  progress: {
+    complete: 'Mira\'s crop check complete.'
+  },
+  rewards: {
+    gold: 4
+  }
+} as const satisfies MiraSecondErrandDefinition;

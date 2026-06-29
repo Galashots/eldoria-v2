@@ -610,10 +610,33 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   await expect.poll(async () => (await state(page)).gold).toBe(10);
   await expect.poll(async () => (await state(page)).inventory.sunberryCharm).toBe(1);
   await expect.poll(async () => (await state(page)).hud).toContain('Keepsake: Sunberry Charm');
+  await expect.poll(async () => (await state(page)).objective).toContain('Talk to Mira for one more farm favor');
 
   await setPlayer(page, 416, 256);
   await sceneInteract(page);
+  await expect.poll(async () => (await state(page)).objective).toContain('Check the crop patch for Mira one more time');
   await expect.poll(async () => (await state(page)).gold).toBe(10);
+  await expect.poll(async () => (await state(page)).inventory.sunberryCharm).toBe(1);
+
+  expect(await interactAt(page, 240, 416)).toContain('CropBonus');
+  await expect.poll(async () => cropFeedbackVisible(page)).toBe(true);
+  await expect.poll(async () => cropFeedbackVisible(page)).toBe(false);
+  await skipOpenPrompt(page);
+  await expect.poll(async () => (await state(page)).gold).toBe(14);
+  await expect.poll(async () => (await state(page)).inventory.sunberryCharm).toBe(1);
+  await expect.poll(async () => (await state(page)).objective).toContain('Optional farm favor complete');
+  await expect.poll(async () => masteryTotal(page, 'skipped')).toBe(3);
+  await expect.poll(async () => hasCanvasText(page, '+4 Gold')).toBe(true);
+
+  await page.reload();
+  await startProfile(page, 120);
+  await expect.poll(async () => (await state(page)).gold).toBe(14);
+  await expect.poll(async () => (await state(page)).inventory.sunberryCharm).toBe(1);
+  await expect.poll(async () => (await state(page)).objective).toContain('Optional farm favor complete');
+
+  await setPlayer(page, 416, 256);
+  await sceneInteract(page);
+  await expect.poll(async () => (await state(page)).gold).toBe(14);
   await expect.poll(async () => (await state(page)).inventory.sunberryCharm).toBe(1);
   expect((await state(page)).hud.split('Sunberry Charm')).toHaveLength(2);
 });
