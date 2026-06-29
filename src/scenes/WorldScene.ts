@@ -84,6 +84,7 @@ export class WorldScene extends Phaser.Scene {
   private mastery: LearningMastery = {};
   private firstQuestStep: StarterQuestStep = MIRA_FIRST_ERRAND.steps.talkToMira;
   private secondErrandAccepted = false;
+  private secondErrandCharmFound = false;
   private secondErrandComplete = false;
   private busy = false;
   private hudText!: Phaser.GameObjects.Text;
@@ -109,6 +110,7 @@ export class WorldScene extends Phaser.Scene {
     this.grade2CastActive = false;
     this.grade2HurtActive = false;
     this.secondErrandAccepted = false;
+    this.secondErrandCharmFound = false;
     this.secondErrandComplete = false;
   }
 
@@ -163,6 +165,7 @@ export class WorldScene extends Phaser.Scene {
       this.player.setPosition(saved.player.x, saved.player.y);
       this.firstQuestStep = saved.firstQuestStep ?? MIRA_FIRST_ERRAND.steps.talkToMira;
       this.secondErrandAccepted = saved.questFlags?.miraSecondErrandAccepted === true;
+      this.secondErrandCharmFound = saved.questFlags?.miraSecondErrandCharmFound === true;
       this.secondErrandComplete = saved.questFlags?.miraSecondErrandComplete === true;
     }
 
@@ -604,14 +607,26 @@ export class WorldScene extends Phaser.Scene {
       return MIRA_SECOND_ERRAND.objectives.complete;
     }
 
+    if (this.secondErrandCharmFound) {
+      return MIRA_SECOND_ERRAND.objectives.returnToMira;
+    }
+
     return this.secondErrandAccepted
-      ? MIRA_SECOND_ERRAND.objectives.accepted
+      ? MIRA_SECOND_ERRAND.objectives.investigate
       : MIRA_SECOND_ERRAND.objectives.available;
   }
 
   private updateHint(): void {
     const target = this.nearestTarget();
-    this.hintText.setText(target ? `Action: ${target.label}` : 'Explore. Learning bonuses are optional.');
+    this.hintText.setText(target ? `Action: ${this.hintLabel(target)}` : 'Explore. Learning bonuses are optional.');
+  }
+
+  private hintLabel(target: InteractionTarget): string {
+    if (target.label === MIRA_FIRST_ERRAND.targets.cropBonus && this.canDiscoverSecondErrandCharm()) {
+      return 'Check Scarecrow';
+    }
+
+    return target.label;
   }
 
   private createTouchControls(): void {
@@ -748,9 +763,9 @@ export class WorldScene extends Phaser.Scene {
             this.setFirstQuestStep(MIRA_FIRST_ERRAND.steps.findSlime);
             return MIRA_FIRST_ERRAND.progress.cropComplete;
           }
-          if (this.canCompleteSecondErrand()) {
-            this.completeSecondErrand();
-            return `${MIRA_SECOND_ERRAND.progress.complete} +${MIRA_SECOND_ERRAND.rewards.gold} Gold.`;
+          if (this.canDiscoverSecondErrandCharm()) {
+            this.discoverSecondErrandCharm();
+            return MIRA_SECOND_ERRAND.progress.discover;
           }
           return undefined;
         });
@@ -808,6 +823,11 @@ export class WorldScene extends Phaser.Scene {
           return;
         }
 
+        if (this.secondErrandCharmFound) {
+          this.turnInSecondErrand();
+          return;
+        }
+
         if (!this.secondErrandAccepted) {
           this.secondErrandAccepted = true;
           this.refreshObjective();
@@ -827,23 +847,44 @@ export class WorldScene extends Phaser.Scene {
     this.save();
   }
 
-  private canCompleteSecondErrand(): boolean {
+  private canDiscoverSecondErrandCharm(): boolean {
     return this.firstQuestStep === MIRA_FIRST_ERRAND.steps.complete
       && this.secondErrandAccepted
+      && !this.secondErrandCharmFound
       && !this.secondErrandComplete;
   }
 
-  private completeSecondErrand(): void {
-    if (!this.canCompleteSecondErrand()) return;
+  private discoverSecondErrandCharm(): void {
+    if (!this.canDiscoverSecondErrandCharm()) return;
+
+    const { name } = MIRA_SECOND_ERRAND.storyItem;
+    this.secondErrandCharmFound = true;
+    this.refreshObjective();
+    this.showFloatingReward(`Found: ${name}`, this.player.x, this.player.y - 26, '#d7ffb8');
+    this.createSparkleBurst(this.player.x, this.player.y - 14);
+    this.save();
+  }
+
+  private canTurnInSecondErrand(): boolean {
+    return this.firstQuestStep === MIRA_FIRST_ERRAND.steps.complete
+      && this.secondErrandAccepted
+      && this.secondErrandCharmFound
+      && !this.secondErrandComplete;
+  }
+
+  private turnInSecondErrand(): void {
+    if (!this.canTurnInSecondErrand()) return;
 
     const { gold } = MIRA_SECOND_ERRAND.rewards;
     this.secondErrandAccepted = false;
+    this.secondErrandCharmFound = false;
     this.secondErrandComplete = true;
     this.gold += gold;
     this.refreshHud();
     this.refreshObjective();
     this.showFloatingReward(`+${gold} Gold`, this.player.x, this.player.y - 26, '#ffd666');
     this.createSparkleBurst(this.player.x, this.player.y - 14);
+    this.showToast(`${MIRA_SECOND_ERRAND.dialogue.return}\n${MIRA_SECOND_ERRAND.completionToast}`);
     this.save();
   }
 
@@ -1110,6 +1151,7 @@ export class WorldScene extends Phaser.Scene {
       questFlags: {
         miraFirstErrandComplete: this.firstQuestStep === MIRA_FIRST_ERRAND.steps.complete,
         miraSecondErrandAccepted: this.secondErrandAccepted,
+        miraSecondErrandCharmFound: this.secondErrandCharmFound,
         miraSecondErrandComplete: this.secondErrandComplete
       },
       player: {

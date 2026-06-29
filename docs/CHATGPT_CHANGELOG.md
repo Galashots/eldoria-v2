@@ -4,6 +4,39 @@ This file records repository changes made through ChatGPT so future work can see
 
 ## 2026-06-29 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
+- Branch: `main`
+- Files changed:
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `src/data/quests.ts`
+  - `src/scenes/WorldScene.ts`
+  - `tests/vertical-slice.spec.ts`
+- Summary: Polished the Whispering Scarecrow interaction hint and shortened its player-facing lines.
+- Implementation notes:
+  - Changed the contextual ACTION hint at the existing crop/scarecrow point from the internal `CropBonus` label to `Check Scarecrow` only while the second errand is in its investigate state.
+  - Left ordinary crop-bonus interactions and the first Mira errand on the existing `CropBonus` hint and unchanged mechanics.
+  - Shortened the scarecrow start, reminder, return, and discovery lines to reduce reading density without changing the quest flow, reward behavior, or save format.
+  - Updated smoke coverage to verify the ordinary crop hint still reads `CropBonus` while the second-errand hint reads `Check Scarecrow`.
+- Reason: Make the follow-up errand easier for kids to read in moment-to-moment play without expanding scope or changing systems.
+
+## 2026-06-29 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
+- Branch: `main`
+- Files changed:
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `docs/CURRENT_STATE.md`
+  - `src/data/quests.ts`
+  - `src/scenes/WorldScene.ts`
+  - `tests/vertical-slice.spec.ts`
+- Summary: Replaced the temporary follow-up farm favor with the requested Whispering Scarecrow micro-errand.
+- Implementation notes:
+  - Added a two-step post-quest follow-up where Mira sends the player to the existing crop/scarecrow spot, the player discovers a text-only Moonseed Charm through the current ACTION and optional-prompt flow, and then returns to Mira for a small gold reward.
+  - Kept the implementation inside the existing `firstQuestStep`, optional `questFlags`, HUD objective text, toast, floating reward, sparkle, and save/load paths without adding maps, art, combat, AI, economy, or a new quest system.
+  - Preserved version-1 save compatibility by storing only optional booleans for accepted, charm-found, and complete second-errand state while leaving the original first-errand step ids unchanged.
+  - Updated the Grade 2 smoke flow to verify the new accept-investigate-return-complete sequence, Moonseed Charm discovery text, reward persistence, and post-reload recovery.
+- Reason: Align the follow-up farm loop with the requested story hook while keeping the vertical slice small, optional-learning-safe, and fully testable.
+
+## 2026-06-29 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
 - Branch: `codex/optional-second-farm-errand`
 - Files changed:
   - `docs/CHATGPT_CHANGELOG.md`

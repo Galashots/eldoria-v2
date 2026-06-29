@@ -41,17 +41,23 @@ type MiraSecondErrandDefinition = {
   name: string;
   objectives: {
     available: string;
-    accepted: string;
+    investigate: string;
+    returnToMira: string;
     complete: string;
   };
   dialogue: {
     start: string;
     reminder: string;
+    return: string;
     complete: string;
+  };
+  storyItem: {
+    name: string;
   };
   progress: {
-    complete: string;
+    discover: string;
   };
+  completionToast: string;
   rewards: {
     gold: number;
   };
@@ -101,20 +107,26 @@ export const MIRA_FIRST_ERRAND = {
 
 export const MIRA_SECOND_ERRAND = {
   id: 'mira-second-errand',
-  name: 'Mira\'s Crop Check',
+  name: 'The Whispering Scarecrow',
   objectives: {
-    available: 'Optional: Talk to Mira for one more farm favor.',
-    accepted: 'Optional: Check the crop patch for Mira one more time.',
-    complete: 'Optional farm favor complete. Keep exploring.'
+    available: 'Optional: Talk to Mira about the whispering scarecrow.',
+    investigate: 'Optional: Check the scarecrow by the crop patch.',
+    returnToMira: 'Optional: Bring the Moonseed Charm back to Mira.',
+    complete: 'Optional errand complete: The Whispering Scarecrow.'
   },
   dialogue: {
-    start: 'Mira: Could you check the crop patch one more time? The learning bonus is still optional.',
-    reminder: 'Mira: The crop patch is ready when you are.',
-    complete: 'Mira: Thanks. That extra crop check really helped.'
+    start: 'Mira: The old scarecrow whispers at night. It may be wind, but the crops feel uneasy. Check it for me.',
+    reminder: 'Mira: Check the scarecrow by the crop patch.',
+    return: 'Mira: A Moonseed Charm. Harmless, but old. Maybe the farm is closer to Eldoria\'s old magic than I thought.',
+    complete: 'Mira: Keep listening. The farm may remember more old magic yet.'
+  },
+  storyItem: {
+    name: 'Moonseed Charm'
   },
   progress: {
-    complete: 'Mira\'s crop check complete.'
+    discover: 'You found a Moonseed Charm beneath the scarecrow.'
   },
+  completionToast: 'Optional Errand Complete: The Whispering Scarecrow',
   rewards: {
     gold: 4
   }

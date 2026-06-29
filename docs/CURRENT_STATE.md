@@ -8,7 +8,7 @@ Last refreshed on 2026-06-29. This file records volatile project status; `AGENTS
 - Grade 2 audio-first and Grade 5 reader-mode profiles.
 - Keyboard movement, dynamic lower-left joystick, and lower-right ACTION control.
 - Mira's First Errand with objective HUD, optional crop/slime prompts, return reward, save/load, and permanent Sunberry Charm keepsake.
-- One optional second farm errand from Mira that becomes available after the first errand, reuses the existing crop patch interaction, and awards a small gold-only reward without changing core systems.
+- One optional second micro-errand, The Whispering Scarecrow, becomes available after Mira's first errand, reuses the existing crop patch interaction, and adds a short investigate-and-return loop with a text-only Moonseed Charm discovery and a small gold reward.
 - Learning remains bonus-only: wrong answers and skips never block quest progress.
 - Floating gold/item feedback, primitive sparkle bursts, and per-skill mastery records.
 - Contextual Grade 2/Grade 5 templates and development/E2E-only deterministic prompt preview.
@@ -30,7 +30,7 @@ Last refreshed on 2026-06-29. This file records volatile project status; `AGENTS
 
 ## Active Milestone
 
-The starter farm slice now includes Mira's first errand plus one optional follow-up farm favor. Grade 2 Mage idle, walk, cast, and hurt presentation are live, while Grade 5 remains on the existing placeholder presentation.
+The starter farm slice now includes Mira's first errand plus the optional Whispering Scarecrow follow-up. Grade 2 Mage idle, walk, cast, and hurt presentation are live, while Grade 5 remains on the existing placeholder presentation.
 
 ## Next Checkpoint
 
