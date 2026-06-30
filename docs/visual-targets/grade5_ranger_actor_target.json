@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "sourceContract": "docs/VISUAL_ASSET_CONTRACT.md",
+  "targets": [
+    {
+      "id": "char_ranger_boy_base",
+      "displayName": "Grade 5 Ranger Explorer Hero Base",
+      "profileId": "grade5-adventurer",
+      "category": "char",
+      "status": "target_only",
+      "approval": "pending_chatgpt_visual_identity_and_prompt",
+      "canvasPx": [32, 48],
+      "footprintPx": [16, 16],
+      "pivotPx": [16, 47],
+      "ppu": 16,
+      "directions": ["front", "back", "left", "right"],
+      "paletteFamilies": ["forest", "wood_leather", "ui_neutral"],
+      "lightDirection": "upper_left",
+      "atlasFamily": "characters",
+      "runtimeExport": "png",
+      "preferredSource": "aseprite",
+      "requiredClips": [
+        { "name": "idle", "frames": [4, 6], "loop": true },
+        { "name": "walk", "frames": [6, 8], "loop": true },
+        { "name": "inspect", "frames": [4, 6], "loop": false },
+        { "name": "hurt", "frames": [2, 4], "loop": false }
+      ],
+      "deferredClips": ["attack_light", "attack_heavy", "death", "special"],
+      "slices": [
+        "base_body",
+        "head",
+        "torso",
+        "legs",
+        "weapon_socket_main",
+        "armor_torso",
+        "armor_head",
+        "cape_back"
+      ],
+      "collision": {
+        "hurtbox": [10, 25, 12, 22],
+        "hitboxes": [],
+        "interaction": [8, 30, 16, 18]
+      },
+      "gameplayPolicy": {
+        "learningGate": "never",
+        "wrongAnswersBlockProgress": false,
+        "skipBlocksProgress": false,
+        "addsCombatOrDamage": false,
+        "addsQuestOrSaveChanges": false
+      },
+      "notes": [
+        "Specification only; no art or runtime behavior is included.",
+        "Final visual identity, seed frame, and image-generation prompt require ChatGPT approval.",
+        "The inspect and hurt clips are presentation-only and add no combat, damage, rewards, or progression effects."
+      ]
+    }
+  ]
+}

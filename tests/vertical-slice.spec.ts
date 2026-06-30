@@ -168,24 +168,26 @@ async function slimePresentation(page: Page): Promise<SlimePresentation> {
 async function heroPresentation(page: Page): Promise<HeroPresentation> {
   return page.evaluate(() => {
     const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
-      grade2HeroSprite?: {
-        anims: { currentAnim?: { key: string } };
-        displayHeight: number;
-        displayWidth: number;
-        frame: { name: string | number };
-        originX: number;
-        originY: number;
-        texture: { key: string };
-        visible: boolean;
-        x: number;
-        y: number;
+      heroPresentation?: {
+        sprite?: {
+          anims: { currentAnim?: { key: string } };
+          displayHeight: number;
+          displayWidth: number;
+          frame: { name: string | number };
+          originX: number;
+          originY: number;
+          texture: { key: string };
+          visible: boolean;
+          x: number;
+          y: number;
+        };
       };
       player: {
         texture: { key: string };
         visible: boolean;
       };
     };
-    const hero = scene.grade2HeroSprite;
+    const hero = scene.heroPresentation?.sprite;
 
     return {
       animation: hero?.anims.currentAnim?.key ?? null,

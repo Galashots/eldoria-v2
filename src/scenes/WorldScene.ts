@@ -2,9 +2,14 @@ import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../gameConfig';
 import type { AnswerValue, BonusContext, LearningPrompt } from '../data/curriculum';
 import { PROFILES, type ProfileId } from '../data/profiles';
-import { MIRA_FIRST_ERRAND, MIRA_SECOND_ERRAND } from '../data/quests';
+import { MIRA_FIRST_ERRAND } from '../data/quests';
+import {
+  HeroPresentationController,
+  type HeroFacing
+} from '../presentation/HeroPresentationController';
 import { LearningBonusSystem } from '../systems/LearningBonusSystem';
 import { MasterySystem, type LearningMastery } from '../systems/MasterySystem';
+import { FarmQuestSystem, type FarmQuestOutcome } from '../systems/FarmQuestSystem';
 import { SaveSystem, type StarterQuestStep } from '../systems/SaveSystem';
 
 type SceneInitData = {
@@ -30,42 +35,10 @@ type PromptCloseResult = {
 
 type PromptCloseHandler = (result: PromptCloseResult) => string | undefined;
 
-type HeroFacing = 'front' | 'back' | 'left' | 'right';
-type HeroMotion = 'idle' | 'walk' | 'cast' | 'hurt';
-
 const PRACTICE_SLIME_TEXTURE_KEY = 'practice-slime-v001';
 const PRACTICE_SLIME_IDLE_ANIMATION = 'practice-slime-idle';
 const PRACTICE_SLIME_HOP_ANIMATION = 'practice-slime-hop';
 const CROP_BONUS_FEEDBACK_NAME = 'crop-bonus-feedback';
-const GRADE2_MAGE_IDLE_TEXTURE_KEY = 'grade2-mage-idle-v001';
-const GRADE2_MAGE_WALK_TEXTURE_KEY = 'grade2-mage-walk-v001';
-const GRADE2_MAGE_CAST_TEXTURE_KEY = 'grade2-mage-cast-v001';
-const GRADE2_MAGE_HURT_TEXTURE_KEY = 'grade2-mage-hurt-v001';
-const GRADE2_MAGE_IDLE_ANIMATIONS: Record<HeroFacing, string> = {
-  front: 'grade2-mage-idle-front',
-  back: 'grade2-mage-idle-back',
-  left: 'grade2-mage-idle-left',
-  right: 'grade2-mage-idle-right'
-};
-const GRADE2_MAGE_WALK_ANIMATIONS: Record<HeroFacing, string> = {
-  front: 'grade2-mage-walk-front',
-  back: 'grade2-mage-walk-back',
-  left: 'grade2-mage-walk-left',
-  right: 'grade2-mage-walk-right'
-};
-const GRADE2_MAGE_CAST_ANIMATIONS: Record<HeroFacing, string> = {
-  front: 'grade2-mage-cast-front',
-  back: 'grade2-mage-cast-back',
-  left: 'grade2-mage-cast-left',
-  right: 'grade2-mage-cast-right'
-};
-const GRADE2_MAGE_HURT_ANIMATIONS: Record<HeroFacing, string> = {
-  front: 'grade2-mage-hurt-front',
-  back: 'grade2-mage-hurt-back',
-  left: 'grade2-mage-hurt-left',
-  right: 'grade2-mage-hurt-right'
-};
-
 export class WorldScene extends Phaser.Scene {
   private player!: Phaser.Physics.Arcade.Sprite;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
@@ -82,20 +55,13 @@ export class WorldScene extends Phaser.Scene {
   private gold = 0;
   private inventory: Record<string, number> = {};
   private mastery: LearningMastery = {};
-  private firstQuestStep: StarterQuestStep = MIRA_FIRST_ERRAND.steps.talkToMira;
-  private secondErrandAccepted = false;
-  private secondErrandCharmFound = false;
-  private secondErrandComplete = false;
+  private farmQuest!: FarmQuestSystem;
   private busy = false;
   private hudText!: Phaser.GameObjects.Text;
   private objectiveText!: Phaser.GameObjects.Text;
   private hintText!: Phaser.GameObjects.Text;
   private practiceSlimeSprite?: Phaser.GameObjects.Sprite;
-  private grade2HeroSprite?: Phaser.GameObjects.Sprite;
-  private heroFacing: HeroFacing = 'front';
-  private heroMotion: HeroMotion = 'idle';
-  private grade2CastActive = false;
-  private grade2HurtActive = false;
+  private heroPresentation!: HeroPresentationController;
 
   constructor() {
     super('WorldScene');
@@ -104,14 +70,6 @@ export class WorldScene extends Phaser.Scene {
   init(data: SceneInitData): void {
     this.profileId = data.profileId ?? 'grade5-adventurer';
     this.learning = new LearningBonusSystem(this.profileId);
-    this.grade2HeroSprite = undefined;
-    this.heroFacing = 'front';
-    this.heroMotion = 'idle';
-    this.grade2CastActive = false;
-    this.grade2HurtActive = false;
-    this.secondErrandAccepted = false;
-    this.secondErrandCharmFound = false;
-    this.secondErrandComplete = false;
   }
 
   create(): void {
@@ -164,30 +122,28 @@ export class WorldScene extends Phaser.Scene {
       this.inventory = { ...(saved.inventory ?? {}) };
       this.mastery = { ...(saved.mastery ?? {}) };
       this.player.setPosition(saved.player.x, saved.player.y);
-      this.firstQuestStep = saved.firstQuestStep ?? MIRA_FIRST_ERRAND.steps.talkToMira;
-      this.secondErrandAccepted = saved.questFlags?.miraSecondErrandAccepted === true;
-      this.secondErrandCharmFound = saved.questFlags?.miraSecondErrandCharmFound === true;
-      this.secondErrandComplete = saved.questFlags?.miraSecondErrandComplete === true;
     }
 
-    this.createGrade2HeroPresentation();
+    this.farmQuest = FarmQuestSystem.fromSave(saved);
+
+    this.heroPresentation = new HeroPresentationController(this, this.player, this.profileId);
+    this.heroPresentation.create();
 
     this.createHud();
     this.createTouchControls();
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.stopPromptReadAloud();
       this.resetJoystick();
+      this.heroPresentation.dispose();
     });
   }
 
   update(): void {
-    this.syncGrade2HeroPresentation();
+    this.heroPresentation.syncPosition();
 
     if (this.busy) {
       this.player.setVelocity(0, 0);
-      this.cancelGrade2Cast();
-      this.cancelGrade2Hurt();
-      this.setGrade2HeroAnimation(this.heroFacing, 'idle');
+      this.heroPresentation.setBusy();
       return;
     }
 
@@ -214,13 +170,9 @@ export class WorldScene extends Phaser.Scene {
             ? 'back'
             : 'front';
 
-      if (this.grade2HeroSprite) {
-        if (!this.isGrade2HeroOneShotActive()) this.setGrade2HeroAnimation(facing, 'walk');
-      } else {
-        this.player.setFrame(facing === 'left' ? 2 : facing === 'right' ? 3 : facing === 'back' ? 1 : 0);
-      }
-    } else if (!this.isGrade2HeroOneShotActive()) {
-      this.setGrade2HeroAnimation(this.heroFacing, 'idle');
+      this.heroPresentation.setMovement(facing, true);
+    } else {
+      this.heroPresentation.setIdle();
     }
 
     if (Phaser.Input.Keyboard.JustDown(this.keys.SPACE) || Phaser.Input.Keyboard.JustDown(this.keys.E)) {
@@ -239,206 +191,6 @@ export class WorldScene extends Phaser.Scene {
         y: obj.y ?? 0,
         label: obj.name || obj.type || 'Target'
       }));
-  }
-
-  private createGrade2HeroPresentation(): void {
-    if (this.profileId !== 'grade2-mage') return;
-
-    const idleClips: Array<{ facing: HeroFacing; start: number; end: number }> = [
-      { facing: 'front', start: 0, end: 3 },
-      { facing: 'back', start: 4, end: 7 },
-      { facing: 'left', start: 8, end: 11 },
-      { facing: 'right', start: 12, end: 15 }
-    ];
-
-    for (const clip of idleClips) {
-      const key = GRADE2_MAGE_IDLE_ANIMATIONS[clip.facing];
-      if (!this.anims.exists(key)) {
-        this.anims.create({
-          key,
-          frames: this.anims.generateFrameNumbers(GRADE2_MAGE_IDLE_TEXTURE_KEY, {
-            start: clip.start,
-            end: clip.end
-          }),
-          frameRate: 3,
-          repeat: -1
-        });
-      }
-    }
-
-    const walkClips: Array<{ facing: HeroFacing; start: number; end: number }> = [
-      { facing: 'front', start: 0, end: 5 },
-      { facing: 'back', start: 6, end: 11 },
-      { facing: 'left', start: 12, end: 17 },
-      { facing: 'right', start: 18, end: 23 }
-    ];
-
-    for (const clip of walkClips) {
-      const key = GRADE2_MAGE_WALK_ANIMATIONS[clip.facing];
-      if (!this.anims.exists(key)) {
-        this.anims.create({
-          key,
-          frames: this.anims.generateFrameNumbers(GRADE2_MAGE_WALK_TEXTURE_KEY, {
-            start: clip.start,
-            end: clip.end
-          }),
-          frameRate: 8,
-          repeat: -1
-        });
-      }
-    }
-
-    const castClips: Array<{ facing: HeroFacing; start: number; end: number }> = [
-      { facing: 'front', start: 0, end: 3 },
-      { facing: 'back', start: 4, end: 7 },
-      { facing: 'left', start: 8, end: 11 },
-      { facing: 'right', start: 12, end: 15 }
-    ];
-
-    for (const clip of castClips) {
-      const key = GRADE2_MAGE_CAST_ANIMATIONS[clip.facing];
-      if (!this.anims.exists(key)) {
-        this.anims.create({
-          key,
-          frames: this.anims.generateFrameNumbers(GRADE2_MAGE_CAST_TEXTURE_KEY, {
-            start: clip.start,
-            end: clip.end
-          }),
-          frameRate: 8,
-          repeat: 0
-        });
-      }
-    }
-
-    const hurtClips: Array<{ facing: HeroFacing; start: number; end: number }> = [
-      { facing: 'front', start: 0, end: 2 },
-      { facing: 'back', start: 3, end: 5 },
-      { facing: 'left', start: 6, end: 8 },
-      { facing: 'right', start: 9, end: 11 }
-    ];
-
-    for (const clip of hurtClips) {
-      const key = GRADE2_MAGE_HURT_ANIMATIONS[clip.facing];
-      if (!this.anims.exists(key)) {
-        this.anims.create({
-          key,
-          frames: this.anims.generateFrameNumbers(GRADE2_MAGE_HURT_TEXTURE_KEY, {
-            start: clip.start,
-            end: clip.end
-          }),
-          frameRate: 10,
-          repeat: 0
-        });
-      }
-    }
-
-    this.player.setVisible(false);
-    this.grade2HeroSprite = this.add.sprite(
-      this.player.x,
-      this.player.y + 16,
-      GRADE2_MAGE_IDLE_TEXTURE_KEY,
-      0
-    )
-      .setOrigin(0.5, 1)
-      .setDepth(3)
-      .play(GRADE2_MAGE_IDLE_ANIMATIONS.front);
-  }
-
-  private setGrade2HeroAnimation(facing: HeroFacing, motion: HeroMotion): void {
-    if (!this.grade2HeroSprite || (facing === this.heroFacing && motion === this.heroMotion)) return;
-
-    this.heroFacing = facing;
-    this.heroMotion = motion;
-    const animations = motion === 'walk'
-      ? GRADE2_MAGE_WALK_ANIMATIONS
-      : motion === 'cast'
-        ? GRADE2_MAGE_CAST_ANIMATIONS
-        : motion === 'hurt'
-          ? GRADE2_MAGE_HURT_ANIMATIONS
-        : GRADE2_MAGE_IDLE_ANIMATIONS;
-    this.grade2HeroSprite.play(animations[facing]);
-  }
-
-  private playGrade2Cast(): void {
-    if (!this.grade2HeroSprite || this.busy || this.isGrade2HeroOneShotActive()) return;
-
-    this.grade2CastActive = true;
-    const castKey = GRADE2_MAGE_CAST_ANIMATIONS[this.heroFacing];
-    this.setGrade2HeroAnimation(this.heroFacing, 'cast');
-    this.grade2HeroSprite.once(
-      Phaser.Animations.Events.ANIMATION_COMPLETE_KEY + castKey,
-      () => {
-        this.grade2CastActive = false;
-        this.recoverGrade2HeroPresentation();
-      }
-    );
-  }
-
-  private cancelGrade2Cast(): void {
-    if (!this.grade2CastActive) return;
-
-    this.grade2HeroSprite?.off(
-      Phaser.Animations.Events.ANIMATION_COMPLETE_KEY + GRADE2_MAGE_CAST_ANIMATIONS[this.heroFacing]
-    );
-    this.grade2CastActive = false;
-  }
-
-  private playGrade2Hurt(): boolean {
-    if (!this.grade2HeroSprite || this.busy || this.grade2HurtActive) return false;
-
-    this.cancelGrade2Cast();
-    this.grade2HurtActive = true;
-    const hurtKey = GRADE2_MAGE_HURT_ANIMATIONS[this.heroFacing];
-    this.setGrade2HeroAnimation(this.heroFacing, 'hurt');
-    this.grade2HeroSprite.once(
-      Phaser.Animations.Events.ANIMATION_COMPLETE_KEY + hurtKey,
-      () => {
-        this.grade2HurtActive = false;
-        this.recoverGrade2HeroPresentation();
-      }
-    );
-
-    return true;
-  }
-
-  private cancelGrade2Hurt(): void {
-    if (!this.grade2HurtActive) return;
-
-    this.grade2HeroSprite?.off(
-      Phaser.Animations.Events.ANIMATION_COMPLETE_KEY + GRADE2_MAGE_HURT_ANIMATIONS[this.heroFacing]
-    );
-    this.grade2HurtActive = false;
-  }
-
-  private isGrade2HeroOneShotActive(): boolean {
-    return this.grade2CastActive || this.grade2HurtActive;
-  }
-
-  private recoverGrade2HeroPresentation(): void {
-    if (!this.grade2HeroSprite || this.busy || this.isGrade2HeroOneShotActive()) return;
-
-    const body = this.player.body as Phaser.Physics.Arcade.Body | null;
-    const velocityX = body?.velocity.x ?? 0;
-    const velocityY = body?.velocity.y ?? 0;
-    const isMoving = Math.abs(velocityX) > 0.01 || Math.abs(velocityY) > 0.01;
-
-    if (!isMoving) {
-      this.setGrade2HeroAnimation(this.heroFacing, 'idle');
-      return;
-    }
-
-    const facing: HeroFacing = velocityX < -0.35
-      ? 'left'
-      : velocityX > 0.35
-        ? 'right'
-        : velocityY < 0
-          ? 'back'
-          : 'front';
-    this.setGrade2HeroAnimation(facing, 'walk');
-  }
-
-  private syncGrade2HeroPresentation(): void {
-    this.grade2HeroSprite?.setPosition(this.player.x, this.player.y + 16);
   }
 
   private drawTargetMarkers(): void {
@@ -592,29 +344,7 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private refreshObjective(): void {
-    this.objectiveText.setText(`Objective: ${this.currentObjective()}`);
-  }
-
-  private firstQuestObjective(): string {
-    return MIRA_FIRST_ERRAND.objectives[this.firstQuestStep];
-  }
-
-  private currentObjective(): string {
-    if (this.firstQuestStep !== MIRA_FIRST_ERRAND.steps.complete) {
-      return this.firstQuestObjective();
-    }
-
-    if (this.secondErrandComplete) {
-      return MIRA_SECOND_ERRAND.objectives.complete;
-    }
-
-    if (this.secondErrandCharmFound) {
-      return MIRA_SECOND_ERRAND.objectives.returnToMira;
-    }
-
-    return this.secondErrandAccepted
-      ? MIRA_SECOND_ERRAND.objectives.investigate
-      : MIRA_SECOND_ERRAND.objectives.available;
+    this.objectiveText.setText(`Objective: ${this.farmQuest.currentObjective()}`);
   }
 
   private updateHint(): void {
@@ -623,11 +353,7 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private hintLabel(target: InteractionTarget): string {
-    if (target.label === MIRA_FIRST_ERRAND.targets.cropBonus && this.canDiscoverSecondErrandCharm()) {
-      return 'Check Scarecrow';
-    }
-
-    return target.label;
+    return this.farmQuest.hintLabel(target.label);
   }
 
   private createTouchControls(): void {
@@ -736,8 +462,8 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private handleActionInput(): void {
-    if (this.grade2HurtActive) return;
-    if (!this.tryInteract()) this.playGrade2Cast();
+    if (this.heroPresentation.isHurtPlaying()) return;
+    if (!this.tryInteract()) this.heroPresentation.playAction(this.busy);
   }
 
   private tryInteract(): boolean {
@@ -760,15 +486,9 @@ export class WorldScene extends Phaser.Scene {
       this.player.setVelocity(0, 0);
       this.playCropBonusFeedback(target, () => {
         this.openBonusPrompt(target.kind, target.label, () => {
-          if (this.firstQuestStep === MIRA_FIRST_ERRAND.steps.tryCropBonus) {
-            this.setFirstQuestStep(MIRA_FIRST_ERRAND.steps.findSlime);
-            return MIRA_FIRST_ERRAND.progress.cropComplete;
-          }
-          if (this.canDiscoverSecondErrandCharm()) {
-            this.discoverSecondErrandCharm();
-            return MIRA_SECOND_ERRAND.progress.discover;
-          }
-          return undefined;
+          const outcome = this.farmQuest.completeCropInteraction();
+          this.applyQuestOutcome(outcome, false);
+          return outcome.message;
         });
       });
       return true;
@@ -780,11 +500,9 @@ export class WorldScene extends Phaser.Scene {
       this.player.setVelocity(0, 0);
       this.playPracticeSlimeFeedback('hop', () => {
         this.openBonusPrompt(target.kind, target.label, () => {
-          if (this.firstQuestStep === MIRA_FIRST_ERRAND.steps.findSlime) {
-            this.setFirstQuestStep(MIRA_FIRST_ERRAND.steps.returnToMira);
-            return MIRA_FIRST_ERRAND.progress.slimeComplete;
-          }
-          return undefined;
+          const outcome = this.farmQuest.completeSlimeInteraction();
+          this.applyQuestOutcome(outcome, false);
+          return outcome.message;
         });
       });
       return true;
@@ -795,98 +513,43 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private handleMiraInteraction(): void {
-    switch (this.firstQuestStep) {
-      case MIRA_FIRST_ERRAND.steps.talkToMira:
-        this.setFirstQuestStep(MIRA_FIRST_ERRAND.steps.tryCropBonus);
-        this.showToast(MIRA_FIRST_ERRAND.dialogue.start);
-        return;
-      case MIRA_FIRST_ERRAND.steps.tryCropBonus:
-        this.showToast(MIRA_FIRST_ERRAND.dialogue.cropReminder);
-        return;
-      case MIRA_FIRST_ERRAND.steps.findSlime:
-        this.showToast(MIRA_FIRST_ERRAND.dialogue.slimeReminder);
-        return;
-      case MIRA_FIRST_ERRAND.steps.returnToMira: {
-        const { gold, charm } = MIRA_FIRST_ERRAND.rewards;
-        this.gold += gold;
-        this.inventory[charm.key] = (this.inventory[charm.key] ?? 0) + 1;
-        this.setFirstQuestStep(MIRA_FIRST_ERRAND.steps.complete);
-        this.refreshHud();
-        this.showFloatingReward(`+${gold} Gold`, this.player.x, this.player.y - 26, '#ffd666');
-        this.showFloatingReward(`Received: ${charm.name}`, this.player.x, this.player.y - 44, '#d7ffb8');
-        this.createSparkleBurst(this.player.x, this.player.y - 14);
-        this.showToast(MIRA_FIRST_ERRAND.completionToast);
-        return;
-      }
-      case MIRA_FIRST_ERRAND.steps.complete:
-        if (this.secondErrandComplete) {
-          this.showToast(MIRA_SECOND_ERRAND.dialogue.complete);
-          return;
-        }
-
-        if (this.secondErrandCharmFound) {
-          this.turnInSecondErrand();
-          return;
-        }
-
-        if (!this.secondErrandAccepted) {
-          this.secondErrandAccepted = true;
-          this.refreshObjective();
-          this.save();
-          this.showToast(MIRA_SECOND_ERRAND.dialogue.start);
-          return;
-        }
-
-        this.showToast(MIRA_SECOND_ERRAND.dialogue.reminder);
-        return;
-    }
+    this.applyQuestOutcome(this.farmQuest.interactWithMira(), true);
   }
 
   private setFirstQuestStep(step: StarterQuestStep): void {
-    this.firstQuestStep = step;
+    this.farmQuest.setFirstQuestStepForTest(step);
     this.refreshObjective();
     this.save();
   }
 
-  private canDiscoverSecondErrandCharm(): boolean {
-    return this.firstQuestStep === MIRA_FIRST_ERRAND.steps.complete
-      && this.secondErrandAccepted
-      && !this.secondErrandCharmFound
-      && !this.secondErrandComplete;
+  private get firstQuestStep(): StarterQuestStep {
+    return this.farmQuest.firstQuestStep;
   }
 
-  private discoverSecondErrandCharm(): void {
-    if (!this.canDiscoverSecondErrandCharm()) return;
+  private applyQuestOutcome(outcome: FarmQuestOutcome, persist: boolean): void {
+    if (outcome.objectiveChanged) this.refreshObjective();
 
-    const { name } = MIRA_SECOND_ERRAND.storyItem;
-    this.secondErrandCharmFound = true;
-    this.refreshObjective();
-    this.showFloatingReward(`Found: ${name}`, this.player.x, this.player.y - 26, '#d7ffb8');
-    this.createSparkleBurst(this.player.x, this.player.y - 14);
-    this.save();
-  }
+    let showSparkles = false;
+    if (outcome.reward) {
+      this.gold += outcome.reward.gold;
+      this.showFloatingReward(`+${outcome.reward.gold} Gold`, this.player.x, this.player.y - 26, '#ffd666');
+      if (outcome.reward.item) {
+        const { key, name } = outcome.reward.item;
+        this.inventory[key] = (this.inventory[key] ?? 0) + 1;
+        this.showFloatingReward(`Received: ${name}`, this.player.x, this.player.y - 44, '#d7ffb8');
+      }
+      this.refreshHud();
+      showSparkles = true;
+    }
 
-  private canTurnInSecondErrand(): boolean {
-    return this.firstQuestStep === MIRA_FIRST_ERRAND.steps.complete
-      && this.secondErrandAccepted
-      && this.secondErrandCharmFound
-      && !this.secondErrandComplete;
-  }
+    if (outcome.foundItem) {
+      this.showFloatingReward(`Found: ${outcome.foundItem}`, this.player.x, this.player.y - 26, '#d7ffb8');
+      showSparkles = true;
+    }
 
-  private turnInSecondErrand(): void {
-    if (!this.canTurnInSecondErrand()) return;
-
-    const { gold } = MIRA_SECOND_ERRAND.rewards;
-    this.secondErrandAccepted = false;
-    this.secondErrandCharmFound = false;
-    this.secondErrandComplete = true;
-    this.gold += gold;
-    this.refreshHud();
-    this.refreshObjective();
-    this.showFloatingReward(`+${gold} Gold`, this.player.x, this.player.y - 26, '#ffd666');
-    this.createSparkleBurst(this.player.x, this.player.y - 14);
-    this.showToast(`${MIRA_SECOND_ERRAND.dialogue.return}\n${MIRA_SECOND_ERRAND.completionToast}`);
-    this.save();
+    if (showSparkles) this.createSparkleBurst(this.player.x, this.player.y - 14);
+    if (outcome.toast) this.showToast(outcome.toast);
+    if (persist && (outcome.stateChanged || outcome.reward)) this.save();
   }
 
   previewPrompt(templateId: string): LearningPrompt {
@@ -905,7 +568,7 @@ export class WorldScene extends Phaser.Scene {
       throw new Error('Grade 2 hurt preview is available only in development and tests.');
     }
 
-    return this.playGrade2Hurt();
+    return this.heroPresentation.playHurtForPreview(this.busy);
   }
 
   private openBonusPrompt(
@@ -1151,6 +814,7 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private save(): void {
+    const questSave = this.farmQuest.toSaveFields();
     SaveSystem.save({
       version: 1,
       profileId: this.profileId,
@@ -1158,13 +822,7 @@ export class WorldScene extends Phaser.Scene {
       inventory: this.inventory,
       mastery: this.mastery,
       lastArea: 'farm',
-      firstQuestStep: this.firstQuestStep,
-      questFlags: {
-        miraFirstErrandComplete: this.firstQuestStep === MIRA_FIRST_ERRAND.steps.complete,
-        miraSecondErrandAccepted: this.secondErrandAccepted,
-        miraSecondErrandCharmFound: this.secondErrandCharmFound,
-        miraSecondErrandComplete: this.secondErrandComplete
-      },
+      ...questSave,
       player: {
         x: this.player.x,
         y: this.player.y

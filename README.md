@@ -45,13 +45,14 @@ The production site is written to `dist/`.
 
 - Loads a Tiled-compatible farm map
 - Pixel-perfect Phaser renderer
-- Player movement and collision
-- Camera follow
-- NPC / crop / enemy interaction stubs
-- Bonus-only curriculum question flow
-- Grade 5 and Grade 2 profile data
-- Local save utility stub
-- GitHub Actions build check
+- Keyboard and dynamic touch movement with collision and camera follow
+- Grade 2 audio-first Mage and Grade 5 reader-mode Adventurer profiles
+- Mira's first errand and optional Whispering Scarecrow follow-up
+- Optional crop and Practice Slime learning bonuses that never gate progress
+- Persistent quest, reward, inventory, position, and per-skill mastery data
+- Production Grade 2 Mage and Practice Slime presentation assets
+- Landscape tablet guidance and Playwright vertical-slice smoke coverage
+- GitHub Actions validation, build, and browser smoke checks
 
 ## Tiled workflow
 

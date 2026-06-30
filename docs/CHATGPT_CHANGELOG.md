@@ -4,6 +4,27 @@ This file records repository changes made through ChatGPT so future work can see
 
 ## 2026-06-29 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
+- Branch: `codex/grade5-ranger-foundation`
+- Files changed:
+  - `README.md`
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `docs/CURRENT_STATE.md`
+  - `docs/visual-targets/GRADE5_RANGER_ACTOR_TARGET.md`
+  - `docs/visual-targets/grade5_ranger_actor_target.json`
+  - `src/presentation/HeroPresentationController.ts`
+  - `src/scenes/WorldScene.ts`
+  - `src/systems/FarmQuestSystem.ts`
+  - `tests/vertical-slice.spec.ts`
+- Summary: Established the Grade 5 Ranger technical target and moved actor presentation and farm quest rules out of the Phaser world scene.
+- Implementation notes:
+  - Added the validated `char_ranger_boy_base` target with idle, walk, presentation-only inspect, and development/test-only hurt contracts; asset generation remains blocked on ChatGPT visual/prompt approval.
+  - Replaced Grade 2-specific scene animation state with a profile-configured hero presentation controller while preserving the Grade 5 placeholder fallback.
+  - Moved both Mira errands into a renderer-independent state system that returns presentation outcomes and serializes the unchanged version-1 quest fields.
+  - Reduced `WorldScene.ts` from 1,174 to roughly 830 lines without changing movement, rewards, learning, saves, quest progression, or profile behavior.
+- Reason: Prepare profile-specific production actors and future quest work without continuing to concentrate rendering and gameplay rules in one Phaser scene.
+
+## 2026-06-29 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
 - Branch: `codex/child-clarity-foundations`
 - Files changed:
   - `.github/workflows/ci.yml`
