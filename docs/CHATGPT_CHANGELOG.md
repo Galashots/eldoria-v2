@@ -4,6 +4,25 @@ This file records repository changes made through ChatGPT so future work can see
 
 ## 2026-06-29 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
+- Branch: `codex/child-clarity-foundations`
+- Files changed:
+  - `.github/workflows/ci.yml`
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `docs/CURRENT_STATE.md`
+  - `docs/playtests/CHILD_CLARITY_CHECKLIST.md`
+  - `index.html`
+  - `src/styles/global.css`
+  - `tests/vertical-slice.spec.ts`
+- Summary: Prepared the verified farm slice for its real-child clarity checkpoint.
+- Implementation notes:
+  - Added an accessible portrait-only orientation overlay so supported touch play stays readable in landscape.
+  - Added a privacy-safe 10-15 minute checklist for separate Grade 2 and Grade 5 sessions with explicit no-gating acceptance criteria.
+  - Added portrait/landscape regression coverage and expanded CI to install Chromium and run the Playwright smoke suite.
+  - Left quests, curriculum, rewards, save data, controls, maps, and actor presentation unchanged.
+- Reason: The current slice needs real-player clarity evidence before more content or production-art expansion.
+
+## 2026-06-29 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
 - Branch: `main`
 - Files changed:
   - `docs/CHATGPT_CHANGELOG.md`

@@ -12,10 +12,12 @@ Last refreshed on 2026-06-29. This file records volatile project status; `AGENTS
 - Learning remains bonus-only: wrong answers and skips never block quest progress.
 - Floating gold/item feedback, primitive sparkle bursts, and per-skill mastery records.
 - Contextual Grade 2/Grade 5 templates and development/E2E-only deterministic prompt preview.
-- Four Playwright vertical-slice smoke tests covering both profiles, quest/save behavior, mastery, templates, and preview side-effect safety.
+- Five Playwright vertical-slice smoke tests covering both profiles, quest/save behavior, mastery, templates, preview side-effect safety, and portrait-orientation guidance.
 - Crop Bonus and Practice Slime interactions now provide short, readable visual feedback before their unchanged optional prompts open.
 - Arcade Physics bounds now cover the full farm map, so the crop/scarecrow and Practice Slime targets are reachable through normal movement rather than only test positioning.
 - Optional prompt panels render above the actor and provide a button-sized pointer target for `Skip bonus`.
+- Portrait phone/tablet layouts show a DOM-based landscape-orientation message instead of shrinking the playable canvas into an unreadable strip.
+- A privacy-safe 10-15 minute child-clarity checklist is ready for separate Grade 2 and Grade 5 sessions.
 
 ## Visual And Asset State
 
@@ -32,11 +34,11 @@ Last refreshed on 2026-06-29. This file records volatile project status; `AGENTS
 
 ## Active Milestone
 
-The starter farm slice now includes Mira's first errand plus the optional Whispering Scarecrow follow-up. Grade 2 Mage idle, walk, cast, and hurt presentation are live, while Grade 5 remains on the existing placeholder presentation.
+The starter farm slice is technically ready for its real-child clarity checkpoint. Grade 2 Mage idle, walk, cast, and hurt presentation are live, while Grade 5 remains on the existing placeholder presentation.
 
 ## Next Checkpoint
 
-Run a short real-child clarity pass on the expanded farm slice, then return to Grade 5 production actor target specs.
+Run the documented Grade 2 and Grade 5 child-clarity sessions in landscape. Fix only demonstrated blockers or repeated confusion, then return to the approved Grade 5 Ranger Explorer actor target.
 
 ## Routine Merge Policy
 

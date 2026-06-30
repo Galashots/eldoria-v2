@@ -819,3 +819,17 @@ test('prompt preview renders a chosen template without gameplay or save effects'
   expect(grade5After.questStep).toBe(grade5Before.questStep);
   expect(await page.evaluate(() => localStorage.getItem('eldoria_v2_save_grade5-adventurer'))).toBe(grade5SaveBefore);
 });
+
+test('portrait devices ask the player to rotate while landscape keeps the game available', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+
+  const orientationLock = page.locator('#orientation-lock');
+  await expect(orientationLock).toBeVisible();
+  await expect(orientationLock).toContainText('Turn your device sideways');
+  await expect(orientationLock).toContainText('landscape');
+
+  await page.setViewportSize({ width: 844, height: 390 });
+  await expect(orientationLock).toBeHidden();
+  await expect(page.locator('canvas')).toBeVisible();
+});
