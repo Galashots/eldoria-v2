@@ -2,6 +2,24 @@
 
 This file records repository changes made through ChatGPT so future work can see what changed, who made it, and when.
 
+## 2026-06-30 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
+- Branch: `codex/save-foundation-hardening`
+- Files changed:
+  - `AGENTS.md`
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `playwright.config.ts`
+  - `src/systems/SaveSystem.ts`
+  - `tests/system-foundations.spec.ts`
+- Summary: Hardened version-1 save loading and added focused regression coverage for the extracted save and farm-quest foundations.
+- Implementation notes:
+  - Added runtime validation for required save fields, profile identity, finite numeric values, quest steps, optional records, and mastery entries before a parsed save can reach the world scene.
+  - Kept malformed JSON and storage read/write failures non-blocking by falling back to a fresh game without throwing.
+  - Added Playwright-runner tests for valid save round-trips, malformed saves with fresh-world fallback, storage failures, both Mira errand transition sequences, state serialization, contextual hints, and duplicate-reward protection.
+  - Kept the expanded smoke suite on its historical single-worker execution so the long Grade 2 browser flow does not compete with the new pure-system test file and exceed its existing timeout.
+  - Refreshed the durable repository baseline to reflect the loaded Practice Slime, five browser smoke tests, farm quest system, and hero presentation controller.
+- Reason: Prevent damaged local storage from crashing scene startup and give the newly extracted pure systems direct regression coverage before the child-clarity checkpoint.
+
 ## 2026-06-29 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
 - Branch: `codex/grade5-ranger-foundation`
