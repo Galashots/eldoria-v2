@@ -1,6 +1,6 @@
 # Eldoria-V2 Current State
 
-Last refreshed on 2026-06-29. This file records volatile project status; `AGENTS.md` remains the durable operating contract.
+Last refreshed on 2026-06-30. This file records volatile project status; `AGENTS.md` remains the durable operating contract.
 
 ## Playable Vertical Slice
 
@@ -20,6 +20,7 @@ Last refreshed on 2026-06-29. This file records volatile project status; `AGENTS
 - A privacy-safe 10-15 minute child-clarity checklist is ready for separate Grade 2 and Grade 5 sessions.
 - Hero animation/rendering is isolated in a profile-configured presentation controller; the unchanged Grade 5 placeholder remains the fallback until approved Ranger art exists.
 - Mira's two errands now use a renderer-independent farm quest state system while preserving the existing version-1 save fields and player-facing behavior.
+- Green `main` builds automatically deploy to GitHub Pages at `https://galashots.github.io/eldoria-v2/` for HTTPS browser play on the boys' iPads.
 
 ## Visual And Asset State
 

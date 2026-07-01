@@ -4,6 +4,22 @@ This file records repository changes made through ChatGPT so future work can see
 
 ## 2026-06-30 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
+- Branch: `codex/ipad-pages-link`
+- Files changed:
+  - `.github/workflows/ci.yml`
+  - `README.md`
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `docs/CURRENT_STATE.md`
+- Summary: Added a stable GitHub Pages link for browser play on the boys' iPads.
+- Implementation notes:
+  - Extended the existing CI workflow to package `dist` only after validation, build, and all Playwright smoke tests pass on a push to `main`.
+  - Added a least-privilege Pages deployment job using the `github-pages` environment and GitHub's artifact-based deployment actions.
+  - Documented the public HTTPS game URL, landscape requirement, and optional Safari Add to Home Screen flow.
+  - Left Vite's existing relative base and Phaser's relative public asset paths unchanged because they already support the repository-scoped Pages URL.
+- Reason: Give both iPads one durable link that updates automatically from verified `main` builds without requiring a local development server.
+
+## 2026-06-30 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
 - Branch: `codex/save-foundation-hardening`
 - Files changed:
   - `AGENTS.md`

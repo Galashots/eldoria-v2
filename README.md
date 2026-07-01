@@ -2,6 +2,12 @@
 
 A fresh Phaser + Vite + Tiled build for a kid-focused 2D educational fantasy RPG.
 
+## Play on iPad or in a browser
+
+[Open Realm of Eldoria v2](https://galashots.github.io/eldoria-v2/)
+
+On iPad, open the link in Safari and turn the device to landscape. Use Safari's Share menu and **Add to Home Screen** for a game-like launcher icon.
+
 ## Core design rule
 
 **Learning never gates adventure.**  
@@ -53,6 +59,7 @@ The production site is written to `dist/`.
 - Production Grade 2 Mage and Practice Slime presentation assets
 - Landscape tablet guidance and Playwright vertical-slice smoke coverage
 - GitHub Actions validation, build, and browser smoke checks
+- Automatic GitHub Pages deployment from verified `main` builds
 
 ## Tiled workflow
 
