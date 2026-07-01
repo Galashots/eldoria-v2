@@ -34,7 +34,10 @@ Current `main` includes:
 - Per-skill mastery tracking for seen, attempted, correct, wrong, skipped, and streak outcomes.
 - Contextual Grade 2 and Grade 5 prompt templates plus a development/test-only deterministic preview.
 - A validated visual asset contract, production target specs, and generated-art normalization tooling.
-- The normalized Practice Slime v001 asset, not yet loaded into the world.
+- The normalized Practice Slime v001 asset, loaded into the world with idle and interaction feedback.
+- Five Playwright vertical-slice smoke tests covering both profiles, quest/save behavior, prompt contracts, side-effect safety, and portrait guidance.
+- A renderer-independent farm quest system for both Mira errands.
+- A profile-configured hero presentation controller with the Grade 2 Mage production animations and Grade 5 placeholder fallback.
 
 Before adding new features, preserve all of the above unless the task explicitly says otherwise.
 
