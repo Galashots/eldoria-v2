@@ -4,6 +4,18 @@ This file records repository changes made through ChatGPT so future work can see
 
 ## 2026-06-30 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
+- Branch: `codex/pages-action-runtime-update`
+- Files changed:
+  - `.github/workflows/ci.yml`
+  - `docs/CHATGPT_CHANGELOG.md`
+- Summary: Updated the Pages deployment actions to their current Node 24-compatible major releases.
+- Implementation notes:
+  - Updated `configure-pages` from v5 to v6, `upload-pages-artifact` from v4 to v5, and `deploy-pages` from v4 to v5.
+  - Kept workflow triggers, permissions, artifact path, CI gates, environment, concurrency, and public URL unchanged.
+- Reason: The first successful Pages deployment reported GitHub's Node 20 action-runtime deprecation annotations; the current action majors remove that maintenance warning.
+
+## 2026-06-30 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
 - Branch: `codex/ipad-pages-link`
 - Files changed:
   - `.github/workflows/ci.yml`
