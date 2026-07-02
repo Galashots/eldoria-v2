@@ -14,7 +14,8 @@
     "validate:visual-targets": "node scripts/validate-visual-targets.mjs",
     "normalize:asset": "node scripts/normalize-asset-sheet.mjs",
     "validate:asset": "node scripts/validate-asset-sheet.mjs",
-    "test:asset-pipeline": "node scripts/test-asset-pipeline.mjs"
+    "test:asset-pipeline": "node scripts/test-asset-pipeline.mjs",
+    "test:unit": "vitest run"
   },
   "dependencies": {
     "phaser": "^4.2.0"
@@ -22,7 +23,8 @@
   "devDependencies": {
     "@playwright/test": "^1.61.1",
     "typescript": "^5.8.0",
-    "vite": "^8.1.0"
+    "vite": "^8.1.0",
+    "vitest": "^4.1.9"
   },
   "engines": {
     "node": ">=20.19.0"
