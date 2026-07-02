@@ -1,11 +1,13 @@
 import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../gameConfig';
 import type { AnswerValue, BonusContext, LearningPrompt } from '../data/curriculum';
+import { REWARD_KIND_GOLD_VALUE } from '../data/curriculum';
 import { PROFILES, type ProfileId } from '../data/profiles';
 import { MIRA_FIRST_ERRAND } from '../data/quests';
+import { resolveInteractionId, type InteractionId } from '../data/interactions';
 import {
-  HeroPresentationController,
-  type HeroFacing
+  facingFromVector,
+  HeroPresentationController
 } from '../presentation/HeroPresentationController';
 import { LearningBonusSystem } from '../systems/LearningBonusSystem';
 import { MasterySystem, type LearningMastery } from '../systems/MasterySystem';
@@ -22,6 +24,7 @@ type TouchMoveVector = {
 };
 
 type InteractionTarget = {
+  id: InteractionId;
   kind: BonusContext;
   x: number;
   y: number;
@@ -39,6 +42,12 @@ const PRACTICE_SLIME_TEXTURE_KEY = 'practice-slime-v001';
 const PRACTICE_SLIME_IDLE_ANIMATION = 'practice-slime-idle';
 const PRACTICE_SLIME_HOP_ANIMATION = 'practice-slime-hop';
 const CROP_BONUS_FEEDBACK_NAME = 'crop-bonus-feedback';
+
+// Tile GIDs on the `farm` map's "Collision" layer (maps/farm.json, tileset
+// eldoria-placeholder) that are impassable — fence/water/rock stand-ins in
+// the current placeholder art. Update this list if the Collision layer's
+// tile palette changes in Tiled.
+const FARM_COLLISION_TILE_GIDS = [3, 4, 6];
 export class WorldScene extends Phaser.Scene {
   private player!: Phaser.Physics.Arcade.Sprite;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
@@ -87,7 +96,7 @@ export class WorldScene extends Phaser.Scene {
 
     const collisionLayer = map.createLayer('Collision', tileset, 0, 0);
     if (collisionLayer) {
-      collisionLayer.setCollision([3, 4, 6]);
+      collisionLayer.setCollision(FARM_COLLISION_TILE_GIDS);
       collisionLayer.setVisible(false);
     }
 
@@ -162,15 +171,7 @@ export class WorldScene extends Phaser.Scene {
     this.player.setVelocity(inputX * speed, inputY * speed);
 
     if (isMoving) {
-      const facing: HeroFacing = inputX < -0.35
-        ? 'left'
-        : inputX > 0.35
-          ? 'right'
-          : inputY < 0
-            ? 'back'
-            : 'front';
-
-      this.heroPresentation.setMovement(facing, true);
+      this.heroPresentation.setMovement(facingFromVector(inputX, inputY), true);
     } else {
       this.heroPresentation.setIdle();
     }
@@ -185,17 +186,21 @@ export class WorldScene extends Phaser.Scene {
   private makeTargets(objects: Phaser.Types.Tilemaps.TiledObject[]): InteractionTarget[] {
     return objects
       .filter((obj) => obj.type === 'npc' || obj.type === 'bonus' || obj.type === 'enemy')
-      .map((obj) => ({
-        kind: obj.type === 'enemy' ? 'combat' : obj.type === 'bonus' ? 'farm' : 'quest',
-        x: obj.x ?? 0,
-        y: obj.y ?? 0,
-        label: obj.name || obj.type || 'Target'
-      }));
+      .map((obj) => {
+        const label = obj.name || obj.type || 'Target';
+        return {
+          id: resolveInteractionId(label),
+          kind: obj.type === 'enemy' ? 'combat' : obj.type === 'bonus' ? 'farm' : 'quest',
+          x: obj.x ?? 0,
+          y: obj.y ?? 0,
+          label
+        } satisfies InteractionTarget;
+      });
   }
 
   private drawTargetMarkers(): void {
     for (const target of this.targets) {
-      if (target.label === MIRA_FIRST_ERRAND.targets.practiceSlime) {
+      if (target.id === 'practice-slime') {
         this.practiceSlimeSprite = this.add.sprite(
           target.x,
           target.y,
@@ -466,6 +471,18 @@ export class WorldScene extends Phaser.Scene {
     if (!this.tryInteract()) this.heroPresentation.playAction(this.busy);
   }
 
+  // Interaction registry: maps a target's stable InteractionId to its handler.
+  // Adding a future NPC/interactable means registering an entry here (and,
+  // for a special sprite/marker, in drawTargetMarkers), not editing a chain
+  // of label comparisons. 'generic-bonus' is the fallback every unmapped
+  // target already used before this registry existed.
+  private readonly interactionHandlers: Record<InteractionId, (target: InteractionTarget) => void> = {
+    mira: () => this.handleMiraInteraction(),
+    'crop-bonus': (target) => this.handleCropBonusInteraction(target),
+    'practice-slime': (target) => this.handleSlimeInteraction(target),
+    'generic-bonus': (target) => this.openBonusPrompt(target.kind, target.label)
+  };
+
   private tryInteract(): boolean {
     if (this.busy) return false;
 
@@ -475,45 +492,38 @@ export class WorldScene extends Phaser.Scene {
       return false;
     }
 
-    if (target.label === MIRA_FIRST_ERRAND.targets.mira) {
-      this.handleMiraInteraction();
-      return true;
-    }
-
-    if (target.label === MIRA_FIRST_ERRAND.targets.cropBonus) {
-      this.busy = true;
-      this.resetJoystick();
-      this.player.setVelocity(0, 0);
-      this.playCropBonusFeedback(target, () => {
-        this.openBonusPrompt(target.kind, target.label, () => {
-          const outcome = this.farmQuest.completeCropInteraction();
-          this.applyQuestOutcome(outcome, false);
-          return outcome.message;
-        });
-      });
-      return true;
-    }
-
-    if (target.label === MIRA_FIRST_ERRAND.targets.practiceSlime) {
-      this.busy = true;
-      this.resetJoystick();
-      this.player.setVelocity(0, 0);
-      this.playPracticeSlimeFeedback('hop', () => {
-        this.openBonusPrompt(target.kind, target.label, () => {
-          const outcome = this.farmQuest.completeSlimeInteraction();
-          this.applyQuestOutcome(outcome, false);
-          return outcome.message;
-        });
-      });
-      return true;
-    }
-
-    this.openBonusPrompt(target.kind, target.label);
+    this.interactionHandlers[target.id](target);
     return true;
   }
 
   private handleMiraInteraction(): void {
     this.applyQuestOutcome(this.farmQuest.interactWithMira(), true);
+  }
+
+  private handleCropBonusInteraction(target: InteractionTarget): void {
+    this.busy = true;
+    this.resetJoystick();
+    this.player.setVelocity(0, 0);
+    this.playCropBonusFeedback(target, () => {
+      this.openBonusPrompt(target.kind, target.label, () => {
+        const outcome = this.farmQuest.completeCropInteraction();
+        this.applyQuestOutcome(outcome, false);
+        return outcome.message;
+      });
+    });
+  }
+
+  private handleSlimeInteraction(target: InteractionTarget): void {
+    this.busy = true;
+    this.resetJoystick();
+    this.player.setVelocity(0, 0);
+    this.playPracticeSlimeFeedback('hop', () => {
+      this.openBonusPrompt(target.kind, target.label, () => {
+        const outcome = this.farmQuest.completeSlimeInteraction();
+        this.applyQuestOutcome(outcome, false);
+        return outcome.message;
+      });
+    });
   }
 
   private setFirstQuestStep(step: StarterQuestStep): void {
@@ -739,11 +749,7 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private applyReward(prompt: LearningPrompt): void {
-    let goldReward = 0;
-    if (prompt.rewardKind === 'bonus-gold') goldReward = 5;
-    if (prompt.rewardKind === 'bonus-harvest') goldReward = 3;
-    if (prompt.rewardKind === 'critical-hit') goldReward = 2;
-    if (prompt.rewardKind === 'bonus-xp') goldReward = 1;
+    const goldReward = REWARD_KIND_GOLD_VALUE[prompt.rewardKind];
 
     this.gold += goldReward;
 
