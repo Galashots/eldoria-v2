@@ -2,6 +2,21 @@
 
 This file records repository changes made through ChatGPT so future work can see what changed, who made it, and when.
 
+## 2026-07-02 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
+- Branch: `codex/phaser-bundle-split`
+- Files changed:
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `docs/CURRENT_STATE.md`
+  - `vite.config.ts`
+- Summary: Isolated Phaser from the game-owned production JavaScript bundle without changing runtime behavior.
+- Implementation notes:
+  - Added a Vite 8 Rolldown code-splitting group that places modules from the Phaser package in a stable `phaser` vendor chunk.
+  - Reduced the game-owned entry chunk from about 1,416 kB to about 39 kB while keeping the monolithic Phaser ESM module in its own roughly 1,377 kB chunk.
+  - Set the chunk warning threshold to 1,400 kB so the known isolated Phaser chunk is accepted while a regression back to the original combined bundle remains above the threshold.
+  - Kept all imports static, preserving game boot timing, scene initialization, profiles, saves, and gameplay behavior.
+- Reason: Let browsers reuse the unchanged Phaser asset across game deployments and make future application-bundle growth visible without introducing runtime-loading changes.
+
 ## 2026-06-30 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
 - Branch: `codex/ipad-pages-link`

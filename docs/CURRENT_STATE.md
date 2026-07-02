@@ -1,6 +1,6 @@
 # Eldoria-V2 Current State
 
-Last refreshed on 2026-06-30. This file records volatile project status; `AGENTS.md` remains the durable operating contract.
+Last refreshed on 2026-07-02. This file records volatile project status; `AGENTS.md` remains the durable operating contract.
 
 ## Playable Vertical Slice
 
@@ -21,6 +21,7 @@ Last refreshed on 2026-06-30. This file records volatile project status; `AGENTS
 - Hero animation/rendering is isolated in a profile-configured presentation controller; the unchanged Grade 5 placeholder remains the fallback until approved Ranger art exists.
 - Mira's two errands now use a renderer-independent farm quest state system while preserving the existing version-1 save fields and player-facing behavior.
 - Green `main` builds automatically deploy to GitHub Pages at `https://galashots.github.io/eldoria-v2/` for HTTPS browser play on the boys' iPads.
+- Production builds isolate Phaser in a stable vendor chunk, leaving the game-owned JavaScript in a small application chunk so repeat deployments can reuse the unchanged engine asset.
 
 ## Visual And Asset State
 
@@ -38,11 +39,11 @@ Last refreshed on 2026-06-30. This file records volatile project status; `AGENTS
 
 ## Active Milestone
 
-The starter farm slice is technically ready for its real-child clarity checkpoint. Grade 2 Mage idle, walk, cast, and hurt presentation are live, while Grade 5 remains on the existing placeholder presentation.
+The child-clarity sessions and Grade 5 Ranger visual checkpoint are approved. The current engineering pass focuses on bundle delivery, one-subsystem-at-a-time `WorldScene` extraction, and deeper regression coverage without changing player-visible behavior.
 
 ## Next Checkpoint
 
-Run the documented Grade 2 and Grade 5 child-clarity sessions in landscape. Fix only demonstrated blockers or repeated confusion, then obtain ChatGPT approval for the Grade 5 Ranger Explorer visual identity and image prompt before generating its seed frame.
+Extract one cohesive subsystem from `WorldScene` as a pure refactor, then stop for review before selecting another extraction.
 
 ## Routine Merge Policy
 
