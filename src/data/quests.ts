@@ -20,7 +20,6 @@ type MiraFirstErrandDefinition = {
     start: string;
     cropReminder: string;
     slimeReminder: string;
-    complete: string;
   };
   progress: {
     cropComplete: string;
@@ -88,8 +87,7 @@ export const MIRA_FIRST_ERRAND = {
   dialogue: {
     start: 'Mira: Check the crop patch for a bonus!',
     cropReminder: 'Mira: The crop patch is southwest of here.',
-    slimeReminder: 'Mira: The Practice Slime is east of the farm.',
-    complete: 'Mira: Great work. Keep exploring Eldoria!'
+    slimeReminder: 'Mira: The Practice Slime is east of the farm.'
   },
   progress: {
     cropComplete: 'Objective updated: find the Practice Slime.',

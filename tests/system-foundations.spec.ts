@@ -1,7 +1,14 @@
 import { expect, test, type Page } from '@playwright/test';
 import { MIRA_FIRST_ERRAND, MIRA_SECOND_ERRAND } from '../src/data/quests';
 import { FarmQuestSystem } from '../src/systems/FarmQuestSystem';
-import { SaveSystem, type SaveState } from '../src/systems/SaveSystem';
+import {
+  CURRENT_SAVE_VERSION,
+  migrateRawSave,
+  SaveSystem,
+  type RawSave,
+  type SaveMigration,
+  type SaveState
+} from '../src/systems/SaveSystem';
 
 const SAVE_KEY = 'eldoria_v2_save_grade2-mage';
 const CANVAS = 'canvas';
@@ -95,7 +102,6 @@ test.describe('SaveSystem runtime validation', () => {
       },
       firstQuestStep: 'complete',
       questFlags: {
-        miraFirstErrandComplete: true,
         miraSecondErrandComplete: true
       }
     };
@@ -194,6 +200,101 @@ test.describe('SaveSystem runtime validation', () => {
   });
 });
 
+test.describe('SaveSystem migration seam', () => {
+  // A synthetic pre-v1 shape used only to exercise the migration seam: an
+  // older save that stored gold under "money" and had no "version" field
+  // fast-forwarded to 0 for this test.
+  const legacyV0Save = (): RawSave => ({
+    version: 0,
+    profileId: 'grade2-mage',
+    money: 42,
+    lastArea: 'farm',
+    player: { x: 160, y: 180 }
+  });
+
+  const rebaseMoneyToGold: SaveMigration = (raw) => {
+    const { money, ...rest } = raw;
+    return { ...rest, version: 1, gold: money };
+  };
+
+  test('migrateRawSave is a no-op for data already at CURRENT_SAVE_VERSION', () => {
+    const current = minimalSave() as unknown as RawSave;
+    expect(migrateRawSave(current, { 0: rebaseMoneyToGold })).toEqual(current);
+  });
+
+  test('migrateRawSave applies a registered migration and reaches CURRENT_SAVE_VERSION', () => {
+    const migrated = migrateRawSave(legacyV0Save(), { 0: rebaseMoneyToGold });
+    expect(migrated).toEqual({
+      version: CURRENT_SAVE_VERSION,
+      profileId: 'grade2-mage',
+      lastArea: 'farm',
+      player: { x: 160, y: 180 },
+      gold: 42
+    });
+  });
+
+  test('migrateRawSave leaves data unchanged when no migration is registered for its version', () => {
+    const legacy = legacyV0Save();
+    expect(migrateRawSave(legacy, {})).toEqual(legacy);
+  });
+
+  test('a registered migration lets a synthetic older-version save load successfully', () => {
+    storage.setItem(SAVE_KEY, JSON.stringify(legacyV0Save()));
+
+    expect(SaveSystem.load('grade2-mage')).toBeNull();
+
+    const loaded = SaveSystem.load('grade2-mage', { 0: rebaseMoneyToGold });
+    expect(loaded).toEqual({
+      version: CURRENT_SAVE_VERSION,
+      profileId: 'grade2-mage',
+      lastArea: 'farm',
+      player: { x: 160, y: 180 },
+      gold: 42
+    });
+  });
+
+  test('a version higher than CURRENT_SAVE_VERSION still returns null even with migrations registered', () => {
+    storage.setItem(SAVE_KEY, JSON.stringify({ ...minimalSave(), version: 99 }));
+
+    expect(SaveSystem.load('grade2-mage', { 0: rebaseMoneyToGold })).toBeNull();
+  });
+
+  test('a migration that produces invalid data returns null instead of throwing', () => {
+    storage.setItem(SAVE_KEY, JSON.stringify(legacyV0Save()));
+
+    const dropPlayer: SaveMigration = (raw) => {
+      const { player: _player, money: _money, ...rest } = raw;
+      return { ...rest, version: 1, gold: 42 };
+    };
+
+    expect(() => SaveSystem.load('grade2-mage', { 0: dropPlayer })).not.toThrow();
+    expect(SaveSystem.load('grade2-mage', { 0: dropPlayer })).toBeNull();
+  });
+
+  test('a migration that throws is treated as unavailable and returns null', () => {
+    storage.setItem(SAVE_KEY, JSON.stringify(legacyV0Save()));
+
+    const throwingMigration: SaveMigration = () => {
+      throw new Error('migration exploded');
+    };
+
+    expect(() => SaveSystem.load('grade2-mage', { 0: throwingMigration })).not.toThrow();
+    expect(SaveSystem.load('grade2-mage', { 0: throwingMigration })).toBeNull();
+  });
+
+  test('existing valid version-1 saves round-trip unaffected by a migrations table', () => {
+    const valid = minimalSave();
+    SaveSystem.save(valid);
+
+    // A migration registered "from" version 1 must never fire, because
+    // version 1 is not < CURRENT_SAVE_VERSION (1). If it did fire it would
+    // corrupt this save.
+    const corruptingMigration: SaveMigration = () => ({ version: 1, corrupted: true });
+
+    expect(SaveSystem.load('grade2-mage', { 1: corruptingMigration })).toEqual(valid);
+  });
+});
+
 test.describe('FarmQuestSystem transitions', () => {
   test('completes the first errand once and serializes its state', () => {
     const quest = new FarmQuestSystem();
@@ -215,7 +316,6 @@ test.describe('FarmQuestSystem transitions', () => {
     expect(quest.toSaveFields()).toEqual({
       firstQuestStep: MIRA_FIRST_ERRAND.steps.complete,
       questFlags: {
-        miraFirstErrandComplete: true,
         miraSecondErrandAccepted: false,
         miraSecondErrandCharmFound: false,
         miraSecondErrandComplete: false
@@ -248,7 +348,6 @@ test.describe('FarmQuestSystem transitions', () => {
     expect(quest.completeCropInteraction().stateChanged).toBe(false);
     expect(quest.interactWithMira().reward).toBeUndefined();
     expect(quest.toSaveFields().questFlags).toEqual({
-      miraFirstErrandComplete: true,
       miraSecondErrandAccepted: false,
       miraSecondErrandCharmFound: false,
       miraSecondErrandComplete: true

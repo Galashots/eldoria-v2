@@ -137,7 +137,6 @@ export class FarmQuestSystem {
     return {
       firstQuestStep: this.state.firstQuestStep,
       questFlags: {
-        miraFirstErrandComplete: this.state.firstQuestStep === MIRA_FIRST_ERRAND.steps.complete,
         miraSecondErrandAccepted: this.state.secondErrandAccepted,
         miraSecondErrandCharmFound: this.state.secondErrandCharmFound,
         miraSecondErrandComplete: this.state.secondErrandComplete
