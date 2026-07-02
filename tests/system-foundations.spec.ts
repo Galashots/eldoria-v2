@@ -282,6 +282,22 @@ test.describe('SaveSystem migration seam', () => {
     expect(SaveSystem.load('grade2-mage', { 0: throwingMigration })).toBeNull();
   });
 
+  test('a migration that does not bump the version terminates instead of looping forever', () => {
+    // A migration keyed at version 0 that forgets to advance `version` would,
+    // without the strictly-greater guard, spin migrateRawSave's while loop
+    // forever: same version in -> same migration selected -> same version
+    // out. This proves the seam breaks out instead of hanging, leaving the
+    // stalled data for isSaveState to reject.
+    const stalledMigration: SaveMigration = (raw) => ({ ...raw, gold: 1 });
+
+    const migrated = migrateRawSave(legacyV0Save(), { 0: stalledMigration });
+    expect(migrated.version).toBe(0);
+
+    storage.setItem(SAVE_KEY, JSON.stringify(legacyV0Save()));
+    expect(() => SaveSystem.load('grade2-mage', { 0: stalledMigration })).not.toThrow();
+    expect(SaveSystem.load('grade2-mage', { 0: stalledMigration })).toBeNull();
+  });
+
   test('existing valid version-1 saves round-trip unaffected by a migrations table', () => {
     const valid = minimalSave();
     SaveSystem.save(valid);

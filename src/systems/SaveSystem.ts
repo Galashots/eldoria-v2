@@ -135,8 +135,16 @@ export function migrateRawSave(
     }
 
     if (!isRecord(next)) break;
+
+    const nextVersion = next.version;
+    // A migration that doesn't strictly advance the version (e.g. forgets to
+    // bump it) would otherwise spin this loop forever, since the same
+    // version maps to the same migration on the next iteration. Bail out and
+    // leave the data as-is for isSaveState to reject or accept.
+    if (!isFiniteNumber(nextVersion) || nextVersion <= version) break;
+
     current = next;
-    version = current.version;
+    version = nextVersion;
   }
 
   return current;
