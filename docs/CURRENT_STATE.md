@@ -1,6 +1,6 @@
 # Eldoria-V2 Current State
 
-Last refreshed on 2026-06-30. This file records volatile project status; `AGENTS.md` remains the durable operating contract.
+Last refreshed on 2026-07-04. This file records volatile project status; `AGENTS.md` remains the durable operating contract.
 
 ## Playable Vertical Slice
 
@@ -24,6 +24,8 @@ Last refreshed on 2026-06-30. This file records volatile project status; `AGENTS
 - Stable interaction IDs are fully decoupled from display labels/names using `interactionId` Tiled custom properties, preventing marker name changes from breaking handler mappings.
 - Fully integrated Vitest unit test framework with unit tests covering QuestionEngine, MasterySystem, LearningBonusSystem, interactions, and curriculum templates.
 - Established save migration seam in SaveSystem and updated WorldScene saving to dynamically read CURRENT_SAVE_VERSION.
+- Center-canvas Stats & Mastery UI overlay showing active profile details, gold, charms keepsake slot, and visual mastery bars across core subjects. Interactive STATS HUD button and I/Tab hotkeys fully functional.
+- Ported Web SpeechSynthesis garbage collection reference pins and lifecycle event listeners.
 
 ## Visual And Asset State
 
@@ -41,7 +43,7 @@ Last refreshed on 2026-06-30. This file records volatile project status; `AGENTS
 
 ## Active Milestone
 
-The starter farm slice is technically ready for its real-child clarity checkpoint. Grade 2 Mage idle, walk, cast, and hurt presentation are live, while Grade 5 remains on the existing placeholder presentation. Refactoring for quest states, presentation delegation, unit test suites, stable interaction ID mappings, and save migrations is fully complete and verified.
+The starter farm slice is technically ready for its real-child clarity checkpoint. Grade 2 Mage idle, walk, cast, and hurt presentation are live, while Grade 5 remains on the existing placeholder presentation. Refactoring for quest states, presentation delegation, unit test suites, stable interaction ID mappings, and save migrations is fully complete and verified. The Stats & Mastery UI panel and SpeechSynthesis GC fixes have been successfully ported onto this new architecture and verified via Playwright integration smoke tests.
 
 ## Next Checkpoint
 

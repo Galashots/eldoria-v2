@@ -217,6 +217,12 @@ async function cropFeedbackVisible(page: Page): Promise<boolean> {
   });
 }
 
+async function holdKey(page: Page, key: string, ms = 300): Promise<void> {
+  await page.keyboard.down(key);
+  await page.waitForTimeout(ms);
+  await page.keyboard.up(key);
+}
+
 async function moveGrade2Hero(
   page: Page,
   key: string,
@@ -834,4 +840,37 @@ test('portrait devices ask the player to rotate while landscape keeps the game a
   await page.setViewportSize({ width: 844, height: 390 });
   await expect(orientationLock).toBeHidden();
   await expect(page.locator('canvas')).toBeVisible();
+});
+
+test('interactive Stats & Mastery UI panel toggles open/closed and shows correct stats', async ({ page }) => {
+  // Set a test-specific timeout of 60s because slow CI VM environments can take longer to boot and register keyboard sequences.
+  test.setTimeout(60000);
+
+  await boot(page);
+  await startProfile(page, 190);
+
+  await holdKey(page, 'KeyI', 100);
+  await expect.poll(async () => hasCanvasText(page, 'STATS & MASTERY')).toBe(true);
+  await expect.poll(async () => hasCanvasText(page, 'CURRICULUM MASTERY')).toBe(true);
+  await expect.poll(async () => hasCanvasText(page, 'Grade 5 Adventurer')).toBe(true);
+  await expect.poll(async () => hasCanvasText(page, 'KEEPSAKES')).toBe(true);
+
+  await page.evaluate(() => {
+    const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as any;
+    const closeBtn = scene.statsContainer.list.find(
+      (child: any) => child.width === 100 && child.height === 24 && child.input?.enabled
+    );
+    closeBtn.emit('pointerdown');
+  });
+  await expect.poll(async () => hasCanvasText(page, 'STATS & MASTERY')).toBe(false);
+
+  await page.waitForTimeout(200);
+
+  await clickGame(page, 430, 14);
+  await expect.poll(async () => hasCanvasText(page, 'STATS & MASTERY')).toBe(true);
+
+  await page.waitForTimeout(200);
+
+  await holdKey(page, 'Tab', 100);
+  await expect.poll(async () => hasCanvasText(page, 'STATS & MASTERY')).toBe(false);
 });
