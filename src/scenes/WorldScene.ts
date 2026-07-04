@@ -4,7 +4,7 @@ import type { AnswerValue, BonusContext, LearningPrompt } from '../data/curricul
 import { REWARD_KIND_GOLD_VALUE } from '../data/curriculum';
 import { PROFILES, type ProfileId } from '../data/profiles';
 import { MIRA_FIRST_ERRAND } from '../data/quests';
-import { resolveInteractionId, type InteractionId } from '../data/interactions';
+import { resolveInteractionId, getTiledProperty, type InteractionId } from '../data/interactions';
 import {
   facingFromVector,
   HeroPresentationController
@@ -12,7 +12,7 @@ import {
 import { LearningBonusSystem } from '../systems/LearningBonusSystem';
 import { MasterySystem, type LearningMastery } from '../systems/MasterySystem';
 import { FarmQuestSystem, type FarmQuestOutcome } from '../systems/FarmQuestSystem';
-import { SaveSystem, type StarterQuestStep } from '../systems/SaveSystem';
+import { CURRENT_SAVE_VERSION, SaveSystem, type StarterQuestStep } from '../systems/SaveSystem';
 
 type SceneInitData = {
   profileId?: ProfileId;
@@ -188,8 +188,9 @@ export class WorldScene extends Phaser.Scene {
       .filter((obj) => obj.type === 'npc' || obj.type === 'bonus' || obj.type === 'enemy')
       .map((obj) => {
         const label = obj.name || obj.type || 'Target';
+        const customId = getTiledProperty(obj, 'interactionId') as InteractionId | undefined;
         return {
-          id: resolveInteractionId(label),
+          id: customId || resolveInteractionId(label),
           kind: obj.type === 'enemy' ? 'combat' : obj.type === 'bonus' ? 'farm' : 'quest',
           x: obj.x ?? 0,
           y: obj.y ?? 0,
@@ -822,7 +823,7 @@ export class WorldScene extends Phaser.Scene {
   private save(): void {
     const questSave = this.farmQuest.toSaveFields();
     SaveSystem.save({
-      version: 1,
+      version: CURRENT_SAVE_VERSION,
       profileId: this.profileId,
       gold: this.gold,
       inventory: this.inventory,

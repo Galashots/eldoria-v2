@@ -21,6 +21,9 @@ Last refreshed on 2026-06-30. This file records volatile project status; `AGENTS
 - Hero animation/rendering is isolated in a profile-configured presentation controller; the unchanged Grade 5 placeholder remains the fallback until approved Ranger art exists.
 - Mira's two errands now use a renderer-independent farm quest state system while preserving the existing version-1 save fields and player-facing behavior.
 - Green `main` builds automatically deploy to GitHub Pages at `https://galashots.github.io/eldoria-v2/` for HTTPS browser play on the boys' iPads.
+- Stable interaction IDs are fully decoupled from display labels/names using `interactionId` Tiled custom properties, preventing marker name changes from breaking handler mappings.
+- Fully integrated Vitest unit test framework with 41 unit tests covering QuestionEngine, MasterySystem, LearningBonusSystem, and curriculum templates.
+- Established save migration seam in SaveSystem and updated WorldScene saving to dynamically read CURRENT_SAVE_VERSION.
 
 ## Visual And Asset State
 
@@ -38,7 +41,7 @@ Last refreshed on 2026-06-30. This file records volatile project status; `AGENTS
 
 ## Active Milestone
 
-The starter farm slice is technically ready for its real-child clarity checkpoint. Grade 2 Mage idle, walk, cast, and hurt presentation are live, while Grade 5 remains on the existing placeholder presentation.
+The starter farm slice is technically ready for its real-child clarity checkpoint. Grade 2 Mage idle, walk, cast, and hurt presentation are live, while Grade 5 remains on the existing placeholder presentation. Refactoring for quest states, presentation delegation, unit test suites, stable interaction ID mappings, and save migrations is fully complete and verified.
 
 ## Next Checkpoint
 

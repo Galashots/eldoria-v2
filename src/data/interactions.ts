@@ -23,3 +23,12 @@ const INTERACTION_ID_BY_TARGET_NAME: Readonly<Record<string, InteractionId>> = {
 export function resolveInteractionId(targetName: string): InteractionId {
   return INTERACTION_ID_BY_TARGET_NAME[targetName] ?? DEFAULT_INTERACTION_ID;
 }
+
+export function getTiledProperty(obj: { properties?: any }, name: string): any {
+  if (!obj.properties) return undefined;
+  if (Array.isArray(obj.properties)) {
+    const prop = obj.properties.find((p: any) => p.name === name);
+    return prop ? prop.value : undefined;
+  }
+  return obj.properties[name];
+}

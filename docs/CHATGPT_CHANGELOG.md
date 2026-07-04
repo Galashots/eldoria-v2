@@ -668,3 +668,22 @@ This file records repository changes made through ChatGPT so future work can see
   - Cancels active speech when the prompt is answered, skipped, or the scene shuts down.
   - Added no new dependencies.
 - Reason: The Grade 2 Mage profile is defined as audio-first, but the prompt UI previously required reading the question and choices.
+
+## 2026-07-04 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
+- Branch: `review/pr45`
+- Files changed:
+  - `src/scenes/WorldScene.ts`
+  - `src/data/interactions.ts`
+  - `public/maps/farm.json`
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `docs/CURRENT_STATE.md`
+  - `tests/unit/interactions.test.ts`
+- Summary: Resolved PR #45 review concerns regarding interaction ID decoupling, save version hardcoding, and missing documentation.
+- Implementation notes:
+  - Configured explicit stable `interactionId` custom properties on all interactive Tiled objects inside `public/maps/farm.json`.
+  - Added `getTiledProperty` helper to `src/data/interactions.ts` to extract properties from both flat structures and Tiled property arrays.
+  - Refactored `WorldScene.makeTargets()` to resolve interaction ID using Tiled custom properties, with a backwards-compatible fallback to the display name registry.
+  - Updated `WorldScene.save()` to use the imported `CURRENT_SAVE_VERSION` constant from `SaveSystem.ts` instead of hardcoded `version: 1`.
+  - Added a dedicated unit test suite in `tests/unit/interactions.test.ts` proving that resolved interaction IDs remain stable when Tiled display names are changed.
+- Reason: Resolve security/robustness concerns around name-based dispatch logic and maintain clean, up-to-date project logs.

@@ -1862,6 +1862,13 @@
           "height": 32,
           "id": 2,
           "name": "Mira",
+          "properties": [
+            {
+              "name": "interactionId",
+              "type": "string",
+              "value": "mira"
+            }
+          ],
           "rotation": 0,
           "type": "npc",
           "visible": true,
@@ -1873,6 +1880,13 @@
           "height": 32,
           "id": 3,
           "name": "CropBonus",
+          "properties": [
+            {
+              "name": "interactionId",
+              "type": "string",
+              "value": "crop-bonus"
+            }
+          ],
           "rotation": 0,
           "type": "bonus",
           "visible": true,
@@ -1884,6 +1898,13 @@
           "height": 32,
           "id": 4,
           "name": "Practice Slime",
+          "properties": [
+            {
+              "name": "interactionId",
+              "type": "string",
+              "value": "practice-slime"
+            }
+          ],
           "rotation": 0,
           "type": "enemy",
           "visible": true,
