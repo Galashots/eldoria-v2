@@ -41,11 +41,14 @@ npm run build
 
 The production site is written to `dist/`.
 
-## Starter controls
+## Controls
 
 - Arrow keys / WASD: move
 - Space / E: interact
-- On-screen D-pad/action buttons are included for touch testing
+- I / Tab or the on-screen STATS button: toggle Stats & Mastery
+- On touch devices, drag in the lower-left area to move and tap ACTION in the lower-right to interact
+
+For supervised iPad sessions, see the [real-child playtest guide](docs/REAL_CHILD_PLAYTEST_GUIDE.md).
 
 ## Current vertical slice
 
@@ -58,8 +61,18 @@ The production site is written to `dist/`.
 - Persistent quest, reward, inventory, position, and per-skill mastery data
 - Production Grade 2 Mage and Practice Slime presentation assets
 - Landscape tablet guidance and Playwright vertical-slice smoke coverage
+- Interactive Stats & Mastery panel with gold, keepsake, and per-skill progress
 - GitHub Actions validation, build, and browser smoke checks
 - Automatic GitHub Pages deployment from verified `main` builds
+
+## Verification
+
+```bash
+npm run check
+npm run test:unit
+npm run test:asset-pipeline
+npm run smoke
+```
 
 ## Tiled workflow
 

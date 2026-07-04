@@ -2,6 +2,23 @@
 
 This file records repository changes made through ChatGPT so future work can see what changed, who made it, and when.
 
+## 2026-07-04 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
+- Branch: `codex/child-playtest-readiness`
+- Files changed:
+  - `README.md`
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `docs/CURRENT_STATE.md`
+  - `docs/REAL_CHILD_PLAYTEST_GUIDE.md`
+- Summary: Prepared the verified farm slice for supervised real-child and iPad playtesting without changing gameplay.
+- Implementation notes:
+  - Added separate 10-15 minute Grade 2 Mage and Grade 5 Adventurer session scripts using the live GitHub Pages build.
+  - Documented iPad landscape setup, touch and keyboard controls, local-save reset options, parent observation rules, privacy-safe notes, and blocker-versus-polish triage.
+  - Updated the README with current Stats & Mastery controls, the playtest guide, and the standard verification commands.
+  - Refreshed current-state documentation to point the active child-clarity checkpoint at the new guide and account for the Stats & Mastery browser test.
+  - Left gameplay, saves, quests, curriculum, rewards, maps, and assets unchanged.
+- Reason: Give the parent a repeatable, low-friction procedure for gathering useful evidence from the first real-child sessions before further feature or production-art work.
+
 ## 2026-06-30 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
 - Branch: `codex/ipad-pages-link`
