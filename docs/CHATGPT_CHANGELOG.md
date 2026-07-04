@@ -2,6 +2,22 @@
 
 This file records repository changes made through ChatGPT so future work can see what changed, who made it, and when.
 
+## 2026-07-04 - Claude Code via Anthropic
+
+- Branch: `claude/eldoria-v2-audit-expansion-qi1s6r`
+- Files changed:
+  - `docs/EXPANSION_PROPOSALS_2026-07.md`
+  - `docs/CHATGPT_CHANGELOG.md`
+- Summary: Added a documentation-only audit refresh and expansion proposal covering quest/story growth with kid-clarity guidance rules, world-building direction, and a two-track visual-beauty roadmap toward a Stardew-Valley-quality presentation.
+- Implementation notes:
+  - Confirmed the July game plan's Phase 1 hardening is complete and repositioned the bottleneck as content, world, and presentation.
+  - Proposed a per-quest guidance contract (single active objective, non-reading pulse cues, read-aloud objectives, quest journal panel, landmark-based reminders).
+  - Proposed the "Eldoria's old magic is waking" story spine, an Act 1 farm quest arc (quests 3-6), an art-gated Act 2 village arc with a shop gold sink, and a quest-as-data refactor to end copy-paste quest wiring.
+  - Proposed a one-page world bible, zone-to-curriculum mapping, and the documented-but-unbuilt `exit` zone-transition convention as the multi-map enabler.
+  - Ranked engine-level atmosphere quick wins (ambient day/evening tint, particles, animated water tiles, actor shadows, pixel font, 9-slice UI, fades) separately from pipeline art production, and flagged the 16x16-versus-32x32 grid decision as a prerequisite for tile art.
+  - Left all code, maps, saves, quests, curriculum, and assets unchanged; final story/dialogue/naming wording is explicitly reserved for user/ChatGPT approval.
+- Reason: Give the user a reviewable, prioritized plan for the next growth phases (content depth, world expansion, and visual polish) before any implementation batches begin.
+
 ## 2026-07-04 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
 - Branch: `codex/child-playtest-readiness`
