@@ -12,12 +12,13 @@ Last refreshed on 2026-07-04. This file records volatile project status; `AGENTS
 - Learning remains bonus-only: wrong answers and skips never block quest progress.
 - Floating gold/item feedback, primitive sparkle bursts, and per-skill mastery records.
 - Contextual Grade 2/Grade 5 templates and development/E2E-only deterministic prompt preview.
-- Five Playwright vertical-slice smoke tests covering both profiles, quest/save behavior, mastery, templates, preview side-effect safety, and portrait-orientation guidance.
+- Six Playwright vertical-slice smoke tests covering both profiles, quest/save behavior, mastery, templates, preview side-effect safety, portrait-orientation guidance, and the Stats & Mastery panel.
 - Crop Bonus and Practice Slime interactions now provide short, readable visual feedback before their unchanged optional prompts open.
 - Arcade Physics bounds now cover the full farm map, so the crop/scarecrow and Practice Slime targets are reachable through normal movement rather than only test positioning.
 - Optional prompt panels render above the actor and provide a button-sized pointer target for `Skip bonus`.
 - Portrait phone/tablet layouts show a DOM-based landscape-orientation message instead of shrinking the playable canvas into an unreadable strip.
 - A privacy-safe 10-15 minute child-clarity checklist is ready for separate Grade 2 and Grade 5 sessions.
+- A parent-facing real-child playtest guide documents the live iPad setup, controls, per-profile session scripts, save reset steps, observation notes, and blocker-versus-polish triage.
 - Hero animation/rendering is isolated in a profile-configured presentation controller; the unchanged Grade 5 placeholder remains the fallback until approved Ranger art exists.
 - Mira's two errands now use a renderer-independent farm quest state system while preserving the existing version-1 save fields and player-facing behavior.
 - Green `main` builds automatically deploy to GitHub Pages at `https://galashots.github.io/eldoria-v2/` for HTTPS browser play on the boys' iPads.
@@ -43,11 +44,11 @@ Last refreshed on 2026-07-04. This file records volatile project status; `AGENTS
 
 ## Active Milestone
 
-The starter farm slice is technically ready for its real-child clarity checkpoint. Grade 2 Mage idle, walk, cast, and hurt presentation are live, while Grade 5 remains on the existing placeholder presentation. Refactoring for quest states, presentation delegation, unit test suites, stable interaction ID mappings, and save migrations is fully complete and verified. The Stats & Mastery UI panel and SpeechSynthesis GC fixes have been successfully ported onto this new architecture and verified via Playwright integration smoke tests.
+The starter farm slice is technically ready for its real-child clarity checkpoint, with the live iPad setup and separate Grade 2 and Grade 5 sessions documented in `docs/REAL_CHILD_PLAYTEST_GUIDE.md`. Grade 2 Mage idle, walk, cast, and hurt presentation are live, while Grade 5 remains on the existing placeholder presentation. Refactoring for quest states, presentation delegation, unit test suites, stable interaction ID mappings, and save migrations is fully complete and verified. The Stats & Mastery UI panel and SpeechSynthesis GC fixes have been successfully ported onto this new architecture and verified via Playwright integration smoke tests.
 
 ## Next Checkpoint
 
-Run the documented Grade 2 and Grade 5 child-clarity sessions in landscape. Fix only demonstrated blockers or repeated confusion, then obtain ChatGPT approval for the Grade 5 Ranger Explorer visual identity and image prompt before generating its seed frame.
+Run the Grade 2 and Grade 5 sessions in `docs/REAL_CHILD_PLAYTEST_GUIDE.md` in landscape. Fix only demonstrated blockers or repeated confusion, then obtain ChatGPT approval for the Grade 5 Ranger Explorer visual identity and image prompt before generating its seed frame.
 
 ## Routine Merge Policy
 
