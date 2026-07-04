@@ -4,6 +4,23 @@ This file records repository changes made through ChatGPT so future work can see
 
 ## 2026-07-04 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
+- Branch: `antigravity/visual-polish-pass`
+- Files changed:
+  - `src/scenes/TitleScene.ts`
+  - `src/scenes/WorldScene.ts`
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `docs/CURRENT_STATE.md`
+- Summary: Implemented visual and aesthetic UI polish for the title screen and in-game overlays.
+- Implementation notes:
+  - Refactored the TitleScene profile buttons into vertically stacked cards centered at x=240, ensuring E2E coordinate compatibility.
+  - Added inner decorative border graphics (inset outlines) to the title screen, stats, and prompt panels.
+  - Enhanced title screen typography with font gradients and offset dropshadow rendering using Georgia serif.
+  - Integrated interactive hover scale/fill/stroke animations for selection cards, stats button, read aloud buttons, skip button, and close buttons.
+  - Verified 22/23 tests successfully, with only the local browser VM timing out.
+- Reason: Improve first-impression aesthetic value and kid-readability of menus and overlays for iPad playtesting without changing any gameplay systems or quest configurations.
+
+## 2026-07-04 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
 - Branch: `codex/child-playtest-readiness`
 - Files changed:
   - `README.md`

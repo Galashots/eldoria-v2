@@ -329,33 +329,48 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private createHud(): void {
-    this.add.rectangle(GAME_WIDTH / 2, 14, GAME_WIDTH - 20, 24, 0x2a1a08, 0.9)
+    // Top HUD bar panel
+    this.add.rectangle(GAME_WIDTH / 2, 14, GAME_WIDTH - 20, 24, 0x2a1a08, 0.95)
       .setScrollFactor(0)
-      .setStrokeStyle(1, 0x6f5126);
+      .setStrokeStyle(1.5, 0x6f5126);
 
     this.hudText = this.add.text(16, 7, '', {
       fontFamily: 'system-ui',
       fontSize: '12px',
-      color: '#ffd666'
+      color: '#ffd666',
+      stroke: '#1a1208',
+      strokeThickness: 2
     }).setScrollFactor(0);
 
-    const statsBtn = this.add.rectangle(GAME_WIDTH - 50, 14, 56, 16, 0x5f3d12, 0.9)
-      .setStrokeStyle(1, 0xffd666)
+    const statsBtn = this.add.rectangle(GAME_WIDTH - 50, 14, 56, 16, 0x5f3d12, 0.95)
+      .setStrokeStyle(1.5, 0xffd666)
       .setScrollFactor(0)
       .setInteractive({ useHandCursor: true });
 
-    this.add.text(GAME_WIDTH - 50, 14, 'STATS', {
+    const statsTxt = this.add.text(GAME_WIDTH - 50, 14, 'STATS', {
       fontFamily: 'system-ui',
       fontSize: '9px',
       color: '#ffd666',
       fontStyle: 'bold'
     }).setOrigin(0.5).setScrollFactor(0);
 
+    // Interactive button hover states
+    statsBtn.on('pointerover', () => {
+      statsBtn.setFillStyle(0x7c541a);
+      statsBtn.setStrokeStyle(1.5, 0xffffff);
+      statsTxt.setColor('#ffffff');
+    });
+    statsBtn.on('pointerout', () => {
+      statsBtn.setFillStyle(0x5f3d12);
+      statsBtn.setStrokeStyle(1.5, 0xffd666);
+      statsTxt.setColor('#ffd666');
+    });
     statsBtn.on('pointerdown', () => this.toggleStatsPanel());
 
-    this.add.rectangle(GAME_WIDTH / 2, 42, GAME_WIDTH - 20, 28, 0x162a12, 0.9)
+    // Objective bar panel with light green highlight border
+    this.add.rectangle(GAME_WIDTH / 2, 42, GAME_WIDTH - 20, 28, 0x162a12, 0.95)
       .setScrollFactor(0)
-      .setStrokeStyle(1, 0x5e9f3a);
+      .setStrokeStyle(1.5, 0x5e9f3a);
 
     this.objectiveText = this.add.text(16, 34, '', {
       fontFamily: 'system-ui',
@@ -364,12 +379,15 @@ export class WorldScene extends Phaser.Scene {
       wordWrap: { width: GAME_WIDTH - 32 }
     }).setScrollFactor(0);
 
+    // Hint text capsule panel with subtle gold border
     this.hintText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 18, '', {
       fontFamily: 'system-ui',
       fontSize: '11px',
       color: '#f5e6c8',
       backgroundColor: '#2a1a08',
-      padding: { x: 8, y: 4 }
+      padding: { x: 10, y: 5 },
+      stroke: '#6f5126',
+      strokeThickness: 1
     }).setOrigin(0.5).setScrollFactor(0);
 
     this.refreshHud();
@@ -641,14 +659,20 @@ export class WorldScene extends Phaser.Scene {
     const choicesY = isAudioFirst ? 38 : 34;
     const skipY = isAudioFirst ? 94 : 82;
 
-    const bg = this.add.rectangle(0, 0, 360, panelHeight, 0x2a1a08, 0.96)
+    // Outer gold border and dark container panel
+    const bg = this.add.rectangle(0, 0, 360, panelHeight, 0x1a1208, 0.98)
       .setStrokeStyle(3, 0xffd666);
+    // Inset decorative dark-brown border line
+    const innerBorder = this.add.rectangle(0, 0, 352, panelHeight - 8)
+      .setStrokeStyle(1.5, 0x6f5126);
     panel.add(bg);
+    panel.add(innerBorder);
 
     panel.add(this.add.text(0, titleY, `${label}: optional learning bonus`, {
       fontFamily: 'system-ui',
       fontSize: '14px',
-      color: '#ffd666'
+      color: '#ffd666',
+      fontStyle: 'bold'
     }).setOrigin(0.5));
 
     panel.add(this.add.text(0, promptY, prompt.text, {
@@ -666,24 +690,46 @@ export class WorldScene extends Phaser.Scene {
       const readText = this.add.text(0, -12, 'READ ALOUD', {
         fontFamily: 'system-ui',
         fontSize: '11px',
-        color: '#ffffff'
+        color: '#ffffff',
+        fontStyle: 'bold'
       }).setOrigin(0.5);
 
+      readButton.on('pointerover', () => {
+        readButton.setFillStyle(0x4a65b5);
+        readButton.setStrokeStyle(2, 0xffffff);
+      });
+      readButton.on('pointerout', () => {
+        readButton.setFillStyle(0x3a4f8f);
+        readButton.setStrokeStyle(2, 0x99c7ff);
+      });
       readButton.on('pointerdown', () => this.readPromptAloud(label, prompt));
       panel.add(readButton);
       panel.add(readText);
     }
 
     const skipButton = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2 + skipY, 132, 28, 0x3a2208)
-      .setStrokeStyle(2, 0xc9a66b)
+      .setStrokeStyle(1.5, 0xc9a66b)
       .setScrollFactor(0)
       .setDepth(31)
       .setInteractive({ useHandCursor: true });
     const skipText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + skipY, 'Skip bonus', {
       fontFamily: 'system-ui',
       fontSize: '12px',
-      color: '#c9a66b'
+      color: '#c9a66b',
+      fontStyle: 'bold'
     }).setOrigin(0.5).setScrollFactor(0).setDepth(32);
+
+    skipButton.on('pointerover', () => {
+      skipButton.setFillStyle(0x5f3d12);
+      skipButton.setStrokeStyle(1.5, 0xffffff);
+      skipText.setColor('#ffffff');
+    });
+    skipButton.on('pointerout', () => {
+      skipButton.setFillStyle(0x3a2208);
+      skipButton.setStrokeStyle(1.5, 0xc9a66b);
+      skipText.setColor('#c9a66b');
+    });
+
     const destroyPrompt = (): void => {
       panel.destroy();
       skipButton.destroy();
@@ -704,6 +750,15 @@ export class WorldScene extends Phaser.Scene {
         align: 'center',
         wordWrap: { width: 92 }
       }).setOrigin(0.5);
+
+      btn.on('pointerover', () => {
+        btn.setFillStyle(0x7c541a);
+        btn.setStrokeStyle(2, 0xffffff);
+      });
+      btn.on('pointerout', () => {
+        btn.setFillStyle(0x5f3d12);
+        btn.setStrokeStyle(2, 0xffd666);
+      });
 
       btn.on('pointerdown', () => {
         const result = this.learning.resolve(prompt, choice as AnswerValue);
@@ -869,28 +924,36 @@ export class WorldScene extends Phaser.Scene {
     const panel = this.add.container(GAME_WIDTH / 2, GAME_HEIGHT / 2).setScrollFactor(0).setDepth(100);
     this.statsContainer = panel;
 
+    // Main dark container background with gold border
     const bg = this.add.rectangle(0, 0, 380, 240, 0x1a1208, 0.98)
       .setStrokeStyle(3, 0xffd666);
+    // Inset border line for premium storybook RPG feel
+    const innerBorder = this.add.rectangle(0, 0, 372, 232)
+      .setStrokeStyle(1.5, 0x6f5126);
     panel.add(bg);
+    panel.add(innerBorder);
 
-    const title = this.add.text(0, -100, 'STATS & MASTERY', {
+    const title = this.add.text(0, -98, 'STATS & MASTERY', {
       fontFamily: 'system-ui',
       fontSize: '15px',
       color: '#ffd666',
-      fontStyle: 'bold'
+      fontStyle: 'bold',
+      stroke: '#1a1208',
+      strokeThickness: 3
     }).setOrigin(0.5);
     panel.add(title);
 
+    // Decorative column divider line
     const divider = this.add.graphics();
-    divider.lineStyle(1, 0x6f5126);
-    divider.lineBetween(0, -80, 0, 80);
+    divider.lineStyle(1.5, 0x6f5126, 0.8);
+    divider.lineBetween(0, -80, 0, 78);
     panel.add(divider);
 
     // --- LEFT COLUMN: PROFILE & KEEPSAKES ---
     const profile = PROFILES[this.profileId];
     const profileName = this.add.text(-90, -70, profile.label, {
-      fontFamily: 'system-ui',
-      fontSize: '14px',
+      fontFamily: 'Georgia, serif',
+      fontSize: '15px',
       color: '#ffffff',
       fontStyle: 'bold'
     }).setOrigin(0.5);
@@ -899,14 +962,16 @@ export class WorldScene extends Phaser.Scene {
     const profileDesc = this.add.text(-90, -50, profile.readingMode === 'audio-first' ? 'Grade 2 Mage' : 'Grade 5 Adventurer', {
       fontFamily: 'system-ui',
       fontSize: '10px',
-      color: '#c9a66b'
+      color: '#c9a66b',
+      fontStyle: 'bold'
     }).setOrigin(0.5);
     panel.add(profileDesc);
 
     const goldLabel = this.add.text(-90, -16, `Gold: ${this.gold} 🪙`, {
       fontFamily: 'system-ui',
       fontSize: '12px',
-      color: '#ffd666'
+      color: '#ffd666',
+      fontStyle: 'bold'
     }).setOrigin(0.5);
     panel.add(goldLabel);
 
@@ -918,8 +983,9 @@ export class WorldScene extends Phaser.Scene {
     }).setOrigin(0.5);
     panel.add(keepsakeHeader);
 
-    const slotBg = this.add.rectangle(-90, 52, 40, 40, 0x2a1a08)
-      .setStrokeStyle(2, 0x6f5126);
+    // Gold-highlighted keepsake slot socket
+    const slotBg = this.add.rectangle(-90, 52, 44, 44, 0x2a1a08)
+      .setStrokeStyle(1.5, 0x6f5126);
     panel.add(slotBg);
 
     const charm = MIRA_FIRST_ERRAND.rewards.charm;
@@ -927,12 +993,14 @@ export class WorldScene extends Phaser.Scene {
     if (hasCharm) {
       const charmText = this.add.text(-90, 52, '🍓', { fontSize: '20px' }).setOrigin(0.5);
       panel.add(charmText);
+      slotBg.setStrokeStyle(1.5, 0xffd666); // Highlight border when charm is slot-filled
     }
 
     const charmLabel = this.add.text(-90, 82, hasCharm ? charm.name : '(Empty Slot)', {
       fontFamily: 'system-ui',
       fontSize: '9px',
-      color: hasCharm ? '#d7ffb8' : '#6f5126'
+      color: hasCharm ? '#d7ffb8' : '#6f5126',
+      fontStyle: 'bold'
     }).setOrigin(0.5);
     panel.add(charmLabel);
 
@@ -970,41 +1038,56 @@ export class WorldScene extends Phaser.Scene {
       const subLabel = this.add.text(90 - 70, yPos - 11, subject.label, {
         fontFamily: 'system-ui',
         fontSize: '10px',
-        color: '#ffffff'
+        color: '#ffffff',
+        fontStyle: 'bold'
       }).setOrigin(0, 0.5);
       panel.add(subLabel);
 
       const subProgressText = this.add.text(90 + 70, yPos - 11, `${correct}/${attempted}`, {
         fontFamily: 'system-ui',
         fontSize: '10px',
-        color: '#c9a66b'
+        color: '#c9a66b',
+        fontStyle: 'bold'
       }).setOrigin(1, 0.5);
       panel.add(subProgressText);
 
-      const barBg = this.add.rectangle(90, yPos, 140, 8, 0x2a1a08)
-        .setStrokeStyle(1, 0x6f5126)
+      // Thicker and highly visible progress bars
+      const barBg = this.add.rectangle(90, yPos, 140, 10, 0x2a1a08)
+        .setStrokeStyle(1.5, 0x6f5126)
         .setOrigin(0.5);
       panel.add(barBg);
 
       if (percent > 0) {
-        const barFill = this.add.rectangle(90 - 70, yPos, 140 * percent, 8, 0x5e9f3a)
+        const barFill = this.add.rectangle(90 - 70, yPos, 140 * percent, 10, 0x5e9f3a)
           .setOrigin(0, 0.5);
         panel.add(barFill);
       }
     });
 
     // --- CLOSE BUTTON ---
-    const closeBtn = this.add.rectangle(0, 100, 100, 24, 0x5f3d12)
+    const closeBtn = this.add.rectangle(0, 101, 100, 24, 0x5f3d12)
       .setStrokeStyle(2, 0xffd666)
       .setInteractive({ useHandCursor: true });
     panel.add(closeBtn);
 
-    const closeTxt = this.add.text(0, 100, 'CLOSE', {
+    const closeTxt = this.add.text(0, 101, 'CLOSE', {
       fontFamily: 'system-ui',
       fontSize: '12px',
-      color: '#ffffff'
+      color: '#ffffff',
+      fontStyle: 'bold'
     }).setOrigin(0.5);
     panel.add(closeTxt);
+
+    closeBtn.on('pointerover', () => {
+      closeBtn.setFillStyle(0x7c541a);
+      closeBtn.setStrokeStyle(2, 0xffffff);
+      closeTxt.setColor('#ffffff');
+    });
+    closeBtn.on('pointerout', () => {
+      closeBtn.setFillStyle(0x5f3d12);
+      closeBtn.setStrokeStyle(2, 0xffd666);
+      closeTxt.setColor('#ffffff');
+    });
 
     closeBtn.on('pointerdown', () => this.closeStatsPanel());
   }

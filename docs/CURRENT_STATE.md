@@ -26,6 +26,7 @@ Last refreshed on 2026-07-04. This file records volatile project status; `AGENTS
 - Fully integrated Vitest unit test framework with unit tests covering QuestionEngine, MasterySystem, LearningBonusSystem, interactions, and curriculum templates.
 - Established save migration seam in SaveSystem and updated WorldScene saving to dynamically read CURRENT_SAVE_VERSION.
 - Center-canvas Stats & Mastery UI overlay showing active profile details, gold, charms keepsake slot, and visual mastery bars across core subjects. Interactive STATS HUD button and I/Tab hotkeys fully functional.
+- Title screen, Stats & Mastery UI panel, top HUD buttons, and learning prompt card overlays are visually polished using Phaser vector shapes, Georgia serif dropshadow text, double inset border styling, and micro-interactive hover-state scales, strokes, and colors.
 - Ported Web SpeechSynthesis garbage collection reference pins and lifecycle event listeners.
 
 ## Visual And Asset State
