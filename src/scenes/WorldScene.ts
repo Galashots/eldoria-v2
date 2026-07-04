@@ -659,6 +659,11 @@ export class WorldScene extends Phaser.Scene {
     const choicesY = isAudioFirst ? 42 : 36;
     const skipY = isAudioFirst ? 100 : 86;
 
+    // Dimming backdrop overlay to focus attention and block accidental map touches
+    const overlay = this.add.rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.4)
+      .setInteractive();
+    panel.add(overlay);
+
     // Outer gold border and warm dark-brown container panel
     const bg = this.add.rectangle(0, 0, 360, panelHeight, 0x24180c, 0.98)
       .setStrokeStyle(3, 0xffd666);
@@ -925,9 +930,10 @@ export class WorldScene extends Phaser.Scene {
     const panel = this.add.container(GAME_WIDTH / 2, GAME_HEIGHT / 2).setScrollFactor(0).setDepth(100);
     this.statsContainer = panel;
 
-    // Interactive black dimming overlay behind the modal
+    // Interactive black dimming overlay behind the modal (closes panel when clicked outside)
     const overlay = this.add.rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.45)
       .setInteractive();
+    overlay.on('pointerdown', () => this.closeStatsPanel());
     panel.add(overlay);
 
     // Main dark container background with gold border (warmer dark wood fill)

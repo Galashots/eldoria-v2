@@ -16,7 +16,8 @@ This file records repository changes made through ChatGPT so future work can see
   - Brightened the Title screen by replacing dark background with twilight fantasy blue `#111a2e` decorated with soft background magical glows and gold corner stars.
   - Redesigned selection cards to use warmer/brighter slate-blue and chocolate fills with glowing golden outlines on hover.
   - Added individual vector shapes to cards (a gold star for Grade 2 Mage and a gold diamond for Grade 5 Adventurer).
-  - Added an interactive black dimming overlay behind the Stats and Mastery panel.
+  - Added an interactive black dimming overlay behind the Stats and Mastery panel which closes the panel when clicked outside.
+  - Added a dimming backdrop overlay behind the learning prompt panel to focus attention and block accidental map touches.
   - Shifted Stats panel fill color to a warmer dark wood brown and added the italicized tip `Try bonuses to fill these bars.` when mastery records are empty.
   - Expanded Learning prompt overlay heights to prevent clipped text and styled the READ ALOUD button as highly visible royal blue with sound `🔊` icon.
 - Reason: Resolve child visual feedback notes, improve text readability and clickable targets for kids, and add a background dimming overlay for iPad focus.
