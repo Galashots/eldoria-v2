@@ -688,7 +688,7 @@ This file records repository changes made through ChatGPT so future work can see
   - Added a dedicated unit test suite in `tests/unit/interactions.test.ts` proving that resolved interaction IDs remain stable when Tiled display names are changed.
 - Reason: Resolve security/robustness concerns around name-based dispatch logic and maintain clean, up-to-date project logs.
 
-## 2026-07-04 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+## 2026-07-04 - Google Antigravity, coordinated with GPT-5.5 Thinking
 
 - Branch: `antigravity/stats-mastery-panel-port`
 - Files changed:

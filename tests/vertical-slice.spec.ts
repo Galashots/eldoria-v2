@@ -852,7 +852,7 @@ test('interactive Stats & Mastery UI panel toggles open/closed and shows correct
   await holdKey(page, 'KeyI', 100);
   await expect.poll(async () => hasCanvasText(page, 'STATS & MASTERY')).toBe(true);
   await expect.poll(async () => hasCanvasText(page, 'CURRICULUM MASTERY')).toBe(true);
-  await expect.poll(async () => hasCanvasText(page, 'Adventurer')).toBe(true);
+  await expect.poll(async () => hasCanvasText(page, 'Grade 5 Adventurer')).toBe(true);
   await expect.poll(async () => hasCanvasText(page, 'KEEPSAKES')).toBe(true);
 
   await page.evaluate(() => {

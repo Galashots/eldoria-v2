@@ -1,6 +1,6 @@
 # Eldoria-V2 Current State
 
-Last refreshed on 2026-06-30. This file records volatile project status; `AGENTS.md` remains the durable operating contract.
+Last refreshed on 2026-07-04. This file records volatile project status; `AGENTS.md` remains the durable operating contract.
 
 ## Playable Vertical Slice
 

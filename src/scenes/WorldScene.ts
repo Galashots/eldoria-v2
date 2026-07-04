@@ -896,7 +896,7 @@ export class WorldScene extends Phaser.Scene {
     }).setOrigin(0.5);
     panel.add(profileName);
 
-    const profileDesc = this.add.text(-90, -50, profile.readingMode === 'audio-first' ? 'Grade 2 Mage' : 'Grade 5 Explorer', {
+    const profileDesc = this.add.text(-90, -50, profile.readingMode === 'audio-first' ? 'Grade 2 Mage' : 'Grade 5 Adventurer', {
       fontFamily: 'system-ui',
       fontSize: '10px',
       color: '#c9a66b'
@@ -922,13 +922,14 @@ export class WorldScene extends Phaser.Scene {
       .setStrokeStyle(2, 0x6f5126);
     panel.add(slotBg);
 
-    const hasCharm = (this.inventory.sunberryCharm ?? 0) > 0;
+    const charm = MIRA_FIRST_ERRAND.rewards.charm;
+    const hasCharm = (this.inventory[charm.key] ?? 0) > 0;
     if (hasCharm) {
       const charmText = this.add.text(-90, 52, '🍓', { fontSize: '20px' }).setOrigin(0.5);
       panel.add(charmText);
     }
 
-    const charmLabel = this.add.text(-90, 82, hasCharm ? 'Sunberry Charm' : '(Empty Slot)', {
+    const charmLabel = this.add.text(-90, 82, hasCharm ? charm.name : '(Empty Slot)', {
       fontFamily: 'system-ui',
       fontSize: '9px',
       color: hasCharm ? '#d7ffb8' : '#6f5126'
