@@ -55,6 +55,16 @@ export type BonusContext =
 
 export type RewardKind = 'bonus-harvest' | 'critical-hit' | 'bonus-gold' | 'bonus-xp';
 
+// Gold granted for a correct answer to a learning-bonus prompt, keyed by the
+// prompt's reward flavor. Kept alongside RewardKind so every reward kind is
+// forced to have an entry (see the `satisfies` check below).
+export const REWARD_KIND_GOLD_VALUE = {
+  'bonus-gold': 5,
+  'bonus-harvest': 3,
+  'critical-hit': 2,
+  'bonus-xp': 1
+} as const satisfies Record<RewardKind, number>;
+
 export type AnswerValue = number | string | boolean;
 
 export type LearningPrompt = {

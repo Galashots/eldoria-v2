@@ -22,6 +22,17 @@ export type HeroPresentationConfig = {
 
 const DIRECTIONS: HeroFacing[] = ['front', 'back', 'left', 'right'];
 
+/**
+ * Shared facing calculation for a normalized movement/velocity vector.
+ * Horizontal intent wins once it clears the deadzone; otherwise facing
+ * follows vertical intent (up = 'back', anything else = 'front').
+ */
+export function facingFromVector(x: number, y: number): HeroFacing {
+  if (x < -0.35) return 'left';
+  if (x > 0.35) return 'right';
+  return y < 0 ? 'back' : 'front';
+}
+
 const mageAnimations = (motion: 'idle' | 'walk' | 'cast' | 'hurt'): DirectionalAnimations => ({
   front: `grade2-mage-${motion}-front`,
   back: `grade2-mage-${motion}-back`,
@@ -237,13 +248,6 @@ export class HeroPresentationController {
       return;
     }
 
-    const facing: HeroFacing = velocityX < -0.35
-      ? 'left'
-      : velocityX > 0.35
-        ? 'right'
-        : velocityY < 0
-          ? 'back'
-          : 'front';
-    this.setAnimation(facing, 'walk');
+    this.setAnimation(facingFromVector(velocityX, velocityY), 'walk');
   }
 }

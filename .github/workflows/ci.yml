@@ -19,6 +19,17 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run check
+      - run: npm run test:asset-pipeline
+      - run: npm run test:unit
+      - name: Get installed Playwright version
+        id: playwright-version
+        run: |
+          echo "version=$(node -e "console.log(require('./package-lock.json').packages['node_modules/@playwright/test'].version)")" >> "$GITHUB_OUTPUT"
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-browsers-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
       - run: npx playwright install --with-deps chromium
       - run: npm run smoke
       - name: Configure GitHub Pages
@@ -47,3 +58,20 @@ jobs:
       - name: Deploy GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: Post-deploy health check
+        run: |
+          # Lightweight smoke check that the published Pages URL
+          # (https://galashots.github.io/eldoria-v2/) is actually serving
+          # after deploy-pages reports success. A couple of retries with a
+          # short delay absorbs normal Pages propagation lag.
+          url="${{ steps.deployment.outputs.page_url }}"
+          for attempt in 1 2 3; do
+            if curl -sf --max-time 10 "$url" > /dev/null; then
+              echo "Health check passed on attempt $attempt for $url"
+              exit 0
+            fi
+            echo "Health check attempt $attempt failed for $url, retrying..."
+            sleep 5
+          done
+          echo "Health check failed after 3 attempts for $url"
+          exit 1

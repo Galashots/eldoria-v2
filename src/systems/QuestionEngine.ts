@@ -1,12 +1,12 @@
-import Phaser from 'phaser';
 import { QUESTION_TEMPLATES } from '../data/questionTemplates';
 import type { BonusContext, LearningPrompt, QuestionEngineState, QuestionTemplate } from '../data/curriculumMap';
 import type { PlayerProfile } from '../data/profiles';
+import { pickRandom } from './random';
 
 export class QuestionEngine {
   static makePrompt(profile: PlayerProfile, context: BonusContext, difficulty: QuestionEngineState['difficulty'] = 1): LearningPrompt {
     const candidates = this.templatesFor(profile, context, difficulty);
-    const selected = Phaser.Utils.Array.GetRandom(candidates);
+    const selected = pickRandom(candidates);
 
     return selected.makePrompt({ profile, context, difficulty });
   }

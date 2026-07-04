@@ -1,12 +1,12 @@
-import Phaser from 'phaser';
 import type { AnswerValue, LearningPrompt, QuestionTemplate } from './curriculumMap';
+import { randomInt, shuffled } from '../systems/random';
 
 function shuffledChoices(answer: number, distractors: number[]): number[];
 function shuffledChoices(answer: string, distractors: string[]): string[];
 function shuffledChoices(answer: boolean, distractors: boolean[]): boolean[];
 function shuffledChoices(answer: AnswerValue, distractors: AnswerValue[]): AnswerValue[] {
   const choices = Array.from(new Set([answer, ...distractors])).slice(0, 3);
-  return choices.sort(() => Math.random() - 0.5);
+  return shuffled(choices);
 }
 
 function contextReward(context: LearningPrompt['context'], fallback: LearningPrompt['rewardKind']): LearningPrompt['rewardKind'] {
@@ -26,8 +26,8 @@ export const QUESTION_TEMPLATES: QuestionTemplate[] = [
     minDifficulty: 1,
     maxDifficulty: 3,
     makePrompt: ({ context }) => {
-      const picked = Phaser.Math.Between(6, 18);
-      const used = Phaser.Math.Between(1, Math.min(9, picked));
+      const picked = randomInt(6, 18);
+      const used = randomInt(1, Math.min(9, picked));
       const answer = picked - used;
 
       return {
@@ -55,8 +55,8 @@ export const QUESTION_TEMPLATES: QuestionTemplate[] = [
     minDifficulty: 1,
     maxDifficulty: 3,
     makePrompt: ({ context }) => {
-      const shield = Phaser.Math.Between(7, 20);
-      const spell = Phaser.Math.Between(2, Math.min(10, shield));
+      const shield = randomInt(7, 20);
+      const spell = randomInt(2, Math.min(10, shield));
       const answer = shield - spell;
 
       return {
@@ -84,8 +84,8 @@ export const QUESTION_TEMPLATES: QuestionTemplate[] = [
     minDifficulty: 1,
     maxDifficulty: 3,
     makePrompt: ({ context }) => {
-      const tens = Phaser.Math.Between(2, 8);
-      const ones = Phaser.Math.Between(0, 9);
+      const tens = randomInt(2, 8);
+      const ones = randomInt(0, 9);
       const berries = tens * 10 + ones;
 
       return {
@@ -113,8 +113,8 @@ export const QUESTION_TEMPLATES: QuestionTemplate[] = [
     minDifficulty: 1,
     maxDifficulty: 3,
     makePrompt: ({ context }) => {
-      const sparks = Phaser.Math.Between(4, 10);
-      const gained = Phaser.Math.Between(2, 9);
+      const sparks = randomInt(4, 10);
+      const gained = randomInt(2, 9);
       const answer = sparks + gained;
 
       return {
@@ -142,8 +142,8 @@ export const QUESTION_TEMPLATES: QuestionTemplate[] = [
     minDifficulty: 1,
     maxDifficulty: 3,
     makePrompt: ({ context }) => {
-      const apples = Phaser.Math.Between(3, 14);
-      const carrots = Phaser.Math.Between(2, 12);
+      const apples = randomInt(3, 14);
+      const carrots = randomInt(2, 12);
       const answer = apples + carrots;
 
       return {
@@ -217,8 +217,8 @@ export const QUESTION_TEMPLATES: QuestionTemplate[] = [
     minDifficulty: 1,
     maxDifficulty: 5,
     makePrompt: ({ context }) => {
-      const length = Phaser.Math.Between(8, 24);
-      const width = Phaser.Math.Between(4, 12);
+      const length = randomInt(8, 24);
+      const width = randomInt(4, 12);
       const answer = length * width;
 
       return {
@@ -245,8 +245,8 @@ export const QUESTION_TEMPLATES: QuestionTemplate[] = [
     minDifficulty: 2,
     maxDifficulty: 5,
     makePrompt: ({ context }) => {
-      const price = Phaser.Math.Between(6, 18) + 0.75;
-      const quantity = Phaser.Math.Between(2, 4);
+      const price = randomInt(6, 18) + 0.75;
+      const quantity = randomInt(2, 4);
       const answer = Math.round(price) * quantity;
 
       return {
@@ -273,7 +273,7 @@ export const QUESTION_TEMPLATES: QuestionTemplate[] = [
     minDifficulty: 1,
     maxDifficulty: 5,
     makePrompt: ({ context }) => {
-      const plantedRows = Phaser.Math.Between(2, 5);
+      const plantedRows = randomInt(2, 5);
       const totalRows = plantedRows * 4;
 
       return {

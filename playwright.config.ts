@@ -2,6 +2,10 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests',
+  // Explicit instead of Playwright's default `**/*.@(spec|test).?(c|m)[jt]s`
+  // so the Vitest unit layer under tests/unit/**/*.test.ts is never picked
+  // up here (and vice versa — see vitest.config.ts's `include`).
+  testMatch: '**/*.spec.ts',
   workers: 1,
   timeout: 30_000,
   expect: {
