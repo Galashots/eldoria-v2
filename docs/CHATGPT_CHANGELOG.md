@@ -687,3 +687,22 @@ This file records repository changes made through ChatGPT so future work can see
   - Updated `WorldScene.save()` to use the imported `CURRENT_SAVE_VERSION` constant from `SaveSystem.ts` instead of hardcoded `version: 1`.
   - Added a dedicated unit test suite in `tests/unit/interactions.test.ts` proving that resolved interaction IDs remain stable when Tiled display names are changed.
 - Reason: Resolve security/robustness concerns around name-based dispatch logic and maintain clean, up-to-date project logs.
+
+## 2026-07-04 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
+- Branch: `antigravity/stats-mastery-panel-port`
+- Files changed:
+  - `src/scenes/WorldScene.ts`
+  - `tests/vertical-slice.spec.ts`
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `docs/CURRENT_STATE.md`
+- Summary: Ported the Stats & Mastery UI panel and Web SpeechSynthesis fixes to the clean post-PR #45 architecture.
+- Implementation notes:
+  - Ported the centered container UI overlay (`380x240`), dividing line, and close button from the parked `antigravity/wip-stats-mastery-panel` branch reference.
+  - Added a visible top-right `STATS` HUD button and configured hotkeys (`I`, `Tab` with capturing prevent-default logic) to toggle the stats panel.
+  - Displayed player profile name/reading description, gold count, keepsakes slot (rendering a `🍓` emoji if the Sunberry Charm is owned), and progress bars tracking mastery ratios for core subjects (Math, ELA, Science, Social Studies).
+  - Maintained complete coexistence with the PR #45 decoupled interaction ID registries, save migration seams, and quest controllers (e.g. reading via `this.farmQuest.firstQuestStep` without editing quest progression).
+  - Ported missing SpeechSynthesis garbage collection reference pins and lifecycle listeners (`PAUSE`/`SLEEP`/`DESTROY`/`SHUTDOWN`) to fix voice narration cut-offs.
+  - Ported the E2E vertical-slice test verifying HUD and hotkey panel toggle interactions.
+  - Configured a test-specific timeout of 60s for the Stats UI E2E test to prevent slow environment timeouts in CI VMs.
+- Reason: Restore the visual overlay, progress tracking, and speech fixes safely to main while preserving all PR #45 hardening foundations.

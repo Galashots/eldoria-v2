@@ -51,7 +51,7 @@ const FARM_COLLISION_TILE_GIDS = [3, 4, 6];
 export class WorldScene extends Phaser.Scene {
   private player!: Phaser.Physics.Arcade.Sprite;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
-  private keys!: Record<'W' | 'A' | 'S' | 'D' | 'SPACE' | 'E', Phaser.Input.Keyboard.Key>;
+  private keys!: Record<'W' | 'A' | 'S' | 'D' | 'SPACE' | 'E' | 'I' | 'TAB', Phaser.Input.Keyboard.Key>;
   private touchMove: TouchMoveVector = { x: 0, y: 0 };
   private joystickOrigin: TouchMoveVector = { x: 0, y: 0 };
   private joystickPointer: Phaser.Input.Pointer | null = null;
@@ -66,6 +66,9 @@ export class WorldScene extends Phaser.Scene {
   private mastery: LearningMastery = {};
   private farmQuest!: FarmQuestSystem;
   private busy = false;
+  private statsPanelOpen = false;
+  private statsContainer?: Phaser.GameObjects.Container;
+  private activeUtterance: SpeechSynthesisUtterance | null = null;
   private hudText!: Phaser.GameObjects.Text;
   private objectiveText!: Phaser.GameObjects.Text;
   private hintText!: Phaser.GameObjects.Text;
@@ -120,10 +123,11 @@ export class WorldScene extends Phaser.Scene {
     this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
 
     this.cursors = this.input.keyboard!.createCursorKeys();
-    this.keys = this.input.keyboard!.addKeys('W,A,S,D,SPACE,E') as Record<
-      'W' | 'A' | 'S' | 'D' | 'SPACE' | 'E',
+    this.keys = this.input.keyboard!.addKeys('W,A,S,D,SPACE,E,I,TAB') as Record<
+      'W' | 'A' | 'S' | 'D' | 'SPACE' | 'E' | 'I' | 'TAB',
       Phaser.Input.Keyboard.Key
     >;
+    this.input.keyboard!.addCapture(Phaser.Input.Keyboard.KeyCodes.TAB);
 
     const saved = SaveSystem.load(this.profileId);
     if (saved) {
@@ -140,15 +144,34 @@ export class WorldScene extends Phaser.Scene {
 
     this.createHud();
     this.createTouchControls();
+
+    this.events.on(Phaser.Scenes.Events.PAUSE, this.stopPromptReadAloud, this);
+    this.events.on(Phaser.Scenes.Events.SLEEP, this.stopPromptReadAloud, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.stopPromptReadAloud();
       this.resetJoystick();
       this.heroPresentation.dispose();
+      this.events.off(Phaser.Scenes.Events.PAUSE, this.stopPromptReadAloud, this);
+      this.events.off(Phaser.Scenes.Events.SLEEP, this.stopPromptReadAloud, this);
+    });
+    this.events.once(Phaser.Scenes.Events.DESTROY, () => {
+      this.stopPromptReadAloud();
     });
   }
 
   update(): void {
     this.heroPresentation.syncPosition();
+
+    if (this.busy && !this.statsPanelOpen) {
+      this.player.setVelocity(0, 0);
+      this.heroPresentation.setBusy();
+      return;
+    }
+
+    if (Phaser.Input.Keyboard.JustDown(this.keys.I) || Phaser.Input.Keyboard.JustDown(this.keys.TAB)) {
+      this.toggleStatsPanel();
+      return;
+    }
 
     if (this.busy) {
       this.player.setVelocity(0, 0);
@@ -315,6 +338,20 @@ export class WorldScene extends Phaser.Scene {
       fontSize: '12px',
       color: '#ffd666'
     }).setScrollFactor(0);
+
+    const statsBtn = this.add.rectangle(GAME_WIDTH - 50, 14, 56, 16, 0x5f3d12, 0.9)
+      .setStrokeStyle(1, 0xffd666)
+      .setScrollFactor(0)
+      .setInteractive({ useHandCursor: true });
+
+    this.add.text(GAME_WIDTH - 50, 14, 'STATS', {
+      fontFamily: 'system-ui',
+      fontSize: '9px',
+      color: '#ffd666',
+      fontStyle: 'bold'
+    }).setOrigin(0.5).setScrollFactor(0);
+
+    statsBtn.on('pointerdown', () => this.toggleStatsPanel());
 
     this.add.rectangle(GAME_WIDTH / 2, 42, GAME_WIDTH - 20, 28, 0x162a12, 0.9)
       .setScrollFactor(0)
@@ -722,6 +759,20 @@ export class WorldScene extends Phaser.Scene {
     const utterance = new SpeechSynthesisUtterance(this.makeReadAloudText(label, prompt));
     utterance.rate = 0.85;
     utterance.pitch = 1.05;
+
+    // Prevent garbage collection mid-speech
+    this.activeUtterance = utterance;
+    utterance.onend = () => {
+      if (this.activeUtterance === utterance) {
+        this.activeUtterance = null;
+      }
+    };
+    utterance.onerror = () => {
+      if (this.activeUtterance === utterance) {
+        this.activeUtterance = null;
+      }
+    };
+
     window.speechSynthesis.speak(utterance);
   }
 
@@ -729,6 +780,7 @@ export class WorldScene extends Phaser.Scene {
     if (this.hasPromptReadAloudSupport()) {
       window.speechSynthesis.cancel();
     }
+    this.activeUtterance = null;
   }
 
   private hasPromptReadAloudSupport(): boolean {
@@ -797,6 +849,173 @@ export class WorldScene extends Phaser.Scene {
         onComplete: () => sparkle.destroy()
       });
     }
+  }
+
+  private toggleStatsPanel(): void {
+    if (this.statsPanelOpen) {
+      this.closeStatsPanel();
+    } else {
+      if (this.busy) return;
+      this.openStatsPanel();
+    }
+  }
+
+  private openStatsPanel(): void {
+    this.busy = true;
+    this.statsPanelOpen = true;
+    this.resetJoystick();
+    this.player.setVelocity(0, 0);
+
+    const panel = this.add.container(GAME_WIDTH / 2, GAME_HEIGHT / 2).setScrollFactor(0).setDepth(100);
+    this.statsContainer = panel;
+
+    const bg = this.add.rectangle(0, 0, 380, 240, 0x1a1208, 0.98)
+      .setStrokeStyle(3, 0xffd666);
+    panel.add(bg);
+
+    const title = this.add.text(0, -100, 'STATS & MASTERY', {
+      fontFamily: 'system-ui',
+      fontSize: '15px',
+      color: '#ffd666',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+    panel.add(title);
+
+    const divider = this.add.graphics();
+    divider.lineStyle(1, 0x6f5126);
+    divider.lineBetween(0, -80, 0, 80);
+    panel.add(divider);
+
+    // --- LEFT COLUMN: PROFILE & KEEPSAKES ---
+    const profile = PROFILES[this.profileId];
+    const profileName = this.add.text(-90, -70, profile.label, {
+      fontFamily: 'system-ui',
+      fontSize: '14px',
+      color: '#ffffff',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+    panel.add(profileName);
+
+    const profileDesc = this.add.text(-90, -50, profile.readingMode === 'audio-first' ? 'Grade 2 Mage' : 'Grade 5 Explorer', {
+      fontFamily: 'system-ui',
+      fontSize: '10px',
+      color: '#c9a66b'
+    }).setOrigin(0.5);
+    panel.add(profileDesc);
+
+    const goldLabel = this.add.text(-90, -16, `Gold: ${this.gold} 🪙`, {
+      fontFamily: 'system-ui',
+      fontSize: '12px',
+      color: '#ffd666'
+    }).setOrigin(0.5);
+    panel.add(goldLabel);
+
+    const keepsakeHeader = this.add.text(-90, 18, 'KEEPSAKES', {
+      fontFamily: 'system-ui',
+      fontSize: '11px',
+      color: '#ffd666',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+    panel.add(keepsakeHeader);
+
+    const slotBg = this.add.rectangle(-90, 52, 40, 40, 0x2a1a08)
+      .setStrokeStyle(2, 0x6f5126);
+    panel.add(slotBg);
+
+    const hasCharm = (this.inventory.sunberryCharm ?? 0) > 0;
+    if (hasCharm) {
+      const charmText = this.add.text(-90, 52, '🍓', { fontSize: '20px' }).setOrigin(0.5);
+      panel.add(charmText);
+    }
+
+    const charmLabel = this.add.text(-90, 82, hasCharm ? 'Sunberry Charm' : '(Empty Slot)', {
+      fontFamily: 'system-ui',
+      fontSize: '9px',
+      color: hasCharm ? '#d7ffb8' : '#6f5126'
+    }).setOrigin(0.5);
+    panel.add(charmLabel);
+
+    // --- RIGHT COLUMN: CURRICULUM MASTERY ---
+    const masteryHeader = this.add.text(90, -70, 'CURRICULUM MASTERY', {
+      fontFamily: 'system-ui',
+      fontSize: '12px',
+      color: '#ffd666',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+    panel.add(masteryHeader);
+
+    const subjects = [
+      { id: 'math', label: 'Math' },
+      { id: 'ela', label: 'English (ELA)' },
+      { id: 'science', label: 'Science' },
+      { id: 'social', label: 'Social Studies' }
+    ];
+
+    subjects.forEach((subject, index) => {
+      const yPos = -40 + index * 34;
+
+      let correct = 0;
+      let attempted = 0;
+      for (const [key, record] of Object.entries(this.mastery)) {
+        const parts = key.split(':');
+        if (parts[1] === subject.id) {
+          correct += record.correct;
+          attempted += record.attempted;
+        }
+      }
+
+      const percent = attempted > 0 ? (correct / attempted) : 0;
+
+      const subLabel = this.add.text(90 - 70, yPos - 11, subject.label, {
+        fontFamily: 'system-ui',
+        fontSize: '10px',
+        color: '#ffffff'
+      }).setOrigin(0, 0.5);
+      panel.add(subLabel);
+
+      const subProgressText = this.add.text(90 + 70, yPos - 11, `${correct}/${attempted}`, {
+        fontFamily: 'system-ui',
+        fontSize: '10px',
+        color: '#c9a66b'
+      }).setOrigin(1, 0.5);
+      panel.add(subProgressText);
+
+      const barBg = this.add.rectangle(90, yPos, 140, 8, 0x2a1a08)
+        .setStrokeStyle(1, 0x6f5126)
+        .setOrigin(0.5);
+      panel.add(barBg);
+
+      if (percent > 0) {
+        const barFill = this.add.rectangle(90 - 70, yPos, 140 * percent, 8, 0x5e9f3a)
+          .setOrigin(0, 0.5);
+        panel.add(barFill);
+      }
+    });
+
+    // --- CLOSE BUTTON ---
+    const closeBtn = this.add.rectangle(0, 100, 100, 24, 0x5f3d12)
+      .setStrokeStyle(2, 0xffd666)
+      .setInteractive({ useHandCursor: true });
+    panel.add(closeBtn);
+
+    const closeTxt = this.add.text(0, 100, 'CLOSE', {
+      fontFamily: 'system-ui',
+      fontSize: '12px',
+      color: '#ffffff'
+    }).setOrigin(0.5);
+    panel.add(closeTxt);
+
+    closeBtn.on('pointerdown', () => this.closeStatsPanel());
+  }
+
+  private closeStatsPanel(): void {
+    if (!this.statsPanelOpen) return;
+    if (this.statsContainer) {
+      this.statsContainer.destroy();
+      this.statsContainer = undefined;
+    }
+    this.statsPanelOpen = false;
+    this.busy = false;
   }
 
   private showToast(message: string): void {
