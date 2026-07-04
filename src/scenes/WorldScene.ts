@@ -653,16 +653,16 @@ export class WorldScene extends Phaser.Scene {
     const panel = this.add.container(GAME_WIDTH / 2, GAME_HEIGHT / 2)
       .setScrollFactor(0)
       .setDepth(30);
-    const panelHeight = isAudioFirst ? 220 : 190;
-    const titleY = isAudioFirst ? -84 : -72;
-    const promptY = isAudioFirst ? -52 : -42;
-    const choicesY = isAudioFirst ? 38 : 34;
-    const skipY = isAudioFirst ? 94 : 82;
+    const panelHeight = isAudioFirst ? 230 : 200;
+    const titleY = isAudioFirst ? -92 : -78;
+    const promptY = isAudioFirst ? -56 : -44;
+    const choicesY = isAudioFirst ? 42 : 36;
+    const skipY = isAudioFirst ? 100 : 86;
 
-    // Outer gold border and dark container panel
-    const bg = this.add.rectangle(0, 0, 360, panelHeight, 0x1a1208, 0.98)
+    // Outer gold border and warm dark-brown container panel
+    const bg = this.add.rectangle(0, 0, 360, panelHeight, 0x24180c, 0.98)
       .setStrokeStyle(3, 0xffd666);
-    // Inset decorative dark-brown border line
+    // Inset decorative line
     const innerBorder = this.add.rectangle(0, 0, 352, panelHeight - 8)
       .setStrokeStyle(1.5, 0x6f5126);
     panel.add(bg);
@@ -684,10 +684,11 @@ export class WorldScene extends Phaser.Scene {
     }).setOrigin(0.5));
 
     if (isAudioFirst) {
-      const readButton = this.add.rectangle(0, -12, 132, 28, 0x3a4f8f)
+      // Brighter, highly visible royal blue button for kids
+      const readButton = this.add.rectangle(0, -12, 132, 28, 0x2a5bb3)
         .setStrokeStyle(2, 0x99c7ff)
         .setInteractive({ useHandCursor: true });
-      const readText = this.add.text(0, -12, 'READ ALOUD', {
+      const readText = this.add.text(0, -12, 'READ ALOUD 🔊', {
         fontFamily: 'system-ui',
         fontSize: '11px',
         color: '#ffffff',
@@ -695,11 +696,11 @@ export class WorldScene extends Phaser.Scene {
       }).setOrigin(0.5);
 
       readButton.on('pointerover', () => {
-        readButton.setFillStyle(0x4a65b5);
-        readButton.setStrokeStyle(2, 0xffffff);
+        readButton.setFillStyle(0x3673db);
+        readButton.setStrokeStyle(2, 0xffd666); // Gold trim highlight
       });
       readButton.on('pointerout', () => {
-        readButton.setFillStyle(0x3a4f8f);
+        readButton.setFillStyle(0x2a5bb3);
         readButton.setStrokeStyle(2, 0x99c7ff);
       });
       readButton.on('pointerdown', () => this.readPromptAloud(label, prompt));
@@ -924,8 +925,13 @@ export class WorldScene extends Phaser.Scene {
     const panel = this.add.container(GAME_WIDTH / 2, GAME_HEIGHT / 2).setScrollFactor(0).setDepth(100);
     this.statsContainer = panel;
 
-    // Main dark container background with gold border
-    const bg = this.add.rectangle(0, 0, 380, 240, 0x1a1208, 0.98)
+    // Interactive black dimming overlay behind the modal
+    const overlay = this.add.rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.45)
+      .setInteractive();
+    panel.add(overlay);
+
+    // Main dark container background with gold border (warmer dark wood fill)
+    const bg = this.add.rectangle(0, 0, 380, 240, 0x24180c, 0.98)
       .setStrokeStyle(3, 0xffd666);
     // Inset border line for premium storybook RPG feel
     const innerBorder = this.add.rectangle(0, 0, 372, 232)
@@ -1020,6 +1026,8 @@ export class WorldScene extends Phaser.Scene {
       { id: 'social', label: 'Social Studies' }
     ];
 
+    let totalAttempted = 0;
+
     subjects.forEach((subject, index) => {
       const yPos = -40 + index * 34;
 
@@ -1033,6 +1041,7 @@ export class WorldScene extends Phaser.Scene {
         }
       }
 
+      totalAttempted += attempted;
       const percent = attempted > 0 ? (correct / attempted) : 0;
 
       const subLabel = this.add.text(90 - 70, yPos - 11, subject.label, {
@@ -1051,9 +1060,9 @@ export class WorldScene extends Phaser.Scene {
       }).setOrigin(1, 0.5);
       panel.add(subProgressText);
 
-      // Thicker and highly visible progress bars
-      const barBg = this.add.rectangle(90, yPos, 140, 10, 0x2a1a08)
-        .setStrokeStyle(1.5, 0x6f5126)
+      // Thicker and highly visible progress bars (dark outline)
+      const barBg = this.add.rectangle(90, yPos, 140, 10, 0x1a1208)
+        .setStrokeStyle(1.5, 0x5c3f21)
         .setOrigin(0.5);
       panel.add(barBg);
 
@@ -1063,6 +1072,18 @@ export class WorldScene extends Phaser.Scene {
         panel.add(barFill);
       }
     });
+
+    // Friendly hint when mastery is 0/0
+    if (totalAttempted === 0) {
+      const helperText = this.add.text(90, 84, 'Try bonuses to fill these bars.', {
+        fontFamily: 'system-ui',
+        fontSize: '9px',
+        color: '#c9a66b',
+        fontStyle: 'italic',
+        align: 'center'
+      }).setOrigin(0.5);
+      panel.add(helperText);
+    }
 
     // --- CLOSE BUTTON ---
     const closeBtn = this.add.rectangle(0, 101, 100, 24, 0x5f3d12)
