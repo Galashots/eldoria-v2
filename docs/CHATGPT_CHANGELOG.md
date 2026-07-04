@@ -4,6 +4,21 @@ This file records repository changes made through ChatGPT so future work can see
 
 ## 2026-07-04 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
+- Branch: `codex/repo-housekeeping`
+- Files changed:
+  - `.github/workflows/ci.yml`
+  - `package.json`
+  - `package-lock.json`
+  - `docs/CHATGPT_CHANGELOG.md`
+- Summary: Consolidated compatible GitHub Actions, TypeScript, and Vite dependency maintenance into one reviewable update.
+- Implementation notes:
+  - Updated the CI and Pages workflow actions to the current versions proposed by the dependency-maintenance queue.
+  - Updated TypeScript to 6.0.3 and Vite to 8.1.3 with the corresponding lockfile refresh.
+  - Kept gameplay, UI, saves, curriculum, quests, rewards, maps, assets, visual polish, and the active milestone unchanged.
+- Reason: Replace overlapping dependency PRs with one current-main maintenance change that can be validated and reviewed as a unit.
+
+## 2026-07-04 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
+
 - Branch: `codex/child-playtest-readiness`
 - Files changed:
   - `README.md`
