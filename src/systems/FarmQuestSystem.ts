@@ -1,5 +1,14 @@
-import { MIRA_FIRST_ERRAND, MIRA_SECOND_ERRAND } from '../data/quests';
+import { MIRA_FIRST_ERRAND, MIRA_SECOND_ERRAND, MIRA_THIRD_ERRAND } from '../data/quests';
+import type { InteractionId } from '../data/interactions';
 import type { SaveState, StarterQuestStep } from './SaveSystem';
+
+type SproutFlagKey = 'sprout1Awakened' | 'sprout2Awakened' | 'sprout3Awakened';
+
+const SPROUT_FLAG_BY_ID: Partial<Record<InteractionId, SproutFlagKey>> = {
+  'sprout-1': 'sprout1Awakened',
+  'sprout-2': 'sprout2Awakened',
+  'sprout-3': 'sprout3Awakened'
+};
 
 export type FarmQuestReward = {
   gold: number;
@@ -23,13 +32,23 @@ export type FarmQuestState = {
   secondErrandAccepted: boolean;
   secondErrandCharmFound: boolean;
   secondErrandComplete: boolean;
+  thirdErrandAccepted: boolean;
+  sprout1Awakened: boolean;
+  sprout2Awakened: boolean;
+  sprout3Awakened: boolean;
+  thirdErrandComplete: boolean;
 };
 
 const defaultState = (): FarmQuestState => ({
   firstQuestStep: MIRA_FIRST_ERRAND.steps.talkToMira,
   secondErrandAccepted: false,
   secondErrandCharmFound: false,
-  secondErrandComplete: false
+  secondErrandComplete: false,
+  thirdErrandAccepted: false,
+  sprout1Awakened: false,
+  sprout2Awakened: false,
+  sprout3Awakened: false,
+  thirdErrandComplete: false
 });
 
 export class FarmQuestSystem {
@@ -44,7 +63,12 @@ export class FarmQuestSystem {
       firstQuestStep: saved?.firstQuestStep ?? MIRA_FIRST_ERRAND.steps.talkToMira,
       secondErrandAccepted: saved?.questFlags?.miraSecondErrandAccepted === true,
       secondErrandCharmFound: saved?.questFlags?.miraSecondErrandCharmFound === true,
-      secondErrandComplete: saved?.questFlags?.miraSecondErrandComplete === true
+      secondErrandComplete: saved?.questFlags?.miraSecondErrandComplete === true,
+      thirdErrandAccepted: saved?.questFlags?.miraThirdErrandAccepted === true,
+      sprout1Awakened: saved?.questFlags?.miraThirdErrandSprout1Awakened === true,
+      sprout2Awakened: saved?.questFlags?.miraThirdErrandSprout2Awakened === true,
+      sprout3Awakened: saved?.questFlags?.miraThirdErrandSprout3Awakened === true,
+      thirdErrandComplete: saved?.questFlags?.miraThirdErrandComplete === true
     });
   }
 
@@ -57,11 +81,20 @@ export class FarmQuestSystem {
       return MIRA_FIRST_ERRAND.objectives[this.state.firstQuestStep];
     }
 
-    if (this.state.secondErrandComplete) return MIRA_SECOND_ERRAND.objectives.complete;
-    if (this.state.secondErrandCharmFound) return MIRA_SECOND_ERRAND.objectives.returnToMira;
-    return this.state.secondErrandAccepted
-      ? MIRA_SECOND_ERRAND.objectives.investigate
-      : MIRA_SECOND_ERRAND.objectives.available;
+    if (!this.state.secondErrandComplete) {
+      if (this.state.secondErrandCharmFound) return MIRA_SECOND_ERRAND.objectives.returnToMira;
+      return this.state.secondErrandAccepted
+        ? MIRA_SECOND_ERRAND.objectives.investigate
+        : MIRA_SECOND_ERRAND.objectives.available;
+    }
+
+    if (this.state.thirdErrandComplete) return MIRA_THIRD_ERRAND.objectives.complete;
+    if (!this.state.thirdErrandAccepted) return MIRA_THIRD_ERRAND.objectives.available;
+
+    const sproutsAwakened = this.sproutsAwakenedCount();
+    return sproutsAwakened === MIRA_THIRD_ERRAND.totalSprouts
+      ? MIRA_THIRD_ERRAND.objectives.returnToMira
+      : MIRA_THIRD_ERRAND.objectives.inProgress(sproutsAwakened);
   }
 
   hintLabel(targetLabel: string): string {
@@ -129,6 +162,24 @@ export class FarmQuestSystem {
     };
   }
 
+  completeSproutInteraction(sproutId: InteractionId): FarmQuestOutcome {
+    if (!this.state.thirdErrandAccepted || this.state.thirdErrandComplete) {
+      return { stateChanged: false };
+    }
+
+    const flagKey = SPROUT_FLAG_BY_ID[sproutId];
+    if (!flagKey || this.state[flagKey]) {
+      return { stateChanged: false };
+    }
+
+    this.state[flagKey] = true;
+    return {
+      stateChanged: true,
+      objectiveChanged: true,
+      message: MIRA_THIRD_ERRAND.progress.sproutAwakened(this.sproutsAwakenedCount())
+    };
+  }
+
   setFirstQuestStepForTest(step: StarterQuestStep): void {
     this.state.firstQuestStep = step;
   }
@@ -139,16 +190,25 @@ export class FarmQuestSystem {
       questFlags: {
         miraSecondErrandAccepted: this.state.secondErrandAccepted,
         miraSecondErrandCharmFound: this.state.secondErrandCharmFound,
-        miraSecondErrandComplete: this.state.secondErrandComplete
+        miraSecondErrandComplete: this.state.secondErrandComplete,
+        miraThirdErrandAccepted: this.state.thirdErrandAccepted,
+        miraThirdErrandSprout1Awakened: this.state.sprout1Awakened,
+        miraThirdErrandSprout2Awakened: this.state.sprout2Awakened,
+        miraThirdErrandSprout3Awakened: this.state.sprout3Awakened,
+        miraThirdErrandComplete: this.state.thirdErrandComplete
       }
     };
   }
 
   private interactWithMiraAfterFirstErrand(): FarmQuestOutcome {
-    if (this.state.secondErrandComplete) {
-      return this.unchanged(MIRA_SECOND_ERRAND.dialogue.complete);
+    if (!this.state.secondErrandComplete) {
+      return this.interactWithMiraForSecondErrand();
     }
 
+    return this.interactWithMiraForThirdErrand();
+  }
+
+  private interactWithMiraForSecondErrand(): FarmQuestOutcome {
     if (this.state.secondErrandCharmFound) {
       this.state.secondErrandAccepted = false;
       this.state.secondErrandCharmFound = false;
@@ -169,11 +229,46 @@ export class FarmQuestSystem {
     return this.unchanged(MIRA_SECOND_ERRAND.dialogue.reminder);
   }
 
+  private interactWithMiraForThirdErrand(): FarmQuestOutcome {
+    if (this.state.thirdErrandComplete) {
+      return this.unchanged(MIRA_THIRD_ERRAND.dialogue.complete);
+    }
+
+    // Require acceptance before a fully-awakened sprout set can complete the
+    // errand, so a malformed/tampered save (sprout flags true, accepted
+    // false) can't skip Mira's start dialogue and auto-complete on the next
+    // interaction.
+    if (this.state.thirdErrandAccepted && this.sproutsAwakenedCount() === MIRA_THIRD_ERRAND.totalSprouts) {
+      this.state.thirdErrandComplete = true;
+      return {
+        ...this.changed(
+          `${MIRA_THIRD_ERRAND.dialogue.return}\n${MIRA_THIRD_ERRAND.completionToast}`
+        ),
+        reward: {
+          gold: MIRA_THIRD_ERRAND.rewards.gold,
+          item: MIRA_THIRD_ERRAND.rewards.charm
+        }
+      };
+    }
+
+    if (!this.state.thirdErrandAccepted) {
+      this.state.thirdErrandAccepted = true;
+      return this.changed(MIRA_THIRD_ERRAND.dialogue.start);
+    }
+
+    return this.unchanged(MIRA_THIRD_ERRAND.dialogue.reminder);
+  }
+
   private canDiscoverSecondErrandCharm(): boolean {
     return this.state.firstQuestStep === MIRA_FIRST_ERRAND.steps.complete
       && this.state.secondErrandAccepted
       && !this.state.secondErrandCharmFound
       && !this.state.secondErrandComplete;
+  }
+
+  private sproutsAwakenedCount(): number {
+    return [this.state.sprout1Awakened, this.state.sprout2Awakened, this.state.sprout3Awakened]
+      .filter(Boolean).length;
   }
 
   private changed(toast: string): FarmQuestOutcome {

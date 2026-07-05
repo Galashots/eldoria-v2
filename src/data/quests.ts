@@ -35,6 +35,8 @@ type MiraFirstErrandDefinition = {
   };
 };
 
+const THIRD_ERRAND_TOTAL_SPROUTS = 3;
+
 type MiraSecondErrandDefinition = {
   id: string;
   name: string;
@@ -103,6 +105,35 @@ export const MIRA_FIRST_ERRAND = {
   }
 } as const satisfies MiraFirstErrandDefinition;
 
+type MiraThirdErrandDefinition = {
+  id: string;
+  name: string;
+  totalSprouts: number;
+  objectives: {
+    available: string;
+    inProgress: (awakened: number) => string;
+    returnToMira: string;
+    complete: string;
+  };
+  dialogue: {
+    start: string;
+    reminder: string;
+    return: string;
+    complete: string;
+  };
+  progress: {
+    sproutAwakened: (awakened: number) => string;
+  };
+  completionToast: string;
+  rewards: {
+    gold: number;
+    charm: {
+      key: string;
+      name: string;
+    };
+  };
+};
+
 export const MIRA_SECOND_ERRAND = {
   id: 'mira-second-errand',
   name: 'The Whispering Scarecrow',
@@ -129,3 +160,37 @@ export const MIRA_SECOND_ERRAND = {
     gold: 4
   }
 } as const satisfies MiraSecondErrandDefinition;
+
+export const MIRA_THIRD_ERRAND = {
+  id: 'mira-third-errand',
+  name: 'The Sleepy Sprouts',
+  totalSprouts: THIRD_ERRAND_TOTAL_SPROUTS,
+  objectives: {
+    available: 'Optional: Talk to Mira about the sleepy sprouts.',
+    inProgress: (awakened: number) => `Optional: Wake the sleepy sprouts (${awakened}/${THIRD_ERRAND_TOTAL_SPROUTS}).`,
+    returnToMira: 'Optional: Tell Mira the sprouts are awake.',
+    complete: 'Optional errand complete: The Sleepy Sprouts.'
+  },
+  dialogue: {
+    start: 'Mira: The Moonseed charm wasn\'t the only strange thing. Some sprouts in the crop rows have gone sleepy, like the old magic tired them out. Could you wake a few up?',
+    reminder: 'Mira: The sleepy sprouts around the farm are still waiting to wake up.',
+    return: 'Mira: All three awake? Good. The old magic stirs gently here. Nothing to fear, just... waking up.',
+    complete: 'Mira: The sprouts hum softly now. Keep an eye on the farm. It\'s changing.'
+  },
+  progress: {
+    sproutAwakened: (awakened: number) => `Sprout awakened! (${awakened}/${THIRD_ERRAND_TOTAL_SPROUTS})`
+  },
+  completionToast: 'Optional Errand Complete: The Sleepy Sprouts\nReceived: Wildbloom Sprig',
+  rewards: {
+    gold: 6,
+    charm: {
+      key: 'wildbloomSprig',
+      name: 'Wildbloom Sprig'
+    }
+  }
+} as const satisfies MiraThirdErrandDefinition;
+
+export const CHARM_REGISTRY = [
+  { key: MIRA_FIRST_ERRAND.rewards.charm.key, name: MIRA_FIRST_ERRAND.rewards.charm.name, emoji: '🍓' },
+  { key: MIRA_THIRD_ERRAND.rewards.charm.key, name: MIRA_THIRD_ERRAND.rewards.charm.name, emoji: '🌱' }
+] as const;

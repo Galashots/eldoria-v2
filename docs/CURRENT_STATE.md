@@ -21,6 +21,8 @@ Last refreshed on 2026-07-04. This file records volatile project status; `AGENTS
 - A parent-facing real-child playtest guide documents the live iPad setup, controls, per-profile session scripts, save reset steps, observation notes, and blocker-versus-polish triage.
 - Hero animation/rendering is isolated in a profile-configured presentation controller; the unchanged Grade 5 placeholder remains the fallback until approved Ranger art exists.
 - Mira's two errands now use a renderer-independent farm quest state system while preserving the existing version-1 save fields and player-facing behavior.
+- A third optional errand, The Sleepy Sprouts, becomes available after the Whispering Scarecrow completes: wake 3 new "Sleepy Sprout" map markers around the farm (reusing the crop-bonus-style optional prompt), then return to Mira for gold and a new Wildbloom Sprig keepsake. Continues the "old magic waking" thread the second errand introduced.
+- The Stats & Mastery panel's keepsake section is now a small charm-registry-driven row of slots instead of one hardcoded Sunberry Charm slot, so newly earned charms (like Wildbloom Sprig) are visible there.
 - Green `main` builds automatically deploy to GitHub Pages at `https://galashots.github.io/eldoria-v2/` for HTTPS browser play on the boys' iPads.
 - Stable interaction IDs are fully decoupled from display labels/names using `interactionId` Tiled custom properties, preventing marker name changes from breaking handler mappings.
 - Fully integrated Vitest unit test framework with unit tests covering QuestionEngine, MasterySystem, LearningBonusSystem, interactions, and curriculum templates.
@@ -48,7 +50,7 @@ The starter farm slice is technically ready for its real-child clarity checkpoin
 
 ## Next Checkpoint
 
-An AI-assisted technical walkthrough of both profiles (`docs/playtests/AI_ASSISTED_WALKTHROUGH_2026-07-05.md`) found zero blockers — full errand loop, save/reload, and the bonus-only rule all held under genuine keyboard play. That is not a substitute for the real checkpoint: run the Grade 2 and Grade 5 sessions in `docs/REAL_CHILD_PLAYTEST_GUIDE.md` in landscape with an actual child. Fix only demonstrated blockers or repeated confusion, then obtain ChatGPT approval for the Grade 5 Ranger Explorer visual identity and image prompt before generating its seed frame.
+An AI-assisted technical walkthrough of both profiles (`docs/playtests/AI_ASSISTED_WALKTHROUGH_2026-07-05.md`) found zero blockers — full errand loop, save/reload, and the bonus-only rule all held under genuine keyboard play. That is not a substitute for the real checkpoint: run the Grade 2 and Grade 5 sessions in `docs/REAL_CHILD_PLAYTEST_GUIDE.md` in landscape with an actual child. Fix only demonstrated blockers or repeated confusion, then obtain ChatGPT approval for the Grade 5 Ranger Explorer visual identity and image prompt before generating its seed frame. The Sleepy Sprouts errand adds new story/dialogue wording (continuing the second errand's "old magic waking" thread) that has not yet had a user/ChatGPT curriculum-and-story review pass; do that before writing further quest content on top of it.
 
 ## Routine Merge Policy
 

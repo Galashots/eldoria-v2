@@ -1911,6 +1911,60 @@
           "width": 32,
           "x": 704,
           "y": 320
+        },
+        {
+          "height": 32,
+          "id": 5,
+          "name": "Sleepy Sprout",
+          "properties": [
+            {
+              "name": "interactionId",
+              "type": "string",
+              "value": "sprout-1"
+            }
+          ],
+          "rotation": 0,
+          "type": "bonus",
+          "visible": true,
+          "width": 32,
+          "x": 496,
+          "y": 80
+        },
+        {
+          "height": 32,
+          "id": 6,
+          "name": "Sleepy Sprout",
+          "properties": [
+            {
+              "name": "interactionId",
+              "type": "string",
+              "value": "sprout-2"
+            }
+          ],
+          "rotation": 0,
+          "type": "bonus",
+          "visible": true,
+          "width": 32,
+          "x": 176,
+          "y": 528
+        },
+        {
+          "height": 32,
+          "id": 7,
+          "name": "Sleepy Sprout",
+          "properties": [
+            {
+              "name": "interactionId",
+              "type": "string",
+              "value": "sprout-3"
+            }
+          ],
+          "rotation": 0,
+          "type": "bonus",
+          "visible": true,
+          "width": 32,
+          "x": 848,
+          "y": 528
         }
       ],
       "opacity": 1,
@@ -1921,7 +1975,7 @@
     }
   ],
   "nextlayerid": 5,
-  "nextobjectid": 5,
+  "nextobjectid": 8,
   "orientation": "orthogonal",
   "renderorder": "right-down",
   "tiledversion": "1.12.2",

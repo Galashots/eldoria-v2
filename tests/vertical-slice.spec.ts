@@ -479,6 +479,11 @@ async function hasCanvasText(page: Page, text: string): Promise<boolean> {
 }
 
 test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progress, and saving', async ({ page }) => {
+  // Set a test-specific timeout of 60s: this test now walks all three Mira
+  // errands (including three sprout interactions) plus several reloads,
+  // which can exceed the global 30s timeout on slower CI VMs.
+  test.setTimeout(60000);
+
   await boot(page);
   await startProfile(page, 120);
 
@@ -645,7 +650,7 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   await sceneInteract(page);
   await expect.poll(async () => (await state(page)).gold).toBe(14);
   await expect.poll(async () => (await state(page)).inventory.sunberryCharm).toBe(1);
-  await expect.poll(async () => (await state(page)).objective).toContain('The Whispering Scarecrow');
+  await expect.poll(async () => (await state(page)).objective).toContain('sleepy sprouts');
   await expect.poll(async () => hasCanvasText(page, 'Moonseed Charm')).toBe(true);
   await expect.poll(async () => hasCanvasText(page, '+4 Gold')).toBe(true);
 
@@ -653,11 +658,48 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   await startProfile(page, 120);
   await expect.poll(async () => (await state(page)).gold).toBe(14);
   await expect.poll(async () => (await state(page)).inventory.sunberryCharm).toBe(1);
-  await expect.poll(async () => (await state(page)).objective).toContain('The Whispering Scarecrow');
+  await expect.poll(async () => (await state(page)).objective).toContain('Talk to Mira about the sleepy sprouts');
 
   await setPlayer(page, 416, 256);
   await sceneInteract(page);
-  await expect.poll(async () => (await state(page)).gold).toBe(14);
+  await expect.poll(async () => (await state(page)).objective).toContain('Wake the sleepy sprouts (0/3)');
+
+  expect(await interactAt(page, 496, 80)).toContain('Sleepy Sprout');
+  await expect.poll(async () => cropFeedbackVisible(page)).toBe(true);
+  await expect.poll(async () => cropFeedbackVisible(page)).toBe(false);
+  await skipOpenPrompt(page);
+  await expect.poll(async () => (await state(page)).objective).toContain('Wake the sleepy sprouts (1/3)');
+
+  expect(await interactAt(page, 176, 528)).toContain('Sleepy Sprout');
+  await expect.poll(async () => cropFeedbackVisible(page)).toBe(true);
+  await expect.poll(async () => cropFeedbackVisible(page)).toBe(false);
+  await skipOpenPrompt(page);
+  await expect.poll(async () => (await state(page)).objective).toContain('Wake the sleepy sprouts (2/3)');
+
+  expect(await interactAt(page, 848, 528)).toContain('Sleepy Sprout');
+  await expect.poll(async () => cropFeedbackVisible(page)).toBe(true);
+  await expect.poll(async () => cropFeedbackVisible(page)).toBe(false);
+  await skipOpenPrompt(page);
+  await expect.poll(async () => (await state(page)).objective).toContain('Tell Mira the sprouts are awake');
+  await expect.poll(async () => masteryTotal(page, 'skipped')).toBe(6);
+
+  expect((await setPlayer(page, 416, 256)).hint).toContain('Mira');
+  await sceneInteract(page);
+  await expect.poll(async () => (await state(page)).gold).toBe(20);
+  await expect.poll(async () => (await state(page)).inventory.wildbloomSprig).toBe(1);
+  await expect.poll(async () => (await state(page)).objective).toContain('The Sleepy Sprouts');
+  await expect.poll(async () => hasCanvasText(page, 'Wildbloom Sprig')).toBe(true);
+  await expect.poll(async () => hasCanvasText(page, '+6 Gold')).toBe(true);
+
+  await page.reload();
+  await startProfile(page, 120);
+  await expect.poll(async () => (await state(page)).gold).toBe(20);
+  await expect.poll(async () => (await state(page)).inventory.wildbloomSprig).toBe(1);
+  await expect.poll(async () => (await state(page)).objective).toContain('The Sleepy Sprouts');
+
+  await setPlayer(page, 416, 256);
+  await sceneInteract(page);
+  await expect.poll(async () => (await state(page)).gold).toBe(20);
   await expect.poll(async () => (await state(page)).inventory.sunberryCharm).toBe(1);
   expect((await state(page)).hud.split('Sunberry Charm')).toHaveLength(2);
 });
