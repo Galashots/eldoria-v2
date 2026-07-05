@@ -41,6 +41,7 @@ Last refreshed on 2026-07-04. This file records volatile project status; `AGENTS
 - The Grade 5 Ranger Explorer technical target is validated as `char_ranger_boy_base`; final visual identity, seed frame, and image prompt remain pending the required ChatGPT approval.
 - Grade 5 continues to use the existing adventurer placeholder; its presentation is unchanged.
 - Equipment, farm/village, crop, building, and UI production art remain target specifications only; Grade 2 Mage idle, walk, cast, and hurt runtime presentation are integrated.
+- A cosmetic `AtmosphereController` adds a subtle, always-readable day/evening light cycle, drifting ambient particles with dusk-only fireflies, soft actor drop-shadows, and title/world scene fade transitions. It is presentation-only with no art dependency and no gameplay, save, quest, curriculum, or input effects.
 
 ## Active Milestone
 

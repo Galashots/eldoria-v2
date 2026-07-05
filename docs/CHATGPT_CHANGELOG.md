@@ -2,6 +2,25 @@
 
 This file records repository changes made through ChatGPT so future work can see what changed, who made it, and when.
 
+## 2026-07-04 - Claude Code via Anthropic (batch 2: atmosphere quick wins)
+
+- Branch: `claude/eldoria-v2-audit-expansion-qi1s6r`
+- Files changed:
+  - `src/presentation/AtmosphereController.ts` (new)
+  - `src/scenes/WorldScene.ts`
+  - `src/scenes/TitleScene.ts`
+  - `docs/CURRENT_STATE.md`
+  - `docs/CHATGPT_CHANGELOG.md`
+- Summary: Added the first zero-art visual-beauty batch from `docs/EXPANSION_PROPOSALS_2026-07.md` (Track 1): an ambient day/evening light cycle, drifting particles with dusk fireflies, soft actor drop-shadows, and scene fade transitions. Presentation-only; no gameplay, save, quest, curriculum, or input changes.
+- Implementation notes:
+  - New scene-owned `AtmosphereController` mirrors the `HeroPresentationController` lifecycle (create/update/dispose); `WorldScene` instantiates it after map/player setup, calls `update()` to track the player shadow, and disposes it on `SHUTDOWN`.
+  - Ambient tint is a camera-fixed, non-interactive full-screen rectangle at depth 15 (above actors, below reward sparkles and UI) tweened around a five-stop warm palette over a ~9-minute loop; alpha is capped at ~0.16 and never darkens into night, keeping the world readable for kids.
+  - Particles use a runtime-generated 4x4 dot texture (no art file): low-rate ambient motes map-wide, plus warm fireflies that emit only during the dusk band via the controller's phase state.
+  - Soft dark ellipse shadows sit at depth 1 under the player (position-tracked each frame), the Practice Slime, and each quest/NPC marker.
+  - Title-to-world and world-entry camera fades added; the title button waits for `FADE_OUT_COMPLETE` before `scene.start`, which the smoke tests tolerate because they poll `scene.isActive`.
+  - Verified `npm run check` (typecheck + build), `npm run test:unit` (47 passed), and all 23 Playwright smoke tests (run against the sandbox's installed Chromium via a throwaway local config; the default `npm run smoke` still hits the documented browser-revision mismatch, which CI installs around).
+- Reason: Give the boys an immediately visible step toward a Stardew-Valley-quality look on the live iPad build without waiting on tile/character art, and validate the atmosphere layer as a reusable seam for later polish batches.
+
 ## 2026-07-04 - Claude Code via Anthropic
 
 - Branch: `claude/eldoria-v2-audit-expansion-qi1s6r`

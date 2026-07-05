@@ -9,6 +9,7 @@ import {
   facingFromVector,
   HeroPresentationController
 } from '../presentation/HeroPresentationController';
+import { AtmosphereController } from '../presentation/AtmosphereController';
 import { LearningBonusSystem } from '../systems/LearningBonusSystem';
 import { MasterySystem, type LearningMastery } from '../systems/MasterySystem';
 import { FarmQuestSystem, type FarmQuestOutcome } from '../systems/FarmQuestSystem';
@@ -74,6 +75,7 @@ export class WorldScene extends Phaser.Scene {
   private hintText!: Phaser.GameObjects.Text;
   private practiceSlimeSprite?: Phaser.GameObjects.Sprite;
   private heroPresentation!: HeroPresentationController;
+  private atmosphere!: AtmosphereController;
 
   constructor() {
     super('WorldScene');
@@ -116,6 +118,11 @@ export class WorldScene extends Phaser.Scene {
     }
 
     this.targets = this.makeTargets(objectLayer?.objects ?? []);
+
+    this.atmosphere = new AtmosphereController(this, GAME_WIDTH, GAME_HEIGHT);
+    this.atmosphere.create(map.widthInPixels, map.heightInPixels);
+    this.atmosphere.attachPlayerShadow(this.player);
+
     this.createPracticeSlimeAnimations();
     this.drawTargetMarkers();
 
@@ -151,16 +158,20 @@ export class WorldScene extends Phaser.Scene {
       this.stopPromptReadAloud();
       this.resetJoystick();
       this.heroPresentation.dispose();
+      this.atmosphere.dispose();
       this.events.off(Phaser.Scenes.Events.PAUSE, this.stopPromptReadAloud, this);
       this.events.off(Phaser.Scenes.Events.SLEEP, this.stopPromptReadAloud, this);
     });
     this.events.once(Phaser.Scenes.Events.DESTROY, () => {
       this.stopPromptReadAloud();
     });
+
+    this.cameras.main.fadeIn(400, 0, 0, 0);
   }
 
   update(): void {
     this.heroPresentation.syncPosition();
+    this.atmosphere.update();
 
     if (this.busy && !this.statsPanelOpen) {
       this.player.setVelocity(0, 0);
@@ -224,6 +235,8 @@ export class WorldScene extends Phaser.Scene {
 
   private drawTargetMarkers(): void {
     for (const target of this.targets) {
+      this.atmosphere.addStaticShadow(target.x, target.y);
+
       if (target.id === 'practice-slime') {
         this.practiceSlimeSprite = this.add.sprite(
           target.x,
