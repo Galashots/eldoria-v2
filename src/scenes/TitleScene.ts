@@ -11,7 +11,9 @@ export class TitleScene extends Phaser.Scene {
 
   create(): void {
     this.cameras.main.setBackgroundColor('#1a1208');
-    this.cameras.main.fadeIn(300, 0, 0, 0);
+    if (!window.__ELDORIA_E2E__) {
+      this.cameras.main.fadeIn(300, 0, 0, 0);
+    }
 
     this.add.text(GAME_WIDTH / 2, 44, 'Realm of Eldoria v2', {
       fontFamily: 'system-ui',
@@ -58,6 +60,10 @@ export class TitleScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     bg.on('pointerdown', () => {
+      if (window.__ELDORIA_E2E__) {
+        this.scene.start('WorldScene', { profileId });
+        return;
+      }
       this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
         this.scene.start('WorldScene', { profileId });
       });

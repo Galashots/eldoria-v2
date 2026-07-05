@@ -166,7 +166,9 @@ export class WorldScene extends Phaser.Scene {
       this.stopPromptReadAloud();
     });
 
-    this.cameras.main.fadeIn(400, 0, 0, 0);
+    if (!window.__ELDORIA_E2E__) {
+      this.cameras.main.fadeIn(400, 0, 0, 0);
+    }
   }
 
   update(): void {

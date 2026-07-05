@@ -63,8 +63,6 @@ export class AtmosphereController {
   ) {}
 
   create(worldWidth: number, worldHeight: number): void {
-    this.ensureMoteTexture();
-
     // Camera-fixed full-screen tint overlay. Non-interactive so pointer and
     // joystick input pass straight through.
     this.tint = this.scene.add
@@ -72,6 +70,13 @@ export class AtmosphereController {
       .setOrigin(0, 0)
       .setScrollFactor(0)
       .setDepth(TINT_DEPTH);
+
+    // Under E2E the continuous tint tween and particle simulation add per-frame
+    // cost and non-determinism to the (already long) smoke tests. Keep a static
+    // first-stop tint and skip the animated layers; real play is unaffected.
+    if (window.__ELDORIA_E2E__) return;
+
+    this.ensureMoteTexture();
 
     // Ambient motes drift slowly across the whole map at a low rate.
     this.motes = this.scene.add.particles(0, 0, MOTE_TEXTURE_KEY, {
