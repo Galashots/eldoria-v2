@@ -48,7 +48,7 @@ The starter farm slice is technically ready for its real-child clarity checkpoin
 
 ## Next Checkpoint
 
-Run the Grade 2 and Grade 5 sessions in `docs/REAL_CHILD_PLAYTEST_GUIDE.md` in landscape. Fix only demonstrated blockers or repeated confusion, then obtain ChatGPT approval for the Grade 5 Ranger Explorer visual identity and image prompt before generating its seed frame.
+An AI-assisted technical walkthrough of both profiles (`docs/playtests/AI_ASSISTED_WALKTHROUGH_2026-07-05.md`) found zero blockers — full errand loop, save/reload, and the bonus-only rule all held under genuine keyboard play. That is not a substitute for the real checkpoint: run the Grade 2 and Grade 5 sessions in `docs/REAL_CHILD_PLAYTEST_GUIDE.md` in landscape with an actual child. Fix only demonstrated blockers or repeated confusion, then obtain ChatGPT approval for the Grade 5 Ranger Explorer visual identity and image prompt before generating its seed frame.
 
 ## Routine Merge Policy
 

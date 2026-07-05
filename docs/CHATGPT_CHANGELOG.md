@@ -2,6 +2,25 @@
 
 This file records repository changes made through ChatGPT so future work can see what changed, who made it, and when.
 
+## 2026-07-05 - Claude Code
+
+- Branch: `claude/repo-audit-roadmap-65q59n`
+- Files changed:
+  - `src/data/questionTemplates.ts`
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `docs/CURRENT_STATE.md`
+  - `docs/playtests/AI_ASSISTED_WALKTHROUGH_2026-07-05.md` (new)
+- Summary: Ran an AI-assisted technical walkthrough of both profiles' vertical slice, then executed the audit's Phase 2 content-depth item: parameterized the six non-math question templates that previously showed the literal same sentence on every replay, and added the first Grade 2 social-studies template (previously zero).
+- Implementation notes:
+  - Added a `pickVariantPrompt` helper (`src/data/questionTemplates.ts`) that picks uniformly among 2-3 hand-authored text/answer/distractor variants per template, reusing the existing `pickRandom`/`shuffledChoices` helpers rather than inventing new randomization.
+  - Converted `grade2-quest-ela-story-detail`, `grade2-crafting-science-materials`, `grade5-combat-science-energy-transfer`, `grade5-combat-science-forces`, `grade5-quest-social-rivers`, and `grade5-quest-ela-evidence` from single hardcoded sentences to 3 variants each.
+  - Added `grade2-quest-social-trade-transportation` (3 variants) to close the previously-empty Grade 2 social-studies gap noted in `docs/AUDIT_AND_GAME_PLAN_2026-07.md`.
+  - Kept every template's per-context `id`, `rewardKind`, and structural tags (`band`/`subject`/`skill`) unchanged and variant-independent so existing tests and save/mastery keying are unaffected.
+  - **New curriculum wording/facts were authored in this change** (not just numeric parameterization) — per `AGENTS.md`'s reserved-decisions list, this content has not had a user/ChatGPT curriculum review pass yet and should get one before/at merge, same as the original Phase 2 note in `docs/AUDIT_AND_GAME_PLAN_2026-07.md` already flagged.
+  - Added `docs/playtests/AI_ASSISTED_WALKTHROUGH_2026-07-05.md`, a genuine-keyboard-input Playwright walkthrough of both profiles' full errand loop (movement, both bonuses, skip-never-blocks, save/reload, Stats & Mastery panel), explicitly distinguished from the still-required real-child Phase 0 checkpoint. Found zero technical blockers; noted three polish items (Practice Slime interact radius, slime hop-animation delay before the prompt opens, and the Stats panel showing 0/0 after a skip-only session).
+  - Ran `npm run check`, `npm run test:unit` (48/48), `npm run test:asset-pipeline`, and the full Playwright smoke suite (23/23, via the sandbox's pre-installed Chromium since the pinned Playwright version wants a newer browser revision than the sandbox ships — CI installs the matching one) — all green.
+- Reason: Continue the roadmap in `docs/AUDIT_AND_GAME_PLAN_2026-07.md` past the already-completed Phase 1 (foundation hardening) into Phase 2 (content depth), after confirming via a technical walkthrough that the existing vertical slice has no blockers to build on top of.
+
 ## 2026-07-04 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
 - Branch: `codex/child-playtest-readiness`
