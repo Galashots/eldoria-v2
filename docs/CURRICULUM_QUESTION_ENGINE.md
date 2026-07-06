@@ -64,17 +64,27 @@ Grade 2:
 
 - Farm subtraction with berries.
 - Combat subtraction with slime shields.
+- Farm place value with baskets.
+- Combat addition with wand sparks.
 - Shop/quest addition with supplies.
 - Story detail comprehension.
 - Material suitability for simple construction.
+- Trade and transportation (closes the previously-empty Grade 2 social-studies slot).
 
 Grade 5:
 
 - Farm area of rectangles.
 - Shop decimal estimation.
-- Combat/quest buoyancy and forces.
-- Ancient civilizations and river settlement.
+- Farm fractions with sunberry rows.
+- Combat/quest energy transfer and buoyancy/drag/lift forces.
+- Ancient civilizations and environment (rivers, coastlines, mountains).
 - Evidence-based reading comprehension.
+
+The ELA, science, and social-studies templates above each pick randomly among
+2-3 hand-authored text/answer variants per play (`pickVariantPrompt` in
+`src/data/questionTemplates.ts`) instead of showing one fixed sentence, so a
+replay doesn't repeat the exact same question. Math templates remain
+procedurally generated from random numbers as before.
 
 ## Future OFIs
 
