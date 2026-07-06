@@ -2,6 +2,49 @@
 
 This file records repository changes made through ChatGPT so future work can see what changed, who made it, and when.
 
+## 2026-07-05 - Claude Code (quest #3)
+
+- Branch: `claude/repo-audit-roadmap-65q59n`
+- Files changed:
+  - `public/maps/farm.json`
+  - `src/data/interactions.ts`
+  - `src/data/quests.ts`
+  - `src/scenes/WorldScene.ts`
+  - `src/systems/FarmQuestSystem.ts`
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `docs/CURRENT_STATE.md`
+  - `tests/system-foundations.spec.ts`
+  - `tests/vertical-slice.spec.ts`
+- Summary: Added a third optional errand, "The Sleepy Sprouts," continuing the "old magic waking" story thread the second errand planted, and generalized the Stats panel's single hardcoded keepsake slot into a small charm-registry-driven row so newly earned charms are visible.
+- Implementation notes:
+  - Extended `FarmQuestSystem`'s existing hand-rolled per-quest pattern (the same approach already used for the first two errands) with a third errand: three new boolean save flags track which of 3 "Sleepy Sprout" map markers have been awakened; returning to Mira once all 3 are done grants gold and a new Wildbloom Sprig charm. **Not** a data-driven `QuestDefinition` refactor — `docs/AUDIT_AND_GAME_PLAN_2026-07.md` explicitly predicted "quest #3 means copy-paste" under the current architecture, and this diff confirms that debt rather than paying it down; a self-review pass judged the added refactor cost bounded/linear rather than a new category of entanglement, but a fourth quest is the natural point to reconsider the generic-schema refactor already proposed elsewhere.
+  - Added 3 new Tiled objects to `public/maps/farm.json` (bumped `nextobjectid` accordingly), reusing the existing generic "bonus"-type marker rendering and the crop-bonus pulse-feedback animation — no new art.
+  - Added a defensive fix during self-review: the "all sprouts awake" completion check now requires `thirdErrandAccepted` first, so a malformed/tampered save can't skip Mira's start dialogue and silently auto-complete.
+  - Generalized the Stats panel's keepsake section (`src/scenes/WorldScene.ts`) to render one slot per entry in a new `CHARM_REGISTRY` (`src/data/quests.ts`) instead of a single hardcoded Sunberry Charm check; the compact top-HUD "Keepsake:" line is unchanged (still Sunberry-only) to avoid touching its tested exact-text assertions.
+  - Extended the existing vertical-slice E2E test to walk all three sprouts to completion (with a `test.setTimeout(60000)` bump, matching the precedent already set by the Stats & Mastery test, since the test now covers three errands instead of two) and added two new `FarmQuestSystem` unit-style tests (full third-errand walkthrough, and the malformed-save defensive case).
+  - **New curriculum/story content**: the quest dialogue and Wildbloom Sprig naming have not yet had a user/ChatGPT story/curriculum review pass, per `AGENTS.md`'s reserved-decisions list. Flagging explicitly rather than treating as routine.
+  - Ran `npm run check`, `npm run test:unit` (48/48), `npm run test:asset-pipeline`, and the full Playwright smoke suite (25/25, including 2 new tests) — all green. Also manually verified in a live dev-server browser session: marker rendering, prompt opening, objective counter, reward toast, and the new keepsake shelf.
+- Reason: Continue the roadmap in `docs/AUDIT_AND_GAME_PLAN_2026-07.md` with genuine new playable content now that Phase 1 (foundation hardening) is done and a technical walkthrough found the existing slice has no blockers to build on top of.
+
+## 2026-07-05 - Claude Code
+
+- Branch: `claude/repo-audit-roadmap-65q59n`
+- Files changed:
+  - `src/data/questionTemplates.ts`
+  - `docs/CHATGPT_CHANGELOG.md`
+  - `docs/CURRENT_STATE.md`
+  - `docs/playtests/AI_ASSISTED_WALKTHROUGH_2026-07-05.md` (new)
+- Summary: Ran an AI-assisted technical walkthrough of both profiles' vertical slice, then executed the audit's Phase 2 content-depth item: parameterized the six non-math question templates that previously showed the literal same sentence on every replay, and added the first Grade 2 social-studies template (previously zero).
+- Implementation notes:
+  - Added a `pickVariantPrompt` helper (`src/data/questionTemplates.ts`) that picks uniformly among 2-3 hand-authored text/answer/distractor variants per template, reusing the existing `pickRandom`/`shuffledChoices` helpers rather than inventing new randomization.
+  - Converted `grade2-quest-ela-story-detail`, `grade2-crafting-science-materials`, `grade5-combat-science-energy-transfer`, `grade5-combat-science-forces`, `grade5-quest-social-rivers`, and `grade5-quest-ela-evidence` from single hardcoded sentences to 3 variants each.
+  - Added `grade2-quest-social-trade-transportation` (3 variants) to close the previously-empty Grade 2 social-studies gap noted in `docs/AUDIT_AND_GAME_PLAN_2026-07.md`.
+  - Kept every template's per-context `id`, `rewardKind`, and structural tags (`band`/`subject`/`skill`) unchanged and variant-independent so existing tests and save/mastery keying are unaffected.
+  - **New curriculum wording/facts were authored in this change** (not just numeric parameterization) — per `AGENTS.md`'s reserved-decisions list, this content has not had a user/ChatGPT curriculum review pass yet and should get one before/at merge, same as the original Phase 2 note in `docs/AUDIT_AND_GAME_PLAN_2026-07.md` already flagged.
+  - Added `docs/playtests/AI_ASSISTED_WALKTHROUGH_2026-07-05.md`, a genuine-keyboard-input Playwright walkthrough of both profiles' full errand loop (movement, both bonuses, skip-never-blocks, save/reload, Stats & Mastery panel), explicitly distinguished from the still-required real-child Phase 0 checkpoint. Found zero technical blockers; noted three polish items (Practice Slime interact radius, slime hop-animation delay before the prompt opens, and the Stats panel showing 0/0 after a skip-only session).
+  - Ran `npm run check`, `npm run test:unit` (48/48), `npm run test:asset-pipeline`, and the full Playwright smoke suite (23/23, via the sandbox's pre-installed Chromium since the pinned Playwright version wants a newer browser revision than the sandbox ships — CI installs the matching one) — all green.
+- Reason: Continue the roadmap in `docs/AUDIT_AND_GAME_PLAN_2026-07.md` past the already-completed Phase 1 (foundation hardening) into Phase 2 (content depth), after confirming via a technical walkthrough that the existing vertical slice has no blockers to build on top of.
+
 ## 2026-07-04 - Codex via OpenAI, coordinated with GPT-5.5 Thinking
 
 - Branch: `codex/child-playtest-readiness`

@@ -3,7 +3,7 @@ import { GAME_HEIGHT, GAME_WIDTH } from '../gameConfig';
 import type { AnswerValue, BonusContext, LearningPrompt } from '../data/curriculum';
 import { REWARD_KIND_GOLD_VALUE } from '../data/curriculum';
 import { PROFILES, type ProfileId } from '../data/profiles';
-import { MIRA_FIRST_ERRAND } from '../data/quests';
+import { CHARM_REGISTRY, MIRA_FIRST_ERRAND } from '../data/quests';
 import { resolveInteractionId, getTiledProperty, type InteractionId } from '../data/interactions';
 import {
   facingFromVector,
@@ -518,6 +518,9 @@ export class WorldScene extends Phaser.Scene {
     mira: () => this.handleMiraInteraction(),
     'crop-bonus': (target) => this.handleCropBonusInteraction(target),
     'practice-slime': (target) => this.handleSlimeInteraction(target),
+    'sprout-1': (target) => this.handleSproutInteraction(target),
+    'sprout-2': (target) => this.handleSproutInteraction(target),
+    'sprout-3': (target) => this.handleSproutInteraction(target),
     'generic-bonus': (target) => this.openBonusPrompt(target.kind, target.label)
   };
 
@@ -558,6 +561,19 @@ export class WorldScene extends Phaser.Scene {
     this.playPracticeSlimeFeedback('hop', () => {
       this.openBonusPrompt(target.kind, target.label, () => {
         const outcome = this.farmQuest.completeSlimeInteraction();
+        this.applyQuestOutcome(outcome, false);
+        return outcome.message;
+      });
+    });
+  }
+
+  private handleSproutInteraction(target: InteractionTarget): void {
+    this.busy = true;
+    this.resetJoystick();
+    this.player.setVelocity(0, 0);
+    this.playCropBonusFeedback(target, () => {
+      this.openBonusPrompt(target.kind, target.label, () => {
+        const outcome = this.farmQuest.completeSproutInteraction(target.id);
         this.applyQuestOutcome(outcome, false);
         return outcome.message;
       });
@@ -918,21 +934,35 @@ export class WorldScene extends Phaser.Scene {
     }).setOrigin(0.5);
     panel.add(keepsakeHeader);
 
-    const slotBg = this.add.rectangle(-90, 52, 40, 40, 0x2a1a08)
-      .setStrokeStyle(2, 0x6f5126);
-    panel.add(slotBg);
+    // Renders one slot per known charm (CHARM_REGISTRY) instead of a single
+    // hardcoded Sunberry Charm slot, so future charms show up here without
+    // further panel changes.
+    const slotSize = 32;
+    const slotGap = 8;
+    const slotsWidth = CHARM_REGISTRY.length * slotSize + (CHARM_REGISTRY.length - 1) * slotGap;
+    const slotsStartX = -90 - slotsWidth / 2 + slotSize / 2;
+    const ownedCharmNames: string[] = [];
 
-    const charm = MIRA_FIRST_ERRAND.rewards.charm;
-    const hasCharm = (this.inventory[charm.key] ?? 0) > 0;
-    if (hasCharm) {
-      const charmText = this.add.text(-90, 52, '🍓', { fontSize: '20px' }).setOrigin(0.5);
-      panel.add(charmText);
-    }
+    CHARM_REGISTRY.forEach((charm, index) => {
+      const slotX = slotsStartX + index * (slotSize + slotGap);
+      const slotBg = this.add.rectangle(slotX, 52, slotSize, slotSize, 0x2a1a08)
+        .setStrokeStyle(2, 0x6f5126);
+      panel.add(slotBg);
 
-    const charmLabel = this.add.text(-90, 82, hasCharm ? charm.name : '(Empty Slot)', {
+      const hasCharm = (this.inventory[charm.key] ?? 0) > 0;
+      if (hasCharm) {
+        ownedCharmNames.push(charm.name);
+        const charmText = this.add.text(slotX, 52, charm.emoji, { fontSize: '16px' }).setOrigin(0.5);
+        panel.add(charmText);
+      }
+    });
+
+    const charmLabel = this.add.text(-90, 82, ownedCharmNames.length > 0 ? ownedCharmNames.join(', ') : '(Empty Slot)', {
       fontFamily: 'system-ui',
       fontSize: '9px',
-      color: hasCharm ? '#d7ffb8' : '#6f5126'
+      color: ownedCharmNames.length > 0 ? '#d7ffb8' : '#6f5126',
+      align: 'center',
+      wordWrap: { width: 170 }
     }).setOrigin(0.5);
     panel.add(charmLabel);
 

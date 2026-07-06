@@ -10,7 +10,14 @@ import { MIRA_FIRST_ERRAND } from './quests';
  * `'generic-bonus'` fallback, which is the same "open a bonus prompt" path
  * every unnamed/future interactable already gets today.
  */
-export type InteractionId = 'mira' | 'crop-bonus' | 'practice-slime' | 'generic-bonus';
+export type InteractionId =
+  | 'mira'
+  | 'crop-bonus'
+  | 'practice-slime'
+  | 'sprout-1'
+  | 'sprout-2'
+  | 'sprout-3'
+  | 'generic-bonus';
 
 const DEFAULT_INTERACTION_ID: InteractionId = 'generic-bonus';
 

@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { MIRA_FIRST_ERRAND, MIRA_SECOND_ERRAND } from '../src/data/quests';
+import { MIRA_FIRST_ERRAND, MIRA_SECOND_ERRAND, MIRA_THIRD_ERRAND } from '../src/data/quests';
 import { FarmQuestSystem } from '../src/systems/FarmQuestSystem';
 import {
   CURRENT_SAVE_VERSION,
@@ -334,7 +334,12 @@ test.describe('FarmQuestSystem transitions', () => {
       questFlags: {
         miraSecondErrandAccepted: false,
         miraSecondErrandCharmFound: false,
-        miraSecondErrandComplete: false
+        miraSecondErrandComplete: false,
+        miraThirdErrandAccepted: false,
+        miraThirdErrandSprout1Awakened: false,
+        miraThirdErrandSprout2Awakened: false,
+        miraThirdErrandSprout3Awakened: false,
+        miraThirdErrandComplete: false
       }
     });
 
@@ -360,13 +365,86 @@ test.describe('FarmQuestSystem transitions', () => {
 
     const completion = quest.interactWithMira();
     expect(completion.reward).toEqual({ gold: MIRA_SECOND_ERRAND.rewards.gold });
-    expect(quest.currentObjective()).toBe(MIRA_SECOND_ERRAND.objectives.complete);
+    // Once the second errand completes, Mira immediately offers the third
+    // errand rather than showing a terminal "second errand complete" state
+    // (mirroring how the first errand's own "complete" objective text is
+    // never shown once the second errand becomes available).
+    expect(quest.currentObjective()).toBe(MIRA_THIRD_ERRAND.objectives.available);
     expect(quest.completeCropInteraction().stateChanged).toBe(false);
+    expect(quest.interactWithMira().toast).toBe(MIRA_THIRD_ERRAND.dialogue.start);
+    expect(quest.toSaveFields().questFlags).toEqual({
+      miraSecondErrandAccepted: false,
+      miraSecondErrandCharmFound: false,
+      miraSecondErrandComplete: true,
+      miraThirdErrandAccepted: true,
+      miraThirdErrandSprout1Awakened: false,
+      miraThirdErrandSprout2Awakened: false,
+      miraThirdErrandSprout3Awakened: false,
+      miraThirdErrandComplete: false
+    });
+  });
+
+  test('completes the third errand once, tracking sprout-by-sprout progress', () => {
+    const quest = FarmQuestSystem.fromSave({
+      ...minimalSave(),
+      firstQuestStep: MIRA_FIRST_ERRAND.steps.complete,
+      questFlags: { miraSecondErrandComplete: true }
+    });
+
+    expect(quest.currentObjective()).toBe(MIRA_THIRD_ERRAND.objectives.available);
+    expect(quest.completeSproutInteraction('sprout-1').stateChanged).toBe(false);
+
+    expect(quest.interactWithMira().toast).toBe(MIRA_THIRD_ERRAND.dialogue.start);
+    expect(quest.currentObjective()).toBe(MIRA_THIRD_ERRAND.objectives.inProgress(0));
+    expect(quest.interactWithMira().toast).toBe(MIRA_THIRD_ERRAND.dialogue.reminder);
+
+    expect(quest.completeSproutInteraction('sprout-1').message).toBe(MIRA_THIRD_ERRAND.progress.sproutAwakened(1));
+    expect(quest.completeSproutInteraction('sprout-1').stateChanged).toBe(false);
+    expect(quest.currentObjective()).toBe(MIRA_THIRD_ERRAND.objectives.inProgress(1));
+
+    expect(quest.completeSproutInteraction('sprout-2').message).toBe(MIRA_THIRD_ERRAND.progress.sproutAwakened(2));
+    expect(quest.completeSproutInteraction('sprout-3').message).toBe(MIRA_THIRD_ERRAND.progress.sproutAwakened(3));
+    expect(quest.currentObjective()).toBe(MIRA_THIRD_ERRAND.objectives.returnToMira);
+
+    const completion = quest.interactWithMira();
+    expect(completion.reward).toEqual({
+      gold: MIRA_THIRD_ERRAND.rewards.gold,
+      item: MIRA_THIRD_ERRAND.rewards.charm
+    });
+    expect(quest.currentObjective()).toBe(MIRA_THIRD_ERRAND.objectives.complete);
+    expect(quest.completeSproutInteraction('sprout-1').stateChanged).toBe(false);
     expect(quest.interactWithMira().reward).toBeUndefined();
     expect(quest.toSaveFields().questFlags).toEqual({
       miraSecondErrandAccepted: false,
       miraSecondErrandCharmFound: false,
-      miraSecondErrandComplete: true
+      miraSecondErrandComplete: true,
+      miraThirdErrandAccepted: true,
+      miraThirdErrandSprout1Awakened: true,
+      miraThirdErrandSprout2Awakened: true,
+      miraThirdErrandSprout3Awakened: true,
+      miraThirdErrandComplete: true
     });
+  });
+
+  test('a malformed save with awakened sprouts but no third-errand acceptance cannot auto-complete', () => {
+    const quest = FarmQuestSystem.fromSave({
+      ...minimalSave(),
+      firstQuestStep: MIRA_FIRST_ERRAND.steps.complete,
+      questFlags: {
+        miraSecondErrandComplete: true,
+        miraThirdErrandAccepted: false,
+        miraThirdErrandSprout1Awakened: true,
+        miraThirdErrandSprout2Awakened: true,
+        miraThirdErrandSprout3Awakened: true
+      }
+    });
+
+    expect(quest.currentObjective()).toBe(MIRA_THIRD_ERRAND.objectives.available);
+
+    const interaction = quest.interactWithMira();
+    expect(interaction.toast).toBe(MIRA_THIRD_ERRAND.dialogue.start);
+    expect(interaction.reward).toBeUndefined();
+    expect(quest.toSaveFields().questFlags.miraThirdErrandComplete).toBe(false);
+    expect(quest.toSaveFields().questFlags.miraThirdErrandAccepted).toBe(true);
   });
 });
