@@ -900,7 +900,7 @@ test('interactive Stats & Mastery UI panel toggles open/closed and shows correct
   await page.evaluate(() => {
     const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as any;
     const closeBtn = scene.statsContainer.list.find(
-      (child: any) => child.width === 100 && child.height === 24 && child.input?.enabled
+      (child: any) => child.name === 'stats-close-button'
     );
     closeBtn.emit('pointerdown');
   });

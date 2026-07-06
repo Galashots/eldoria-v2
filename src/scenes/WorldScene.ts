@@ -9,6 +9,7 @@ import {
   facingFromVector,
   HeroPresentationController
 } from '../presentation/HeroPresentationController';
+import { drawRoundedButton, drawRoundedPanelBackground } from '../presentation/uiHelpers';
 import { LearningBonusSystem } from '../systems/LearningBonusSystem';
 import { MasterySystem, type LearningMastery } from '../systems/MasterySystem';
 import { FarmQuestSystem, type FarmQuestOutcome } from '../systems/FarmQuestSystem';
@@ -43,6 +44,7 @@ const PRACTICE_SLIME_TEXTURE_KEY = 'practice-slime-v001';
 const PRACTICE_SLIME_IDLE_ANIMATION = 'practice-slime-idle';
 const PRACTICE_SLIME_HOP_ANIMATION = 'practice-slime-hop';
 const CROP_BONUS_FEEDBACK_NAME = 'crop-bonus-feedback';
+const STATS_CLOSE_BUTTON_NAME = 'stats-close-button';
 
 // Tile GIDs on the `farm` map's "Collision" layer (maps/farm.json, tileset
 // eldoria-placeholder) that are impassable — fence/water/rock stand-ins in
@@ -76,7 +78,7 @@ export class WorldScene extends Phaser.Scene {
   private practiceSlimeSprite?: Phaser.GameObjects.Sprite;
   private heroPresentation!: HeroPresentationController;
   private music?: Phaser.Sound.BaseSound;
-  private muteButtonText!: Phaser.GameObjects.Text;
+  private muteIcon!: Phaser.GameObjects.Graphics;
   private lastFootstepAt = 0;
   private readonly lastSfxAt: Partial<Record<string, number>> = {};
   private readonly sfxCooldownMs = 90;
@@ -354,10 +356,53 @@ export class WorldScene extends Phaser.Scene {
     });
   }
 
+  /**
+   * Draws a small speaker glyph by hand instead of using a native emoji
+   * (🔊/🔇), which renders in whatever emoji font the OS/browser ships and
+   * looks visually inconsistent next to the pixel-art sprites — a real risk
+   * for a game that has to look the same on iPad Safari and desktop Chrome.
+   * Repaints in place on `graphics` so the mute toggle can redraw it without
+   * recreating the object.
+   */
+  private paintSpeakerIcon(graphics: Phaser.GameObjects.Graphics, x: number, y: number, muted: boolean): void {
+    graphics.clear();
+    graphics.fillStyle(0xffd666, 1);
+    graphics.fillRect(x - 9, y - 3, 4, 6);
+    graphics.fillTriangle(x - 5, y - 3, x - 5, y + 3, x + 1, y - 7);
+    graphics.fillTriangle(x - 5, y + 3, x + 1, y - 7, x + 1, y + 7);
+
+    if (muted) {
+      graphics.lineStyle(2, 0xe0916c, 1);
+      graphics.beginPath();
+      graphics.moveTo(x + 2, y - 7);
+      graphics.lineTo(x + 9, y + 7);
+      graphics.strokePath();
+    } else {
+      graphics.lineStyle(1.5, 0xffd666, 1);
+      graphics.beginPath();
+      graphics.arc(x + 1, y, 4, Phaser.Math.DegToRad(-40), Phaser.Math.DegToRad(40));
+      graphics.strokePath();
+      graphics.beginPath();
+      graphics.arc(x + 1, y, 7, Phaser.Math.DegToRad(-35), Phaser.Math.DegToRad(35));
+      graphics.strokePath();
+    }
+  }
+
+  /** Draws a small gold-coin glyph in place of the 🪙 emoji, for the same reason as `paintSpeakerIcon`. */
+  private drawCoinIcon(x: number, y: number, radius = 8): Phaser.GameObjects.Graphics {
+    const graphics = this.add.graphics();
+    graphics.fillStyle(0xffd666, 1);
+    graphics.fillCircle(x, y, radius);
+    graphics.lineStyle(1.5, 0xa97a1f, 1);
+    graphics.strokeCircle(x, y, radius);
+    graphics.fillStyle(0xfff3c9, 0.8);
+    graphics.fillEllipse(x - radius * 0.32, y - radius * 0.32, radius * 0.55, radius * 0.35);
+    return graphics;
+  }
+
   private createHud(initialAudioMuted: boolean): void {
-    this.add.rectangle(GAME_WIDTH / 2, 14, GAME_WIDTH - 20, 24, 0x2a1a08, 0.9)
-      .setScrollFactor(0)
-      .setStrokeStyle(1, 0x6f5126);
+    drawRoundedPanelBackground(this, GAME_WIDTH / 2, 14, GAME_WIDTH - 20, 24, 0x2a1a08, 0x6f5126, 5)
+      .setScrollFactor(0);
 
     this.hudText = this.add.text(16, 7, '', {
       fontFamily: 'system-ui',
@@ -365,10 +410,8 @@ export class WorldScene extends Phaser.Scene {
       color: '#ffd666'
     }).setScrollFactor(0);
 
-    const statsBtn = this.add.rectangle(GAME_WIDTH - 50, 14, 56, 16, 0x5f3d12, 0.9)
-      .setStrokeStyle(1, 0xffd666)
-      .setScrollFactor(0)
-      .setInteractive({ useHandCursor: true });
+    const statsBtn = drawRoundedButton(this, GAME_WIDTH - 50, 14, 56, 16, 0x5f3d12, 0xffd666, 5)
+      .setScrollFactor(0);
 
     this.add.text(GAME_WIDTH - 50, 14, 'STATS', {
       fontFamily: 'system-ui',
@@ -379,22 +422,20 @@ export class WorldScene extends Phaser.Scene {
 
     statsBtn.on('pointerdown', () => this.toggleStatsPanel());
 
-    const muteBtn = this.add.rectangle(GAME_WIDTH - 96, 14, 24, 16, 0x5f3d12, 0.9)
-      .setStrokeStyle(1, 0xffd666)
-      .setScrollFactor(0)
-      .setInteractive({ useHandCursor: true });
+    const muteBtn = drawRoundedButton(this, GAME_WIDTH - 96, 14, 24, 16, 0x5f3d12, 0xffd666, 5)
+      .setScrollFactor(0);
 
-    this.muteButtonText = this.add.text(GAME_WIDTH - 96, 14, initialAudioMuted ? '\u{1F507}' : '\u{1F50A}', {
-      fontSize: '11px'
-    }).setOrigin(0.5).setScrollFactor(0);
+    this.muteIcon = this.add.graphics().setScrollFactor(0);
+    this.paintSpeakerIcon(this.muteIcon, GAME_WIDTH - 96, 14, initialAudioMuted);
 
     muteBtn.on('pointerdown', () => this.toggleAudioMute());
 
-    this.add.rectangle(GAME_WIDTH / 2, 42, GAME_WIDTH - 20, 28, 0x162a12, 0.9)
-      .setScrollFactor(0)
-      .setStrokeStyle(1, 0x5e9f3a);
+    // A small gap below the HUD bar (rather than sitting flush against it)
+    // so the two read as separate pieces of information, not one tall box.
+    drawRoundedPanelBackground(this, GAME_WIDTH / 2, 48, GAME_WIDTH - 20, 28, 0x162a12, 0x5e9f3a, 5)
+      .setScrollFactor(0);
 
-    this.objectiveText = this.add.text(16, 34, '', {
+    this.objectiveText = this.add.text(16, 40, '', {
       fontFamily: 'system-ui',
       fontSize: '11px',
       color: '#d7ffb8',
@@ -439,8 +480,16 @@ export class WorldScene extends Phaser.Scene {
   private createTouchControls(): void {
     this.createDynamicJoystick();
 
-    const action = this.add.circle(GAME_WIDTH - 54, GAME_HEIGHT - 52, 34, 0x5f3d12, 0.82)
-      .setStrokeStyle(3, 0xffd666)
+    // Stays clickable on every device (a mouse-accessible alternative to
+    // Space/E is useful even on desktop), but only renders at full
+    // prominence on touch-capable devices — on a keyboard/mouse session it
+    // was previously showing at full opacity for no reason, cluttering the
+    // most valuable screen corner.
+    const isTouchDevice = this.sys.game.device.input.touch;
+    const actionAlpha = isTouchDevice ? 0.82 : 0.25;
+
+    const action = this.add.circle(GAME_WIDTH - 54, GAME_HEIGHT - 52, 34, 0x5f3d12, actionAlpha)
+      .setStrokeStyle(3, 0xffd666, actionAlpha)
       .setScrollFactor(0)
       .setInteractive({ useHandCursor: true });
 
@@ -448,7 +497,7 @@ export class WorldScene extends Phaser.Scene {
       fontFamily: 'system-ui',
       fontSize: '10px',
       color: '#ffd666'
-    }).setOrigin(0.5).setScrollFactor(0);
+    }).setOrigin(0.5).setScrollFactor(0).setAlpha(isTouchDevice ? 1 : actionAlpha);
 
     action.on('pointerdown', () => this.handleActionInput());
   }
@@ -598,7 +647,7 @@ export class WorldScene extends Phaser.Scene {
     const nextMuted = !this.sound.mute;
     this.sound.mute = nextMuted;
     saveAudioMuted(nextMuted);
-    this.muteButtonText.setText(nextMuted ? '\u{1F507}' : '\u{1F50A}');
+    this.paintSpeakerIcon(this.muteIcon, GAME_WIDTH - 96, 14, nextMuted);
   }
 
   private handleMiraInteraction(): void {
@@ -722,8 +771,10 @@ export class WorldScene extends Phaser.Scene {
     const choicesY = isAudioFirst ? 38 : 34;
     const skipY = isAudioFirst ? 94 : 82;
 
-    const bg = this.add.rectangle(0, 0, 360, panelHeight, 0x2a1a08, 0.96)
-      .setStrokeStyle(3, 0xffd666);
+    // Fully opaque (not the previous 0.96 alpha): a slightly transparent
+    // panel background let whatever world-space marker label happened to
+    // sit behind it (e.g. "CropBonus") faintly ghost through.
+    const bg = drawRoundedPanelBackground(this, 0, 0, 360, panelHeight, 0x2a1a08, 0xffd666, 10);
     panel.add(bg);
 
     panel.add(this.add.text(0, titleY, `${label}: optional learning bonus`, {
@@ -741,9 +792,7 @@ export class WorldScene extends Phaser.Scene {
     }).setOrigin(0.5));
 
     if (isAudioFirst) {
-      const readButton = this.add.rectangle(0, -12, 132, 28, 0x3a4f8f)
-        .setStrokeStyle(2, 0x99c7ff)
-        .setInteractive({ useHandCursor: true });
+      const readButton = drawRoundedButton(this, 0, -12, 132, 28, 0x3a4f8f, 0x99c7ff, 6);
       const readText = this.add.text(0, -12, 'READ ALOUD', {
         fontFamily: 'system-ui',
         fontSize: '11px',
@@ -755,11 +804,9 @@ export class WorldScene extends Phaser.Scene {
       panel.add(readText);
     }
 
-    const skipButton = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2 + skipY, 132, 28, 0x3a2208)
-      .setStrokeStyle(2, 0xc9a66b)
+    const skipButton = drawRoundedButton(this, GAME_WIDTH / 2, GAME_HEIGHT / 2 + skipY, 132, 28, 0x3a2208, 0xc9a66b, 6)
       .setScrollFactor(0)
-      .setDepth(31)
-      .setInteractive({ useHandCursor: true });
+      .setDepth(31);
     const skipText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + skipY, 'Skip bonus', {
       fontFamily: 'system-ui',
       fontSize: '12px',
@@ -774,9 +821,7 @@ export class WorldScene extends Phaser.Scene {
     prompt.choices.forEach((choice, index) => {
       const x = -110 + index * 110;
       const choiceLabel = String(choice);
-      const btn = this.add.rectangle(x, choicesY, 102, 46, 0x5f3d12)
-        .setStrokeStyle(2, 0xffd666)
-        .setInteractive({ useHandCursor: true });
+      const btn = drawRoundedButton(this, x, choicesY, 102, 46, 0x5f3d12, 0xffd666, 6);
 
       const txt = this.add.text(x, choicesY, choiceLabel, {
         fontFamily: 'system-ui',
@@ -959,8 +1004,7 @@ export class WorldScene extends Phaser.Scene {
     const panel = this.add.container(GAME_WIDTH / 2, GAME_HEIGHT / 2).setScrollFactor(0).setDepth(100);
     this.statsContainer = panel;
 
-    const bg = this.add.rectangle(0, 0, 380, 240, 0x1a1208, 0.98)
-      .setStrokeStyle(3, 0xffd666);
+    const bg = drawRoundedPanelBackground(this, 0, 0, 380, 240, 0x1a1208, 0xffd666, 10);
     panel.add(bg);
 
     const title = this.add.text(0, -100, 'STATS & MASTERY', {
@@ -971,8 +1015,12 @@ export class WorldScene extends Phaser.Scene {
     }).setOrigin(0.5);
     panel.add(title);
 
+    // A cool slate-blue divider (instead of the same brown/gold used
+    // everywhere else) gives this "character sheet" screen a small visual
+    // identity of its own, distinct from the warm gold chrome the HUD and
+    // bonus-prompt panels share.
     const divider = this.add.graphics();
-    divider.lineStyle(1, 0x6f5126);
+    divider.lineStyle(1, 0x5a7a94);
     divider.lineBetween(0, -80, 0, 80);
     panel.add(divider);
 
@@ -993,12 +1041,13 @@ export class WorldScene extends Phaser.Scene {
     }).setOrigin(0.5);
     panel.add(profileDesc);
 
-    const goldLabel = this.add.text(-90, -16, `Gold: ${this.gold} 🪙`, {
+    const goldLabel = this.add.text(-90, -16, `Gold: ${this.gold}`, {
       fontFamily: 'system-ui',
       fontSize: '12px',
       color: '#ffd666'
-    }).setOrigin(0.5);
+    }).setOrigin(0.5, 0.5);
     panel.add(goldLabel);
+    panel.add(this.drawCoinIcon(-90 + goldLabel.displayWidth / 2 + 12, -16, 7));
 
     const keepsakeHeader = this.add.text(-90, 18, 'KEEPSAKES', {
       fontFamily: 'system-ui',
@@ -1012,33 +1061,33 @@ export class WorldScene extends Phaser.Scene {
     // hardcoded Sunberry Charm slot, so future charms show up here without
     // further panel changes.
     const slotSize = 32;
-    const slotGap = 8;
+    const slotGap = 20;
     const slotsWidth = CHARM_REGISTRY.length * slotSize + (CHARM_REGISTRY.length - 1) * slotGap;
     const slotsStartX = -90 - slotsWidth / 2 + slotSize / 2;
-    const ownedCharmNames: string[] = [];
 
     CHARM_REGISTRY.forEach((charm, index) => {
       const slotX = slotsStartX + index * (slotSize + slotGap);
-      const slotBg = this.add.rectangle(slotX, 52, slotSize, slotSize, 0x2a1a08)
-        .setStrokeStyle(2, 0x6f5126);
+      const slotBg = drawRoundedPanelBackground(this, slotX, 52, slotSize, slotSize, 0x2a1a08, 0x6f5126, 4);
       panel.add(slotBg);
 
       const hasCharm = (this.inventory[charm.key] ?? 0) > 0;
       if (hasCharm) {
-        ownedCharmNames.push(charm.name);
         const charmText = this.add.text(slotX, 52, charm.emoji, { fontSize: '16px' }).setOrigin(0.5);
         panel.add(charmText);
       }
-    });
 
-    const charmLabel = this.add.text(-90, 82, ownedCharmNames.length > 0 ? ownedCharmNames.join(', ') : '(Empty Slot)', {
-      fontFamily: 'system-ui',
-      fontSize: '9px',
-      color: ownedCharmNames.length > 0 ? '#d7ffb8' : '#6f5126',
-      align: 'center',
-      wordWrap: { width: 170 }
-    }).setOrigin(0.5);
-    panel.add(charmLabel);
+      // A caption directly under each slot (rather than one caption shared
+      // across every slot) so it's unambiguous which slot is empty and
+      // which one holds which charm once more than one exists.
+      const slotCaption = this.add.text(slotX, 52 + slotSize / 2 + 12, hasCharm ? charm.name : '(Empty)', {
+        fontFamily: 'system-ui',
+        fontSize: '8px',
+        color: hasCharm ? '#d7ffb8' : '#6f5126',
+        align: 'center',
+        wordWrap: { width: slotSize + slotGap, useAdvancedWrap: true }
+      }).setOrigin(0.5, 0);
+      panel.add(slotCaption);
+    });
 
     // --- RIGHT COLUMN: CURRICULUM MASTERY ---
     const masteryHeader = this.add.text(90, -70, 'CURRICULUM MASTERY', {
@@ -1098,9 +1147,8 @@ export class WorldScene extends Phaser.Scene {
     });
 
     // --- CLOSE BUTTON ---
-    const closeBtn = this.add.rectangle(0, 100, 100, 24, 0x5f3d12)
-      .setStrokeStyle(2, 0xffd666)
-      .setInteractive({ useHandCursor: true });
+    const closeBtn = drawRoundedButton(this, 0, 100, 100, 24, 0x5f3d12, 0xffd666, 6)
+      .setName(STATS_CLOSE_BUTTON_NAME);
     panel.add(closeBtn);
 
     const closeTxt = this.add.text(0, 100, 'CLOSE', {
