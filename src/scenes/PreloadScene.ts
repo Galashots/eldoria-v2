@@ -37,6 +37,13 @@ export class PreloadScene extends Phaser.Scene {
       frameHeight: 32
     });
     this.load.tilemapTiledJSON('farm', 'maps/farm.json');
+
+    this.load.audio('bgm-farm', 'assets/audio/music/farm-theme-loop.wav');
+    this.load.audio('sfx-footstep', 'assets/audio/sfx/footstep.wav');
+    this.load.audio('sfx-interact', 'assets/audio/sfx/interact.wav');
+    this.load.audio('sfx-reward', 'assets/audio/sfx/reward.wav');
+    this.load.audio('sfx-quest-complete', 'assets/audio/sfx/quest-complete.wav');
+    this.load.audio('sfx-ui-tap', 'assets/audio/sfx/ui-tap.wav');
   }
 
   create(): void {

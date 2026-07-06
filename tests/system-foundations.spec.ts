@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { MIRA_FIRST_ERRAND, MIRA_SECOND_ERRAND, MIRA_THIRD_ERRAND } from '../src/data/quests';
 import { FarmQuestSystem } from '../src/systems/FarmQuestSystem';
+import { loadAudioMuted, saveAudioMuted } from '../src/systems/AudioPreference';
 import {
   CURRENT_SAVE_VERSION,
   migrateRawSave,
@@ -446,5 +447,36 @@ test.describe('FarmQuestSystem transitions', () => {
     expect(interaction.reward).toBeUndefined();
     expect(quest.toSaveFields().questFlags.miraThirdErrandComplete).toBe(false);
     expect(quest.toSaveFields().questFlags.miraThirdErrandAccepted).toBe(true);
+  });
+});
+
+test.describe('AudioPreference persistence', () => {
+  test('defaults to unmuted when nothing is stored', () => {
+    expect(loadAudioMuted()).toBe(false);
+  });
+
+  test('round-trips a saved mute preference', () => {
+    saveAudioMuted(true);
+    expect(loadAudioMuted()).toBe(true);
+
+    saveAudioMuted(false);
+    expect(loadAudioMuted()).toBe(false);
+  });
+
+  test('treats any stored value other than the string "true" as unmuted', () => {
+    localStorage.setItem('eldoria_v2_audio_muted', 'yes');
+    expect(loadAudioMuted()).toBe(false);
+  });
+
+  test('storage failures fail safe to unmuted and do not throw', () => {
+    const original = globalThis.localStorage.getItem;
+    globalThis.localStorage.getItem = () => {
+      throw new Error('storage unavailable');
+    };
+
+    expect(() => loadAudioMuted()).not.toThrow();
+    expect(loadAudioMuted()).toBe(false);
+
+    globalThis.localStorage.getItem = original;
   });
 });

@@ -2,6 +2,29 @@
 
 This file records repository changes made through ChatGPT so future work can see what changed, who made it, and when.
 
+## 2026-07-06 - Claude Code (audio pipeline + curriculum tightening)
+
+- Branch: `claude/audio-and-content-fixes`
+- Files changed:
+  - `src/data/questionTemplates.ts`
+  - `src/scenes/PreloadScene.ts`
+  - `src/scenes/WorldScene.ts`
+  - `src/systems/AudioPreference.ts` (new)
+  - `public/assets/audio/` (new, placeholder WAVs)
+  - `tests/system-foundations.spec.ts`
+  - `ATTRIBUTION.md`
+  - `docs/CURRENT_STATE.md`
+- Summary: Acted on a research pass (curriculum alignment, audio sourcing, Stardew-style visual direction). Tightened one curriculum-adjacent question template, checked and documented the right Phaser lighting approach for later, and built a complete audio pipeline (music, SFX, mute toggle, read-aloud ducking) — using synthesized placeholder assets since this environment's network policy blocks the actual licensed-asset sources.
+- Implementation notes:
+  - `grade5-farm-fractions-sunberry-rows` now asks for a fraction-to-decimal conversion with denominator 10 or 100 (e.g. "7 of 10 rows... what decimal is that?") instead of generic "simplify to 1/4" — matches Alberta's actual Grade 5 outcome wording (fraction-decimal conversion, denominators of 10/100) more tightly. Distractors model real misconceptions (misplaced decimal point, extra zero).
+  - Checked Phaser 4.2.0's installed source directly: it ships a purpose-built `PointLight` game object (`this.add.pointlight(...)`) that's cheaper and simpler than the Phaser-3-era normal-map/Light2D tutorial the research surfaced. Documented in `docs/CURRENT_STATE.md` for whenever the atmosphere/lighting work (currently only in the still-open PR #51) lands — no lighting code shipped in this change, it's a decision record only.
+  - Attempted to download the actual recommended CC0 audio packs (Tallbeard/HydroGene on itch.io, Freesound SFX); this sandbox's network policy hard-blocks itch.io, freesound.org, opengameart.org, incompetech.com, and kenney.nl (confirmed via proxy status, not a transient failure). Generated placeholder WAVs locally instead (`public/assets/audio/`, pure sine/triangle/noise synthesis, no samples) so the integration code is real and testable. `ATTRIBUTION.md` documents exactly which real packs to swap in and why.
+  - Added `src/systems/AudioPreference.ts` (mute preference persisted to `localStorage`, independent of per-profile saves, defaults to unmuted) plus a background music loop, 5 SFX triggers (footstep, interact, reward, quest-complete, UI tap on the Stats panel), and a default-on mute button in the HUD.
+  - Read-aloud now ducks music volume for the duration of the utterance and restores it after, so "read-aloud always wins" holds for audio too.
+  - Found and fixed a real bug during testing: Phaser's WebAudio `mute` getter reads a `GainNode`'s value, and the setter schedules the change via `AudioParam.setValueAtTime` — reading `this.sound.mute` back immediately after setting it (same tick) can return the stale pre-toggle value. Fixed by computing the intended mute state once into a local variable and reusing it, instead of re-reading the getter.
+  - Added a Playwright test block for `AudioPreference` (default/round-trip/malformed-value/storage-failure cases) following the existing `MemoryStorage`-mock pattern already used for `SaveSystem`.
+- Reason: Follow through on the research brief delivered earlier — verify/tighten curriculum content, make an informed lighting-technique decision instead of blindly following an outdated tutorial, and get real (if temporary) audio into the game rather than leaving it silent.
+
 ## 2026-07-05 - Claude Code (quest #3)
 
 - Branch: `claude/repo-audit-roadmap-65q59n`
