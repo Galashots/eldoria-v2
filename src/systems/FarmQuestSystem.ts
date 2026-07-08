@@ -176,7 +176,7 @@ export class FarmQuestSystem {
     return {
       stateChanged: true,
       objectiveChanged: true,
-      message: MIRA_THIRD_ERRAND.progress.sproutAwakened(this.sproutsAwakenedCount())
+      message: MIRA_THIRD_ERRAND.progress.sproutAwakened
     };
   }
 

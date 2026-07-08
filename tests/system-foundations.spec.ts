@@ -399,12 +399,12 @@ test.describe('FarmQuestSystem transitions', () => {
     expect(quest.currentObjective()).toBe(MIRA_THIRD_ERRAND.objectives.inProgress(0));
     expect(quest.interactWithMira().toast).toBe(MIRA_THIRD_ERRAND.dialogue.reminder);
 
-    expect(quest.completeSproutInteraction('sprout-1').message).toBe(MIRA_THIRD_ERRAND.progress.sproutAwakened(1));
+    expect(quest.completeSproutInteraction('sprout-1').message).toBe(MIRA_THIRD_ERRAND.progress.sproutAwakened);
     expect(quest.completeSproutInteraction('sprout-1').stateChanged).toBe(false);
     expect(quest.currentObjective()).toBe(MIRA_THIRD_ERRAND.objectives.inProgress(1));
 
-    expect(quest.completeSproutInteraction('sprout-2').message).toBe(MIRA_THIRD_ERRAND.progress.sproutAwakened(2));
-    expect(quest.completeSproutInteraction('sprout-3').message).toBe(MIRA_THIRD_ERRAND.progress.sproutAwakened(3));
+    expect(quest.completeSproutInteraction('sprout-2').message).toBe(MIRA_THIRD_ERRAND.progress.sproutAwakened);
+    expect(quest.completeSproutInteraction('sprout-3').message).toBe(MIRA_THIRD_ERRAND.progress.sproutAwakened);
     expect(quest.currentObjective()).toBe(MIRA_THIRD_ERRAND.objectives.returnToMira);
 
     const completion = quest.interactWithMira();

@@ -22,12 +22,14 @@ export class TitleScene extends Phaser.Scene {
       strokeThickness: 4
     }).setOrigin(0.5);
 
-    this.add.text(GAME_WIDTH / 2, 76, 'Learning gives bonuses. Adventure never gets gated.', {
+    this.add.text(GAME_WIDTH / 2, 76, 'Old magic is waking in Eldoria. Learning helps — adventure never waits.', {
       fontFamily: 'system-ui',
       fontSize: '12px',
       color: '#f5e6c8',
       align: 'center'
     }).setOrigin(0.5);
+
+    this.addAmbientSparkles();
 
     this.addProfileButton(116, 'grade2-mage');
     this.addProfileButton(184, 'grade5-adventurer');
@@ -55,6 +57,35 @@ export class TitleScene extends Phaser.Scene {
     const glow = this.add.graphics();
     glow.fillGradientStyle(0x3a2208, 0x3a2208, 0x5f3d12, 0x5f3d12, 0, 0, 0.4, 0.4);
     glow.fillRect(0, GAME_HEIGHT * 0.55, GAME_WIDTH, GAME_HEIGHT * 0.45);
+  }
+
+  /**
+   * A handful of slow, staggered-fade sparkle dots near the title text —
+   * a cheap "something magical is here" cue that costs no new art and
+   * doesn't sit over any button hitbox.
+   */
+  private addAmbientSparkles(): void {
+    const positions = [
+      { x: GAME_WIDTH / 2 - 168, y: 40 },
+      { x: GAME_WIDTH / 2 + 176, y: 52 },
+      { x: GAME_WIDTH / 2 - 140, y: 92 },
+      { x: GAME_WIDTH / 2 + 150, y: 90 },
+      { x: GAME_WIDTH / 2 + 200, y: 28 }
+    ];
+
+    positions.forEach(({ x, y }, index) => {
+      const sparkle = this.add.circle(x, y, 1.6, 0xfff0a3, 0).setDepth(1);
+      this.tweens.add({
+        targets: sparkle,
+        alpha: { from: 0, to: 0.9 },
+        duration: 1400,
+        delay: index * 260,
+        yoyo: true,
+        repeat: -1,
+        repeatDelay: 900 + index * 180,
+        ease: 'Sine.easeInOut'
+      });
+    });
   }
 
   private addProfileButton(y: number, profileId: ProfileId): void {

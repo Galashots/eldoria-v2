@@ -38,8 +38,16 @@ marketing copy):
   a one-time $16-50 buyout license to drop attribution entirely.
 
 This environment's network policy blocks itch.io, freesound.org,
-opengameart.org, incompetech.com, and kenney.nl outright, so the actual
-files need to be downloaded from a normal network and dropped into
-`public/assets/audio/` in place of the placeholders (same filenames, or
-update the `this.load.audio(...)` calls in `src/scenes/PreloadScene.ts`).
-Once real assets are in, replace this section with their actual credits.
+opengameart.org, incompetech.com, and kenney.nl outright (re-confirmed as of
+2026-07-08, still not a transient failure), so the actual files need to be
+downloaded from a normal network and dropped into `public/assets/audio/` in
+place of the placeholders (same filenames, or update the
+`this.load.audio(...)` calls in `src/scenes/PreloadScene.ts`). Once real
+assets are in, replace this section with their actual credits.
+
+As a stopgap first-impression risk reduction (`docs/ATTENTION_FIRST_OPENING_PLAN_2026-07.md`),
+the background music volume and the footstep SFX (the two most repetitive
+sounds — the ~12.6s music loop repeats constantly, and footstep fires every
+~380ms while moving) were turned down further in `src/scenes/WorldScene.ts`
+rather than building a larger audio pipeline. This is a volume tweak, not a
+substitute for swapping in real audio above.

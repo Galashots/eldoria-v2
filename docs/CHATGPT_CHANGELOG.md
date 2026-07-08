@@ -2,6 +2,37 @@
 
 This file records repository changes made through ChatGPT so future work can see what changed, who made it, and when.
 
+## 2026-07-08 - Claude Code (attention-first opening pass implementation)
+
+- Branch: `claude/attention-first-opening`
+- Files changed:
+  - `src/data/profiles.ts`
+  - `src/data/quests.ts`
+  - `src/scenes/TitleScene.ts`
+  - `src/scenes/WorldScene.ts`
+  - `src/systems/FarmQuestSystem.ts`
+  - `tests/system-foundations.spec.ts`
+  - `tests/vertical-slice.spec.ts`
+  - `ATTRIBUTION.md`
+  - `docs/CURRENT_STATE.md`
+- Summary: Implements `docs/ATTENTION_FIRST_OPENING_PLAN_2026-07.md` — the small, focused execution brief ChatGPT's planning PR (#56) laid out for making the first 60-90 seconds feel like a real fantasy game rather than a systems prototype, without adding quest #4 or touching the reserved art/architecture items.
+- Title/profile polish:
+  - Grade 5's player-facing label is now **Ranger Explorer** with subtitle "Reader mode, clues, tracking, and tactical bonuses" (`profiles.ts`); the internal `grade5-adventurer` profile ID is untouched, so saves and template fixtures needed no migration.
+  - Grade 2's subtitle is now "Audio-first spellcaster with charms and sparkle magic" (still names audio-first mode for parents choosing a profile, just framed as a hero role instead of a settings description).
+  - The title screen's tagline is now "Old magic is waking in Eldoria. Learning helps — adventure never waits." — same policy meaning (learning never gates adventure), framed as an in-fiction promise. Added a handful of slow, staggered-fade ambient sparkle dots near the title text (existing sparkle-circle pattern, non-interactive, positioned clear of both button hitboxes).
+- Opening dialogue:
+  - Mira's very first line now seeds the "old magic waking" mystery immediately ("Whoa — feel that? The whole farm is humming today. Something old is waking up...") instead of reading as a chore assignment ("Check the crop patch for a bonus!").
+  - The Sleepy Sprouts errand's dialogue is rewritten to the plan's approved wording, including establishing the Wildbloom Sprig as a "hums when secrets are nearby" hook for a future discovery system (flavor text only — no new mechanic implemented, per the plan's explicit guardrail).
+  - `MIRA_THIRD_ERRAND.progress.sproutAwakened` changed from a function taking an unused-in-the-new-wording count parameter to a plain string, since the new wording ("Sprout awake! It popped up with a sparkle.") doesn't repeat the counter already shown in the objective HUD line; updated the one call site (`FarmQuestSystem`) and three test assertions accordingly.
+- Reward/charm feedback:
+  - A keepsake charm reward now gets an emphasized pop-in floating-text treatment (bigger font, scale-in tween) and a larger/longer sparkle burst than a plain gold trickle, so receiving a charm reads as a bigger moment than routine gold.
+  - Quest-chapter narrative beats with a toast but no reward yet (e.g. Mira's opening hook) now get a small sparkle too, so "something magical is happening" registers even without a reward.
+  - The quest/reward toast is now a rounded gold-bordered card with a quick pop-in tween (reusing `drawRoundedPanelBackground`) instead of a flat text-background box, and is repositioned below the objective banner — the old position drifted upward into the banner's territory, a pre-existing overlap this pass's own screenshots caught and fixed while already touching this code.
+- Audio risk reduction: lowered the background music loop's volume (0.32 → 0.22) and the footstep SFX (0.22 → 0.16), the two most repetitive sounds, to reduce first-impression annoyance risk. Re-confirmed this environment's network policy still hard-blocks itch.io/freesound.org/opengameart.org/incompetech.com/kenney.nl before choosing this over building a larger audio pipeline (out of scope per the plan).
+- Verification: `npm run check`, `npm run test:unit` (48/48), `npm run test:asset-pipeline`, and the full Playwright smoke suite (29/29) all pass. Also did a full browser-inspection screenshot pass across both profiles per the plan's checklist — title screen, each profile's fresh start, Mira's first interaction, the crop bonus and Practice Slime prompts, the Sleepy Sprouts interaction, reward/charm feedback, and the Stats panel with a charm — which is how the toast/objective-banner overlap above was caught and fixed.
+- Explicitly out of scope, per the plan: quest #4, combat/inventory expansion, save schema changes, production Ranger sprite art, and merging PR #51's atmosphere work (reference only until rebased and re-verified).
+- Reason: Follow through on ChatGPT's planning PR with the concrete implementation it specified, verified end-to-end rather than left as an unimplemented brief.
+
 ## 2026-07-08 - ChatGPT (attention-first opening milestone plan)
 
 - Branch: `chatgpt/attention-first-planning`

@@ -87,9 +87,9 @@ export const MIRA_FIRST_ERRAND = {
     practiceSlime: 'Practice Slime'
   },
   dialogue: {
-    start: 'Mira: Check the crop patch for a bonus!',
-    cropReminder: 'Mira: The crop patch is southwest of here.',
-    slimeReminder: 'Mira: The Practice Slime is east of the farm.'
+    start: 'Mira: Whoa — feel that? The whole farm is humming today. Something old is waking up. Check the crop patch with me?',
+    cropReminder: 'Mira: The humming is loudest at the crop patch, southwest of here.',
+    slimeReminder: 'Mira: There\'s a Practice Slime east of the farm — good for testing what you\'ve got.'
   },
   progress: {
     cropComplete: 'Objective updated: find the Practice Slime.',
@@ -122,7 +122,7 @@ type MiraThirdErrandDefinition = {
     complete: string;
   };
   progress: {
-    sproutAwakened: (awakened: number) => string;
+    sproutAwakened: string;
   };
   completionToast: string;
   rewards: {
@@ -172,13 +172,13 @@ export const MIRA_THIRD_ERRAND = {
     complete: 'Optional errand complete: The Sleepy Sprouts.'
   },
   dialogue: {
-    start: 'Mira: The Moonseed charm wasn\'t the only strange thing. Some sprouts in the crop rows have gone sleepy, like the old magic tired them out. Could you wake a few up?',
-    reminder: 'Mira: The sleepy sprouts around the farm are still waiting to wake up.',
-    return: 'Mira: All three awake? Good. The old magic stirs gently here. Nothing to fear, just... waking up.',
-    complete: 'Mira: The sprouts hum softly now. Keep an eye on the farm. It\'s changing.'
+    start: 'Mira: The farm is glowing again! Three sleepy sprouts curled up in the rows. Wake them before the old magic fades.',
+    reminder: 'Mira: Find the glowing sprouts. They wiggle when you get close.',
+    return: 'Mira: All three woke up? Then the old magic likes you. Take this Wildbloom Sprig — it hums when secrets are nearby.',
+    complete: 'Mira: Keep exploring. If the Sprig hums, something hidden may be close.'
   },
   progress: {
-    sproutAwakened: (awakened: number) => `Sprout awakened! (${awakened}/${THIRD_ERRAND_TOTAL_SPROUTS})`
+    sproutAwakened: 'Sprout awake! It popped up with a sparkle.'
   },
   completionToast: 'Optional Errand Complete: The Sleepy Sprouts\nReceived: Wildbloom Sprig',
   rewards: {
