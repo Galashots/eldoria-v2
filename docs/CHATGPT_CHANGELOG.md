@@ -2,6 +2,28 @@
 
 This file records repository changes made through ChatGPT so future work can see what changed, who made it, and when.
 
+## 2026-07-06 - Claude Code (design critique + visual polish)
+
+- Branch: `claude/design-polish` (stacked on `claude/audio-and-content-fixes`, PR #54)
+- Files changed:
+  - `src/presentation/uiHelpers.ts` (new)
+  - `src/scenes/TitleScene.ts`
+  - `src/scenes/WorldScene.ts`
+  - `tests/vertical-slice.spec.ts`
+  - `docs/CURRENT_STATE.md`
+- Summary: Ran a live-screenshot design critique of the title screen, HUD, world (no menus), and both the Stats & Mastery and bonus-prompt panels across both Grade 2 and Grade 5 profiles, grounded in `docs/VISUAL_ASSET_CONTRACT.md`. Fixed every code-only finding, then iterated (fix → full test pass → re-screenshot → re-critique) until a second round turned up no new major issues.
+- Implementation notes:
+  - Extracted shared `drawRoundedButton`/`drawRoundedPanelBackground` Graphics helpers into `src/presentation/uiHelpers.ts` so every scene's buttons/panels read as one consistent rounded-rect UI language instead of ad hoc flat rectangles.
+  - Root-caused the bonus-prompt panel's "ghosting" (the `CropBonus` world label visibly bleeding through the panel background): the panel background had a `0.96` alpha. `drawRoundedPanelBackground` renders fully opaque, which fixed it.
+  - The Stats panel's keepsake row used to share one `(Empty Slot)` caption under both slots regardless of which was actually empty; each slot now gets its own caption. Its first pass wrapped long charm names (`Sunberry Charm`, `Wildbloom Sprig`) with a `wordWrap` width narrower than the words themselves, and Phaser doesn't force a break on an over-width single word unless `useAdvancedWrap` is set — the two captions' first lines ran together and read as one merged word. Fixed with `useAdvancedWrap: true` plus a wider slot gap so common charm names wrap on a natural word boundary instead of mid-word.
+  - Gave the Stats panel a slate-blue (`0x5a7a94`) divider instead of the shared brown/gold chrome, so it reads as a distinct "character sheet" screen rather than a re-skinned bonus prompt.
+  - Replaced the 🔊/🔇/🪙 emoji HUD icons with hand-drawn vector shapes (`paintSpeakerIcon`, `drawCoinIcon`) for a consistent look across platforms/fonts.
+  - Title screen: added a warm vertical-gradient background plus a soft glow, and moved the "Tap a hero to start" line up to use vertical space freed by the new visual treatment. Verified real mastery/keepsake data (`4/5` Math, `1/2` ELA, both keepsake slots filled) renders correctly in the mastery bars and keepsake row, which no prior save had exercised.
+  - Deliberately left the ACTION touch-control dimmed (not hidden) on non-touch devices and preserved existing profile-card Y-positions and the Stats-panel CLOSE button's exact size, to avoid breaking several Playwright tests that click/measure those elements by coordinate or bounding box — renamed the CLOSE button lookup in `tests/vertical-slice.spec.ts` to match on `setName('stats-close-button')` instead of width/height once it became a `Graphics` object.
+  - Left tile/sprite art, the Grade 5 Ranger visual identity, and hero portraits on title cards untouched — those are art/story-gated per `AGENTS.md` and reserved for a user/ChatGPT checkpoint, not this pass.
+  - Verified with `npm run check`, `npm run test:unit` (48 passing), `npm run test:asset-pipeline`, and the full Playwright smoke suite (29 passing) after every round, plus a second round of screenshots across both profiles to confirm no regressions and no new major findings.
+- Reason: Follow through on the user's design-critique findings with actual fixes, then keep iterating fix/verify/re-critique cycles (as instructed) until convergence rather than a single unverified pass.
+
 ## 2026-07-06 - Claude Code (audio pipeline + curriculum tightening)
 
 - Branch: `claude/audio-and-content-fixes`

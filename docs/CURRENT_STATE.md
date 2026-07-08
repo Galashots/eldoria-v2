@@ -1,6 +1,6 @@
 # Eldoria-V2 Current State
 
-Last refreshed on 2026-07-04. This file records volatile project status; `AGENTS.md` remains the durable operating contract.
+Last refreshed on 2026-07-06. This file records volatile project status; `AGENTS.md` remains the durable operating contract.
 
 ## Playable Vertical Slice
 
@@ -31,6 +31,7 @@ Last refreshed on 2026-07-04. This file records volatile project status; `AGENTS
 - Ported Web SpeechSynthesis garbage collection reference pins and lifecycle event listeners.
 - A full audio pipeline: looping background music, footstep/interact/reward/quest-complete/UI-tap SFX, a default-on mute toggle in the HUD (persisted independent of per-profile saves), and read-aloud ducking music while a prompt is being spoken. **The shipped audio files are synthesized placeholders, not final assets** — see `ATTRIBUTION.md` for the concrete licensed packs to swap in once a normal (non-sandboxed) network is available.
 - The Grade 5 fraction template (`grade5-farm-fractions-sunberry-rows`) now asks for a fraction-to-decimal conversion with a denominator of 10 or 100, matching Alberta's actual outcome wording more closely than the previous generic "simplify to 1/4" framing.
+- A visual design pass (grounded in a live-screenshot critique against `docs/VISUAL_ASSET_CONTRACT.md`) fixed several code-only UI issues across the title screen, HUD, Stats & Mastery panel, and bonus-prompt panel: shared rounded-rect button/panel helpers (`src/presentation/uiHelpers.ts`) replace ad hoc flat rectangles; the bonus-prompt panel background is now fully opaque (fixing a label-ghosting bug caused by a stale 0.96 alpha); the Stats panel gives each keepsake slot its own caption instead of one shared "(Empty Slot)" label and uses a slate-blue divider to read as a distinct "character sheet" screen; the mute and gold-coin HUD icons are hand-drawn vector shapes instead of emoji; the title screen has a warm gradient background and its "Tap a hero to start" line moved up to use freed vertical space. Confirmed via fresh Playwright screenshots across both profiles (title, world, Stats panel with real mastery/keepsake data, bonus prompt) and a full `npm run check` + unit + asset-pipeline + Playwright smoke pass. Tile/sprite art, the Grade 5 Ranger visual identity, and title-card hero portraits remain out of scope for this pass (art/story-gated, reserved for a user/ChatGPT checkpoint per `AGENTS.md`).
 
 ## Visual And Asset State
 
