@@ -1,6 +1,6 @@
 # Eldoria-V2 Current State
 
-Last refreshed on 2026-07-06. This file records volatile project status; `AGENTS.md` remains the durable operating contract.
+Last refreshed on 2026-07-08. This file records volatile project status; `AGENTS.md` remains the durable operating contract.
 
 ## Playable Vertical Slice
 
@@ -17,7 +17,6 @@ Last refreshed on 2026-07-06. This file records volatile project status; `AGENTS
 - Arcade Physics bounds now cover the full farm map, so the crop/scarecrow and Practice Slime targets are reachable through normal movement rather than only test positioning.
 - Optional prompt panels render above the actor and provide a button-sized pointer target for `Skip bonus`.
 - Portrait phone/tablet layouts show a DOM-based landscape-orientation message instead of shrinking the playable canvas into an unreadable strip.
-- A privacy-safe 10-15 minute child-clarity checklist is ready for separate Grade 2 and Grade 5 sessions.
 - A parent-facing real-child playtest guide documents the live iPad setup, controls, per-profile session scripts, save reset steps, observation notes, and blocker-versus-polish triage.
 - Hero animation/rendering is isolated in a profile-configured presentation controller; the unchanged Grade 5 placeholder remains the fallback until approved Ranger art exists.
 - Mira's two errands now use a renderer-independent farm quest state system while preserving the existing version-1 save fields and player-facing behavior.
@@ -43,21 +42,44 @@ Last refreshed on 2026-07-06. This file records volatile project status; `AGENTS
 - Grade 2 Mage walk v001 is preloaded and plays six-frame directional loops while keyboard or joystick movement is active, returning to the matching idle loop on release.
 - Grade 2 Mage cast v001 is preloaded and plays a brief directional presentation-only clip when ACTION is pressed away from interaction targets, returning to matching walk or idle.
 - Grade 2 Mage hurt v001 is preloaded and can be triggered only from a development/test-safe path as a brief directional presentation-only clip that preserves movement underneath, cancels cast cleanly, and recovers to matching walk or idle with no combat, damage, reward, quest, or save effects.
-- The Grade 5 Ranger Explorer technical target is validated as `char_ranger_boy_base`; final visual identity, seed frame, and image prompt remain pending the required ChatGPT approval.
+- The Grade 5 Ranger Explorer technical target is validated as `char_ranger_boy_base`; final production sprite generation remains pending a dedicated art prompt/asset PR.
 - Grade 5 continues to use the existing adventurer placeholder; its presentation is unchanged.
 - Equipment, farm/village, crop, building, and UI production art remain target specifications only; Grade 2 Mage idle, walk, cast, and hurt runtime presentation are integrated.
 
 ## Active Milestone
 
-The starter farm slice is technically ready for its real-child clarity checkpoint, with the live iPad setup and separate Grade 2 and Grade 5 sessions documented in `docs/REAL_CHILD_PLAYTEST_GUIDE.md`. Grade 2 Mage idle, walk, cast, and hurt presentation are live, while Grade 5 remains on the existing placeholder presentation. Refactoring for quest states, presentation delegation, unit test suites, stable interaction ID mappings, and save migrations is fully complete and verified. The Stats & Mastery UI panel and SpeechSynthesis GC fixes have been successfully ported onto this new architecture and verified via Playwright integration smoke tests.
+The project is pivoting from the originally planned real-child clarity checkpoint to an **Attention-First Opening Pass** because the boys' limited iPad time is likely to go to already-fun games unless Eldoria captures attention immediately.
+
+The current build is technically verified but **not child-validated**. Do not claim real-child UX validation. The next milestone is to make the first 60-90 seconds feel more magical, responsive, and game-like before expanding quest count.
+
+Planning source of truth for this milestone:
+
+- `docs/ATTENTION_FIRST_OPENING_PLAN_2026-07.md`
+
+Approved product decisions now recorded there:
+
+- Grade 5 direction is **Ranger Explorer** for player-facing identity, while preserving the internal `grade5-adventurer` profile ID for now.
+- The Sleepy Sprouts / Wildbloom Sprig thread should keep the "old magic waking" idea but use more immediate, exciting wording.
+- Placeholder audio is acceptable as pipeline infrastructure but should be softened, muted-by-default, or replaced before treating a build as first-impression-ready.
 
 ## Next Checkpoint
 
-An AI-assisted technical walkthrough of both profiles (`docs/playtests/AI_ASSISTED_WALKTHROUGH_2026-07-05.md`) found zero blockers — full errand loop, save/reload, and the bonus-only rule all held under genuine keyboard play. That is not a substitute for the real checkpoint: run the Grade 2 and Grade 5 sessions in `docs/REAL_CHILD_PLAYTEST_GUIDE.md` in landscape with an actual child. Fix only demonstrated blockers or repeated confusion, then obtain ChatGPT approval for the Grade 5 Ranger Explorer visual identity and image prompt before generating its seed frame. The Sleepy Sprouts errand adds new story/dialogue wording (continuing the second errand's "old magic waking" thread) that has not yet had a user/ChatGPT curriculum-and-story review pass; do that before writing further quest content on top of it.
+Implement a small, focused Attention-First Opening PR from `docs/ATTENTION_FIRST_OPENING_PLAN_2026-07.md`.
+
+Recommended implementation priorities:
+
+1. Title/profile screen: make the profiles feel like hero choices, especially Mage vs Ranger Explorer.
+2. Opening Mira/Sleepy Sprouts wording: make the old-magic hook more exciting without adding quest #4.
+3. Reward/charm feedback: make early rewards feel clearer and more magical.
+4. Audio risk reduction: ensure placeholder background music is not irritating and read-aloud remains dominant.
+
+Do not merge stale PR #51 as-is. Treat its atmosphere ideas as reference only unless rebased, split, and re-verified against latest `main`.
+
+After this milestone lands, pause for a product/design review before deciding whether the next step is quest #4, Grade 5 Ranger art, real audio replacement, or a small atmosphere pass.
 
 ## Lighting Note (for whenever the atmosphere work lands)
 
-A research pass initially surfaced a Phaser 3 tutorial (normal maps + the `Light2D` pipeline) as a cheap way to add torch/window glow beyond the ambient day/evening tint. Checked directly against the installed dependency: this project runs Phaser `^4.2.0`, which ships its own purpose-built `PointLight` game object (`this.add.pointlight(x, y, color, radius, intensity, attenuation)`, in `node_modules/phaser/src/gameobjects/pointlight/`) — no normal maps, no per-sprite shader setup, explicitly documented for effects like "flickering torches or muzzle flashes," and cheaper to add than the Phaser 3 recipe. WebGL-only (no Canvas fallback), which is a non-issue given `Phaser.AUTO` and modern iPad/desktop browsers. Use this native API instead of the Phaser 3 tutorial when the atmosphere/lighting pass happens (currently proposed but unimplemented on `main`; the ambient tint/particles/shadows referenced in `docs/EXPANSION_PROPOSALS_2026-07.md` live only in the still-open PR #51 branch as of this writing).
+A research pass initially surfaced a Phaser 3 tutorial (normal maps + the `Light2D` pipeline) as a cheap way to add torch/window glow beyond the ambient day/evening tint. Checked directly against the installed dependency: this project runs Phaser `^4.2.0`, which ships its own purpose-built `PointLight` game object (`this.add.pointlight(x, y, color, radius, intensity, attenuation)`, in `node_modules/phaser/src/gameobjects/pointlight/`) — no normal maps, no per-sprite shader setup, explicitly documented for effects like "flickering torches or muzzle flashes," and cheaper to add than the Phaser 3 recipe. WebGL-only (no Canvas fallback), which is a non-issue given `Phaser.AUTO` and modern iPad/desktop browsers. Use this native API instead of the Phaser 3 tutorial when the atmosphere/lighting pass happens. The older ambient tint/particles/shadows work referenced in still-open PR #51 must be rebased and re-audited before use.
 
 ## Routine Merge Policy
 
