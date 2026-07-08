@@ -2,6 +2,21 @@
 
 This file records repository changes made through ChatGPT so future work can see what changed, who made it, and when.
 
+## 2026-07-08 - ChatGPT (attention-first opening milestone plan)
+
+- Branch: `chatgpt/attention-first-planning`
+- Files changed:
+  - `docs/ATTENTION_FIRST_OPENING_PLAN_2026-07.md` (new)
+  - `docs/CURRENT_STATE.md`
+- Summary: Docs-only planning update. Replaces the previously-planned real-child iPad playtest checkpoint with a new next milestone, the **Attention-First Opening Pass** — the product assumption being that the boys' limited iPad time will go to already-fun games unless Eldoria's first 60-90 seconds feels like a real fantasy game, not a systems prototype.
+- Product decisions recorded (per `AGENTS.md`'s reserved-decisions list, approved here via ChatGPT checkpoint):
+  - Grade 5's player-facing identity moves toward **Ranger Explorer** (explorer/tracker, forest cloak, clues, tactical bonuses), while the internal `grade5-adventurer` profile ID and existing tests stay unchanged for now.
+  - The Sleepy Sprouts / Wildbloom Sprig "old magic waking" thread gets more immediate, exciting wording (draft lines included in the plan), with the Sprig established as a future hook for secrets/discovery bonuses (not implemented yet).
+  - Placeholder audio remains acceptable as pipeline infrastructure but must be softened, muted-by-default, or replaced before a build counts as first-impression-ready.
+- Explicit guardrails for the follow-up implementation PR: no quest #4, no broad `WorldScene` refactor, no merging stale PR #51 as-is (reference only, requires rebase + split + fresh screenshots first), preserve save compatibility and the bonus-only learning rule.
+- `docs/CURRENT_STATE.md`'s Active Milestone and Next Checkpoint sections now point at this plan instead of `docs/REAL_CHILD_PLAYTEST_GUIDE.md`, and are explicit that the current build is technically verified but not child-validated.
+- Reason: Give Codex/Claude Code a concrete, scoped execution brief for the next content PR, and record the product-direction decisions this milestone depends on before implementation starts.
+
 ## 2026-07-06 - Claude Code (design critique + visual polish)
 
 - Branch: `claude/design-polish` (stacked on `claude/audio-and-content-fixes`, PR #54)
