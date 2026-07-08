@@ -382,9 +382,17 @@ export const QUESTION_TEMPLATES: QuestionTemplate[] = [
     contexts: ['farm'],
     minDifficulty: 1,
     maxDifficulty: 5,
+    // Uses a denominator of 10 or 100 so the prompt targets Alberta's actual
+    // Grade 5 outcome (fraction <-> decimal conversion with denominators of
+    // 10 or 100), not just generic fraction simplification.
     makePrompt: ({ context }) => {
-      const plantedRows = randomInt(2, 5);
-      const totalRows = plantedRows * 4;
+      const useHundredths = randomInt(0, 1) === 1;
+      const denominator = useHundredths ? 100 : 10;
+      const planted = useHundredths ? randomInt(1, 99) : randomInt(1, 9);
+      const digits = useHundredths ? String(planted).padStart(2, '0') : String(planted);
+      const answer = `0.${digits}`;
+      const misplacedRight = useHundredths ? `${digits[0]}.${digits[1]}` : `${digits}.0`;
+      const extraZero = `0.0${digits}`;
 
       return {
         id: `${context}-grade5-fractions-sunberry-rows`,
@@ -392,12 +400,12 @@ export const QUESTION_TEMPLATES: QuestionTemplate[] = [
         subject: 'math',
         skill: 'fractions',
         context,
-        text: `${plantedRows} of ${totalRows} garden rows have sunberries. What fraction is that in simplest form?`,
-        answer: '1/4',
-        choices: shuffledChoices('1/4', ['1/3', '3/4']),
+        text: `${planted} of ${denominator} garden rows have sunberries. What decimal is that?`,
+        answer,
+        choices: shuffledChoices(answer, [misplacedRight, extraZero]),
         rewardKind: 'bonus-harvest',
-        hint: `Divide both ${plantedRows} and ${totalRows} by ${plantedRows}.`,
-        explanation: `${plantedRows}/${totalRows} simplifies to 1/4.`
+        hint: `${planted} out of ${denominator} means ${planted} in the ${useHundredths ? 'hundredths' : 'tenths'} place.`,
+        explanation: `${planted}/${denominator} equals ${answer}.`
       };
     }
   },

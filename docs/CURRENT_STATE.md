@@ -29,6 +29,8 @@ Last refreshed on 2026-07-04. This file records volatile project status; `AGENTS
 - Established save migration seam in SaveSystem and updated WorldScene saving to dynamically read CURRENT_SAVE_VERSION.
 - Center-canvas Stats & Mastery UI overlay showing active profile details, gold, charms keepsake slot, and visual mastery bars across core subjects. Interactive STATS HUD button and I/Tab hotkeys fully functional.
 - Ported Web SpeechSynthesis garbage collection reference pins and lifecycle event listeners.
+- A full audio pipeline: looping background music, footstep/interact/reward/quest-complete/UI-tap SFX, a default-on mute toggle in the HUD (persisted independent of per-profile saves), and read-aloud ducking music while a prompt is being spoken. **The shipped audio files are synthesized placeholders, not final assets** — see `ATTRIBUTION.md` for the concrete licensed packs to swap in once a normal (non-sandboxed) network is available.
+- The Grade 5 fraction template (`grade5-farm-fractions-sunberry-rows`) now asks for a fraction-to-decimal conversion with a denominator of 10 or 100, matching Alberta's actual outcome wording more closely than the previous generic "simplify to 1/4" framing.
 
 ## Visual And Asset State
 
@@ -51,6 +53,10 @@ The starter farm slice is technically ready for its real-child clarity checkpoin
 ## Next Checkpoint
 
 An AI-assisted technical walkthrough of both profiles (`docs/playtests/AI_ASSISTED_WALKTHROUGH_2026-07-05.md`) found zero blockers — full errand loop, save/reload, and the bonus-only rule all held under genuine keyboard play. That is not a substitute for the real checkpoint: run the Grade 2 and Grade 5 sessions in `docs/REAL_CHILD_PLAYTEST_GUIDE.md` in landscape with an actual child. Fix only demonstrated blockers or repeated confusion, then obtain ChatGPT approval for the Grade 5 Ranger Explorer visual identity and image prompt before generating its seed frame. The Sleepy Sprouts errand adds new story/dialogue wording (continuing the second errand's "old magic waking" thread) that has not yet had a user/ChatGPT curriculum-and-story review pass; do that before writing further quest content on top of it.
+
+## Lighting Note (for whenever the atmosphere work lands)
+
+A research pass initially surfaced a Phaser 3 tutorial (normal maps + the `Light2D` pipeline) as a cheap way to add torch/window glow beyond the ambient day/evening tint. Checked directly against the installed dependency: this project runs Phaser `^4.2.0`, which ships its own purpose-built `PointLight` game object (`this.add.pointlight(x, y, color, radius, intensity, attenuation)`, in `node_modules/phaser/src/gameobjects/pointlight/`) — no normal maps, no per-sprite shader setup, explicitly documented for effects like "flickering torches or muzzle flashes," and cheaper to add than the Phaser 3 recipe. WebGL-only (no Canvas fallback), which is a non-issue given `Phaser.AUTO` and modern iPad/desktop browsers. Use this native API instead of the Phaser 3 tutorial when the atmosphere/lighting pass happens (currently proposed but unimplemented on `main`; the ambient tint/particles/shadows referenced in `docs/EXPANSION_PROPOSALS_2026-07.md` live only in the still-open PR #51 branch as of this writing).
 
 ## Routine Merge Policy
 

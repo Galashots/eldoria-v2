@@ -13,6 +13,7 @@ import { LearningBonusSystem } from '../systems/LearningBonusSystem';
 import { MasterySystem, type LearningMastery } from '../systems/MasterySystem';
 import { FarmQuestSystem, type FarmQuestOutcome } from '../systems/FarmQuestSystem';
 import { CURRENT_SAVE_VERSION, SaveSystem, type StarterQuestStep } from '../systems/SaveSystem';
+import { loadAudioMuted, saveAudioMuted } from '../systems/AudioPreference';
 
 type SceneInitData = {
   profileId?: ProfileId;
@@ -74,6 +75,13 @@ export class WorldScene extends Phaser.Scene {
   private hintText!: Phaser.GameObjects.Text;
   private practiceSlimeSprite?: Phaser.GameObjects.Sprite;
   private heroPresentation!: HeroPresentationController;
+  private music?: Phaser.Sound.BaseSound;
+  private muteButtonText!: Phaser.GameObjects.Text;
+  private lastFootstepAt = 0;
+  private readonly lastSfxAt: Partial<Record<string, number>> = {};
+  private readonly sfxCooldownMs = 90;
+  private readonly musicVolume = 0.32;
+  private readonly musicDuckedVolume = 0.06;
 
   constructor() {
     super('WorldScene');
@@ -142,8 +150,18 @@ export class WorldScene extends Phaser.Scene {
     this.heroPresentation = new HeroPresentationController(this, this.player, this.profileId);
     this.heroPresentation.create();
 
-    this.createHud();
+    // Passed into createHud() rather than read back from `this.sound.mute`
+    // there: Phaser's WebAudio `mute` getter reflects a GainNode value that
+    // a `setValueAtTime`-scheduled setter doesn't update synchronously, so
+    // re-reading it on the same tick can still return the pre-set value.
+    const initialAudioMuted = loadAudioMuted();
+    this.sound.mute = initialAudioMuted;
+
+    this.createHud(initialAudioMuted);
     this.createTouchControls();
+
+    this.music = this.sound.add('bgm-farm', { loop: true, volume: this.musicVolume });
+    this.music.play();
 
     this.events.on(Phaser.Scenes.Events.PAUSE, this.stopPromptReadAloud, this);
     this.events.on(Phaser.Scenes.Events.SLEEP, this.stopPromptReadAloud, this);
@@ -151,6 +169,10 @@ export class WorldScene extends Phaser.Scene {
       this.stopPromptReadAloud();
       this.resetJoystick();
       this.heroPresentation.dispose();
+      // destroy(), not just stop(): `this.sound` is a Game-level plugin
+      // shared across scene restarts, so a merely-stopped Sound instance
+      // would leak every time this WorldScene instance re-runs create().
+      this.music?.destroy();
       this.events.off(Phaser.Scenes.Events.PAUSE, this.stopPromptReadAloud, this);
       this.events.off(Phaser.Scenes.Events.SLEEP, this.stopPromptReadAloud, this);
     });
@@ -195,6 +217,10 @@ export class WorldScene extends Phaser.Scene {
 
     if (isMoving) {
       this.heroPresentation.setMovement(facingFromVector(inputX, inputY), true);
+      if (this.time.now - this.lastFootstepAt > 380) {
+        this.lastFootstepAt = this.time.now;
+        this.playSfx('sfx-footstep', 0.22);
+      }
     } else {
       this.heroPresentation.setIdle();
     }
@@ -328,7 +354,7 @@ export class WorldScene extends Phaser.Scene {
     });
   }
 
-  private createHud(): void {
+  private createHud(initialAudioMuted: boolean): void {
     this.add.rectangle(GAME_WIDTH / 2, 14, GAME_WIDTH - 20, 24, 0x2a1a08, 0.9)
       .setScrollFactor(0)
       .setStrokeStyle(1, 0x6f5126);
@@ -352,6 +378,17 @@ export class WorldScene extends Phaser.Scene {
     }).setOrigin(0.5).setScrollFactor(0);
 
     statsBtn.on('pointerdown', () => this.toggleStatsPanel());
+
+    const muteBtn = this.add.rectangle(GAME_WIDTH - 96, 14, 24, 16, 0x5f3d12, 0.9)
+      .setStrokeStyle(1, 0xffd666)
+      .setScrollFactor(0)
+      .setInteractive({ useHandCursor: true });
+
+    this.muteButtonText = this.add.text(GAME_WIDTH - 96, 14, initialAudioMuted ? '\u{1F507}' : '\u{1F50A}', {
+      fontSize: '11px'
+    }).setOrigin(0.5).setScrollFactor(0);
+
+    muteBtn.on('pointerdown', () => this.toggleAudioMute());
 
     this.add.rectangle(GAME_WIDTH / 2, 42, GAME_WIDTH - 20, 28, 0x162a12, 0.9)
       .setScrollFactor(0)
@@ -533,8 +570,35 @@ export class WorldScene extends Phaser.Scene {
       return false;
     }
 
+    this.playSfx('sfx-interact', 0.3);
     this.interactionHandlers[target.id](target);
     return true;
+  }
+
+  private playSfx(key: string, volume = 0.5): void {
+    // A short per-key cooldown keeps enthusiastic repeated taps (a common
+    // pattern for young kids) from stacking overlapping copies of the same
+    // one-shot sound into a buzz.
+    const now = this.time.now;
+    if ((this.lastSfxAt[key] ?? -Infinity) + this.sfxCooldownMs > now) return;
+    this.lastSfxAt[key] = now;
+    this.sound.play(key, { volume });
+  }
+
+  private setMusicVolume(volume: number): void {
+    const sound = this.music as (Phaser.Sound.WebAudioSound | Phaser.Sound.HTML5AudioSound) | undefined;
+    sound?.setVolume(volume);
+  }
+
+  private toggleAudioMute(): void {
+    // Read the getter exactly once. Phaser's WebAudio `mute` getter reflects
+    // a GainNode's value, and the setter schedules the change via
+    // AudioParam.setValueAtTime — re-reading `this.sound.mute` right after
+    // setting it can still return the pre-toggle value on the same tick.
+    const nextMuted = !this.sound.mute;
+    this.sound.mute = nextMuted;
+    saveAudioMuted(nextMuted);
+    this.muteButtonText.setText(nextMuted ? '\u{1F507}' : '\u{1F50A}');
   }
 
   private handleMiraInteraction(): void {
@@ -604,6 +668,7 @@ export class WorldScene extends Phaser.Scene {
       }
       this.refreshHud();
       showSparkles = true;
+      this.playSfx('sfx-quest-complete', 0.4);
     }
 
     if (outcome.foundItem) {
@@ -776,16 +841,22 @@ export class WorldScene extends Phaser.Scene {
     utterance.rate = 0.85;
     utterance.pitch = 1.05;
 
+    // Read-aloud always wins over music, so duck it for the duration of the
+    // utterance and restore it on end/error/manual cancel (stopPromptReadAloud).
+    this.setMusicVolume(this.musicDuckedVolume);
+
     // Prevent garbage collection mid-speech
     this.activeUtterance = utterance;
     utterance.onend = () => {
       if (this.activeUtterance === utterance) {
         this.activeUtterance = null;
+        this.setMusicVolume(this.musicVolume);
       }
     };
     utterance.onerror = () => {
       if (this.activeUtterance === utterance) {
         this.activeUtterance = null;
+        this.setMusicVolume(this.musicVolume);
       }
     };
 
@@ -793,6 +864,7 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private stopPromptReadAloud(): void {
+    this.setMusicVolume(this.musicVolume);
     if (this.hasPromptReadAloudSupport()) {
       window.speechSynthesis.cancel();
     }
@@ -827,6 +899,7 @@ export class WorldScene extends Phaser.Scene {
     if (goldReward > 0) {
       this.showFloatingReward(`+${goldReward} Gold`, this.player.x, this.player.y - 26, '#ffd666');
       this.createSparkleBurst(this.player.x, this.player.y - 12);
+      this.playSfx('sfx-reward', 0.45);
     }
   }
 
@@ -874,6 +947,7 @@ export class WorldScene extends Phaser.Scene {
       if (this.busy) return;
       this.openStatsPanel();
     }
+    this.playSfx('sfx-ui-tap', 0.35);
   }
 
   private openStatsPanel(): void {
