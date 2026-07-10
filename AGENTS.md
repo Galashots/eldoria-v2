@@ -2,7 +2,9 @@
 
 ## Project
 
-This repository is `Galashots/eldoria-v2`, a private/offline fantasy-learning 2D RPG for two boys preparing for Grade 2 and Grade 5 in Calgary, Alberta.
+This repository is `Galashots/eldoria-v2`, an intentionally public fantasy-learning 2D RPG for two boys preparing for Grade 2 and Grade 5 in Calgary, Alberta.
+
+Because the repository is public, never commit secrets, credentials, or additional sensitive personal data. Keep any personal details already present (such as first names and city) general and do not expand them.
 
 The game should feel like a beautiful, fun, low-friction fantasy RPG first. Learning should be embedded into play as optional bonuses, not presented as worksheets or blocking quizzes.
 
