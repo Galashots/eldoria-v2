@@ -1,18 +1,19 @@
 # Eldoria-V2 Current State
 
-Last refreshed on 2026-07-08. This file records volatile project status; `AGENTS.md` remains the durable operating contract.
+Last refreshed on 2026-07-09. This file records volatile project status; `AGENTS.md` remains the durable operating contract.
 
 ## Playable Vertical Slice
 
 - Phaser, Vite, TypeScript, and Tiled farm map.
 - Grade 2 audio-first and Grade 5 reader-mode profiles.
+- A fresh profile now enters a short, skippable **Waking Gate** action scene before the farm: the Mage fires three spell sparks and the Ranger Explorer fires three tracking shots, with immediate touch/keyboard feedback, impact reactions, progress pips, a completion burst, and no learning gate or save-schema change. Existing saves and returning profiles enter the farm directly.
 - Keyboard movement, dynamic lower-left joystick, and lower-right ACTION control.
 - Mira's First Errand with objective HUD, optional crop/slime prompts, return reward, save/load, and permanent Sunberry Charm keepsake.
 - One optional second micro-errand, The Whispering Scarecrow, becomes available after Mira's first errand, reuses the existing crop patch interaction, and adds a short investigate-and-return loop with a text-only Moonseed Charm discovery and a small gold reward.
 - Learning remains bonus-only: wrong answers and skips never block quest progress.
 - Floating gold/item feedback, primitive sparkle bursts, and per-skill mastery records.
 - Contextual Grade 2/Grade 5 templates and development/E2E-only deterministic prompt preview.
-- Six Playwright vertical-slice smoke tests covering both profiles, quest/save behavior, mastery, templates, preview side-effect safety, portrait-orientation guidance, and the Stats & Mastery panel.
+- Playwright browser coverage now includes the one-time Waking Gate flow plus the existing vertical-slice tests covering both profiles, quest/save behavior, mastery, templates, preview side-effect safety, portrait-orientation guidance, and the Stats & Mastery panel.
 - Crop Bonus and Practice Slime interactions now provide short, readable visual feedback before their unchanged optional prompts open.
 - Arcade Physics bounds now cover the full farm map, so the crop/scarecrow and Practice Slime targets are reachable through normal movement rather than only test positioning.
 - Optional prompt panels render above the actor and provide a button-sized pointer target for `Skip bonus`.
@@ -49,21 +50,18 @@ Last refreshed on 2026-07-08. This file records volatile project status; `AGENTS
 
 ## Active Milestone
 
-The **Attention-First Opening Pass** (`docs/ATTENTION_FIRST_OPENING_PLAN_2026-07.md`) is implemented and verified — see the vertical-slice bullet above for what shipped. This replaced the originally planned real-child clarity checkpoint because the boys' limited iPad time is likely to go to already-fun games unless Eldoria captures attention immediately.
+The **First Playable Magic Hook** is implemented as a deliberately small scene between profile selection and the first fresh farm visit. It turns the opening promise into immediate input and reaction without adding a worksheet, quest #4, a random-reward loop, or new save fields.
 
-The current build is technically verified but **still not child-validated**. Do not claim real-child UX validation — that remains a separate, not-yet-run checkpoint (`docs/REAL_CHILD_PLAYTEST_GUIDE.md`).
+The design goal is healthy engagement: clear agency, strong feedback, profile identity, and a fast path into the actual game. The scene is always skippable, plays only for a fresh profile, and does not use timers, streak pressure, variable rewards, or other dark-pattern retention mechanics.
+
+The build remains technically verified rather than child-validated until the deployed iPad experience is observed directly.
 
 ## Next Checkpoint
 
-Per the plan's own "Product Review Notes For After Implementation," pause here for a product/design review before adding more content. Worth checking specifically:
-
-- Does the title screen make each profile feel like a hero?
-- Does Mira's first interaction create curiosity rather than reading as a chore?
-- Does the charm reward feel satisfying?
-- Is the placeholder audio still irritating, or acceptable as a temporary stand-in?
-- Do the Grade 2 and Grade 5 paths still feel appropriately distinct (audio-first/younger vs. reader-mode/older)?
-
-Once that review lands, the likely next steps (in no particular order, pending a decision) are: quest #4, the Grade 5 Ranger Explorer production art pass, real licensed audio (still blocked by this environment's network policy — see `ATTRIBUTION.md`), or a small atmosphere pass salvaged from PR #51 (rebased and re-verified, not merged as-is).
+1. Run CI and inspect the new Waking Gate scene in desktop Chrome and iPad Safari, checking touch targets, text fit, sound levels, and the transition into the farm.
+2. Confirm the first-run scene appears once per fresh profile and that returning saves go directly to the farm.
+3. After that verification, prioritize an **in-world profile ability loop** over quest #4: Mage magic and Ranger tracking should interact with a creature or secret inside the farm, with a small permanent discovery reward.
+4. Run the Grade 5 Ranger Explorer production-art pass in parallel so the world model matches the title/profile promise.
 
 ## Lighting Note (for whenever the atmosphere work lands)
 

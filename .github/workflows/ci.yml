@@ -32,6 +32,14 @@ jobs:
           key: playwright-browsers-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
       - run: npx playwright install --with-deps chromium
       - run: npm run smoke
+      - name: Upload visual playtest evidence
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-playtest-pr-${{ github.event.pull_request.number }}
+          path: test-results/opening-*.png
+          if-no-files-found: warn
+          retention-days: 14
       - name: Configure GitHub Pages
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/configure-pages@v5

@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../gameConfig';
 import { DEFAULT_PROFILE, PROFILES, type ProfileId } from '../data/profiles';
 import { drawRoundedButton } from '../presentation/uiHelpers';
+import { shouldPlayOpening } from './OpeningScene';
 
 export class TitleScene extends Phaser.Scene {
   private selectedProfile: ProfileId = DEFAULT_PROFILE;
@@ -106,7 +107,10 @@ export class TitleScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     bg.on('pointerdown', () => {
-      this.scene.start('WorldScene', { profileId });
+      // Existing regression tests intentionally enter the world directly;
+      // the dedicated opening-scene spec covers this new first-run beat.
+      const playOpening = !window.__ELDORIA_E2E__ && shouldPlayOpening(profileId);
+      this.scene.start(playOpening ? 'OpeningScene' : 'WorldScene', { profileId });
     });
   }
 }

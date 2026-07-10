@@ -55,13 +55,14 @@ For supervised iPad sessions, see the [real-child playtest guide](docs/REAL_CHIL
 - Loads a Tiled-compatible farm map
 - Pixel-perfect Phaser renderer
 - Keyboard and dynamic touch movement with collision and camera follow
-- Grade 2 audio-first Mage and Grade 5 reader-mode Adventurer profiles
-- Mira's first errand and optional Whispering Scarecrow follow-up
+- Grade 2 audio-first Mage and Grade 5 reader-mode Ranger Explorer profiles
+- A short, skippable first-run Waking Gate action scene with profile-specific spell/tracking feedback before the farm begins
+- Mira's first errand plus the optional Whispering Scarecrow and Sleepy Sprouts follow-ups
 - Optional crop and Practice Slime learning bonuses that never gate progress
 - Persistent quest, reward, inventory, position, and per-skill mastery data
 - Production Grade 2 Mage and Practice Slime presentation assets
-- Landscape tablet guidance and Playwright vertical-slice smoke coverage
-- Interactive Stats & Mastery panel with gold, keepsake, and per-skill progress
+- Landscape tablet guidance and Playwright browser coverage for the opening and vertical slice
+- Interactive Stats & Mastery panel with gold, keepsakes, and per-skill progress
 - GitHub Actions validation, build, and browser smoke checks
 - Automatic GitHub Pages deployment from verified `main` builds
 
