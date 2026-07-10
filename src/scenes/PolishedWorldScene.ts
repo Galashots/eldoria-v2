@@ -89,6 +89,7 @@ export class PolishedWorldScene extends WorldScene {
     this.installPracticeSlimeEncounter();
     this.addFarmColorGrade();
     this.addPlayerShadow();
+    this.addInteractiveObjectShadows();
     this.addMiraGuidance();
     this.installWildbloomDiscovery();
     this.createPolishedHudText();
@@ -304,6 +305,33 @@ export class PolishedWorldScene extends WorldScene {
     const { player } = this.presentationInternals;
     this.playerShadow = this.add.ellipse(player.x, player.y + 9, 26, 10, 0x06110d, 0.35)
       .setDepth(1);
+  }
+
+  /**
+   * Grounds the remaining interactive world objects with the same soft shadow
+   * the player and Mira already use (contract Section 8a). The Practice Slime
+   * gets a shadow at its bottom-center base; the other bare quest markers get a
+   * small shadow on the tile beneath them so they read as objects hovering over
+   * the world rather than UI floating on top of it. Mira already has its own
+   * shadow (addMiraGuidance) and the Wildbloom spots draw their own, so both are
+   * skipped here. These objects do not move, so no per-frame update is needed.
+   */
+  private addInteractiveObjectShadows(): void {
+    const { targets, practiceSlimeSprite } = this.presentationInternals;
+
+    if (practiceSlimeSprite) {
+      // Slime sprite origin is bottom-center, so its base sits at the sprite y.
+      this.add.ellipse(practiceSlimeSprite.x, practiceSlimeSprite.y - 1, 20, 7, 0x06110d, 0.32)
+        .setDepth(1);
+    }
+
+    for (const target of targets) {
+      if (target.id === 'mira' || target.id === 'practice-slime') continue;
+      // The bare marker (WorldScene.drawTargetMarkers) floats ~12px above the
+      // target's map point; anchor the shadow on that ground point.
+      this.add.ellipse(target.x, target.y, 12, 5, 0x06110d, 0.28)
+        .setDepth(1);
+    }
   }
 
   private addMiraGuidance(): void {

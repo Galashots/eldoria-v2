@@ -52,6 +52,7 @@ Last refreshed on 2026-07-10. This file records volatile project status; `AGENTS
 - Inside the farm, Grade 5 reads as Ranger Explorer through a forest-green hood and mantle, leather harness cue, visible bow/quiver/arrows in every direction, and a short ACTION recoil/arrow presentation layered around the existing directional adventurer base. This is an intentional bridge, not final production art.
 - Wildbloom discoveries use cohesive code-drawn moss, stone, runes, leaves, flowers, glow, lore cards, and profile-colored reveal effects to create local visual interest without pretending the placeholder farm tiles are final art.
 - Mira now has a small code-drawn world-space NPC silhouette with the quest star above her rather than being represented only by a plain diamond marker. Final Mira production art remains pending.
+- Interactive farm objects now render soft ground shadows so they read as grounded rather than flat markers floating over the tile grid: the player and Mira already had shadows; the Practice Slime and the crop-bonus and sleepy-sprout quest markers now do too. Presentation-only, following visual contract Section 8a.
 - Equipment, farm/village, crop, building, and broader UI production art remain target specifications rather than final integrated assets.
 
 ## Active Milestone
