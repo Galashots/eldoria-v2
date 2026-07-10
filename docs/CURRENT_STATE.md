@@ -7,7 +7,7 @@ Last refreshed on 2026-07-10. This file records volatile project status; `AGENTS
 - Phaser, Vite, TypeScript, and Tiled farm map.
 - Grade 2 audio-first and Grade 5 reader-mode profiles.
 - A fresh profile now enters a short, skippable **Waking Gate** action scene before the farm: the Mage fires three spell sparks and the Ranger Explorer fires three tracking shots, with immediate touch/keyboard feedback, impact reactions, progress pips, a completion burst, and no learning gate or save-schema change. Existing saves and returning profiles enter the farm directly.
-- The first-minute visual polish pass replaces the opening's diagram hero with the real Mage sprite/cast animation (and the existing adventurer fallback for Ranger), simplifies the opening instructions, adds visibly escalating rune/crack/particle damage states, and carries the gate event into the farm through an arrival burst, guiding sparkle trail, player shadow, gold Mira marker, warmer presentation layer, and story-forward helper text.
+- The first-minute visual polish pass replaces the opening's diagram hero with the real Mage sprite/cast animation (and a tinted normalized hero proxy with bow/quiver cues for Ranger), simplifies the opening instructions, adds visibly escalating rune/crack/particle damage states, and carries the gate event into the farm through an arrival burst, guiding sparkle trail, player shadow, gold Mira marker, warmer presentation layer, and story-forward helper text.
 - Keyboard movement, dynamic lower-left joystick, and lower-right ACTION control.
 - Mira's First Errand with objective HUD, optional crop/slime prompts, return reward, save/load, and permanent Sunberry Charm keepsake.
 - One optional second micro-errand, The Whispering Scarecrow, becomes available after Mira's first errand, reuses the existing crop patch interaction, and adds a short investigate-and-return loop with a text-only Moonseed Charm discovery and a small gold reward.
@@ -45,7 +45,7 @@ Last refreshed on 2026-07-10. This file records volatile project status; `AGENTS
 - Grade 2 Mage walk v001 is preloaded and plays six-frame directional loops while keyboard or joystick movement is active, returning to the matching idle loop on release.
 - Grade 2 Mage cast v001 is preloaded and plays a brief directional presentation-only clip when ACTION is pressed away from interaction targets, returning to matching walk or idle.
 - Grade 2 Mage hurt v001 is preloaded and can be triggered only from a development/test-safe path as a brief directional presentation-only clip that preserves movement underneath, cancels cast cleanly, and recovers to matching walk or idle with no combat, damage, reward, quest, or save effects.
-- The Waking Gate now reuses the real Mage sprite and cast animation, while Ranger uses the existing adventurer fallback plus a presentation-only bow accent until production Ranger art exists.
+- The Waking Gate now reuses the real Mage sprite and cast animation, while Ranger uses a tinted normalized hero proxy plus presentation-only bow/quiver accents until production Ranger art exists.
 - The Grade 5 Ranger Explorer technical target is validated as `char_ranger_boy_base`; final production sprite generation remains pending a dedicated art prompt/asset PR.
 - Grade 5 continues to use the existing adventurer placeholder in the farm.
 - Equipment, farm/village, crop, building, and UI production art remain target specifications only; Grade 2 Mage idle, walk, cast, and hurt runtime presentation are integrated.
