@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { PreloadScene } from './scenes/PreloadScene';
 import { TitleScene } from './scenes/TitleScene';
 import { OpeningScene } from './scenes/OpeningScene';
-import { WorldScene } from './scenes/WorldScene';
+import { PolishedWorldScene } from './scenes/PolishedWorldScene';
 
 export const GAME_WIDTH = 480;
 export const GAME_HEIGHT = 320;
@@ -26,5 +26,5 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
       debug: false
     }
   },
-  scene: [PreloadScene, TitleScene, OpeningScene, WorldScene]
+  scene: [PreloadScene, TitleScene, OpeningScene, PolishedWorldScene]
 };
