@@ -2,6 +2,8 @@
 
 Source reference: [Executable 2D RPG Visual Design Guide for Eldoria V2](research/visual-design/Executable_2D_RPG_Visual_Design_Guide_for_Eldoria_V2.pdf)
 
+Additional source reference (2026-07-10): [Stardew-Caliber Visual Research](research/visual-design/STARDEW_CALIBER_VISUAL_RESEARCH_2026-07.md), which produced Sections 4a, 8a, and 13-15 below.
+
 ## 1. Purpose
 
 Eldoria-V2 is a fantasy-learning RPG first. This contract prevents visual drift and gives Codex, Claude, artists, and asset-generation tools one consistent specification for sprites, tiles, UI, VFX, buildings, and related metadata.
@@ -36,6 +38,13 @@ This contract does not override the product rule that learning never gates adven
 - Use a consistent upper-left, slightly front-facing key light; default shadows fall down-right/back.
 - Establish a readable silhouette and major color clusters before adding shading detail.
 - Avoid noisy dithering on actors, combat-readable elements, icons, and UI. Reserve restrained dithering for broad environmental surfaces when useful.
+- Sub-palette names are a starting point, not the finished contract. Before committing production art in a given sub-palette, lock its actual hex values in a small swatch reference alongside that asset's PR so later assets in the same family cannot silently drift (see the research doc's Finding 3).
+
+## 4a. Perspective Discipline
+
+- The ground plane (tiles, floors) renders as a true top-down/3-4 projection.
+- Anything with height — trees, buildings, fences, standing characters, props — is flattened toward the camera rather than drawn in true isometric or true top-down, the same "pop-up book" technique Stardew Valley and comparable top-down RPGs use. This keeps tall objects visually grounded on the tile grid instead of appearing to float or lean incorrectly.
+- Do not mix true-isometric art with this flattened style in the same scene; pick the flattened convention for all new environment and building art.
 
 ## 5. Asset Naming Contract
 
@@ -124,6 +133,12 @@ Every exported sheet or loose gameplay asset should eventually have a JSON sidec
 - Attacks must identify anticipation, contact, and recovery timing; combat clips must declare hitbox windows.
 - Prototype frame counts may be reduced, but the intended production timing and direction set must still be documented.
 
+## 8a. Grounding And Shadows
+
+- Every dynamic actor, NPC, monster, and interactive world object (Mira, the Practice Slime, crop/quest markers, and anything similar) must render a soft, semi-transparent ground shadow anchored under its feet/base, offset down-right to match the upper-left key light.
+- This is the cheapest available fix for sprites otherwise reading as flat markers floating over the tile grid (see the research doc's Finding 4); it renders on the existing `actors_feet` layer and requires no new art asset (a drawn ellipse/soft circle is sufficient).
+- Placeholder markers (colored circles/diamonds standing in for un-produced art) are not exempt: they still need a shadow so they read as objects in the world rather than UI floating over it.
+
 ## 9. Layering And Render Order
 
 Use this canonical order:
@@ -173,6 +188,9 @@ Every future visual asset PR should confirm:
 - [ ] Collision, hitbox, hurtbox, interaction, or socket metadata when relevant.
 - [ ] Declared atlas family.
 - [ ] Nearest/point rendering expectation for gameplay pixel art.
+- [ ] Ground shadow present for dynamic actors/NPCs/interactive objects (Section 8a).
+- [ ] Flattened "pop-up book" perspective for anything with height, not true isometric (Section 4a).
+- [ ] Terrain tiles that border another terrain type declare edge/corner blend variants rather than a hard grid boundary (Section 13).
 - [ ] No unrelated runtime changes.
 
 ## 12. Near-Term Eldoria Application
@@ -186,3 +204,28 @@ The next practical visual milestones, each requiring its own reviewed scope, are
 5. UI panel/icon polish.
 
 None of those assets or runtime changes are implemented by this contract.
+
+## 13. Terrain Blending (Autotiling)
+
+Source: [Stardew-Caliber Visual Research, Finding 1](research/visual-design/STARDEW_CALIBER_VISUAL_RESEARCH_2026-07.md).
+
+- Any two adjacent terrain tile types (grass/dirt, dirt/water, grass/village-stone, etc.) must be authored with edge and corner blend variants rather than meeting at a hard grid line. This is the single highest-leverage fix identified for the "reads like a development grid" problem.
+- Default to a reduced ~13-tile blend set per terrain boundary (1 center + 4 edges + 4 outer corners + 4 inner corners) rather than the full 47-tile blob set, unless a specific boundary is proven to need the full set. `tile_farm_path_dirt` already declares most of this set (center, 4 edges, 4 corners) and should be finished under this rule rather than redesigned.
+- Author and paint static terrain blending using Tiled's built-in Terrain Brush / Wangset feature. This requires no plugin or runtime code for tiles that do not change during gameplay.
+- Tiles whose state changes at runtime from gameplay (for example `tile_farm_tilled_soil`'s dry/wet/seeded states) are a same-cell sprite swap, not a neighbor blend, and do not need autotiling.
+- If a future feature requires tiles that blend based on changing gameplay state (not just static map authoring), evaluate `phaser3-autotile` for runtime Wangset lookups, but first spike its compatibility with this project's Phaser `^4.2.0` — it targets the Phaser 3 API and compatibility is unverified.
+
+## 14. Lighting And Atmosphere
+
+Source: [Stardew-Caliber Visual Research, Finding 5](research/visual-design/STARDEW_CALIBER_VISUAL_RESEARCH_2026-07.md).
+
+- Phaser's native `this.add.pointlight(x, y, color, radius, intensity, attenuation)` (available in the project's Phaser `^4.2.0`) is the preferred tool for future controlled light sources — torches, windows, spell impacts, muzzle flashes — without needing normal maps or a `Light2D` setup.
+- Before any per-light work, apply a single cheap atmosphere layer first: a full-scene, semi-transparent color-tint rectangle (warm gold for daytime; reserve cooler tones for any future evening/interior scene) blended with `MULTIPLY` or `SCREEN`. This is a few lines of Phaser code, not an art asset, and is what makes visually disconnected sprites read as lit by the same light source.
+- Do not build a full day/night cycle or weather system as part of this pass; it is explicitly out of scope until the core vertical slice is further along (see the research doc's non-goals).
+
+## 15. Feedback And Juice
+
+Source: [Stardew-Caliber Visual Research, Finding 6](research/visual-design/STARDEW_CALIBER_VISUAL_RESEARCH_2026-07.md).
+
+- Squash-and-stretch on impact/landing, brief screen shake on impact, and particles/decals that leave a lasting trace (rather than only flying and vanishing) are expected, standard techniques ("juice") for making sprites feel reactive. Eldoria-V2 already uses versions of the first two (the Waking Gate's camera shake, the Practice Slime's squash/hop reaction); keep using and naming this pattern deliberately in future PRs instead of reinventing it ad hoc each time.
+- Non-negotiable: juice must echo gameplay that already works. It must never gate, replace, or stand in for an actual gameplay or clarity improvement, and it must never be used in a way that pressures the player (no juice tied to countdowns, streak loss, or punishment). This is the same spirit as the existing "learning never gates adventure" rule and extends it to visual feedback.
