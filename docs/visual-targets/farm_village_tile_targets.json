@@ -29,6 +29,28 @@
       "preferredSource": "aseprite",
       "atlasFamily": "environment_farm",
       "visualRule": "Readable low-noise grass base; supports tiling without obvious seams; must not compete with actors or crop overlays.",
+      "notes": ["Specification only; no art is included.", "No runtime behavior is added.", "Boundary against tile_farm_path_dirt must use that target's center/edge/corner blend variants per contract Section 13, not a hard grid edge."]
+    },
+    {
+      "id": "tile_farm_grass_scatter",
+      "displayName": "Farm Grass Scatter Decoration",
+      "status": "target_only",
+      "category": "tile",
+      "canvasPx": [16, 16],
+      "footprintPx": [16, 16],
+      "pivotPx": [8, 15],
+      "ppu": 16,
+      "view": "top_down",
+      "directions": [],
+      "paletteFamilies": ["forest"],
+      "lightDirection": "upper_left",
+      "renderLayer": "decals_low",
+      "variants": ["tuft_a", "tuft_b", "pebble_a", "flower_a"],
+      "collision": { "solid": false, "body": null, "hurtbox": null, "hitboxes": [], "interaction": null },
+      "runtimeExport": "png",
+      "preferredSource": "aseprite",
+      "atlasFamily": "environment_farm",
+      "visualRule": "Sparse, non-repeating detail scattered over tile_farm_grass_base to break up grid monotony; must remain quieter than actors and crop overlays and must not obstruct walkability or interaction reads.",
       "notes": ["Specification only; no art is included.", "No runtime behavior is added."]
     },
     {
@@ -50,7 +72,7 @@
       "runtimeExport": "png",
       "preferredSource": "aseprite",
       "atlasFamily": "environment_farm",
-      "visualRule": "Clear walkable dirt path with readable edges; must connect cleanly to grass and village tiles.",
+      "visualRule": "Clear walkable dirt path with readable edges; must connect cleanly to grass and village tiles. This is the project's reference terrain-blend set per contract Section 13 (reduced ~13-tile blend, not the full 47-tile blob set), authored for Tiled's Terrain Brush.",
       "notes": ["Specification only; no art is included.", "No runtime behavior is added."]
     },
     {
