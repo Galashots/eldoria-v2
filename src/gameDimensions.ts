@@ -19,6 +19,14 @@ export const GAME_SCALE = 2;
 export const GAME_WIDTH = LEGACY_GAME_WIDTH * GAME_SCALE;
 export const GAME_HEIGHT = LEGACY_GAME_HEIGHT * GAME_SCALE;
 
+/**
+ * Historical coordinate conversion for save schema v1 -> v2.
+ * Keep this explicit and immutable even if the runtime renderer scale changes
+ * again in a later release; old saves must always migrate exactly once from
+ * the original 480x320 world coordinate space into the 960x640 space.
+ */
+export const WORLD_COORDINATE_SCALE_V1_TO_V2 = 2;
+
 /** Scales a screen-space pixel offset/size (not a GAME_WIDTH/HEIGHT-relative fraction) by GAME_SCALE. */
 export const sx = (value: number): number => value * GAME_SCALE;
 /** Scales a screen-space pixel offset/size (not a GAME_WIDTH/HEIGHT-relative fraction) by GAME_SCALE. */
