@@ -1,12 +1,13 @@
 # Eldoria-V2 Current State
 
-Last refreshed on 2026-07-09. This file records volatile project status; `AGENTS.md` remains the durable operating contract.
+Last refreshed on 2026-07-10. This file records volatile project status; `AGENTS.md` remains the durable operating contract.
 
 ## Playable Vertical Slice
 
 - Phaser, Vite, TypeScript, and Tiled farm map.
 - Grade 2 audio-first and Grade 5 reader-mode profiles.
 - A fresh profile now enters a short, skippable **Waking Gate** action scene before the farm: the Mage fires three spell sparks and the Ranger Explorer fires three tracking shots, with immediate touch/keyboard feedback, impact reactions, progress pips, a completion burst, and no learning gate or save-schema change. Existing saves and returning profiles enter the farm directly.
+- The first-minute visual polish pass replaces the opening's diagram hero with the real Mage sprite/cast animation (and the existing adventurer fallback for Ranger), simplifies the opening instructions, adds visibly escalating rune/crack/particle damage states, and carries the gate event into the farm through an arrival burst, guiding sparkle trail, player shadow, gold Mira marker, warmer presentation layer, and story-forward helper text.
 - Keyboard movement, dynamic lower-left joystick, and lower-right ACTION control.
 - Mira's First Errand with objective HUD, optional crop/slime prompts, return reward, save/load, and permanent Sunberry Charm keepsake.
 - One optional second micro-errand, The Whispering Scarecrow, becomes available after Mira's first errand, reuses the existing crop patch interaction, and adds a short investigate-and-return loop with a text-only Moonseed Charm discovery and a small gold reward.
@@ -44,8 +45,9 @@ Last refreshed on 2026-07-09. This file records volatile project status; `AGENTS
 - Grade 2 Mage walk v001 is preloaded and plays six-frame directional loops while keyboard or joystick movement is active, returning to the matching idle loop on release.
 - Grade 2 Mage cast v001 is preloaded and plays a brief directional presentation-only clip when ACTION is pressed away from interaction targets, returning to matching walk or idle.
 - Grade 2 Mage hurt v001 is preloaded and can be triggered only from a development/test-safe path as a brief directional presentation-only clip that preserves movement underneath, cancels cast cleanly, and recovers to matching walk or idle with no combat, damage, reward, quest, or save effects.
+- The Waking Gate now reuses the real Mage sprite and cast animation, while Ranger uses the existing adventurer fallback plus a presentation-only bow accent until production Ranger art exists.
 - The Grade 5 Ranger Explorer technical target is validated as `char_ranger_boy_base`; final production sprite generation remains pending a dedicated art prompt/asset PR.
-- Grade 5 continues to use the existing adventurer placeholder; its presentation is unchanged.
+- Grade 5 continues to use the existing adventurer placeholder in the farm.
 - Equipment, farm/village, crop, building, and UI production art remain target specifications only; Grade 2 Mage idle, walk, cast, and hurt runtime presentation are integrated.
 
 ## Active Milestone
@@ -60,15 +62,16 @@ The build remains technically verified rather than child-validated until the dep
 
 ## Next Checkpoint
 
-1. Implement the focused controller and minimal `WorldScene` integration described in `docs/PRACTICE_SLIME_COMBAT_PLAN_2026-07.md`.
-2. Prove that the first two hits do not open a prompt and the third hit does; skipping or answering incorrectly must still advance the quest.
-3. Capture browser screenshots for Mage and Ranger before, during, and after the encounter, and test deliberate three-tap input on iPad Safari.
-4. Run the Grade 5 Ranger Explorer production-art pass in parallel so the world model catches up to the profile promise.
-5. After the slime slice is proven, implement the Wildbloom Sprig discovery loop, then a small merchant/customization gold sink before deciding on quest #4.
+1. Complete browser and iPad verification of the first-minute visual polish, especially text fit, Mage cast readability, Ranger fallback readability, three-hit escalation, and gate-to-farm continuity.
+2. Implement the focused Practice Slime controller and minimal integration described in `docs/PRACTICE_SLIME_COMBAT_PLAN_2026-07.md`.
+3. Prove that the first two slime hits do not open a prompt and the third hit does; skipping or answering incorrectly must still advance the quest.
+4. Capture browser screenshots for Mage and Ranger before, during, and after the encounter, and test deliberate three-tap input on iPad Safari.
+5. Run the Grade 5 Ranger Explorer production-art pass in parallel so the world model catches up to the profile promise.
+6. After the slime slice is proven, implement the Wildbloom Sprig discovery loop, then a small merchant/customization gold sink before deciding on quest #4.
 
 ## Lighting Note (for whenever the atmosphere work lands)
 
-A research pass initially surfaced a Phaser 3 tutorial (normal maps + the `Light2D` pipeline) as a cheap way to add torch/window glow beyond the ambient day/evening tint. Checked directly against the installed dependency: this project runs Phaser `^4.2.0`, which ships its own purpose-built `PointLight` game object (`this.add.pointlight(x, y, color, radius, intensity, attenuation)`, in `node_modules/phaser/src/gameobjects/pointlight/`) — no normal maps, no per-sprite shader setup, explicitly documented for effects like "flickering torches or muzzle flashes," and cheaper to add than the Phaser 3 recipe. WebGL-only (no Canvas fallback), which is a non-issue given `Phaser.AUTO` and modern iPad/desktop browsers. Use this native API instead of the Phaser 3 tutorial when the atmosphere/lighting pass happens. The older ambient tint/particles/shadows work referenced in still-open PR #51 must be rebased and re-audited before use.
+A research pass initially surfaced a Phaser 3 tutorial (normal maps + the `Light2D` pipeline) as a cheap way to add torch/window glow beyond the ambient day/evening tint. Checked directly against the installed dependency: this project runs Phaser `^4.2.0`, which ships its own purpose-built `PointLight` game object (`this.add.pointlight(x, y, color, radius, intensity, attenuation)`, in `node_modules/phaser/src/gameobjects/pointlight/`) — no normal maps, no per-sprite shader setup, explicitly documented for effects like "flickering torches or muzzle flashes," and cheaper to add than the Phaser 3 recipe. WebGL-only (no Canvas fallback), which is a non-issue given `Phaser.AUTO` and modern iPad/desktop browsers. Use this native API instead of the Phaser 3 tutorial when the atmosphere/lighting pass happens.
 
 ## Routine Merge Policy
 
