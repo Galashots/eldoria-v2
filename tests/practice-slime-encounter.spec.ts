@@ -46,7 +46,10 @@ async function startAtSlime(page: Page, profile: 'grade2-mage' | 'grade5-adventu
       updateHint: () => void;
     };
     scene.setFirstQuestStep('find-slime');
-    scene.player.setPosition(704, 320);
+    // Stand just inside the 42px interaction radius instead of directly on
+    // top of the slime, so screenshots show the hero, projectile path, slime,
+    // and health pips as a readable encounter composition.
+    scene.player.setPosition(670, 320);
     scene.player.setVelocity(0, 0);
     scene.updateHint();
   });
