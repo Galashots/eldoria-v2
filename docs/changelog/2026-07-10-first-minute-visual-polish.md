@@ -12,7 +12,7 @@ Implemented the first code-backed visual pass inspired by the approved Waking Ga
 
 - Replaced the diagram-like Grade 2 hero with the existing production Mage sprite.
 - Reused the existing Mage cast animation for each spell shot.
-- Replaced the Ranger diagram with the existing adventurer fallback plus a presentation-only bow accent.
+- Replaced the blocky Ranger opening placeholder with a tinted normalized hero proxy, bow, and quiver treatment until approved Ranger production art lands.
 - Simplified the opening copy to `BREAK THE WAKING GATE!` and `Tap ACTION 3 times`.
 - Added layered gate rings, rune nodes, floating shards, visible cracks, stronger impact bursts, and escalating damage states.
 - Enlarged and emphasized the ACTION target while preserving gate taps, Space/E, and SKIP.
@@ -24,8 +24,8 @@ Implemented the first code-backed visual pass inspired by the approved Waking Ga
 - Added a gate-arrival burst and a short guiding sparkle trail toward Mira.
 - Added a player shadow, subtle atmosphere motes, warm color grading, and a clearer gold Mira marker.
 - Reworded the initial on-screen objective to connect the gate event to Mira.
-- Replaced `Explore. Learning bonuses are optional.` with `Old magic is stirring nearby.`
-- Reformatted contextual helper text as `ACTION • ...`.
+- Replaced `Explore. Learning bonuses are optional.` with `Old magic is stirring nearby.` in the presentation layer while preserving the gameplay text object for regression stability.
+- Reformatted contextual helper text as `ACTION • ...` in the presentation layer.
 
 ## Verification Coverage
 
