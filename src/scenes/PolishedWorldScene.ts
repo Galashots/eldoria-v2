@@ -35,6 +35,8 @@ export class PolishedWorldScene extends WorldScene {
   private arrivedFromOpening = false;
   private playerShadow?: Phaser.GameObjects.Ellipse;
   private miraPulse?: Phaser.GameObjects.Arc;
+  private presentationHint?: Phaser.GameObjects.Text;
+  private presentationObjective?: Phaser.GameObjects.Text;
 
   init(data: PolishedSceneInitData): void {
     this.arrivedFromOpening = data.fromOpening === true;
@@ -46,7 +48,7 @@ export class PolishedWorldScene extends WorldScene {
     this.addFarmColorGrade();
     this.addPlayerShadow();
     this.addMiraGuidance();
-    this.polishHudTypography();
+    this.createPolishedHudText();
 
     if (this.arrivedFromOpening) {
       this.playGateArrival();
@@ -56,15 +58,10 @@ export class PolishedWorldScene extends WorldScene {
   update(): void {
     super.update();
 
-    const { player, hintText } = this.presentationInternals;
+    const { player, hintText, objectiveText } = this.presentationInternals;
     this.playerShadow?.setPosition(player.x, player.y + 9);
-
-    const currentHint = hintText.text;
-    if (currentHint === 'Explore. Learning bonuses are optional.') {
-      hintText.setText('Old magic is stirring nearby.');
-    } else if (currentHint.startsWith('Action: ')) {
-      hintText.setText(`ACTION • ${currentHint.slice('Action: '.length)}`);
-    }
+    this.presentationHint?.setText(this.formatHint(hintText.text));
+    this.presentationObjective?.setText(this.formatObjective(objectiveText.text));
   }
 
   private get presentationInternals(): WorldScenePresentationInternals {
@@ -136,23 +133,49 @@ export class PolishedWorldScene extends WorldScene {
     });
   }
 
-  private polishHudTypography(): void {
+  private createPolishedHudText(): void {
     const { hintText, objectiveText } = this.presentationInternals;
 
-    if (objectiveText.text === 'Objective: Talk to Mira near the path.') {
-      objectiveText.setText("The gate's magic flew toward Mira—find her by the path.");
+    // Preserve the base Text objects and strings for gameplay/tests, but hide
+    // their rendering behind a presentation-only mirror with in-world copy.
+    objectiveText.setAlpha(0);
+    hintText.setAlpha(0);
+
+    this.presentationObjective = this.add.text(16, 40, this.formatObjective(objectiveText.text), {
+      fontFamily: 'system-ui',
+      fontSize: '11px',
+      color: '#fff3c9',
+      fontStyle: 'bold',
+      stroke: '#102016',
+      strokeThickness: 2,
+      wordWrap: { width: GAME_WIDTH - 32 }
+    }).setScrollFactor(0).setDepth(21);
+
+    this.presentationHint = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 18, this.formatHint(hintText.text), {
+      fontFamily: 'system-ui',
+      fontSize: '11px',
+      color: '#fff3c9',
+      backgroundColor: '#1a140d',
+      padding: { x: 10, y: 4 },
+      stroke: '#0d0905',
+      strokeThickness: 2
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(21);
+  }
+
+  private formatObjective(objective: string): string {
+    return objective === 'Objective: Talk to Mira near the path.'
+      ? "The gate's magic flew toward Mira—find her by the path."
+      : objective;
+  }
+
+  private formatHint(hint: string): string {
+    if (hint === 'Explore. Learning bonuses are optional.') {
+      return 'Old magic is stirring nearby.';
     }
-
-    objectiveText
-      .setColor('#fff3c9')
-      .setFontStyle('bold')
-      .setStroke('#102016', 2);
-
-    hintText
-      .setColor('#fff3c9')
-      .setBackgroundColor('#1a140d')
-      .setPadding({ x: 10, y: 4 })
-      .setStroke('#0d0905', 2);
+    if (hint.startsWith('Action: ')) {
+      return `ACTION • ${hint.slice('Action: '.length)}`;
+    }
+    return hint;
   }
 
   private playGateArrival(): void {
