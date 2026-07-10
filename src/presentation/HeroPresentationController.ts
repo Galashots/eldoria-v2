@@ -127,6 +127,15 @@ export class HeroPresentationController {
   create(): void {
     if (!this.config) return;
 
+    // Keep the long-standing Grade 5 physics sprite as the visible base so
+    // collision and regression helpers retain their existing seam. The role
+    // identity is supplied by presentation-only accents around that sprite.
+    if (this.isRanger()) {
+      this.physicsSprite.setVisible(true).setDepth(3).setFrame(0);
+      this.createRangerAccents();
+      return;
+    }
+
     for (const motion of ['idle', 'walk', 'action', 'hurt'] as const) {
       this.createAnimations(this.config.clips[motion]);
     }
@@ -141,10 +150,6 @@ export class HeroPresentationController {
       .setOrigin(0.5, 1)
       .setDepth(3)
       .play(this.config.clips.idle.animations.front);
-
-    if (this.isRanger()) {
-      this.createRangerAccents();
-    }
   }
 
   syncPosition(): void {
@@ -166,37 +171,49 @@ export class HeroPresentationController {
     }
 
     this.facing = facing;
-    if (moving) {
-      this.physicsSprite.setFrame(
-        facing === 'left' ? 2 : facing === 'right' ? 3 : facing === 'back' ? 1 : 0
-      );
-    }
+    this.motion = moving ? 'walk' : 'idle';
+    this.physicsSprite.setFrame(
+      facing === 'left' ? 2 : facing === 'right' ? 3 : facing === 'back' ? 1 : 0
+    );
+    this.redrawRangerAccents();
   }
 
   setIdle(): void {
     if (this.isOneShotActive()) return;
+    if (this.isRanger()) {
+      this.motion = 'idle';
+      this.redrawRangerAccents();
+      return;
+    }
     this.setAnimation(this.facing, 'idle');
   }
 
   setBusy(): void {
     this.cancelAction();
     this.cancelHurt();
+    if (this.isRanger()) {
+      this.motion = 'idle';
+      this.redrawRangerAccents();
+      return;
+    }
     this.setAnimation(this.facing, 'idle');
   }
 
   playAction(busy: boolean): boolean {
-    if (!this.sprite || busy || this.isOneShotActive()) return false;
+    if ((!this.sprite && !this.isRanger()) || busy || this.isOneShotActive()) return false;
 
     this.actionActive = true;
-    const actionKey = this.config!.clips.action.animations[this.facing];
-    this.setAnimation(this.facing, 'action');
 
     if (this.isRanger()) {
+      this.motion = 'action';
+      this.redrawRangerAccents();
       this.playRangerOneShot('action');
       return true;
     }
 
-    this.sprite.once(
+    const actionKey = this.config!.clips.action.animations[this.facing];
+    this.setAnimation(this.facing, 'action');
+    this.sprite!.once(
       Phaser.Animations.Events.ANIMATION_COMPLETE_KEY + actionKey,
       () => {
         this.actionActive = false;
@@ -207,19 +224,21 @@ export class HeroPresentationController {
   }
 
   playHurtForPreview(busy: boolean): boolean {
-    if (!this.sprite || busy || this.hurtActive) return false;
+    if ((!this.sprite && !this.isRanger()) || busy || this.hurtActive) return false;
 
     this.cancelAction();
     this.hurtActive = true;
-    const hurtKey = this.config!.clips.hurt.animations[this.facing];
-    this.setAnimation(this.facing, 'hurt');
 
     if (this.isRanger()) {
+      this.motion = 'hurt';
+      this.redrawRangerAccents();
       this.playRangerOneShot('hurt');
       return true;
     }
 
-    this.sprite.once(
+    const hurtKey = this.config!.clips.hurt.animations[this.facing];
+    this.setAnimation(this.facing, 'hurt');
+    this.sprite!.once(
       Phaser.Animations.Events.ANIMATION_COMPLETE_KEY + hurtKey,
       () => {
         this.hurtActive = false;
@@ -240,6 +259,7 @@ export class HeroPresentationController {
     this.rangerFrontAccents?.destroy();
     this.rangerBackAccents = undefined;
     this.rangerFrontAccents = undefined;
+    this.physicsSprite.setScale(1);
   }
 
   private createAnimations(clip: HeroClipConfig): void {
@@ -266,7 +286,6 @@ export class HeroPresentationController {
     this.facing = facing;
     this.motion = motion;
     this.sprite.play(this.config.clips[motion].animations[facing]);
-    this.redrawRangerAccents();
   }
 
   private cancelAction(): void {
@@ -298,12 +317,17 @@ export class HeroPresentationController {
   }
 
   private recover(): void {
-    if (!this.sprite || this.isOneShotActive()) return;
+    if ((!this.sprite && !this.isRanger()) || this.isOneShotActive()) return;
 
     const body = this.physicsSprite.body as Phaser.Physics.Arcade.Body | null;
     const velocityX = body?.velocity.x ?? 0;
     const velocityY = body?.velocity.y ?? 0;
     const moving = Math.abs(velocityX) > 0.01 || Math.abs(velocityY) > 0.01;
+
+    if (this.isRanger()) {
+      this.setMovement(moving ? facingFromVector(velocityX, velocityY) : this.facing, moving);
+      return;
+    }
 
     if (!moving) {
       this.setAnimation(this.facing, 'idle');
@@ -432,8 +456,7 @@ export class HeroPresentationController {
   }
 
   private playRangerOneShot(kind: 'action' | 'hurt'): void {
-    const targets: Array<Phaser.GameObjects.Sprite | Phaser.GameObjects.Graphics> = [];
-    if (this.sprite) targets.push(this.sprite);
+    const targets: Array<Phaser.GameObjects.Sprite | Phaser.GameObjects.Graphics> = [this.physicsSprite];
     if (this.rangerBackAccents) targets.push(this.rangerBackAccents);
     if (this.rangerFrontAccents) targets.push(this.rangerFrontAccents);
 
@@ -466,8 +489,9 @@ export class HeroPresentationController {
   }
 
   private resetRangerOneShotScale(): void {
-    for (const target of [this.sprite, this.rangerBackAccents, this.rangerFrontAccents]) {
-      target?.setScale(1);
-    }
+    this.physicsSprite.setScale(1);
+    this.sprite?.setScale(1);
+    this.rangerBackAccents?.setScale(1);
+    this.rangerFrontAccents?.setScale(1);
   }
 }
