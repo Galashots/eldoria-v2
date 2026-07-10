@@ -139,6 +139,10 @@ export class PolishedWorldScene extends WorldScene {
   private polishHudTypography(): void {
     const { hintText, objectiveText } = this.presentationInternals;
 
+    if (objectiveText.text === 'Objective: Talk to Mira near the path.') {
+      objectiveText.setText("The gate's magic flew toward Mira—find her by the path.");
+    }
+
     objectiveText
       .setColor('#fff3c9')
       .setFontStyle('bold')
