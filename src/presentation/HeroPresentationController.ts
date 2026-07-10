@@ -432,8 +432,10 @@ export class HeroPresentationController {
   }
 
   private playRangerOneShot(kind: 'action' | 'hurt'): void {
-    const targets = [this.sprite, this.rangerBackAccents, this.rangerFrontAccents]
-      .filter((target): target is Phaser.GameObjects.GameObject & Phaser.GameObjects.Components.Transform => Boolean(target));
+    const targets: Array<Phaser.GameObjects.Sprite | Phaser.GameObjects.Graphics> = [];
+    if (this.sprite) targets.push(this.sprite);
+    if (this.rangerBackAccents) targets.push(this.rangerBackAccents);
+    if (this.rangerFrontAccents) targets.push(this.rangerFrontAccents);
 
     this.scene.tweens.add({
       targets,
