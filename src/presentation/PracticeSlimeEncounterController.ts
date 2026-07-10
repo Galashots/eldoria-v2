@@ -6,7 +6,7 @@ const TOTAL_HITS = 3;
 const IMPACT_DELAY_MS = 150;
 const HIT_LOCK_MS = 390;
 const FINISH_DURATION_MS = 720;
-const HEALTH_CONTAINER_NAME = 'practice-slime-health';
+const HEALTH_PIP_NAME = 'practice-slime-health-pip';
 const PROJECTILE_NAME = 'practice-slime-projectile';
 const IMPACT_NAME = 'practice-slime-impact';
 const COMPLETE_TEXT_NAME = 'practice-slime-complete-text';
@@ -46,7 +46,6 @@ export class PracticeSlimeEncounterController {
   private hitCount = 0;
   private inputLocked = false;
   private completed = false;
-  private healthContainer?: Phaser.GameObjects.Container;
   private pips: Phaser.GameObjects.Arc[] = [];
   private delayedCalls: Phaser.Time.TimerEvent[] = [];
 
@@ -61,24 +60,23 @@ export class PracticeSlimeEncounterController {
   }
 
   create(): void {
-    if (this.healthContainer?.active) return;
-
-    this.healthContainer = this.scene.add.container(this.slime.x, this.slime.y - 43)
-      .setName(HEALTH_CONTAINER_NAME)
-      .setDepth(5);
+    if (this.pips.some((pip) => pip.active)) return;
 
     for (let index = 0; index < TOTAL_HITS; index += 1) {
-      const pip = this.scene.add.circle(-13 + index * 13, 0, 4, 0x18211b, 1)
-        .setStrokeStyle(1.5, 0xffd666, 0.95);
+      const pip = this.scene.add.circle(0, 0, 4, 0x18211b, 1)
+        .setName(`${HEALTH_PIP_NAME}-${index + 1}`)
+        .setStrokeStyle(1.5, 0xffd666, 0.95)
+        .setDepth(5);
       this.pips.push(pip);
-      this.healthContainer.add(pip);
     }
 
     this.reset();
   }
 
   update(): void {
-    this.healthContainer?.setPosition(this.slime.x, this.slime.y - 43);
+    this.pips.forEach((pip, index) => {
+      pip.setPosition(this.slime.x - 13 + index * 13, this.slime.y - 43);
+    });
   }
 
   hintLabel(): string {
@@ -106,7 +104,8 @@ export class PracticeSlimeEncounterController {
     this.setLocked(false);
     this.slime.setVisible(true).setAlpha(1).setScale(1).setAngle(0);
     this.slime.play('practice-slime-idle', true);
-    this.healthContainer?.setVisible(true).setAlpha(1).setScale(1);
+    this.pips.forEach((pip) => pip.setVisible(true).setAlpha(1).setScale(1));
+    this.update();
     this.refreshPips();
   }
 
@@ -123,11 +122,10 @@ export class PracticeSlimeEncounterController {
   dispose(): void {
     this.clearDelayedCalls();
     this.scene.tweens.killTweensOf(this.slime);
-    if (this.healthContainer) {
-      this.scene.tweens.killTweensOf(this.healthContainer);
-      this.healthContainer.destroy(true);
-    }
-    this.healthContainer = undefined;
+    this.pips.forEach((pip) => {
+      this.scene.tweens.killTweensOf(pip);
+      pip.destroy();
+    });
     this.pips = [];
     this.inputLocked = false;
   }
@@ -328,7 +326,7 @@ export class PracticeSlimeEncounterController {
     });
 
     this.scene.tweens.add({
-      targets: this.healthContainer,
+      targets: this.pips,
       scale: 1.25,
       alpha: 0,
       duration: 480,
