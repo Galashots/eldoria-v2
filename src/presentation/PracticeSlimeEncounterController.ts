@@ -80,6 +80,7 @@ export class PracticeSlimeEncounterController {
   }
 
   hintLabel(): string {
+    if (this.completed) return 'Practice complete!';
     const verb = this.profileId === 'grade2-mage' ? 'Cast at' : 'Shoot';
     const remaining = Math.max(0, TOTAL_HITS - this.hitCount);
     return `${verb} Practice Slime (${remaining} ${remaining === 1 ? 'hit' : 'hits'})`;
