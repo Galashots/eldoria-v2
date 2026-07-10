@@ -1,6 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
 import { CANVAS, clickGame } from './support/canvas';
 
+const IPAD_LANDSCAPE_VIEWPORT = { width: 1180, height: 820 } as const;
+
 /**
  * Visual evidence inherited from the pre-migration beautification baseline.
  *
@@ -91,4 +93,18 @@ test('baseline comparison: Stats & Mastery panel', async ({ page }) => {
   await holdKey(page, 'KeyI', 100);
   await page.waitForTimeout(200);
   await page.screenshot({ path: 'test-results/baseline-stats-panel.png', fullPage: true });
+});
+
+test('iPad-like landscape comparison: Mage farm arrival', async ({ page }) => {
+  await page.setViewportSize(IPAD_LANDSCAPE_VIEWPORT);
+  await enterFarmDirectly(page, 'grade2-mage');
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: 'test-results/baseline-ipad-landscape-mage.png', fullPage: true });
+});
+
+test('iPad-like landscape comparison: Ranger farm arrival', async ({ page }) => {
+  await page.setViewportSize(IPAD_LANDSCAPE_VIEWPORT);
+  await enterFarmDirectly(page, 'grade5-adventurer');
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: 'test-results/baseline-ipad-landscape-ranger.png', fullPage: true });
 });
