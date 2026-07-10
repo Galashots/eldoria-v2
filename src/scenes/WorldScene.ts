@@ -82,7 +82,10 @@ export class WorldScene extends Phaser.Scene {
   private lastFootstepAt = 0;
   private readonly lastSfxAt: Partial<Record<string, number>> = {};
   private readonly sfxCooldownMs = 90;
-  private readonly musicVolume = 0.32;
+  // Lowered from the first pass's 0.32: the placeholder loop is only ~12.6s,
+  // so at first-impression volumes its repetition became noticeable fast.
+  // Softer here reduces that risk until real licensed music replaces it.
+  private readonly musicVolume = 0.22;
   private readonly musicDuckedVolume = 0.06;
 
   constructor() {
@@ -221,7 +224,10 @@ export class WorldScene extends Phaser.Scene {
       this.heroPresentation.setMovement(facingFromVector(inputX, inputY), true);
       if (this.time.now - this.lastFootstepAt > 380) {
         this.lastFootstepAt = this.time.now;
-        this.playSfx('sfx-footstep', 0.22);
+        // Softer than other one-shot SFX on purpose: this one repeats every
+        // ~380ms during movement, so it's the SFX most likely to feel
+        // annoying on a first playthrough.
+        this.playSfx('sfx-footstep', 0.16);
       }
     } else {
       this.heroPresentation.setIdle();
@@ -706,6 +712,7 @@ export class WorldScene extends Phaser.Scene {
   private applyQuestOutcome(outcome: FarmQuestOutcome, persist: boolean): void {
     if (outcome.objectiveChanged) this.refreshObjective();
 
+    let bigSparkles = false;
     let showSparkles = false;
     if (outcome.reward) {
       this.gold += outcome.reward.gold;
@@ -713,7 +720,11 @@ export class WorldScene extends Phaser.Scene {
       if (outcome.reward.item) {
         const { key, name } = outcome.reward.item;
         this.inventory[key] = (this.inventory[key] ?? 0) + 1;
-        this.showFloatingReward(`Received: ${name}`, this.player.x, this.player.y - 44, '#d7ffb8');
+        // A keepsake charm is a bigger moment than a gold trickle, so it
+        // gets its own emphasized pop-in text and a larger sparkle burst
+        // rather than reusing the plain floating-text treatment.
+        this.showFloatingReward(`Received: ${name}`, this.player.x, this.player.y - 46, '#d7ffb8', true);
+        bigSparkles = true;
       }
       this.refreshHud();
       showSparkles = true;
@@ -725,7 +736,13 @@ export class WorldScene extends Phaser.Scene {
       showSparkles = true;
     }
 
-    if (showSparkles) this.createSparkleBurst(this.player.x, this.player.y - 14);
+    // A quest-chapter narrative beat (e.g. Mira's opening "something old is
+    // waking up" hook) has a toast but no reward yet — a small sparkle still
+    // sells "something magical is happening" without implying an item/gold
+    // reward was granted.
+    if (!showSparkles && outcome.toast && outcome.objectiveChanged) showSparkles = true;
+
+    if (showSparkles) this.createSparkleBurst(this.player.x, this.player.y - 14, bigSparkles);
     if (outcome.toast) this.showToast(outcome.toast);
     if (persist && (outcome.stateChanged || outcome.reward)) this.save();
   }
@@ -948,37 +965,52 @@ export class WorldScene extends Phaser.Scene {
     }
   }
 
-  private showFloatingReward(message: string, x: number, y: number, color: string): void {
+  private showFloatingReward(message: string, x: number, y: number, color: string, emphasize = false): void {
     const text = this.add.text(x, y, message, {
       fontFamily: 'system-ui',
-      fontSize: '12px',
+      fontSize: emphasize ? '15px' : '12px',
       color,
       stroke: '#1a1208',
-      strokeThickness: 3
-    }).setOrigin(0.5).setDepth(20);
+      strokeThickness: emphasize ? 4 : 3
+    }).setOrigin(0.5).setDepth(20).setScale(emphasize ? 0.6 : 1);
+
+    if (emphasize) {
+      this.tweens.add({
+        targets: text,
+        scale: 1,
+        duration: 220,
+        ease: 'Back.easeOut'
+      });
+    }
 
     this.tweens.add({
       targets: text,
-      y: y - 22,
+      y: y - (emphasize ? 30 : 22),
       alpha: 0,
-      duration: 1200,
+      delay: emphasize ? 120 : 0,
+      duration: emphasize ? 1500 : 1200,
       ease: 'Sine.easeOut',
       onComplete: () => text.destroy()
     });
   }
 
-  private createSparkleBurst(x: number, y: number): void {
-    const sparkleCount = 8;
+  private createSparkleBurst(x: number, y: number, big = false): void {
+    const sparkleCount = big ? 14 : 8;
+    const distanceX = big ? 34 : 22;
+    const distanceY = big ? 26 : 16;
+    const duration = big ? 680 : 520;
+    const color = big ? 0xfff6cf : 0xfff0a3;
+    const radius = big ? 3 : 2;
     for (let index = 0; index < sparkleCount; index += 1) {
       const angle = (Math.PI * 2 * index) / sparkleCount;
-      const sparkle = this.add.circle(x, y, 2, 0xfff0a3, 0.95).setDepth(19);
+      const sparkle = this.add.circle(x, y, radius, color, 0.95).setDepth(19);
       this.tweens.add({
         targets: sparkle,
-        x: x + Math.cos(angle) * 22,
-        y: y + Math.sin(angle) * 16,
+        x: x + Math.cos(angle) * distanceX,
+        y: y + Math.sin(angle) * distanceY,
         alpha: 0,
         scale: 0.2,
-        duration: 520,
+        duration,
         ease: 'Sine.easeOut',
         onComplete: () => sparkle.destroy()
       });
@@ -1034,7 +1066,7 @@ export class WorldScene extends Phaser.Scene {
     }).setOrigin(0.5);
     panel.add(profileName);
 
-    const profileDesc = this.add.text(-90, -50, profile.readingMode === 'audio-first' ? 'Grade 2 Mage' : 'Grade 5 Adventurer', {
+    const profileDesc = this.add.text(-90, -50, profile.readingMode === 'audio-first' ? 'Grade 2 Mage' : 'Grade 5 Ranger Explorer', {
       fontFamily: 'system-ui',
       fontSize: '10px',
       color: '#c9a66b'
@@ -1172,21 +1204,44 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private showToast(message: string): void {
-    const toast = this.add.text(GAME_WIDTH / 2, 66, message, {
+    const text = this.add.text(0, 0, message, {
       fontFamily: 'system-ui',
       fontSize: '13px',
       color: '#ffffff',
-      backgroundColor: '#3a2208',
-      padding: { x: 8, y: 5 },
       align: 'center',
-      wordWrap: { width: GAME_WIDTH - 40 }
-    }).setOrigin(0.5).setScrollFactor(0);
+      wordWrap: { width: GAME_WIDTH - 64 }
+    }).setOrigin(0.5);
+
+    const paddingX = 14;
+    const paddingY = 8;
+    const bg = drawRoundedPanelBackground(
+      this, 0, 0, text.width + paddingX * 2, text.height + paddingY * 2, 0x2a1a08, 0xffd666, 8
+    );
+
+    // A rounded gold-bordered card (matching the panel/HUD chrome) instead
+    // of a flat text-background box, with a quick pop-in so a quest or
+    // reward notification reads as a small event rather than debug text.
+    // Sits below the objective banner (which spans y 34-62) rather than
+    // drifting up into it, since this toast fires most often in exactly
+    // the moment the objective banner's text is also changing.
+    const toast = this.add.container(GAME_WIDTH / 2, 80, [bg, text])
+      .setScrollFactor(0)
+      .setDepth(40)
+      .setScale(0.85);
 
     this.tweens.add({
       targets: toast,
-      y: 54,
+      scale: 1,
+      duration: 160,
+      ease: 'Back.easeOut'
+    });
+
+    this.tweens.add({
+      targets: toast,
+      y: 70,
       alpha: 0,
-      duration: 2200,
+      delay: 260,
+      duration: 2000,
       ease: 'Sine.easeInOut',
       onComplete: () => toast.destroy()
     });
