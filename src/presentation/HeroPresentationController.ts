@@ -224,21 +224,15 @@ export class HeroPresentationController {
   }
 
   playHurtForPreview(busy: boolean): boolean {
-    if ((!this.sprite && !this.isRanger()) || busy || this.hurtActive) return false;
+    // The hurt clip remains a Grade 2 development/test presentation seam.
+    // Ranger identity feedback is handled by ACTION and never implies damage.
+    if (this.isRanger() || !this.sprite || busy || this.hurtActive) return false;
 
     this.cancelAction();
     this.hurtActive = true;
-
-    if (this.isRanger()) {
-      this.motion = 'hurt';
-      this.redrawRangerAccents();
-      this.playRangerOneShot('hurt');
-      return true;
-    }
-
     const hurtKey = this.config!.clips.hurt.animations[this.facing];
     this.setAnimation(this.facing, 'hurt');
-    this.sprite!.once(
+    this.sprite.once(
       Phaser.Animations.Events.ANIMATION_COMPLETE_KEY + hurtKey,
       () => {
         this.hurtActive = false;
