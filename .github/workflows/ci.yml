@@ -18,7 +18,15 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run check
+      - name: Run repository check
+        run: npm run check 2>&1 | tee check-output.txt
+      - name: Upload check diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: check-diagnostics-pr-${{ github.event.pull_request.number }}
+          path: check-output.txt
+          retention-days: 3
       - run: npm run test:asset-pipeline
       - run: npm run test:unit
       - name: Get installed Playwright version
