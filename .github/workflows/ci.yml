@@ -18,7 +18,17 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run check
+      - name: Run repository check
+        run: |
+          set -o pipefail
+          npm run check 2>&1 | tee check-output.txt
+      - name: Upload check diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: check-diagnostics-pr-${{ github.event.pull_request.number }}
+          path: check-output.txt
+          retention-days: 3
       - run: npm run test:asset-pipeline
       - run: npm run test:unit
       - name: Get installed Playwright version
@@ -31,13 +41,28 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-browsers-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
       - run: npx playwright install --with-deps chromium
-      - run: npm run smoke
+      - name: Run browser smoke suite
+        run: |
+          set -o pipefail
+          npm run smoke 2>&1 | tee smoke-output.txt
+      - name: Upload smoke diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-diagnostics-pr-${{ github.event.pull_request.number }}
+          path: |
+            smoke-output.txt
+            test-results/**
+          if-no-files-found: warn
+          retention-days: 3
       - name: Upload visual playtest evidence
         if: always() && github.event_name == 'pull_request'
         uses: actions/upload-artifact@v4
         with:
           name: visual-playtest-pr-${{ github.event.pull_request.number }}
-          path: test-results/opening-*.png
+          path: |
+            test-results/opening-*.png
+            test-results/slime-*.png
           if-no-files-found: warn
           retention-days: 14
       - name: Configure GitHub Pages
