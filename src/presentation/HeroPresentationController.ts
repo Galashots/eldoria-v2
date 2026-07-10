@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { GAME_SCALE } from '../gameDimensions';
 import type { ProfileId } from '../data/profiles';
 
 export type HeroFacing = 'front' | 'back' | 'left' | 'right';
@@ -59,7 +60,7 @@ const rangerClip = (motion: HeroMotion, frameRate: number, repeat: number): Hero
 export const HERO_PRESENTATION_CONFIGS: Partial<Record<ProfileId, HeroPresentationConfig>> = {
   'grade2-mage': {
     profileId: 'grade2-mage',
-    verticalOffset: 16,
+    verticalOffset: 16 * GAME_SCALE,
     clips: {
       idle: {
         textureKey: 'grade2-mage-idle-v001',
@@ -93,7 +94,7 @@ export const HERO_PRESENTATION_CONFIGS: Partial<Record<ProfileId, HeroPresentati
   },
   'grade5-adventurer': {
     profileId: 'grade5-adventurer',
-    verticalOffset: 16,
+    verticalOffset: 16 * GAME_SCALE,
     clips: {
       idle: rangerClip('idle', 1, -1),
       walk: rangerClip('walk', 4, -1),
@@ -148,6 +149,7 @@ export class HeroPresentationController {
       0
     )
       .setOrigin(0.5, 1)
+      .setScale(GAME_SCALE)
       .setDepth(3)
       .play(this.config.clips.idle.animations.front);
   }
@@ -253,7 +255,7 @@ export class HeroPresentationController {
     this.rangerFrontAccents?.destroy();
     this.rangerBackAccents = undefined;
     this.rangerFrontAccents = undefined;
-    this.physicsSprite.setScale(1);
+    this.physicsSprite.setScale(GAME_SCALE);
   }
 
   private createAnimations(clip: HeroClipConfig): void {
@@ -336,8 +338,11 @@ export class HeroPresentationController {
   }
 
   private createRangerAccents(): void {
-    this.rangerBackAccents = this.scene.add.graphics().setDepth(2.9);
-    this.rangerFrontAccents = this.scene.add.graphics().setDepth(3.1);
+    // Every drawn offset in redrawRangerAccents() stays in the original
+    // local design space; scaling these two Graphics objects themselves
+    // reproduces the accents at GAME_SCALE without touching that geometry.
+    this.rangerBackAccents = this.scene.add.graphics().setDepth(2.9).setScale(GAME_SCALE);
+    this.rangerFrontAccents = this.scene.add.graphics().setDepth(3.1).setScale(GAME_SCALE);
     this.syncPosition();
     this.redrawRangerAccents();
   }
@@ -454,10 +459,13 @@ export class HeroPresentationController {
     if (this.rangerBackAccents) targets.push(this.rangerBackAccents);
     if (this.rangerFrontAccents) targets.push(this.rangerFrontAccents);
 
+    // These punch scales replace (not multiply) the target's current
+    // scaleX/scaleY, so GAME_SCALE must be folded in — otherwise the punch
+    // would shrink the ranger from its 2x baseline down toward 1x.
     this.scene.tweens.add({
       targets,
-      scaleX: kind === 'action' ? 1.12 : 0.9,
-      scaleY: kind === 'action' ? 0.92 : 1.08,
+      scaleX: (kind === 'action' ? 1.12 : 0.9) * GAME_SCALE,
+      scaleY: (kind === 'action' ? 0.92 : 1.08) * GAME_SCALE,
       duration: 85,
       yoyo: true,
       ease: 'Sine.easeInOut',
@@ -483,9 +491,9 @@ export class HeroPresentationController {
   }
 
   private resetRangerOneShotScale(): void {
-    this.physicsSprite.setScale(1);
-    this.sprite?.setScale(1);
-    this.rangerBackAccents?.setScale(1);
-    this.rangerFrontAccents?.setScale(1);
+    this.physicsSprite.setScale(GAME_SCALE);
+    this.sprite?.setScale(GAME_SCALE);
+    this.rangerBackAccents?.setScale(GAME_SCALE);
+    this.rangerFrontAccents?.setScale(GAME_SCALE);
   }
 }

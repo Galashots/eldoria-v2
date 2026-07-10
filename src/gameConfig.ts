@@ -4,8 +4,20 @@ import { TitleScene } from './scenes/TitleScene';
 import { OpeningScene } from './scenes/OpeningScene';
 import { PolishedWorldScene } from './scenes/PolishedWorldScene';
 
-export const GAME_WIDTH = 480;
-export const GAME_HEIGHT = 320;
+// Re-exported from the Phaser-free gameDimensions module (not defined here)
+// so Node-side tooling — e.g. tests/support/canvas.ts — can import the real
+// GAME_WIDTH/GAME_HEIGHT without transitively importing 'phaser', which
+// throws outside a browser.
+export {
+  GAME_HEIGHT,
+  GAME_SCALE,
+  GAME_WIDTH,
+  LEGACY_GAME_HEIGHT,
+  LEGACY_GAME_WIDTH,
+  sx,
+  sy
+} from './gameDimensions';
+import { GAME_HEIGHT, GAME_WIDTH } from './gameDimensions';
 
 export const gameConfig: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,

@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { CANVAS, clickGame } from './support/canvas';
 
 type StarterQuestStep = 'talk-to-mira' | 'try-crop-bonus' | 'find-slime' | 'return-to-mira' | 'complete';
 
@@ -65,8 +66,6 @@ type HeroPresentation = {
   y: number | null;
 };
 
-const CANVAS = 'canvas';
-
 async function boot(page: Page): Promise<void> {
   await page.addInitScript(() => {
     window.__ELDORIA_E2E__ = true;
@@ -79,18 +78,8 @@ async function boot(page: Page): Promise<void> {
   await page.waitForFunction(() => Boolean(window.__ELDORIA_GAME__?.scene.getScene('TitleScene')));
 }
 
-async function clickGame(page: Page, gameX: number, gameY: number): Promise<void> {
-  const box = await page.locator(CANVAS).boundingBox();
-  if (!box) throw new Error('Canvas was not visible.');
-
-  await page.mouse.click(
-    box.x + (gameX / 480) * box.width,
-    box.y + (gameY / 320) * box.height
-  );
-}
-
 async function startProfile(page: Page, y: number): Promise<void> {
-  await clickGame(page, 240, y);
+  await clickGame(page, 480, y);
   await page.waitForFunction(() => window.__ELDORIA_GAME__?.scene.isActive('WorldScene'));
 }
 
@@ -336,7 +325,7 @@ async function setQuestStep(page: Page, step: StarterQuestStep): Promise<void> {
 }
 
 async function interact(page: Page): Promise<void> {
-  await clickGame(page, 426, 268);
+  await clickGame(page, 852, 536);
   await page.waitForTimeout(200);
 }
 
@@ -406,7 +395,7 @@ async function skipOpenPrompt(page: Page): Promise<void> {
     return scene.profileId;
   });
 
-  await clickGame(page, 240, profileId === 'grade2-mage' ? 254 : 242);
+  await clickGame(page, 480, profileId === 'grade2-mage' ? 508 : 484);
   await page.waitForTimeout(200);
 }
 
@@ -485,14 +474,14 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   test.setTimeout(60000);
 
   await boot(page);
-  await startProfile(page, 120);
+  await startProfile(page, 240);
 
   await expect.poll(async () => (await state(page)).objective).toContain('Talk to Mira');
   await expect.poll(async () => (await state(page)).hud).not.toContain('Sunberry Charm');
   expect(await heroPresentation(page)).toMatchObject({
     animation: 'grade2-mage-idle-front',
-    displayHeight: 48,
-    displayWidth: 32,
+    displayHeight: 96,
+    displayWidth: 64,
     heroVisible: true,
     originX: 0.5,
     originY: 1,
@@ -503,16 +492,16 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   const slime = await slimePresentation(page);
   expect(slime).toMatchObject({
     animation: 'practice-slime-idle',
-    displayHeight: 32,
-    displayWidth: 32,
+    displayHeight: 64,
+    displayWidth: 64,
     hopAnimationExists: true,
     idleAnimationExists: true,
     originX: 0.5,
     originY: 1,
     texture: 'practice-slime-v001',
     visible: true,
-    x: 704,
-    y: 320
+    x: 1408,
+    y: 640
   });
   expect(Number(slime.frame)).toBeGreaterThanOrEqual(0);
   expect(Number(slime.frame)).toBeLessThanOrEqual(3);
@@ -532,7 +521,7 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   await moveGrade2Hero(page, 'KeyW', 'back', 700);
   expect((await state(page)).player.y).toBeLessThan(start.y + 20);
 
-  await setPlayer(page, 160, 160);
+  await setPlayer(page, 320, 320);
   const beforeCast = await state(page);
   await castGrade2Hero(page, 'back');
   await castGrade2Hero(page, 'right', 'KeyD');
@@ -582,13 +571,13 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   await expect.poll(async () => (await heroPresentation(page)).animation).toBe('grade2-mage-idle-right');
   await castGrade2Hero(page, 'right');
 
-  await setPlayer(page, 416, 256);
+  await setPlayer(page, 832, 512);
   await expect.poll(async () => (await state(page)).hint).toContain('Mira');
   await interact(page);
   await expect.poll(async () => (await state(page)).questStep).toBe('try-crop-bonus');
   await expect.poll(async () => (await state(page)).objective).toContain('crop patch');
 
-  expect(await interactAt(page, 240, 416)).toContain('CropBonus');
+  expect(await interactAt(page, 480, 832)).toContain('CropBonus');
   await expect.poll(async () => cropFeedbackVisible(page)).toBe(true);
   await expect.poll(async () => hasCanvasText(page, 'READ ALOUD')).toBe(true);
   await expect.poll(async () => cropFeedbackVisible(page)).toBe(false);
@@ -596,7 +585,7 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   await expect.poll(async () => (await state(page)).questStep).toBe('find-slime');
   await expect.poll(async () => masteryTotal(page, 'skipped')).toBe(1);
 
-  expect(await interactAt(page, 704, 320)).toContain('Practice Slime');
+  expect(await interactAt(page, 1408, 640)).toContain('Practice Slime');
   await expect.poll(async () => (await slimePresentation(page)).animation).toBe('practice-slime-hop');
   await expect.poll(async () => hasCanvasText(page, 'READ ALOUD')).toBe(true);
   await skipOpenPrompt(page);
@@ -605,32 +594,32 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   await expect.poll(async () => (await state(page)).gold).toBe(0);
   await expect.poll(async () => masteryTotal(page, 'skipped')).toBe(2);
 
-  expect((await setPlayer(page, 416, 256)).hint).toContain('Mira');
+  expect((await setPlayer(page, 832, 512)).hint).toContain('Mira');
   await sceneInteract(page);
   await expect.poll(async () => (await state(page)).questStep).toBe('complete');
   await expect.poll(async () => (await state(page)).gold).toBe(10);
   await expect.poll(async () => (await state(page)).inventory.sunberryCharm).toBe(1);
   await expect.poll(async () => (await state(page)).hud).toContain('Keepsake: Sunberry Charm');
-  await expect.poll(async () => (await state(page)).hudWidth).toBeLessThanOrEqual(448);
+  await expect.poll(async () => (await state(page)).hudWidth).toBeLessThanOrEqual(896);
   await expect.poll(async () => masteryTotal(page, 'seen')).toBe(2);
   await expect.poll(async () => masteryTotal(page, 'attempted')).toBe(0);
   await expect.poll(async () => hasCanvasText(page, 'Received: Sunberry Charm')).toBe(true);
 
   await page.reload();
-  await startProfile(page, 120);
+  await startProfile(page, 240);
   await expect.poll(async () => (await state(page)).questStep).toBe('complete');
   await expect.poll(async () => (await state(page)).gold).toBe(10);
   await expect.poll(async () => (await state(page)).inventory.sunberryCharm).toBe(1);
   await expect.poll(async () => (await state(page)).hud).toContain('Keepsake: Sunberry Charm');
   await expect.poll(async () => (await state(page)).objective).toContain('whispering scarecrow');
 
-  await setPlayer(page, 416, 256);
+  await setPlayer(page, 832, 512);
   await sceneInteract(page);
   await expect.poll(async () => (await state(page)).objective).toContain('Check the scarecrow by the crop patch');
   await expect.poll(async () => (await state(page)).gold).toBe(10);
   await expect.poll(async () => (await state(page)).inventory.sunberryCharm).toBe(1);
 
-  expect(await interactAt(page, 240, 416)).toContain('Check Scarecrow');
+  expect(await interactAt(page, 480, 832)).toContain('Check Scarecrow');
   await expect.poll(async () => cropFeedbackVisible(page)).toBe(true);
   await expect.poll(async () => cropFeedbackVisible(page)).toBe(false);
   await skipOpenPrompt(page);
@@ -641,12 +630,12 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   await expect.poll(async () => hasCanvasText(page, 'Found: Moonseed Charm')).toBe(true);
 
   await page.reload();
-  await startProfile(page, 120);
+  await startProfile(page, 240);
   await expect.poll(async () => (await state(page)).gold).toBe(10);
   await expect.poll(async () => (await state(page)).inventory.sunberryCharm).toBe(1);
   await expect.poll(async () => (await state(page)).objective).toContain('Bring the Moonseed Charm back to Mira');
 
-  await setPlayer(page, 416, 256);
+  await setPlayer(page, 832, 512);
   await sceneInteract(page);
   await expect.poll(async () => (await state(page)).gold).toBe(14);
   await expect.poll(async () => (await state(page)).inventory.sunberryCharm).toBe(1);
@@ -655,35 +644,35 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   await expect.poll(async () => hasCanvasText(page, '+4 Gold')).toBe(true);
 
   await page.reload();
-  await startProfile(page, 120);
+  await startProfile(page, 240);
   await expect.poll(async () => (await state(page)).gold).toBe(14);
   await expect.poll(async () => (await state(page)).inventory.sunberryCharm).toBe(1);
   await expect.poll(async () => (await state(page)).objective).toContain('Talk to Mira about the sleepy sprouts');
 
-  await setPlayer(page, 416, 256);
+  await setPlayer(page, 832, 512);
   await sceneInteract(page);
   await expect.poll(async () => (await state(page)).objective).toContain('Wake the sleepy sprouts (0/3)');
 
-  expect(await interactAt(page, 496, 80)).toContain('Sleepy Sprout');
+  expect(await interactAt(page, 992, 160)).toContain('Sleepy Sprout');
   await expect.poll(async () => cropFeedbackVisible(page)).toBe(true);
   await expect.poll(async () => cropFeedbackVisible(page)).toBe(false);
   await skipOpenPrompt(page);
   await expect.poll(async () => (await state(page)).objective).toContain('Wake the sleepy sprouts (1/3)');
 
-  expect(await interactAt(page, 176, 528)).toContain('Sleepy Sprout');
+  expect(await interactAt(page, 352, 1056)).toContain('Sleepy Sprout');
   await expect.poll(async () => cropFeedbackVisible(page)).toBe(true);
   await expect.poll(async () => cropFeedbackVisible(page)).toBe(false);
   await skipOpenPrompt(page);
   await expect.poll(async () => (await state(page)).objective).toContain('Wake the sleepy sprouts (2/3)');
 
-  expect(await interactAt(page, 848, 528)).toContain('Sleepy Sprout');
+  expect(await interactAt(page, 1696, 1056)).toContain('Sleepy Sprout');
   await expect.poll(async () => cropFeedbackVisible(page)).toBe(true);
   await expect.poll(async () => cropFeedbackVisible(page)).toBe(false);
   await skipOpenPrompt(page);
   await expect.poll(async () => (await state(page)).objective).toContain('Tell Mira the sprouts are awake');
   await expect.poll(async () => masteryTotal(page, 'skipped')).toBe(6);
 
-  expect((await setPlayer(page, 416, 256)).hint).toContain('Mira');
+  expect((await setPlayer(page, 832, 512)).hint).toContain('Mira');
   await sceneInteract(page);
   await expect.poll(async () => (await state(page)).gold).toBe(20);
   await expect.poll(async () => (await state(page)).inventory.wildbloomSprig).toBe(1);
@@ -692,12 +681,12 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   await expect.poll(async () => hasCanvasText(page, '+6 Gold')).toBe(true);
 
   await page.reload();
-  await startProfile(page, 120);
+  await startProfile(page, 240);
   await expect.poll(async () => (await state(page)).gold).toBe(20);
   await expect.poll(async () => (await state(page)).inventory.wildbloomSprig).toBe(1);
   await expect.poll(async () => (await state(page)).objective).toContain('The Sleepy Sprouts');
 
-  await setPlayer(page, 416, 256);
+  await setPlayer(page, 832, 512);
   await sceneInteract(page);
   await expect.poll(async () => (await state(page)).gold).toBe(20);
   await expect.poll(async () => (await state(page)).inventory.sunberryCharm).toBe(1);
@@ -716,7 +705,7 @@ test('Grade 5 prompts keep reader profile without the Grade 2 read-aloud control
     }));
   });
   await page.reload();
-  await startProfile(page, 190);
+  await startProfile(page, 380);
 
   expect((await state(page)).mastery).toEqual({});
   expect(await heroPresentation(page)).toMatchObject({
@@ -734,7 +723,7 @@ test('Grade 5 prompts keep reader profile without the Grade 2 read-aloud control
 
   await expect.poll(async () => hasCanvasText(page, 'optional learning bonus')).toBe(true);
   await expect.poll(async () => hasCanvasText(page, 'READ ALOUD')).toBe(false);
-  await clickGame(page, 130, 194);
+  await clickGame(page, 260, 388);
 
   await expect.poll(async () => (await state(page)).gold).toBe(3);
   await expect.poll(async () => hasCanvasText(page, '+3 Gold')).toBe(true);
@@ -744,7 +733,7 @@ test('Grade 5 prompts keep reader profile without the Grade 2 read-aloud control
 
   await setQuestStep(page, 'try-crop-bonus');
   await openQuestPrompt(page, 'farm', 'CropBonus', 'find-slime', 'Objective updated: find the Practice Slime.');
-  await clickGame(page, 240, 194);
+  await clickGame(page, 480, 388);
 
   await expect.poll(async () => (await state(page)).questStep).toBe('find-slime');
   await expect.poll(async () => (await state(page)).gold).toBe(3);
@@ -754,7 +743,7 @@ test('Grade 5 prompts keep reader profile without the Grade 2 read-aloud control
   await expect.poll(async () => (await state(page)).mastery['grade5:math:area-perimeter']?.bestCorrectStreak).toBe(1);
 
   await page.reload();
-  await startProfile(page, 190);
+  await startProfile(page, 380);
   await expect.poll(async () => (await state(page)).mastery['grade5:math:area-perimeter']?.correct).toBe(1);
   await expect.poll(async () => (await state(page)).mastery['grade5:math:area-perimeter']?.wrong).toBe(1);
   await expect.poll(async () => (await state(page)).gold).toBe(3);
@@ -830,7 +819,7 @@ test('new contextual templates preserve grade-specific prompt contracts', async 
 
 test('prompt preview renders a chosen template without gameplay or save effects', async ({ page }) => {
   await boot(page);
-  await startProfile(page, 120);
+  await startProfile(page, 240);
 
   const grade2Before = await state(page);
   const grade2SaveBefore = await page.evaluate(() => localStorage.getItem('eldoria_v2_save_grade2-mage'));
@@ -850,7 +839,7 @@ test('prompt preview renders a chosen template without gameplay or save effects'
   expect(await page.evaluate(() => localStorage.getItem('eldoria_v2_save_grade2-mage'))).toBe(grade2SaveBefore);
 
   await page.reload();
-  await startProfile(page, 190);
+  await startProfile(page, 380);
 
   const grade5Before = await state(page);
   const grade5SaveBefore = await page.evaluate(() => localStorage.getItem('eldoria_v2_save_grade5-adventurer'));
@@ -889,7 +878,7 @@ test('interactive Stats & Mastery UI panel toggles open/closed and shows correct
   test.setTimeout(60000);
 
   await boot(page);
-  await startProfile(page, 190);
+  await startProfile(page, 380);
 
   await holdKey(page, 'KeyI', 100);
   await expect.poll(async () => hasCanvasText(page, 'STATS & MASTERY')).toBe(true);
@@ -897,18 +886,12 @@ test('interactive Stats & Mastery UI panel toggles open/closed and shows correct
   await expect.poll(async () => hasCanvasText(page, 'Grade 5 Ranger Explorer')).toBe(true);
   await expect.poll(async () => hasCanvasText(page, 'KEEPSAKES')).toBe(true);
 
-  await page.evaluate(() => {
-    const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as any;
-    const closeBtn = scene.statsContainer.list.find(
-      (child: any) => child.name === 'stats-close-button'
-    );
-    closeBtn.emit('pointerdown');
-  });
+  await clickGame(page, 480, 520);
   await expect.poll(async () => hasCanvasText(page, 'STATS & MASTERY')).toBe(false);
 
   await page.waitForTimeout(200);
 
-  await clickGame(page, 430, 14);
+  await clickGame(page, 860, 28);
   await expect.poll(async () => hasCanvasText(page, 'STATS & MASTERY')).toBe(true);
 
   await page.waitForTimeout(200);

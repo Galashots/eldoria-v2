@@ -1,4 +1,5 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import { CANVAS, clickGame } from './support/canvas';
 import { MIRA_FIRST_ERRAND, MIRA_SECOND_ERRAND, MIRA_THIRD_ERRAND } from '../src/data/quests';
 import { FarmQuestSystem } from '../src/systems/FarmQuestSystem';
 import { loadAudioMuted, saveAudioMuted } from '../src/systems/AudioPreference';
@@ -12,17 +13,6 @@ import {
 } from '../src/systems/SaveSystem';
 
 const SAVE_KEY = 'eldoria_v2_save_grade2-mage';
-const CANVAS = 'canvas';
-
-async function clickGame(page: Page, gameX: number, gameY: number): Promise<void> {
-  const box = await page.locator(CANVAS).boundingBox();
-  if (!box) throw new Error('Canvas was not visible.');
-
-  await page.mouse.click(
-    box.x + (gameX / 480) * box.width,
-    box.y + (gameY / 320) * box.height
-  );
-}
 
 class MemoryStorage implements Storage {
   private readonly values = new Map<string, string>();
@@ -53,7 +43,7 @@ class MemoryStorage implements Storage {
 }
 
 const minimalSave = (): SaveState => ({
-  version: 1,
+  version: CURRENT_SAVE_VERSION,
   profileId: 'grade2-mage',
   gold: 7,
   lastArea: 'farm',
@@ -78,7 +68,7 @@ test.afterEach(() => {
 });
 
 test.describe('SaveSystem runtime validation', () => {
-  test('round-trips valid minimal and complete version-1 saves', () => {
+  test('round-trips valid minimal and complete saves', () => {
     const minimal = minimalSave();
     SaveSystem.save(minimal);
     expect(SaveSystem.load('grade2-mage')).toEqual(minimal);
@@ -114,7 +104,7 @@ test.describe('SaveSystem runtime validation', () => {
     storage.setItem(SAVE_KEY, '{broken');
     expect(SaveSystem.load('grade2-mage')).toBeNull();
 
-    storage.setItem(SAVE_KEY, JSON.stringify({ ...minimalSave(), version: 2 }));
+    storage.setItem(SAVE_KEY, JSON.stringify({ ...minimalSave(), version: 99 }));
     expect(SaveSystem.load('grade2-mage')).toBeNull();
 
     storage.setItem(SAVE_KEY, JSON.stringify({ ...minimalSave(), profileId: 'grade5-adventurer' }));
@@ -179,7 +169,7 @@ test.describe('SaveSystem runtime validation', () => {
     await expect(page.locator(CANVAS)).toBeVisible();
     await page.waitForFunction(() => Boolean(window.__ELDORIA_GAME__?.scene.getScene('TitleScene')));
 
-    await clickGame(page, 240, 116);
+    await clickGame(page, 480, 232);
     await page.waitForFunction(() => window.__ELDORIA_GAME__?.scene.isActive('WorldScene'));
     const freshState = await page.evaluate(() => {
       const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
@@ -196,7 +186,7 @@ test.describe('SaveSystem runtime validation', () => {
 
     expect(freshState.gold).toBe(0);
     expect(freshState.objective).toContain('Talk to Mira');
-    expect(freshState.player).toEqual({ x: 160, y: 256 });
+    expect(freshState.player).toEqual({ x: 320, y: 512 });
     expect(pageErrors).toEqual([]);
   });
 });
@@ -215,7 +205,7 @@ test.describe('SaveSystem migration seam', () => {
 
   const rebaseMoneyToGold: SaveMigration = (raw) => {
     const { money, ...rest } = raw;
-    return { ...rest, version: 1, gold: money };
+    return { ...rest, version: CURRENT_SAVE_VERSION, gold: money };
   };
 
   test('migrateRawSave is a no-op for data already at CURRENT_SAVE_VERSION', () => {
@@ -299,16 +289,34 @@ test.describe('SaveSystem migration seam', () => {
     expect(SaveSystem.load('grade2-mage', { 0: stalledMigration })).toBeNull();
   });
 
-  test('existing valid version-1 saves round-trip unaffected by a migrations table', () => {
+  test('existing valid saves round-trip unaffected by a migrations table', () => {
     const valid = minimalSave();
     SaveSystem.save(valid);
 
-    // A migration registered "from" version 1 must never fire, because
-    // version 1 is not < CURRENT_SAVE_VERSION (1). If it did fire it would
-    // corrupt this save.
-    const corruptingMigration: SaveMigration = () => ({ version: 1, corrupted: true });
+    // A migration registered "from" the current version must never fire,
+    // because CURRENT_SAVE_VERSION is not < CURRENT_SAVE_VERSION. If it did
+    // fire it would corrupt this save.
+    const corruptingMigration: SaveMigration = () => ({ version: CURRENT_SAVE_VERSION, corrupted: true });
 
-    expect(SaveSystem.load('grade2-mage', { 1: corruptingMigration })).toEqual(valid);
+    expect(SaveSystem.load('grade2-mage', { [CURRENT_SAVE_VERSION]: corruptingMigration })).toEqual(valid);
+  });
+
+  test('a real v1 save is migrated to v2 with its player position doubled to match the 960x640 world scale', () => {
+    storage.setItem(SAVE_KEY, JSON.stringify({
+      version: 1,
+      profileId: 'grade2-mage',
+      gold: 7,
+      lastArea: 'farm',
+      player: { x: 160, y: 180 }
+    }));
+
+    expect(SaveSystem.load('grade2-mage')).toEqual({
+      version: CURRENT_SAVE_VERSION,
+      profileId: 'grade2-mage',
+      gold: 7,
+      lastArea: 'farm',
+      player: { x: 320, y: 360 }
+    });
   });
 });
 

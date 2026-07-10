@@ -1,6 +1,6 @@
 # Eldoria-V2 Current State
 
-Last refreshed on 2026-07-10. This file records volatile project status; `AGENTS.md` remains the durable operating contract.
+Last refreshed on 2026-07-10 (canvas resolution migration). This file records volatile project status; `AGENTS.md` remains the durable operating contract.
 
 ## Playable Vertical Slice
 
@@ -36,6 +36,7 @@ Last refreshed on 2026-07-10. This file records volatile project status; `AGENTS
 - The Grade 5 fraction template (`grade5-farm-fractions-sunberry-rows`) asks for a fraction-to-decimal conversion with a denominator of 10 or 100, matching Alberta's actual outcome wording more closely than the previous generic framing.
 - A visual design pass fixed several code-only UI issues across the title screen, HUD, Stats & Mastery panel, and bonus-prompt panel: shared rounded-rect helpers replace ad hoc flat rectangles; the prompt background is fully opaque; keepsake slots have individual captions; mute and coin icons are hand-drawn instead of emoji; and the title screen has a warmer magical presentation.
 - The Attention-First Opening Pass is implemented: Grade 5's player-facing label is **Ranger Explorer** (internal `grade5-adventurer` ID unchanged); the title and Mira dialogue seed the "old magic waking" mystery; keepsake rewards receive emphasized feedback; and repetitive placeholder audio is quieter.
+- The game canvas is now `960x640` (2x the prior `480x320`), the first stage of `docs/beautification/ELDORIA_BEAUTIFICATION_EXECUTION_PLAN.md`. Aspect ratio, visible world coverage, gameplay timing, touch behavior, saves (via a new v1→v2 migration doubling stored player coordinates), quests, curriculum, and both profiles are unchanged; `pixelArt`/`roundPixels`/`FIT`/`CENTER_BOTH` are unchanged and no `devicePixelRatio` multiplier was added. `src/gameDimensions.ts` centralizes the scale factor (`GAME_SCALE`, `sx()`/`sy()` helpers) so future visual work has one seam instead of scattered literals.
 
 ## Visual And Asset State
 

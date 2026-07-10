@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_HEIGHT, GAME_WIDTH } from '../gameConfig';
+import { GAME_HEIGHT, GAME_WIDTH, sx, sy } from '../gameDimensions';
 import { DEFAULT_PROFILE, PROFILES, type ProfileId } from '../data/profiles';
 import { drawRoundedButton } from '../presentation/uiHelpers';
 import { shouldPlayOpening } from './OpeningScene';
@@ -15,32 +15,32 @@ export class TitleScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor('#1a1208');
     this.drawBackground();
 
-    this.add.text(GAME_WIDTH / 2, 44, 'Realm of Eldoria v2', {
+    this.add.text(GAME_WIDTH / 2, sy(44), 'Realm of Eldoria v2', {
       fontFamily: 'system-ui',
-      fontSize: '24px',
+      fontSize: '48px',
       color: '#ffd666',
       stroke: '#3a2208',
-      strokeThickness: 4
+      strokeThickness: 8
     }).setOrigin(0.5);
 
-    this.add.text(GAME_WIDTH / 2, 76, 'Old magic is waking in Eldoria. Learning helps — adventure never waits.', {
+    this.add.text(GAME_WIDTH / 2, sy(76), 'Old magic is waking in Eldoria. Learning helps — adventure never waits.', {
       fontFamily: 'system-ui',
-      fontSize: '12px',
+      fontSize: '24px',
       color: '#f5e6c8',
       align: 'center'
     }).setOrigin(0.5);
 
     this.addAmbientSparkles();
 
-    this.addProfileButton(116, 'grade2-mage');
-    this.addProfileButton(184, 'grade5-adventurer');
+    this.addProfileButton(sy(116), 'grade2-mage');
+    this.addProfileButton(sy(184), 'grade5-adventurer');
 
     // Pulled up from the very bottom of the frame: with the gradient behind
     // it, the space between the cards and this line no longer needs to be
     // this large to avoid feeling empty.
-    this.add.text(GAME_WIDTH / 2, 238, 'Tap a hero to start', {
+    this.add.text(GAME_WIDTH / 2, sy(238), 'Tap a hero to start', {
       fontFamily: 'system-ui',
-      fontSize: '13px',
+      fontSize: '26px',
       color: '#c9a66b'
     }).setOrigin(0.5);
   }
@@ -67,15 +67,15 @@ export class TitleScene extends Phaser.Scene {
    */
   private addAmbientSparkles(): void {
     const positions = [
-      { x: GAME_WIDTH / 2 - 168, y: 40 },
-      { x: GAME_WIDTH / 2 + 176, y: 52 },
-      { x: GAME_WIDTH / 2 - 140, y: 92 },
-      { x: GAME_WIDTH / 2 + 150, y: 90 },
-      { x: GAME_WIDTH / 2 + 200, y: 28 }
+      { x: GAME_WIDTH / 2 - sx(168), y: sy(40) },
+      { x: GAME_WIDTH / 2 + sx(176), y: sy(52) },
+      { x: GAME_WIDTH / 2 - sx(140), y: sy(92) },
+      { x: GAME_WIDTH / 2 + sx(150), y: sy(90) },
+      { x: GAME_WIDTH / 2 + sx(200), y: sy(28) }
     ];
 
     positions.forEach(({ x, y }, index) => {
-      const sparkle = this.add.circle(x, y, 1.6, 0xfff0a3, 0).setDepth(1);
+      const sparkle = this.add.circle(x, y, sx(1.6), 0xfff0a3, 0).setDepth(1);
       this.tweens.add({
         targets: sparkle,
         alpha: { from: 0, to: 0.9 },
@@ -92,17 +92,17 @@ export class TitleScene extends Phaser.Scene {
   private addProfileButton(y: number, profileId: ProfileId): void {
     const profile = PROFILES[profileId];
     const isSelected = profileId === this.selectedProfile;
-    const bg = drawRoundedButton(this, GAME_WIDTH / 2, y, 310, 48, isSelected ? 0x5f3d12 : 0x2a1a08, isSelected ? 0xffd666 : 0x6f5126, 8);
+    const bg = drawRoundedButton(this, GAME_WIDTH / 2, y, sx(310), sy(48), isSelected ? 0x5f3d12 : 0x2a1a08, isSelected ? 0xffd666 : 0x6f5126, 16);
 
-    this.add.text(GAME_WIDTH / 2, y - 8, profile.label, {
+    this.add.text(GAME_WIDTH / 2, y - sy(8), profile.label, {
       fontFamily: 'system-ui',
-      fontSize: '16px',
+      fontSize: '32px',
       color: '#ffffff'
     }).setOrigin(0.5);
 
-    this.add.text(GAME_WIDTH / 2, y + 12, profile.subtitle, {
+    this.add.text(GAME_WIDTH / 2, y + sy(12), profile.subtitle, {
       fontFamily: 'system-ui',
-      fontSize: '11px',
+      fontSize: '22px',
       color: '#f5e6c8'
     }).setOrigin(0.5);
 

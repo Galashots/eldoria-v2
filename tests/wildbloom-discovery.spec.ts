@@ -1,6 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-
-const CANVAS = 'canvas';
+import { CANVAS, clickGame } from './support/canvas';
 
 type ProfileId = 'grade2-mage' | 'grade5-adventurer';
 type SpotId = 'root-star' | 'moonwell-echo' | 'foxfire-seed';
@@ -15,20 +14,10 @@ type DiscoverySnapshot = {
 };
 
 const SPOT_APPROACH: Record<SpotId, { x: number; y: number }> = {
-  'root-star': { x: 526, y: 144 },
-  'moonwell-echo': { x: 302, y: 480 },
-  'foxfire-seed': { x: 766, y: 464 }
+  'root-star': { x: 1052, y: 288 },
+  'moonwell-echo': { x: 604, y: 960 },
+  'foxfire-seed': { x: 1532, y: 928 }
 };
-
-async function clickGame(page: Page, gameX: number, gameY: number): Promise<void> {
-  const box = await page.locator(CANVAS).boundingBox();
-  if (!box) throw new Error('Canvas was not visible.');
-
-  await page.mouse.click(
-    box.x + (gameX / 480) * box.width,
-    box.y + (gameY / 320) * box.height
-  );
-}
 
 async function seedAndStart(
   page: Page,
@@ -67,7 +56,7 @@ async function seedAndStart(
   await page.reload();
   await expect(page.locator(CANVAS)).toBeVisible();
   await page.waitForFunction(() => window.__ELDORIA_GAME__?.scene.isActive('TitleScene'));
-  await clickGame(page, 240, profileId === 'grade2-mage' ? 116 : 184);
+  await clickGame(page, 480, profileId === 'grade2-mage' ? 232 : 368);
   await page.waitForFunction(() => window.__ELDORIA_GAME__?.scene.isActive('WorldScene'));
 }
 
@@ -120,7 +109,7 @@ async function savedInventory(page: Page, profileId: ProfileId): Promise<Record<
 async function revealSpot(page: Page, spotId: SpotId): Promise<void> {
   await moveToSpot(page, spotId);
   await expect.poll(async () => (await snapshot(page)).activeSpotId).toBe(spotId);
-  await clickGame(page, 426, 268);
+  await clickGame(page, 852, 536);
   await expect.poll(async () => (await snapshot(page)).inputLocked).toBe(true);
   await expect.poll(async () => (await snapshot(page)).discoveredSpotIds).toContain(spotId);
   await expect.poll(async () => (await snapshot(page)).inputLocked).toBe(false);
@@ -143,7 +132,7 @@ test('Mage magic reveals all three persistent Wildbloom secrets without changing
   await expect.poll(async () => hasCanvasText(page, 'WILDBLOOM')).toBe(true);
   await page.screenshot({ path: 'test-results/discovery-mage-hum.png', fullPage: true });
 
-  await clickGame(page, 426, 268);
+  await clickGame(page, 852, 536);
   await expect.poll(async () => (await snapshot(page)).inputLocked).toBe(true);
   await page.waitForTimeout(110);
   await page.screenshot({ path: 'test-results/discovery-mage-ability.png', fullPage: true });
@@ -157,7 +146,7 @@ test('Mage magic reveals all three persistent Wildbloom secrets without changing
   await revealSpot(page, 'moonwell-echo');
   await moveToSpot(page, 'foxfire-seed');
   await expect.poll(async () => (await snapshot(page)).activeSpotId).toBe('foxfire-seed');
-  await clickGame(page, 426, 268);
+  await clickGame(page, 852, 536);
   await expect.poll(async () => (await snapshot(page)).discoveredSpotIds).toHaveLength(3);
   await expect.poll(async () => hasCanvasText(page, 'WILDBLOOM SONG COMPLETE')).toBe(true);
   await page.screenshot({ path: 'test-results/discovery-mage-complete.png', fullPage: true });
@@ -173,7 +162,7 @@ test('Mage magic reveals all three persistent Wildbloom secrets without changing
 
   await page.reload();
   await page.waitForFunction(() => window.__ELDORIA_GAME__?.scene.isActive('TitleScene'));
-  await clickGame(page, 240, 116);
+  await clickGame(page, 480, 232);
   await page.waitForFunction(() => window.__ELDORIA_GAME__?.scene.isActive('WorldScene'));
   await expect.poll(async () => (await snapshot(page)).discoveredSpotIds).toEqual([
     'root-star',
@@ -194,7 +183,7 @@ test('Ranger tracking reveals the same secret loop with a distinct readable abil
   });
   await page.screenshot({ path: 'test-results/discovery-ranger-hum.png', fullPage: true });
 
-  await clickGame(page, 426, 268);
+  await clickGame(page, 852, 536);
   await expect.poll(async () => (await snapshot(page)).inputLocked).toBe(true);
   await page.waitForTimeout(110);
   await page.screenshot({ path: 'test-results/discovery-ranger-ability.png', fullPage: true });
@@ -215,7 +204,7 @@ test('hidden spots stay dormant until the Wildbloom Sprig has been earned', asyn
     discoveredSpotIds: [],
     unlocked: false
   });
-  await clickGame(page, 426, 268);
+  await clickGame(page, 852, 536);
   await page.waitForTimeout(420);
   expect((await savedInventory(page, 'grade2-mage')).wildbloomSecretRootStar).toBeUndefined();
 });
