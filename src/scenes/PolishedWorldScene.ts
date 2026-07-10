@@ -8,6 +8,10 @@ import {
   PracticeSlimeEncounterController,
   type PracticeSlimeEncounterSnapshot
 } from '../presentation/PracticeSlimeEncounterController';
+import {
+  WildbloomDiscoveryController,
+  type WildbloomDiscoverySnapshot
+} from '../presentation/WildbloomDiscoveryController';
 import type { FarmQuestOutcome } from '../systems/FarmQuestSystem';
 import { WorldScene } from './WorldScene';
 
@@ -35,6 +39,7 @@ type WorldScenePresentationInternals = {
   hintText: Phaser.GameObjects.Text;
   objectiveText: Phaser.GameObjects.Text;
   profileId: ProfileId;
+  inventory: Record<string, number>;
   practiceSlimeSprite?: Phaser.GameObjects.Sprite;
   heroPresentation: HeroPresentationController;
   busy: boolean;
@@ -49,6 +54,7 @@ type WorldScenePresentationInternals = {
   hintLabel: (target: WorldSceneTarget) => string;
   nearestTarget: () => WorldSceneTarget | null;
   tryInteract: () => boolean;
+  save: () => void;
   openBonusPrompt: (
     context: BonusContext,
     label: string,
@@ -58,9 +64,9 @@ type WorldScenePresentationInternals = {
 
 /**
  * Verified farm gameplay with a deliberately narrow presentation/integration
- * layer. It adds first-minute visual polish and now wires the focused Practice
- * Slime encounter controller without moving quest, prompt, reward, mastery, or
- * save authority out of WorldScene/FarmQuestSystem.
+ * layer. Focused controllers add first-minute polish, the Practice Slime loop,
+ * and Wildbloom discoveries without moving quest, prompt, curriculum, reward,
+ * mastery, or save-schema authority out of WorldScene/FarmQuestSystem.
  */
 export class PolishedWorldScene extends WorldScene {
   private arrivedFromOpening = false;
@@ -69,7 +75,9 @@ export class PolishedWorldScene extends WorldScene {
   private presentationHint?: Phaser.GameObjects.Text;
   private presentationObjective?: Phaser.GameObjects.Text;
   private practiceSlimeEncounter?: PracticeSlimeEncounterController;
+  private wildbloomDiscovery?: WildbloomDiscoveryController;
   private encounterInputLocked = false;
+  private discoveryInputLocked = false;
 
   init(data: PolishedSceneInitData): void {
     this.arrivedFromOpening = data.fromOpening === true;
@@ -82,6 +90,7 @@ export class PolishedWorldScene extends WorldScene {
     this.addFarmColorGrade();
     this.addPlayerShadow();
     this.addMiraGuidance();
+    this.installWildbloomDiscovery();
     this.createPolishedHudText();
 
     if (this.arrivedFromOpening) {
@@ -91,26 +100,35 @@ export class PolishedWorldScene extends WorldScene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.practiceSlimeEncounter?.dispose();
       this.practiceSlimeEncounter = undefined;
+      this.wildbloomDiscovery?.dispose();
+      this.wildbloomDiscovery = undefined;
       this.encounterInputLocked = false;
+      this.discoveryInputLocked = false;
     });
   }
 
   update(): void {
     super.update();
 
-    const { player, hintText, objectiveText } = this.presentationInternals;
+    const { player, hintText, objectiveText, inventory } = this.presentationInternals;
     this.practiceSlimeEncounter?.update();
+    // Create discovery containers lazily. Before the Sprig is earned there are
+    // no hidden-world containers competing with prompt/UI container discovery.
+    if ((inventory.wildbloomSprig ?? 0) > 0) {
+      this.wildbloomDiscovery?.create();
+    }
+    this.wildbloomDiscovery?.update();
 
-    // The base scene remains un-busy during a strike so the Mage cast one-shot
-    // is not cancelled by HeroPresentationController.setBusy(). Stop movement
-    // after the base update instead; the encounter's own lock rejects repeat
-    // taps until the impact reaction has finished.
-    if (this.encounterInputLocked) {
+    // Controllers keep WorldScene un-busy so one-shot hero animations are not
+    // cancelled by HeroPresentationController.setBusy(). Movement is stopped
+    // here and repeat input is rejected inside each controller.
+    if (this.encounterInputLocked || this.discoveryInputLocked) {
       player.setVelocity(0, 0);
     }
 
     this.playerShadow?.setPosition(player.x, player.y + 9);
-    this.presentationHint?.setText(this.formatHint(hintText.text));
+    const discoveryHint = this.wildbloomDiscovery?.hintText();
+    this.presentationHint?.setText(discoveryHint ?? this.formatHint(hintText.text));
     this.presentationObjective?.setText(this.formatObjective(objectiveText.text));
   }
 
@@ -124,10 +142,21 @@ export class PolishedWorldScene extends WorldScene {
     };
   }
 
+  getWildbloomDiscoverySnapshot(): WildbloomDiscoverySnapshot {
+    return this.wildbloomDiscovery?.snapshot() ?? {
+      activeSpotId: null,
+      discoveredSpotIds: [],
+      inputLocked: false,
+      profileId: this.presentationInternals.profileId,
+      totalSpots: 3,
+      unlocked: false
+    };
+  }
+
   private get presentationInternals(): WorldScenePresentationInternals {
     // WorldScene uses TypeScript `private`, not ECMAScript #private fields.
-    // This narrow integration seam touches only the existing Practice Slime
-    // handler and stable scene objects; the base scene keeps gameplay authority.
+    // These narrow seams touch stable scene objects and existing inventory/save
+    // methods while the base scene remains the gameplay authority.
     return this as unknown as WorldScenePresentationInternals;
   }
 
@@ -167,6 +196,42 @@ export class PolishedWorldScene extends WorldScene {
     };
 
     this.installLegacyDirectInteractionBridge();
+  }
+
+  private installWildbloomDiscovery(): void {
+    const internals = this.presentationInternals;
+    this.wildbloomDiscovery = new WildbloomDiscoveryController({
+      scene: this,
+      profileId: internals.profileId,
+      player: internals.player,
+      heroPresentation: internals.heroPresentation,
+      hasInventoryItem: (key) => (internals.inventory[key] ?? 0) > 0,
+      markInventoryItem: (key) => {
+        internals.inventory[key] = 1;
+        internals.save();
+      },
+      isBusy: () => internals.busy,
+      onLockChanged: (locked) => {
+        this.discoveryInputLocked = locked;
+        if (locked) {
+          internals.resetJoystick();
+          internals.player.setVelocity(0, 0);
+        }
+      }
+    });
+
+    // ACTION first checks for a nearby Sprig secret. If no discovery is close
+    // enough, the already-wrapped WorldScene interaction path runs unchanged.
+    const originalTryInteract = internals.tryInteract.bind(this);
+    internals.tryInteract = () => {
+      const discovered = this.wildbloomDiscovery?.tryDiscover() ?? false;
+      if (discovered) {
+        internals.resetJoystick();
+        internals.player.setVelocity(0, 0);
+        return true;
+      }
+      return originalTryInteract();
+    };
   }
 
   private openPracticeSlimePrompt(target: WorldSceneTarget): void {
@@ -245,17 +310,38 @@ export class PolishedWorldScene extends WorldScene {
     const mira = this.presentationInternals.targets.find((target) => target.id === 'mira');
     if (!mira) return;
 
-    const glow = this.add.circle(mira.x, mira.y - 13, 16, 0xffd666, 0.08)
+    // A small world-space NPC silhouette cheaply replaces the bare marker feel
+    // until final Mira sprite art arrives. The original target remains the
+    // interaction authority underneath it.
+    const npc = this.add.graphics().setPosition(mira.x, mira.y).setDepth(3.5);
+    npc.fillStyle(0x06110d, 0.35);
+    npc.fillEllipse(0, 5, 24, 8);
+    npc.fillStyle(0x5a2f68, 1);
+    npc.fillRoundedRect(-8, -20, 16, 22, 5);
+    npc.fillStyle(0xe8b98f, 1);
+    npc.fillCircle(0, -25, 7);
+    npc.fillStyle(0x3b2238, 1);
+    npc.fillRoundedRect(-7, -31, 14, 8, 4);
+    npc.fillRect(-7, -28, 3, 8);
+    npc.fillRect(4, -28, 3, 8);
+    npc.fillStyle(0xf1d7a5, 1);
+    npc.fillRoundedRect(-5, -13, 10, 11, 3);
+    npc.fillStyle(0x342016, 1);
+    npc.fillCircle(-2.5, -25, 1);
+    npc.fillCircle(2.5, -25, 1);
+
+    const markerY = mira.y - 42;
+    const glow = this.add.circle(mira.x, markerY, 13, 0xffd666, 0.08)
       .setStrokeStyle(2, 0xffd666, 0.9)
-      .setDepth(3);
+      .setDepth(4);
     this.miraPulse = glow;
 
-    const marker = this.add.graphics().setPosition(mira.x, mira.y - 13).setDepth(4);
+    const marker = this.add.graphics().setPosition(mira.x, markerY).setDepth(5);
     marker.fillStyle(0xfff2ad, 1);
-    marker.fillTriangle(0, -8, 4, 0, 0, 8);
-    marker.fillTriangle(0, -8, -4, 0, 0, 8);
-    marker.fillTriangle(-8, 0, 0, -4, 8, 0);
-    marker.fillTriangle(-8, 0, 0, 4, 8, 0);
+    marker.fillTriangle(0, -7, 3.5, 0, 0, 7);
+    marker.fillTriangle(0, -7, -3.5, 0, 0, 7);
+    marker.fillTriangle(-7, 0, 0, -3.5, 7, 0);
+    marker.fillTriangle(-7, 0, 0, 3.5, 7, 0);
 
     this.tweens.add({
       targets: [glow, marker],
