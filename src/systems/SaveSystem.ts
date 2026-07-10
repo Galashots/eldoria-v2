@@ -1,4 +1,5 @@
 import type { ProfileId } from '../data/profiles';
+import { WORLD_COORDINATE_SCALE_V1_TO_V2 } from '../gameDimensions';
 import type { LearningMastery } from './MasterySystem';
 
 export type StarterQuestStep = 'talk-to-mira' | 'try-crop-bonus' | 'find-slime' | 'return-to-mira' | 'complete';
@@ -10,11 +11,6 @@ export type StarterQuestStep = 'talk-to-mira' | 'try-crop-bonus' | 'find-slime' 
  * docs/AUDIT_AND_GAME_PLAN_2026-07.md, Phase 1 item 1.
  */
 export const CURRENT_SAVE_VERSION = 2 as const;
-
-// Matches gameConfig.ts's GAME_SCALE. Duplicated (not imported) so this
-// renderer-independent module keeps its existing no-Phaser-dependency
-// contract; this is a plain migration constant, not a rendering concern.
-const WORLD_SCALE_V1_TO_V2 = 2;
 
 export type SaveState = {
   version: typeof CURRENT_SAVE_VERSION;
@@ -111,14 +107,18 @@ export type SaveMigration = (raw: RawSave) => RawSave;
  */
 const SAVE_MIGRATIONS: Record<number, SaveMigration> = {
   // The 960x640 canvas migration doubled every world coordinate (map tiles,
-  // objects, physics) via GAME_SCALE. A v1 save's player position was
-  // recorded in the old, half-scale world, so it must be doubled to land in
-  // the same relative spot in the new one — otherwise a returning player
-  // would spawn at the wrong point on the (now larger) map.
+  // objects, physics). A v1 save's player position was recorded in the old,
+  // half-scale world, so it must be doubled to land in the same relative spot
+  // in the new one. The imported historical constant deliberately remains
+  // independent from any future runtime renderer-scale changes.
   1: (raw) => {
     const player = isRecord(raw.player) ? raw.player : undefined;
-    const x = isFiniteNumber(player?.x) ? player.x * WORLD_SCALE_V1_TO_V2 : player?.x;
-    const y = isFiniteNumber(player?.y) ? player.y * WORLD_SCALE_V1_TO_V2 : player?.y;
+    const x = isFiniteNumber(player?.x)
+      ? player.x * WORLD_COORDINATE_SCALE_V1_TO_V2
+      : player?.x;
+    const y = isFiniteNumber(player?.y)
+      ? player.y * WORLD_COORDINATE_SCALE_V1_TO_V2
+      : player?.y;
 
     return {
       ...raw,
