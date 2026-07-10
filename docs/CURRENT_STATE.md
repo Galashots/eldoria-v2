@@ -15,13 +15,13 @@ Last refreshed on 2026-07-10. This file records volatile project status; `AGENTS
 - Learning remains bonus-only: wrong answers and skips never block quest progress.
 - Floating gold/item feedback, primitive sparkle bursts, and per-skill mastery records.
 - Contextual Grade 2/Grade 5 templates and development/E2E-only deterministic prompt preview.
-- Playwright browser coverage includes both profiles, the one-time Waking Gate, the real three-tap Practice Slime encounter, rapid-tap rejection, prompt timing, quest/save behavior, mastery, curriculum templates, preview side-effect safety, portrait-orientation guidance, and the Stats & Mastery panel.
+- Playwright browser coverage includes both profiles, the one-time Waking Gate, the real three-tap Practice Slime encounter, rapid-tap rejection, Ranger front/side/ACTION presentation, prompt timing, quest/save behavior, mastery, curriculum templates, preview side-effect safety, portrait-orientation guidance, and the Stats & Mastery panel.
 - Crop Bonus interactions provide short, readable visual feedback before their unchanged optional prompts open.
 - Arcade Physics bounds cover the full farm map, so the crop/scarecrow and Practice Slime targets are reachable through normal movement rather than only test positioning.
 - Optional prompt panels render above the actor and provide a button-sized pointer target for `Skip bonus`.
 - Portrait phone/tablet layouts show a DOM-based landscape-orientation message instead of shrinking the playable canvas into an unreadable strip.
 - A parent-facing real-child playtest guide documents the live iPad setup, controls, per-profile session scripts, save reset steps, observation notes, and blocker-versus-polish triage.
-- Hero animation/rendering is isolated in a profile-configured presentation controller; the unchanged Grade 5 placeholder remains the fallback until approved Ranger art exists.
+- Hero animation/rendering is isolated in a profile-configured presentation controller. The Mage uses approved normalized animation sheets; the Ranger now uses the existing directional physics sprite plus presentation-only hood, mantle, leather strap, bow, quiver, arrows, and ACTION recoil until approved production art exists.
 - Mira's two errands use a renderer-independent farm quest state system while preserving the existing version-1 save fields and player-facing behavior.
 - A third optional errand, The Sleepy Sprouts, becomes available after the Whispering Scarecrow completes: wake 3 new "Sleepy Sprout" map markers around the farm, then return to Mira for gold and a new Wildbloom Sprig keepsake. Continues the "old magic waking" thread the second errand introduced.
 - The Stats & Mastery panel's keepsake section is a small charm-registry-driven row of slots instead of one hardcoded Sunberry Charm slot, so newly earned charms are visible there.
@@ -47,22 +47,22 @@ Last refreshed on 2026-07-10. This file records volatile project status; `AGENTS
 - Grade 2 Mage cast v001 plays for ordinary ACTION use and each Practice Slime spell strike.
 - Grade 2 Mage hurt v001 remains available only from a development/test-safe preview path with no combat, damage, reward, quest, or save effects.
 - The Waking Gate reuses the real Mage sprite and cast animation, while Ranger uses a tinted normalized hero proxy plus presentation-only bow/quiver accents until production Ranger art exists.
-- The Grade 5 Ranger Explorer technical target is validated as `char_ranger_boy_base`; final production sprite generation remains pending a dedicated art and normalization pass.
-- Grade 5 continues to use the existing adventurer placeholder in the farm, while its tracking-shot effects are implemented.
+- The Grade 5 Ranger Explorer technical target is validated as `char_ranger_boy_base`; final production sprite generation and normalization remain pending a dedicated art pass.
+- Inside the farm, Grade 5 now reads as Ranger Explorer through a forest-green hood and mantle, leather harness cue, visible bow/quiver/arrows in every direction, and a short ACTION recoil/arrow presentation layered around the existing directional adventurer base. This is an intentional bridge, not final production art.
 - Equipment, farm/village, crop, building, and broader UI production art remain target specifications rather than final integrated assets.
 
 ## Active Milestone
 
-The **Practice Slime Combat & Profile Ability Loop** defined in `docs/PRACTICE_SLIME_COMBAT_PLAN_2026-07.md` is implemented and browser-verified.
+The **Ranger Explorer Identity Pass** defined in `docs/RANGER_IDENTITY_PASS_2026-07.md` is implemented and browser-verified. It removes the largest profile-role mismatch in the playable farm while preserving the existing collision, quest, curriculum, reward, and save seams.
 
-The slice is deliberately narrow: three profile-specific ACTION hits, readable slime reactions and health pips, then the existing optional learning prompt. It adds no player damage, fail state, enemy AI, random loot, new save fields, quest #4, or generalized combat architecture.
+The **Practice Slime Combat & Profile Ability Loop** defined in `docs/PRACTICE_SLIME_COMBAT_PLAN_2026-07.md` also remains implemented and browser-verified: three profile-specific ACTION hits, readable reactions and health pips, then the existing optional learning prompt. It adds no player damage, fail state, enemy AI, random loot, new save fields, quest #4, or generalized combat architecture.
 
 The build remains technically verified rather than child-validated until the deployed iPad experience is observed directly.
 
 ## Next Checkpoint
 
-1. Verify the merged Waking Gate and Practice Slime flow on an actual iPad in landscape, focusing on ACTION timing, accidental double taps, text fit, audio levels, and whether the first minute holds attention.
-2. Complete the Grade 5 Ranger Explorer production-art pass so the opening and farm model match the role promise.
+1. Verify the merged Waking Gate, Ranger identity, and Practice Slime flow on an actual iPad in landscape, focusing on ACTION timing, accidental double taps, text fit, audio levels, and whether the first minute holds attention.
+2. Replace the Ranger bridge presentation with dedicated `char_ranger_boy_base` idle/walk/action sheets through the existing normalization and presentation-controller contract; do not redesign gameplay while swapping art.
 3. Implement the Wildbloom Sprig discovery loop so the first permanent keepsake leads to an optional secret in the existing farm.
 4. Add a small merchant/customization gold sink so quest and bonus rewards visibly change the hero or world.
 5. Reassess after those loops before choosing quest #4, a second zone, or broader combat architecture.
