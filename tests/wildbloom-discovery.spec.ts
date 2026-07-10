@@ -140,7 +140,7 @@ test('Mage magic reveals all three persistent Wildbloom secrets without changing
 
   await moveToSpot(page, 'root-star');
   await expect.poll(async () => (await snapshot(page)).activeSpotId).toBe('root-star');
-  await expect.poll(async () => hasCanvasText(page, 'Wildbloom Sprig hums')).toBe(true);
+  await expect.poll(async () => hasCanvasText(page, 'WILDBLOOM')).toBe(true);
   await page.screenshot({ path: 'test-results/discovery-mage-hum.png', fullPage: true });
 
   await clickGame(page, 426, 268);
