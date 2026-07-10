@@ -127,7 +127,7 @@ test('Mage completes three deliberate Practice Slime hits before the optional pr
 
   await page.waitForTimeout(440);
   await strike(page);
-  await expect.poll(async () => (await snapshot(page)).toMatchObject({
+  await expect.poll(async () => snapshot(page)).toMatchObject({
     completed: true,
     hitCount: 3,
     remainingHits: 0
