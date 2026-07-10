@@ -123,8 +123,10 @@ export class PracticeSlimeEncounterController {
   dispose(): void {
     this.clearDelayedCalls();
     this.scene.tweens.killTweensOf(this.slime);
-    this.scene.tweens.killTweensOf(this.healthContainer);
-    this.healthContainer?.destroy(true);
+    if (this.healthContainer) {
+      this.scene.tweens.killTweensOf(this.healthContainer);
+      this.healthContainer.destroy(true);
+    }
     this.healthContainer = undefined;
     this.pips = [];
     this.inputLocked = false;
