@@ -2,6 +2,21 @@
 
 This file records repository changes made through ChatGPT so future work can see what changed, who made it, and when.
 
+## 2026-07-10 - Claude Code (beautification Phase 0: baseline audit and screenshot lock)
+
+- Branch: `claude/beautification-phase0-baseline`
+- Files changed:
+  - `docs/beautification/ELDORIA_BEAUTIFICATION_EXECUTION_PLAN.md` (new)
+  - `docs/beautification/BEAUTIFICATION_BASELINE_2026-07.md` (new)
+  - `tests/baseline-capture.spec.ts` (new)
+  - `docs/CHATGPT_CHANGELOG.md`
+- Summary: Phase 0 of the ChatGPT-authored beautification execution brief — a baseline-only audit with zero runtime changes, ahead of the Phase 1 canvas resolution migration. Committed the execution plan itself into the repo at its canonical referenced path, ran the full gate suite on unmodified `main`, added a small evidence-only Playwright spec to capture the screens no existing spec covered, and recorded renderer/canvas/FPS metrics and a critical map-resolution finding for Phase 1.
+- Implementation notes:
+  - `npm run check`, `npm run test:asset-pipeline`, and `npm run test:unit` (48/48) all pass unmodified; the full smoke suite passes 43/43 (one test flaked once with a 30s scene-activation timeout on the first run, then passed 3/3 in isolation and again in the next full run — recorded as an environment flake, not a regression).
+  - `tests/baseline-capture.spec.ts` captures the title screen, direct Mage/Ranger farm arrival, the Mira interaction area, the crop-bonus optional-learning prompt, and the Stats & Mastery panel — screens not captured by any existing spec. All other required baseline screenshots (Waking Gate, Practice Slime encounter, Wildbloom discovery, Ranger identity) already exist via the current suite and are cataloged in the baseline doc rather than re-captured.
+  - Critical finding for Phase 1: `public/maps/farm.json` is already exactly 960x640 pixels (30x20 tiles at 32px); the camera currently scrolls across roughly 4x the visible canvas area. A resolution migration that only changes `GAME_WIDTH`/`GAME_HEIGHT` without also scaling world presentation (tiles, physics bounds, object coordinates, interaction radii, VFX offsets) by the same factor would make the entire map visible at once with no scrolling — an unintended gameplay change. Recorded in the baseline doc so Phase 1 scales world presentation deliberately via a centralized seam, per the execution plan's own preferred approach.
+- Reason: Establish trustworthy before/after evidence and a documented risk before any resolution-migration code changes land, per the execution plan's explicit Phase 0 requirement and this repo's own checkpoint discipline for architecture/visual-direction changes.
+
 ## 2026-07-08 - Claude Code (attention-first opening pass implementation)
 
 - Branch: `claude/attention-first-opening`
