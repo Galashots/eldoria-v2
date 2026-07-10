@@ -84,12 +84,12 @@ test('a fresh Mage profile gets a polished skippable magic hook before the farm'
   expect(await page.evaluate(() => window.__ELDORIA_GAME__?.scene.isActive('OpeningScene'))).toBe(false);
 });
 
-test('a fresh Ranger profile uses the in-game fallback sprite and tracking-shot palette', async ({ page }) => {
+test('a fresh Ranger profile uses the polished temporary hero proxy and tracking-shot palette', async ({ page }) => {
   await enterFreshOpening(page, 184);
 
   await expect.poll(async () => readOpeningState(page)).toEqual({
     completed: false,
-    heroTexture: 'adventurer',
+    heroTexture: 'grade2-mage-idle-v001',
     profileId: 'grade5-adventurer',
     remainingHits: 3
   });
