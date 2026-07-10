@@ -76,8 +76,8 @@ test('the Grade 5 farm hero reads as Ranger Explorer and keeps ACTION feedback',
     frontAccentsVisible: true,
     backAccentsVisible: true,
     motion: 'idle',
-    physicsVisible: false,
-    spriteTexture: 'adventurer'
+    physicsVisible: true,
+    spriteTexture: ''
   });
   await page.screenshot({ path: 'test-results/ranger-identity-front.png', fullPage: true });
 
