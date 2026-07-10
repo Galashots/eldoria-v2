@@ -110,8 +110,13 @@ export class PolishedWorldScene extends WorldScene {
   update(): void {
     super.update();
 
-    const { player, hintText, objectiveText } = this.presentationInternals;
+    const { player, hintText, objectiveText, inventory } = this.presentationInternals;
     this.practiceSlimeEncounter?.update();
+    // Create discovery containers lazily. Before the Sprig is earned there are
+    // no hidden-world containers competing with prompt/UI container discovery.
+    if ((inventory.wildbloomSprig ?? 0) > 0) {
+      this.wildbloomDiscovery?.create();
+    }
     this.wildbloomDiscovery?.update();
 
     // Controllers keep WorldScene un-busy so one-shot hero animations are not
@@ -214,7 +219,6 @@ export class PolishedWorldScene extends WorldScene {
         }
       }
     });
-    this.wildbloomDiscovery.create();
 
     // ACTION first checks for a nearby Sprig secret. If no discovery is close
     // enough, the already-wrapped WorldScene interaction path runs unchanged.
