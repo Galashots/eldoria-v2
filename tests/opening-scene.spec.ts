@@ -43,6 +43,7 @@ test('a fresh Mage profile gets a skippable playable magic hook before the farm'
     profileId: 'grade2-mage',
     remainingHits: 3
   });
+  await page.screenshot({ path: 'test-results/opening-mage-start.png', fullPage: true });
 
   // Use the same large ACTION target the child sees; tapping the gate and
   // pressing Space/E route through the identical scene method.
@@ -50,10 +51,14 @@ test('a fresh Mage profile gets a skippable playable magic hook before the farm'
     await clickGame(page, 426, 272);
     await expect.poll(async () => (await openingState()).remainingHits).toBe(expectedRemaining);
     await page.waitForTimeout(420);
+    if (expectedRemaining === 2) {
+      await page.screenshot({ path: 'test-results/opening-mage-first-hit.png', fullPage: true });
+    }
   }
 
   await page.waitForFunction(() => window.__ELDORIA_GAME__?.scene.isActive('WorldScene'));
   expect(await page.evaluate(() => localStorage.getItem('eldoria_v2_opening_seen_grade2-mage'))).toBe('true');
+  await page.screenshot({ path: 'test-results/opening-mage-world-entry.png', fullPage: true });
 
   // The opening is a one-time first-run beat and never blocks returning players.
   await page.reload();
