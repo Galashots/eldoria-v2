@@ -44,8 +44,11 @@ test('a fresh Mage profile gets a skippable playable magic hook before the farm'
     remainingHits: 3
   });
 
-  for (let hit = 0; hit < 3; hit += 1) {
-    await clickGame(page, 324, 158);
+  // Use the same large ACTION target the child sees; tapping the gate and
+  // pressing Space/E route through the identical scene method.
+  for (const expectedRemaining of [2, 1, 0]) {
+    await clickGame(page, 426, 272);
+    await expect.poll(async () => (await openingState()).remainingHits).toBe(expectedRemaining);
     await page.waitForTimeout(420);
   }
 
