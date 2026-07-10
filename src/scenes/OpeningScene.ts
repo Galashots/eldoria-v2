@@ -100,8 +100,6 @@ export class OpeningScene extends Phaser.Scene {
     horizon.fillGradientStyle(0x182e2b, 0x182e2b, 0x0b1d16, 0x0b1d16, 0.72, 0.72, 1, 1);
     horizon.fillRect(0, GAME_HEIGHT * 0.57, GAME_WIDTH, GAME_HEIGHT * 0.43);
 
-    // Soft layered hills keep the screen atmospheric without competing with
-    // the hero and gate silhouettes.
     const hills = this.add.graphics().setDepth(0);
     hills.fillStyle(0x111f32, 0.9);
     hills.fillTriangle(0, 202, 84, 124, 172, 202);
@@ -159,21 +157,19 @@ export class OpeningScene extends Phaser.Scene {
       ease: 'Sine.easeInOut'
     });
 
-    if (isMage) {
-      this.createMageAnimations();
-      this.heroSprite = this.add.sprite(HERO_X, HERO_Y, 'grade2-mage-idle-v001', 12)
-        .setOrigin(0.5, 1)
-        .setScale(2.25)
-        .setDepth(4)
-        .play(MAGE_IDLE_RIGHT);
-    } else {
-      // Ranger production art remains pending, but the existing in-game
-      // adventurer sprite is still far more cohesive than the old diagram.
-      this.heroSprite = this.add.sprite(HERO_X, HERO_Y, 'adventurer', 3)
-        .setOrigin(0.5, 1)
-        .setScale(2.35)
-        .setDepth(4);
+    this.createMageAnimations();
+    this.heroSprite = this.add.sprite(HERO_X, HERO_Y, 'grade2-mage-idle-v001', 12)
+      .setOrigin(0.5, 1)
+      .setScale(2.25)
+      .setDepth(4);
 
+    if (isMage) {
+      this.heroSprite.play(MAGE_IDLE_RIGHT);
+    } else {
+      // A detailed normalized hero proxy is preferable to the blocky 32x32
+      // development placeholder in this high-focus scene. Tint + bow make the
+      // temporary role clear until approved Ranger production art lands.
+      this.heroSprite.setTint(0xb8d59a);
       const bow = this.add.graphics().setPosition(HERO_X + 29, HERO_Y - 43).setDepth(5);
       bow.lineStyle(3, accent, 1);
       bow.beginPath();
@@ -184,6 +180,17 @@ export class OpeningScene extends Phaser.Scene {
       bow.moveTo(7, -21);
       bow.lineTo(7, 21);
       bow.strokePath();
+
+      const quiver = this.add.graphics().setPosition(HERO_X - 17, HERO_Y - 55).setDepth(3);
+      quiver.fillStyle(0x6b4423, 1);
+      quiver.fillRoundedRect(-4, -9, 8, 24, 3);
+      quiver.lineStyle(1.5, 0xd7ffb8, 0.9);
+      quiver.beginPath();
+      quiver.moveTo(-2, -8);
+      quiver.lineTo(-6, -18);
+      quiver.moveTo(2, -8);
+      quiver.lineTo(6, -19);
+      quiver.strokePath();
     }
 
     const heroAura = this.add.circle(HERO_X + 22, HERO_Y - 52, 8, accent, 0.18)
@@ -261,8 +268,6 @@ export class OpeningScene extends Phaser.Scene {
       .setStrokeStyle(3, 0xeaf8ff, 0.95)
       .setDepth(5);
 
-    // Eight rune nodes make hit progress visible on the gate itself, not only
-    // in the pips below it.
     for (let index = 0; index < 8; index += 1) {
       const angle = (Math.PI * 2 * index) / 8 - Math.PI / 2;
       const rune = this.add.circle(
@@ -340,7 +345,7 @@ export class OpeningScene extends Phaser.Scene {
       strokeThickness: 3
     }).setOrigin(0.5).setDepth(8);
 
-    this.instructionText = this.add.text(GAME_WIDTH / 2 + 48, 266, '', {
+    this.instructionText = this.add.text(GATE_X, 266, '', {
       fontFamily: 'system-ui',
       fontSize: '12px',
       color: '#f5e6c8',
@@ -512,9 +517,7 @@ export class OpeningScene extends Phaser.Scene {
       return;
     }
 
-    this.instructionText.setText(completedHits === 1
-      ? 'Again! The gate is weakening!'
-      : 'One more hit!');
+    this.instructionText.setText(completedHits === 1 ? 'Gate weakening!' : 'One more hit!');
   }
 
   private drawGateCracks(completedHits: number, accent: number): void {
