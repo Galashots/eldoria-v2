@@ -64,6 +64,7 @@ jobs:
             test-results/opening-*.png
             test-results/slime-*.png
             test-results/ranger-*.png
+            test-results/discovery-*.png
           if-no-files-found: warn
           retention-days: 14
       - name: Configure GitHub Pages
