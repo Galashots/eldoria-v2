@@ -216,13 +216,13 @@ Per the reviewer's decision, each target ID normalizes to **one deterministic pa
 
 The shimmer frame count is fixed at 4 for a deterministic sheet; if generation approves only 3, drop `shimmer_f3` and set `tile_farm_water_base` to `5×1`.
 
-## 6. Resolved handoff decisions
+## 6. Resolved production decisions
 
-The four questions raised in the initial handoff were resolved by the reviewer (2026-07-11); they are now baked into this document:
+These four production decisions are approved and final (2026-07-11); they are baked into this document, and nothing here remains an open question before Batch A:
 
-1. **Addendum slotting — resolved.** Grass scatter generates with **Batch C**; tilled soil, crop sprouts, harvest crops, and crop-row overlays generate with **Batch D** (see §4 addendum).
-2. **Multi-variant output packing — resolved.** One deterministic packed runtime PNG per target ID with the fixed manifest layout in §5.1; source generation may remain one image per variant.
-3. **Water shimmer runtime mechanism — deferred to Phase 3.** Author the shimmer frames now (§5.1); the runtime loop mechanism (Tiled animated tile vs. lightweight texture swap) is decided in Phase 3.
-4. **Shore rock vs medium rock — resolved.** `env_farm_shore_rock` stays a small `16×16` decal (Category B); `env_farm_rock_medium` is the `32×32` landmark (Category C).
+1. **Addendum slotting.** Generate `tile_farm_grass_scatter` with **Batch C**. Generate `tile_farm_tilled_soil`, `tile_farm_crop_sprout`, `tile_farm_crop_harvest`, and `tile_farm_crop_row` with **Batch D** (see §4 addendum).
+2. **Variant packing.** Normalize all variants for a target into **one deterministic PNG sheet per target ID**. Declare the fixed columns, rows, cell ordering, and any intentionally empty cells in that target's manifest before normalization (the §5.1 layout table is the authority). Source generation may remain **one separate image per variant** when that produces better consistency. **Do not create mixed-size source sheets.**
+3. **Water shimmer.** Author the required shimmer frames during the environment-kit art pass (§5.1). **Defer** the Tiled-animation-versus-Phaser-texture-swap runtime decision to Phase 3 integration.
+4. **Rock distinction.** `env_farm_shore_rock` remains a small `16×16` shoreline decal (Category B); `env_farm_rock_medium` remains a `32×32` landmark-scale Y-sorted prop (Category C).
 
 Nothing further blocks Batch A production generation.
