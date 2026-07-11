@@ -1,11 +1,12 @@
 import Phaser from 'phaser';
+import { GAME_SCALE, GAME_WIDTH, sx, sy } from '../gameDimensions';
 import type { ProfileId } from '../data/profiles';
 import { drawRoundedPanelBackground } from './uiHelpers';
 import type { HeroPresentationController } from './HeroPresentationController';
 
 const WILDBLOOM_SPRIG_KEY = 'wildbloomSprig';
-const SENSE_RADIUS = 112;
-const REVEAL_RADIUS = 48;
+const SENSE_RADIUS = sx(112);
+const REVEAL_RADIUS = sx(48);
 const IMPACT_DELAY_MS = 300;
 const REVEAL_LOCK_MS = 760;
 
@@ -28,8 +29,8 @@ const WILDBLOOM_SPOTS: readonly WildbloomSpotDefinition[] = [
     id: 'root-star',
     name: 'Root-Star Sigil',
     inventoryKey: 'wildbloomSecretRootStar',
-    x: 560,
-    y: 144,
+    x: 560 * GAME_SCALE,
+    y: 144 * GAME_SCALE,
     accent: 0xffd666,
     secondary: 0x8fd14f,
     lore: 'A tiny star was carved beneath the oldest roots.',
@@ -39,8 +40,8 @@ const WILDBLOOM_SPOTS: readonly WildbloomSpotDefinition[] = [
     id: 'moonwell-echo',
     name: 'Moonwell Echo',
     inventoryKey: 'wildbloomSecretMoonwellEcho',
-    x: 336,
-    y: 480,
+    x: 336 * GAME_SCALE,
+    y: 480 * GAME_SCALE,
     accent: 0x9fd7ff,
     secondary: 0x8f63ff,
     lore: 'Silver ripples answer the Sprig from below the soil.',
@@ -50,8 +51,8 @@ const WILDBLOOM_SPOTS: readonly WildbloomSpotDefinition[] = [
     id: 'foxfire-seed',
     name: 'Foxfire Seed',
     inventoryKey: 'wildbloomSecretFoxfireSeed',
-    x: 800,
-    y: 464,
+    x: 800 * GAME_SCALE,
+    y: 464 * GAME_SCALE,
     accent: 0xa9e783,
     secondary: 0x72b95c,
     lore: 'A sleeping green flame remembers the first garden.',
@@ -261,8 +262,11 @@ export class WildbloomDiscoveryController {
     const leafLeft = this.scene.add.ellipse(-8, 3, 8, 4, 0x8fd14f, 0.95).setAngle(-28);
     const leafRight = this.scene.add.ellipse(8, 3, 8, 4, 0xa9e783, 0.95).setAngle(28);
     const spark = this.scene.add.circle(0, -11, 2, 0xfff3c9, 1);
-    const indicator = this.scene.add.container(definition.x, definition.y - 8, [glow, inner, leafLeft, leafRight, spark])
+    // A pre-existing container; scaling it reproduces every local offset
+    // above at GAME_SCALE without touching them individually.
+    const indicator = this.scene.add.container(definition.x, definition.y - sy(8), [glow, inner, leafLeft, leafRight, spark])
       .setName(`wildbloom-indicator-${definition.id}`)
+      .setScale(GAME_SCALE)
       .setDepth(5)
       .setVisible(false);
 
@@ -289,15 +293,15 @@ export class WildbloomDiscoveryController {
   private fireAbility(definition: WildbloomSpotDefinition): void {
     const start = this.projectileStart(definition.x);
     const targetX = definition.x;
-    const targetY = definition.y - 8;
+    const targetY = definition.y - sy(8);
 
     if (this.profileId === 'grade2-mage') {
-      const orb = this.scene.add.circle(start.x, start.y, 6, 0x9fd7ff, 1)
+      const orb = this.scene.add.circle(start.x, start.y, sx(6), 0x9fd7ff, 1)
         .setName('wildbloom-mage-projectile')
         .setStrokeStyle(2, 0xffffff, 0.95)
         .setDepth(8);
-      const glow = this.scene.add.circle(start.x, start.y, 12, 0x8f63ff, 0.2).setDepth(7);
-      const trails = [0, 1, 2].map((index) => this.scene.add.circle(start.x, start.y, 3 - index * 0.5, 0x8f63ff, 0.65)
+      const glow = this.scene.add.circle(start.x, start.y, sx(12), 0x8f63ff, 0.2).setDepth(7);
+      const trails = [0, 1, 2].map((index) => this.scene.add.circle(start.x, start.y, sx(3 - index * 0.5), 0x8f63ff, 0.65)
         .setDepth(7));
 
       this.scene.tweens.add({
@@ -330,11 +334,11 @@ export class WildbloomDiscoveryController {
     const dx = targetX - start.x;
     const dy = targetY - start.y;
     const angle = Math.atan2(dy, dx);
-    const tracker = this.scene.add.circle(targetX, targetY, 17, 0x72b95c, 0.05)
+    const tracker = this.scene.add.circle(targetX, targetY, sx(17), 0x72b95c, 0.05)
       .setStrokeStyle(2, 0xd7ffb8, 0.95)
       .setDepth(7)
       .setScale(0.45);
-    const shot = this.scene.add.rectangle(start.x, start.y, 27, 4, 0xa9e783, 1)
+    const shot = this.scene.add.rectangle(start.x, start.y, sx(27), sx(4), 0xa9e783, 1)
       .setName('wildbloom-ranger-projectile')
       .setStrokeStyle(1, 0xffffff, 0.9)
       .setRotation(angle)
@@ -343,11 +347,11 @@ export class WildbloomDiscoveryController {
       start.x,
       start.y,
       0,
-      -4,
-      8,
+      -sy(4),
+      sx(8),
       0,
       0,
-      4,
+      sy(4),
       0xffe39a,
       1
     ).setRotation(angle).setDepth(8);
@@ -378,8 +382,8 @@ export class WildbloomDiscoveryController {
     const hero = this.heroPresentation.sprite;
     const playerX = hero?.x ?? this.player.x;
     return {
-      x: playerX + (targetX >= playerX ? 16 : -16),
-      y: (hero?.y ?? this.player.y) - 22
+      x: playerX + (targetX >= playerX ? sx(16) : -sx(16)),
+      y: (hero?.y ?? this.player.y) - sy(22)
     };
   }
 
@@ -434,11 +438,13 @@ export class WildbloomDiscoveryController {
     const glow = this.scene.add.circle(0, -5, 15, definition.secondary, 0.05)
       .setStrokeStyle(1.5, definition.accent, 0.45);
 
+    // A pre-existing container of purely local-offset children; scaling it
+    // reproduces the whole composition at GAME_SCALE with no other edits.
     const reveal = this.scene.add.container(
       definition.x,
       definition.y,
       [shadow, moss, glow, ...petals, stone, rune, label]
-    ).setName(`wildbloom-reveal-${definition.id}`).setDepth(4);
+    ).setName(`wildbloom-reveal-${definition.id}`).setScale(GAME_SCALE).setDepth(4);
 
     this.scene.tweens.add({
       targets: glow,
@@ -451,10 +457,12 @@ export class WildbloomDiscoveryController {
     });
 
     if (animate) {
-      reveal.setScale(0.2).setAlpha(0);
+      // Pop-in animates around the container's real GAME_SCALE baseline
+      // rather than 1, so it grows from small up to its true rest size.
+      reveal.setScale(0.2 * GAME_SCALE).setAlpha(0);
       this.scene.tweens.add({
         targets: reveal,
-        scale: 1,
+        scale: GAME_SCALE,
         alpha: 1,
         duration: 420,
         ease: 'Back.easeOut'
@@ -501,15 +509,15 @@ export class WildbloomDiscoveryController {
     const count = this.discoveredSpotIds.size === WILDBLOOM_SPOTS.length ? 22 : 14;
     for (let index = 0; index < count; index += 1) {
       const angle = (Math.PI * 2 * index) / count;
-      const distance = 24 + (index % 4) * 5;
+      const distance = sx(24) + (index % 4) * sx(5);
       const particle = index % 3 === 0
-        ? this.scene.add.ellipse(definition.x, definition.y - 8, 7, 4, definition.secondary, 1).setRotation(angle)
-        : this.scene.add.circle(definition.x, definition.y - 8, index % 4 === 0 ? 3 : 2, definition.accent, 1);
+        ? this.scene.add.ellipse(definition.x, definition.y - sy(8), sx(7), sx(4), definition.secondary, 1).setRotation(angle)
+        : this.scene.add.circle(definition.x, definition.y - sy(8), index % 4 === 0 ? sx(3) : sx(2), definition.accent, 1);
       particle.setDepth(8);
       this.scene.tweens.add({
         targets: particle,
         x: definition.x + Math.cos(angle) * distance,
-        y: definition.y - 8 + Math.sin(angle) * (distance * 0.72),
+        y: definition.y - sy(8) + Math.sin(angle) * (distance * 0.72),
         alpha: 0,
         scale: 0.2,
         duration: 460 + (index % 4) * 45,
@@ -544,21 +552,24 @@ export class WildbloomDiscoveryController {
       }
     ).setOrigin(0.5);
     const background = drawRoundedPanelBackground(this.scene, 0, 0, 360, complete ? 62 : 72, 0x152016, 0x8fd14f, 9);
-    this.toast = this.scene.add.container(240, 82, [background, title, detail])
+    // Was hardcoded to 240 (the old GAME_WIDTH/2) instead of referencing the
+    // real constant — harmless while GAME_WIDTH was fixed, but would have
+    // silently mis-centered this toast once the canvas resolution changed.
+    this.toast = this.scene.add.container(GAME_WIDTH / 2, sy(82), [background, title, detail])
       .setName('wildbloom-discovery-toast')
       .setScrollFactor(0)
-      .setDepth(42)
-      .setScale(0.78);
+      .setScale(0.78 * GAME_SCALE)
+      .setDepth(42);
 
     this.scene.tweens.add({
       targets: this.toast,
-      scale: 1,
+      scale: GAME_SCALE,
       duration: 180,
       ease: 'Back.easeOut'
     });
     this.scene.tweens.add({
       targets: this.toast,
-      y: 72,
+      y: sy(72),
       alpha: 0,
       delay: complete ? 1650 : 1250,
       duration: 850,

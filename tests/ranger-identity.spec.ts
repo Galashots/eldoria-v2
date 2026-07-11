@@ -1,6 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-
-const CANVAS = 'canvas';
+import { CANVAS, clickGame } from './support/canvas';
 
 type RangerPresentationState = {
   facing: string;
@@ -10,16 +9,6 @@ type RangerPresentationState = {
   physicsVisible: boolean;
   spriteTexture: string;
 };
-
-async function clickGame(page: Page, gameX: number, gameY: number): Promise<void> {
-  const box = await page.locator(CANVAS).boundingBox();
-  if (!box) throw new Error('Canvas was not visible.');
-
-  await page.mouse.click(
-    box.x + (gameX / 480) * box.width,
-    box.y + (gameY / 320) * box.height
-  );
-}
 
 async function readRangerPresentation(page: Page): Promise<RangerPresentationState> {
   return page.evaluate(() => {
@@ -55,7 +44,7 @@ async function enterReturningRangerFarm(page: Page): Promise<void> {
 
   await expect(page.locator(CANVAS)).toBeVisible();
   await page.waitForFunction(() => window.__ELDORIA_GAME__?.scene.isActive('TitleScene'));
-  await clickGame(page, 240, 184);
+  await clickGame(page, 480, 368);
   await page.waitForFunction(() => window.__ELDORIA_GAME__?.scene.isActive('WorldScene'));
 }
 
@@ -67,7 +56,7 @@ test('the Grade 5 farm hero reads as Ranger Explorer and keeps ACTION feedback',
       player: { setPosition: (x: number, y: number) => void };
       heroPresentation: { syncPosition: () => void };
     };
-    scene.player.setPosition(160, 160);
+    scene.player.setPosition(320, 320);
     scene.heroPresentation.syncPosition();
   });
 

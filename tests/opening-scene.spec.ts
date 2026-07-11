@@ -1,6 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-
-const CANVAS = 'canvas';
+import { CANVAS, clickGame } from './support/canvas';
 
 type OpeningState = {
   completed: boolean;
@@ -8,16 +7,6 @@ type OpeningState = {
   profileId: string;
   remainingHits: number;
 };
-
-async function clickGame(page: Page, gameX: number, gameY: number): Promise<void> {
-  const box = await page.locator(CANVAS).boundingBox();
-  if (!box) throw new Error('Canvas was not visible.');
-
-  await page.mouse.click(
-    box.x + (gameX / 480) * box.width,
-    box.y + (gameY / 320) * box.height
-  );
-}
 
 async function readOpeningState(page: Page): Promise<OpeningState> {
   return page.evaluate(() => {
@@ -43,12 +32,12 @@ async function enterFreshOpening(page: Page, profileY: number): Promise<void> {
 
   await expect(page.locator(CANVAS)).toBeVisible();
   await page.waitForFunction(() => window.__ELDORIA_GAME__?.scene.isActive('TitleScene'));
-  await clickGame(page, 240, profileY);
+  await clickGame(page, 480, profileY);
   await page.waitForFunction(() => window.__ELDORIA_GAME__?.scene.isActive('OpeningScene'));
 }
 
 test('a fresh Mage profile gets a polished skippable magic hook before the farm', async ({ page }) => {
-  await enterFreshOpening(page, 116);
+  await enterFreshOpening(page, 232);
 
   await expect.poll(async () => readOpeningState(page)).toEqual({
     completed: false,
@@ -61,7 +50,7 @@ test('a fresh Mage profile gets a polished skippable magic hook before the farm'
   // Use the same large ACTION target the child sees; tapping the gate and
   // pressing Space/E route through the identical scene method.
   for (const expectedRemaining of [2, 1, 0]) {
-    await clickGame(page, 426, 272);
+    await clickGame(page, 852, 544);
     await expect.poll(async () => (await readOpeningState(page)).remainingHits).toBe(expectedRemaining);
     await page.waitForTimeout(440);
     if (expectedRemaining === 2) {
@@ -79,13 +68,13 @@ test('a fresh Mage profile gets a polished skippable magic hook before the farm'
   // The opening is a one-time first-run beat and never blocks returning players.
   await page.reload();
   await page.waitForFunction(() => window.__ELDORIA_GAME__?.scene.isActive('TitleScene'));
-  await clickGame(page, 240, 116);
+  await clickGame(page, 480, 232);
   await page.waitForFunction(() => window.__ELDORIA_GAME__?.scene.isActive('WorldScene'));
   expect(await page.evaluate(() => window.__ELDORIA_GAME__?.scene.isActive('OpeningScene'))).toBe(false);
 });
 
 test('a fresh Ranger profile uses the polished temporary hero proxy and tracking-shot palette', async ({ page }) => {
-  await enterFreshOpening(page, 184);
+  await enterFreshOpening(page, 368);
 
   await expect.poll(async () => readOpeningState(page)).toEqual({
     completed: false,
@@ -95,7 +84,7 @@ test('a fresh Ranger profile uses the polished temporary hero proxy and tracking
   });
   await page.screenshot({ path: 'test-results/opening-ranger-start.png', fullPage: true });
 
-  await clickGame(page, 426, 272);
+  await clickGame(page, 852, 544);
   await expect.poll(async () => (await readOpeningState(page)).remainingHits).toBe(2);
   await page.waitForTimeout(440);
   await page.screenshot({ path: 'test-results/opening-ranger-first-hit.png', fullPage: true });

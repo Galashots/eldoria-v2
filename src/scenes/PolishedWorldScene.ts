@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import type { BonusContext } from '../data/curriculum';
 import type { InteractionId } from '../data/interactions';
 import type { ProfileId } from '../data/profiles';
-import { GAME_HEIGHT, GAME_WIDTH } from '../gameConfig';
+import { GAME_HEIGHT, GAME_SCALE, GAME_WIDTH, sx, sy } from '../gameDimensions';
 import type { HeroPresentationController } from '../presentation/HeroPresentationController';
 import {
   PracticeSlimeEncounterController,
@@ -127,7 +127,7 @@ export class PolishedWorldScene extends WorldScene {
       player.setVelocity(0, 0);
     }
 
-    this.playerShadow?.setPosition(player.x, player.y + 9);
+    this.playerShadow?.setPosition(player.x, player.y + sy(9));
     const discoveryHint = this.wildbloomDiscovery?.hintText();
     this.presentationHint?.setText(discoveryHint ?? this.formatHint(hintText.text));
     this.presentationObjective?.setText(this.formatObjective(objectiveText.text));
@@ -260,9 +260,22 @@ export class PolishedWorldScene extends WorldScene {
       // The long-standing vertical-slice smoke helper invokes private
       // `tryInteract()` directly once. Keep that helper viable while the new
       // dedicated browser test exercises the real three deliberate ACTION taps.
+      //
+      // Polls and retries rather than firing at two fixed offsets: a fixed
+      // 440ms/880ms schedule left only ~50ms of slack against the encounter's
+      // own hit-unlock timer, which the larger 960x640 canvas's heavier
+      // render load was enough to occasionally overrun, silently dropping
+      // the second auto-strike and stranding the encounter at 2/3 hits.
       if (interacted && directLegacySlimeCall) {
-        this.time.delayedCall(440, () => this.practiceSlimeEncounter?.tryStrike());
-        this.time.delayedCall(880, () => this.practiceSlimeEncounter?.tryStrike());
+        const attemptRemainingStrikes = (): void => {
+          this.time.delayedCall(80, () => {
+            const snapshot = this.practiceSlimeEncounter?.snapshot();
+            if (!snapshot || snapshot.completed) return;
+            this.practiceSlimeEncounter?.tryStrike();
+            attemptRemainingStrikes();
+          });
+        };
+        this.time.delayedCall(440, attemptRemainingStrikes);
       }
 
       return interacted;
@@ -283,14 +296,14 @@ export class PolishedWorldScene extends WorldScene {
     vignette.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
     for (let index = 0; index < 14; index += 1) {
-      const x = 26 + ((index * 89) % (GAME_WIDTH - 52));
-      const y = 76 + ((index * 53) % (GAME_HEIGHT - 112));
-      const mote = this.add.circle(x, y, index % 4 === 0 ? 2 : 1, index % 3 === 0 ? 0xffe39a : 0xd7ffb8, 0.18)
+      const x = sx(26) + ((index * 89) % (GAME_WIDTH - sx(52)));
+      const y = sy(76) + ((index * 53) % (GAME_HEIGHT - sy(112)));
+      const mote = this.add.circle(x, y, index % 4 === 0 ? sx(2) : sx(1), index % 3 === 0 ? 0xffe39a : 0xd7ffb8, 0.18)
         .setScrollFactor(0)
         .setDepth(2);
       this.tweens.add({
         targets: mote,
-        y: y - 8 - (index % 4) * 2,
+        y: y - sy(8) - (index % 4) * sy(2),
         alpha: 0.04,
         duration: 1700 + index * 90,
         yoyo: true,
@@ -303,7 +316,7 @@ export class PolishedWorldScene extends WorldScene {
 
   private addPlayerShadow(): void {
     const { player } = this.presentationInternals;
-    this.playerShadow = this.add.ellipse(player.x, player.y + 9, 26, 10, 0x06110d, 0.35)
+    this.playerShadow = this.add.ellipse(player.x, player.y + sy(9), sx(26), sx(10), 0x06110d, 0.35)
       .setDepth(1);
   }
 
@@ -321,7 +334,7 @@ export class PolishedWorldScene extends WorldScene {
 
     if (practiceSlimeSprite) {
       // Slime sprite origin is bottom-center, so its base sits at the sprite y.
-      this.add.ellipse(practiceSlimeSprite.x, practiceSlimeSprite.y - 1, 20, 7, 0x06110d, 0.32)
+      this.add.ellipse(practiceSlimeSprite.x, practiceSlimeSprite.y - sy(1), sx(20), sx(7), 0x06110d, 0.32)
         .setDepth(1);
     }
 
@@ -329,7 +342,7 @@ export class PolishedWorldScene extends WorldScene {
       if (target.id === 'mira' || target.id === 'practice-slime') continue;
       // The bare marker (WorldScene.drawTargetMarkers) floats ~12px above the
       // target's map point; anchor the shadow on that ground point.
-      this.add.ellipse(target.x, target.y, 12, 5, 0x06110d, 0.28)
+      this.add.ellipse(target.x, target.y, sx(12), sx(5), 0x06110d, 0.28)
         .setDepth(1);
     }
   }
@@ -340,8 +353,10 @@ export class PolishedWorldScene extends WorldScene {
 
     // A small world-space NPC silhouette cheaply replaces the bare marker feel
     // until final Mira sprite art arrives. The original target remains the
-    // interaction authority underneath it.
-    const npc = this.add.graphics().setPosition(mira.x, mira.y).setDepth(3.5);
+    // interaction authority underneath it. Scaling this single Graphics
+    // object reproduces every local fill/shape coordinate below at
+    // GAME_SCALE without needing each one doubled by hand.
+    const npc = this.add.graphics().setPosition(mira.x, mira.y).setScale(GAME_SCALE).setDepth(3.5);
     npc.fillStyle(0x06110d, 0.35);
     npc.fillEllipse(0, 5, 24, 8);
     npc.fillStyle(0x5a2f68, 1);
@@ -358,13 +373,17 @@ export class PolishedWorldScene extends WorldScene {
     npc.fillCircle(-2.5, -25, 1);
     npc.fillCircle(2.5, -25, 1);
 
-    const markerY = mira.y - 42;
+    const markerY = mira.y - sy(42);
+    // Both glow and marker share a GAME_SCALE baseline (radius/geometry left
+    // in local units) so the shared pulse tween below can target one scale
+    // value consistently for both.
     const glow = this.add.circle(mira.x, markerY, 13, 0xffd666, 0.08)
       .setStrokeStyle(2, 0xffd666, 0.9)
+      .setScale(GAME_SCALE)
       .setDepth(4);
     this.miraPulse = glow;
 
-    const marker = this.add.graphics().setPosition(mira.x, markerY).setDepth(5);
+    const marker = this.add.graphics().setPosition(mira.x, markerY).setScale(GAME_SCALE).setDepth(5);
     marker.fillStyle(0xfff2ad, 1);
     marker.fillTriangle(0, -7, 3.5, 0, 0, 7);
     marker.fillTriangle(0, -7, -3.5, 0, 0, 7);
@@ -373,7 +392,7 @@ export class PolishedWorldScene extends WorldScene {
 
     this.tweens.add({
       targets: [glow, marker],
-      scale: 1.18,
+      scale: 1.18 * GAME_SCALE,
       alpha: { from: 0.62, to: 1 },
       duration: 720,
       yoyo: true,
@@ -388,24 +407,24 @@ export class PolishedWorldScene extends WorldScene {
     objectiveText.setAlpha(0);
     hintText.setAlpha(0);
 
-    this.presentationObjective = this.add.text(16, 40, this.formatObjective(objectiveText.text), {
+    this.presentationObjective = this.add.text(sx(16), sy(40), this.formatObjective(objectiveText.text), {
       fontFamily: 'system-ui',
-      fontSize: '11px',
+      fontSize: '22px',
       color: '#fff3c9',
       fontStyle: 'bold',
       stroke: '#102016',
-      strokeThickness: 2,
-      wordWrap: { width: GAME_WIDTH - 32 }
+      strokeThickness: 4,
+      wordWrap: { width: GAME_WIDTH - sx(32) }
     }).setScrollFactor(0).setDepth(21);
 
-    this.presentationHint = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 18, this.formatHint(hintText.text), {
+    this.presentationHint = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - sy(18), this.formatHint(hintText.text), {
       fontFamily: 'system-ui',
-      fontSize: '11px',
+      fontSize: '22px',
       color: '#fff3c9',
       backgroundColor: '#1a140d',
-      padding: { x: 10, y: 4 },
+      padding: { x: sx(10), y: sy(4) },
       stroke: '#0d0905',
-      strokeThickness: 2
+      strokeThickness: 4
     }).setOrigin(0.5).setScrollFactor(0).setDepth(21);
   }
 
@@ -431,7 +450,7 @@ export class PolishedWorldScene extends WorldScene {
 
     this.cameras.main.fadeIn(360, 12, 10, 18);
 
-    const arrivalRing = this.add.circle(player.x, player.y + 2, 10, 0x8f63ff, 0.08)
+    const arrivalRing = this.add.circle(player.x, player.y + sy(2), sx(10), 0x8f63ff, 0.08)
       .setStrokeStyle(3, 0xcdb8ff, 0.95)
       .setDepth(5);
     this.tweens.add({
@@ -448,14 +467,14 @@ export class PolishedWorldScene extends WorldScene {
       const sparkle = this.add.circle(
         player.x,
         player.y,
-        index % 4 === 0 ? 3 : 2,
+        index % 4 === 0 ? sx(3) : sx(2),
         index % 2 === 0 ? 0xcdb8ff : 0xffe39a,
         1
       ).setDepth(6);
       this.tweens.add({
         targets: sparkle,
-        x: player.x + Math.cos(angle) * (25 + (index % 4) * 6),
-        y: player.y + Math.sin(angle) * (18 + (index % 4) * 5) - 8,
+        x: player.x + Math.cos(angle) * (sx(25) + (index % 4) * sx(6)),
+        y: player.y + Math.sin(angle) * (sy(18) + (index % 4) * sy(5)) - sy(8),
         alpha: 0,
         scale: 0.25,
         duration: 620 + index * 14,
@@ -465,7 +484,7 @@ export class PolishedWorldScene extends WorldScene {
     }
 
     if (mira) {
-      this.createGuidingTrail(player.x, player.y - 8, mira.x, mira.y - 12);
+      this.createGuidingTrail(player.x, player.y - sy(8), mira.x, mira.y - sy(12));
     }
   }
 
@@ -474,8 +493,8 @@ export class PolishedWorldScene extends WorldScene {
     for (let index = 1; index <= points; index += 1) {
       const progress = index / (points + 1);
       const x = Phaser.Math.Linear(startX, endX, progress);
-      const y = Phaser.Math.Linear(startY, endY, progress) - Math.sin(progress * Math.PI) * 18;
-      const sparkle = this.add.circle(x, y, index % 3 === 0 ? 3 : 2, 0xcdb8ff, 0)
+      const y = Phaser.Math.Linear(startY, endY, progress) - Math.sin(progress * Math.PI) * sy(18);
+      const sparkle = this.add.circle(x, y, index % 3 === 0 ? sx(3) : sx(2), 0xcdb8ff, 0)
         .setStrokeStyle(1, 0xffffff, 0.8)
         .setDepth(5);
 
@@ -493,9 +512,11 @@ export class PolishedWorldScene extends WorldScene {
     }
 
     if (this.miraPulse) {
+      // miraPulse (the "glow" circle from addMiraGuidance) carries a
+      // GAME_SCALE baseline, so this absolute scale target must too.
       this.tweens.add({
         targets: this.miraPulse,
-        scale: 1.45,
+        scale: 1.45 * GAME_SCALE,
         alpha: 1,
         delay: 980,
         duration: 260,

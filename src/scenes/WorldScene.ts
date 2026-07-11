@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_HEIGHT, GAME_WIDTH } from '../gameConfig';
+import { GAME_HEIGHT, GAME_SCALE, GAME_WIDTH, LEGACY_GAME_WIDTH, sx, sy } from '../gameDimensions';
 import type { AnswerValue, BonusContext, LearningPrompt } from '../data/curriculum';
 import { REWARD_KIND_GOLD_VALUE } from '../data/curriculum';
 import { PROFILES, type ProfileId } from '../data/profiles';
@@ -60,7 +60,7 @@ export class WorldScene extends Phaser.Scene {
   private joystickPointer: Phaser.Input.Pointer | null = null;
   private joystickBase!: Phaser.GameObjects.Arc;
   private joystickKnob!: Phaser.GameObjects.Arc;
-  private readonly joystickRadius = 42;
+  private readonly joystickRadius = sx(42);
   private targets: InteractionTarget[] = [];
   private profileId: ProfileId = 'grade5-adventurer';
   private learning!: LearningBonusSystem;
@@ -71,6 +71,7 @@ export class WorldScene extends Phaser.Scene {
   private busy = false;
   private statsPanelOpen = false;
   private statsContainer?: Phaser.GameObjects.Container;
+  private statsCloseZone?: Phaser.GameObjects.Zone;
   private activeUtterance: SpeechSynthesisUtterance | null = null;
   private hudText!: Phaser.GameObjects.Text;
   private objectiveText!: Phaser.GameObjects.Text;
@@ -107,10 +108,14 @@ export class WorldScene extends Phaser.Scene {
       throw new Error('Missing tileset: eldoria-placeholder');
     }
 
-    map.createLayer('Ground', tileset, 0, 0);
-    map.createLayer('Decor', tileset, 0, 0);
+    // Tile layers render at GAME_SCALE (their underlying Tiled grid/GIDs are
+    // untouched) rather than doubling public/maps/farm.json's own tile
+    // dimensions, so the map file stays a single source of truth for both
+    // this scaled runtime and Tiled's editor view.
+    map.createLayer('Ground', tileset, 0, 0)?.setScale(GAME_SCALE);
+    map.createLayer('Decor', tileset, 0, 0)?.setScale(GAME_SCALE);
 
-    const collisionLayer = map.createLayer('Collision', tileset, 0, 0);
+    const collisionLayer = map.createLayer('Collision', tileset, 0, 0)?.setScale(GAME_SCALE);
     if (collisionLayer) {
       collisionLayer.setCollision(FARM_COLLISION_TILE_GIDS);
       collisionLayer.setVisible(false);
@@ -118,11 +123,22 @@ export class WorldScene extends Phaser.Scene {
 
     const objectLayer = map.getObjectLayer('Objects');
     const spawn = objectLayer?.objects.find((obj) => obj.name === 'PlayerSpawn');
+    const worldWidth = map.widthInPixels * GAME_SCALE;
+    const worldHeight = map.heightInPixels * GAME_SCALE;
 
-    this.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
-    this.player = this.physics.add.sprite(spawn?.x ?? 160, spawn?.y ?? 160, 'adventurer', 0);
+    this.physics.world.setBounds(0, 0, worldWidth, worldHeight);
+    this.player = this.physics.add.sprite(
+      (spawn?.x ?? 160) * GAME_SCALE,
+      (spawn?.y ?? 160) * GAME_SCALE,
+      'adventurer',
+      0
+    );
     this.player.setCollideWorldBounds(true);
-    this.player.body?.setSize(18, 18).setOffset(7, 12);
+    this.player.setScale(GAME_SCALE);
+    // Arcade Physics bodies don't auto-derive from display scale once
+    // setSize() is called explicitly, so these must be doubled by hand to
+    // match the now-2x sprite and world.
+    this.player.body?.setSize(sx(18), sy(18)).setOffset(sx(7), sy(12));
 
     if (collisionLayer) {
       this.physics.add.collider(this.player, collisionLayer);
@@ -133,7 +149,7 @@ export class WorldScene extends Phaser.Scene {
     this.drawTargetMarkers();
 
     this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
-    this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
+    this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
 
     this.cursors = this.input.keyboard!.createCursorKeys();
     this.keys = this.input.keyboard!.addKeys('W,A,S,D,SPACE,E,I,TAB') as Record<
@@ -206,7 +222,9 @@ export class WorldScene extends Phaser.Scene {
       return;
     }
 
-    const speed = 125;
+    // Doubled alongside the world so traversal timing (seconds to cross the
+    // farm) is unchanged even though every world coordinate is now 2x.
+    const speed = sx(125);
     const keyX = (this.cursors.right.isDown || this.keys.D.isDown ? 1 : 0)
       - (this.cursors.left.isDown || this.keys.A.isDown ? 1 : 0);
     const keyY = (this.cursors.down.isDown || this.keys.S.isDown ? 1 : 0)
@@ -249,8 +267,8 @@ export class WorldScene extends Phaser.Scene {
         return {
           id: customId || resolveInteractionId(label),
           kind: obj.type === 'enemy' ? 'combat' : obj.type === 'bonus' ? 'farm' : 'quest',
-          x: obj.x ?? 0,
-          y: obj.y ?? 0,
+          x: (obj.x ?? 0) * GAME_SCALE,
+          y: (obj.y ?? 0) * GAME_SCALE,
           label
         } satisfies InteractionTarget;
       });
@@ -266,14 +284,21 @@ export class WorldScene extends Phaser.Scene {
           0
         )
           .setOrigin(0.5, 1)
+          .setScale(GAME_SCALE)
           .setDepth(2)
           .play(PRACTICE_SLIME_IDLE_ANIMATION);
         continue;
       }
 
+      // Kept as direct scene children (not a container): tests locate the
+      // bonus-prompt panel via `children.list.find(c => Array.isArray(c.list))`
+      // — "the first Container in the scene" — and a persistent marker
+      // container created here (during every create()) would wrongly match
+      // that lookup instead of the actual prompt panel. Each pixel literal is
+      // doubled by hand instead.
       const color = target.kind === 'combat' ? 0xaa3344 : target.kind === 'farm' ? 0x55aa33 : 0x4488cc;
-      this.add.circle(target.x, target.y - 12, 6, color).setStrokeStyle(2, 0x1a1208);
-      this.add.text(target.x, target.y - 30, target.label, {
+      this.add.circle(target.x, target.y - sy(12), sx(6), color).setStrokeStyle(2, 0x1a1208);
+      this.add.text(target.x, target.y - sy(30), target.label, {
         fontFamily: 'system-ui',
         fontSize: '9px',
         color: '#ffffff',
@@ -320,8 +345,12 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private playCropBonusFeedback(target: InteractionTarget, onComplete: () => void): void {
-    const centerY = target.y - 12;
-    const pulse = this.add.circle(target.x, centerY, 8, 0x8fd14f, 0.08)
+    // Kept as direct scene children (not a scaled container) with each pixel
+    // literal doubled by hand: the pulse is located by name via
+    // scene.children.getByName in tests/vertical-slice.spec.ts, which only
+    // searches the scene's own direct display list, not nested containers.
+    const centerY = target.y - sy(12);
+    const pulse = this.add.circle(target.x, centerY, sx(8), 0x8fd14f, 0.08)
       .setName(CROP_BONUS_FEEDBACK_NAME)
       .setStrokeStyle(2, 0xd7ff8f, 0.95)
       .setDepth(3);
@@ -329,18 +358,18 @@ export class WorldScene extends Phaser.Scene {
     for (let index = 0; index < 4; index += 1) {
       const direction = index % 2 === 0 ? -1 : 1;
       const leaf = this.add.ellipse(
-        target.x + direction * (4 + index * 2),
-        centerY + 2,
-        5,
-        3,
+        target.x + direction * sx(4 + index * 2),
+        centerY + sy(2),
+        sx(5),
+        sx(3),
         index < 2 ? 0x8fd14f : 0xffd666,
         0.95
       ).setDepth(3).setAngle(direction * 22);
 
       this.tweens.add({
         targets: leaf,
-        x: leaf.x + direction * (8 + index * 2),
-        y: leaf.y - 12 - index * 2,
+        x: leaf.x + direction * sx(8 + index * 2),
+        y: leaf.y - sy(12 + index * 2),
         angle: leaf.angle + direction * 55,
         alpha: 0,
         duration: 420 + index * 20,
@@ -370,26 +399,30 @@ export class WorldScene extends Phaser.Scene {
    * Repaints in place on `graphics` so the mute toggle can redraw it without
    * recreating the object.
    */
-  private paintSpeakerIcon(graphics: Phaser.GameObjects.Graphics, x: number, y: number, muted: boolean): void {
+  // Draws relative to a local (0,0) origin — the caller positions the whole
+  // icon once via graphics.setPosition() and scales it via .setScale(), so
+  // every internal offset here stays correct at any GAME_SCALE without
+  // needing to be doubled by hand.
+  private paintSpeakerIcon(graphics: Phaser.GameObjects.Graphics, muted: boolean): void {
     graphics.clear();
     graphics.fillStyle(0xffd666, 1);
-    graphics.fillRect(x - 9, y - 3, 4, 6);
-    graphics.fillTriangle(x - 5, y - 3, x - 5, y + 3, x + 1, y - 7);
-    graphics.fillTriangle(x - 5, y + 3, x + 1, y - 7, x + 1, y + 7);
+    graphics.fillRect(-9, -3, 4, 6);
+    graphics.fillTriangle(-5, -3, -5, 3, 1, -7);
+    graphics.fillTriangle(-5, 3, 1, -7, 1, 7);
 
     if (muted) {
       graphics.lineStyle(2, 0xe0916c, 1);
       graphics.beginPath();
-      graphics.moveTo(x + 2, y - 7);
-      graphics.lineTo(x + 9, y + 7);
+      graphics.moveTo(2, -7);
+      graphics.lineTo(9, 7);
       graphics.strokePath();
     } else {
       graphics.lineStyle(1.5, 0xffd666, 1);
       graphics.beginPath();
-      graphics.arc(x + 1, y, 4, Phaser.Math.DegToRad(-40), Phaser.Math.DegToRad(40));
+      graphics.arc(1, 0, 4, Phaser.Math.DegToRad(-40), Phaser.Math.DegToRad(40));
       graphics.strokePath();
       graphics.beginPath();
-      graphics.arc(x + 1, y, 7, Phaser.Math.DegToRad(-35), Phaser.Math.DegToRad(35));
+      graphics.arc(1, 0, 7, Phaser.Math.DegToRad(-35), Phaser.Math.DegToRad(35));
       graphics.strokePath();
     }
   }
@@ -407,53 +440,56 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private createHud(initialAudioMuted: boolean): void {
-    drawRoundedPanelBackground(this, GAME_WIDTH / 2, 14, GAME_WIDTH - 20, 24, 0x2a1a08, 0x6f5126, 5)
+    drawRoundedPanelBackground(this, GAME_WIDTH / 2, sy(14), GAME_WIDTH - sx(20), sy(24), 0x2a1a08, 0x6f5126, 10)
       .setScrollFactor(0);
 
-    this.hudText = this.add.text(16, 7, '', {
+    this.hudText = this.add.text(sx(16), sy(7), '', {
       fontFamily: 'system-ui',
-      fontSize: '12px',
+      fontSize: '24px',
       color: '#ffd666'
     }).setScrollFactor(0);
 
-    const statsBtn = drawRoundedButton(this, GAME_WIDTH - 50, 14, 56, 16, 0x5f3d12, 0xffd666, 5)
+    const statsBtn = drawRoundedButton(this, GAME_WIDTH - sx(50), sy(14), sx(56), sy(16), 0x5f3d12, 0xffd666, 10)
       .setScrollFactor(0);
 
-    this.add.text(GAME_WIDTH - 50, 14, 'STATS', {
+    this.add.text(GAME_WIDTH - sx(50), sy(14), 'STATS', {
       fontFamily: 'system-ui',
-      fontSize: '9px',
+      fontSize: '18px',
       color: '#ffd666',
       fontStyle: 'bold'
     }).setOrigin(0.5).setScrollFactor(0);
 
     statsBtn.on('pointerdown', () => this.toggleStatsPanel());
 
-    const muteBtn = drawRoundedButton(this, GAME_WIDTH - 96, 14, 24, 16, 0x5f3d12, 0xffd666, 5)
+    const muteBtn = drawRoundedButton(this, GAME_WIDTH - sx(96), sy(14), sx(24), sy(16), 0x5f3d12, 0xffd666, 10)
       .setScrollFactor(0);
 
-    this.muteIcon = this.add.graphics().setScrollFactor(0);
-    this.paintSpeakerIcon(this.muteIcon, GAME_WIDTH - 96, 14, initialAudioMuted);
+    this.muteIcon = this.add.graphics()
+      .setScrollFactor(0)
+      .setScale(GAME_SCALE)
+      .setPosition(GAME_WIDTH - sx(96), sy(14));
+    this.paintSpeakerIcon(this.muteIcon, initialAudioMuted);
 
     muteBtn.on('pointerdown', () => this.toggleAudioMute());
 
     // A small gap below the HUD bar (rather than sitting flush against it)
     // so the two read as separate pieces of information, not one tall box.
-    drawRoundedPanelBackground(this, GAME_WIDTH / 2, 48, GAME_WIDTH - 20, 28, 0x162a12, 0x5e9f3a, 5)
+    drawRoundedPanelBackground(this, GAME_WIDTH / 2, sy(48), GAME_WIDTH - sx(20), sy(28), 0x162a12, 0x5e9f3a, 10)
       .setScrollFactor(0);
 
-    this.objectiveText = this.add.text(16, 40, '', {
+    this.objectiveText = this.add.text(sx(16), sy(40), '', {
       fontFamily: 'system-ui',
-      fontSize: '11px',
+      fontSize: '22px',
       color: '#d7ffb8',
-      wordWrap: { width: GAME_WIDTH - 32 }
+      wordWrap: { width: GAME_WIDTH - sx(32) }
     }).setScrollFactor(0);
 
-    this.hintText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 18, '', {
+    this.hintText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - sy(18), '', {
       fontFamily: 'system-ui',
-      fontSize: '11px',
+      fontSize: '22px',
       color: '#f5e6c8',
       backgroundColor: '#2a1a08',
-      padding: { x: 8, y: 4 }
+      padding: { x: sx(8), y: sy(4) }
     }).setOrigin(0.5).setScrollFactor(0);
 
     this.refreshHud();
@@ -494,14 +530,14 @@ export class WorldScene extends Phaser.Scene {
     const isTouchDevice = this.sys.game.device.input.touch;
     const actionAlpha = isTouchDevice ? 0.82 : 0.25;
 
-    const action = this.add.circle(GAME_WIDTH - 54, GAME_HEIGHT - 52, 34, 0x5f3d12, actionAlpha)
+    const action = this.add.circle(GAME_WIDTH - sx(54), GAME_HEIGHT - sy(52), sx(34), 0x5f3d12, actionAlpha)
       .setStrokeStyle(3, 0xffd666, actionAlpha)
       .setScrollFactor(0)
       .setInteractive({ useHandCursor: true });
 
-    this.add.text(GAME_WIDTH - 54, GAME_HEIGHT - 52, 'ACTION', {
+    this.add.text(GAME_WIDTH - sx(54), GAME_HEIGHT - sy(52), 'ACTION', {
       fontFamily: 'system-ui',
-      fontSize: '10px',
+      fontSize: '20px',
       color: '#ffd666'
     }).setOrigin(0.5).setScrollFactor(0).setAlpha(isTouchDevice ? 1 : actionAlpha);
 
@@ -513,7 +549,7 @@ export class WorldScene extends Phaser.Scene {
       .setStrokeStyle(3, 0xffd666, 0.75)
       .setScrollFactor(0)
       .setVisible(false);
-    this.joystickKnob = this.add.circle(0, 0, 16, 0xffd666, 0.82)
+    this.joystickKnob = this.add.circle(0, 0, sx(16), 0xffd666, 0.82)
       .setStrokeStyle(2, 0x2a1a08)
       .setScrollFactor(0)
       .setVisible(false);
@@ -587,7 +623,7 @@ export class WorldScene extends Phaser.Scene {
 
     for (const target of this.targets) {
       const d = Phaser.Math.Distance.Between(px, py, target.x, target.y);
-      if (d < 42 && d < bestDistance) {
+      if (d < sx(42) && d < bestDistance) {
         best = target;
         bestDistance = d;
       }
@@ -653,7 +689,7 @@ export class WorldScene extends Phaser.Scene {
     const nextMuted = !this.sound.mute;
     this.sound.mute = nextMuted;
     saveAudioMuted(nextMuted);
-    this.paintSpeakerIcon(this.muteIcon, GAME_WIDTH - 96, 14, nextMuted);
+    this.paintSpeakerIcon(this.muteIcon, nextMuted);
   }
 
   private handleMiraInteraction(): void {
@@ -716,14 +752,14 @@ export class WorldScene extends Phaser.Scene {
     let showSparkles = false;
     if (outcome.reward) {
       this.gold += outcome.reward.gold;
-      this.showFloatingReward(`+${outcome.reward.gold} Gold`, this.player.x, this.player.y - 26, '#ffd666');
+      this.showFloatingReward(`+${outcome.reward.gold} Gold`, this.player.x, this.player.y - sy(26), '#ffd666');
       if (outcome.reward.item) {
         const { key, name } = outcome.reward.item;
         this.inventory[key] = (this.inventory[key] ?? 0) + 1;
         // A keepsake charm is a bigger moment than a gold trickle, so it
         // gets its own emphasized pop-in text and a larger sparkle burst
         // rather than reusing the plain floating-text treatment.
-        this.showFloatingReward(`Received: ${name}`, this.player.x, this.player.y - 46, '#d7ffb8', true);
+        this.showFloatingReward(`Received: ${name}`, this.player.x, this.player.y - sy(46), '#d7ffb8', true);
         bigSparkles = true;
       }
       this.refreshHud();
@@ -732,7 +768,7 @@ export class WorldScene extends Phaser.Scene {
     }
 
     if (outcome.foundItem) {
-      this.showFloatingReward(`Found: ${outcome.foundItem}`, this.player.x, this.player.y - 26, '#d7ffb8');
+      this.showFloatingReward(`Found: ${outcome.foundItem}`, this.player.x, this.player.y - sy(26), '#d7ffb8');
       showSparkles = true;
     }
 
@@ -742,7 +778,7 @@ export class WorldScene extends Phaser.Scene {
     // reward was granted.
     if (!showSparkles && outcome.toast && outcome.objectiveChanged) showSparkles = true;
 
-    if (showSparkles) this.createSparkleBurst(this.player.x, this.player.y - 14, bigSparkles);
+    if (showSparkles) this.createSparkleBurst(this.player.x, this.player.y - sy(14), bigSparkles);
     if (outcome.toast) this.showToast(outcome.toast);
     if (persist && (outcome.stateChanged || outcome.reward)) this.save();
   }
@@ -779,40 +815,52 @@ export class WorldScene extends Phaser.Scene {
     const isPreview = previewPrompt !== undefined;
     const prompt = previewPrompt ?? this.learning.makePrompt(context);
     const isAudioFirst = PROFILES[this.profileId].readingMode === 'audio-first';
+    // NOT scaled via container: Phaser's hit-test for a Graphics object's
+    // custom Geom.Rectangle interactive area does not account for an
+    // ancestor container's scale (only its position), so every interactive
+    // child below (read/skip/choice buttons) would silently stop responding
+    // to clicks if this container carried a GAME_SCALE transform. Every
+    // literal is doubled directly instead.
     const panel = this.add.container(GAME_WIDTH / 2, GAME_HEIGHT / 2)
       .setScrollFactor(0)
       .setDepth(30);
-    const panelHeight = isAudioFirst ? 220 : 190;
-    const titleY = isAudioFirst ? -84 : -72;
-    const promptY = isAudioFirst ? -52 : -42;
-    const choicesY = isAudioFirst ? 38 : 34;
-    const skipY = isAudioFirst ? 94 : 82;
+    const panelHeight = isAudioFirst ? sy(220) : sy(190);
+    const titleY = isAudioFirst ? -sy(84) : -sy(72);
+    const promptY = isAudioFirst ? -sy(52) : -sy(42);
+    const choicesY = isAudioFirst ? sy(38) : sy(34);
+    const skipY = isAudioFirst ? sy(94) : sy(82);
 
     // Fully opaque (not the previous 0.96 alpha): a slightly transparent
     // panel background let whatever world-space marker label happened to
     // sit behind it (e.g. "CropBonus") faintly ghost through.
-    const bg = drawRoundedPanelBackground(this, 0, 0, 360, panelHeight, 0x2a1a08, 0xffd666, 10);
+    const bg = drawRoundedPanelBackground(this, 0, 0, sx(360), panelHeight, 0x2a1a08, 0xffd666, 10);
     panel.add(bg);
 
     panel.add(this.add.text(0, titleY, `${label}: optional learning bonus`, {
       fontFamily: 'system-ui',
-      fontSize: '14px',
+      fontSize: '28px',
       color: '#ffd666'
     }).setOrigin(0.5));
 
     panel.add(this.add.text(0, promptY, prompt.text, {
       fontFamily: 'system-ui',
-      fontSize: prompt.text.length > 55 ? '13px' : '17px',
+      fontSize: prompt.text.length > 55 ? '26px' : '34px',
       color: '#ffffff',
       align: 'center',
-      wordWrap: { width: 324 }
+      wordWrap: { width: sx(324) }
     }).setOrigin(0.5));
 
     if (isAudioFirst) {
-      const readButton = drawRoundedButton(this, 0, -12, 132, 28, 0x3a4f8f, 0x99c7ff, 6);
-      const readText = this.add.text(0, -12, 'READ ALOUD', {
+      // setScrollFactor(0) here is required, not redundant with the panel's
+      // own setScrollFactor(0): Phaser's input hit-test uses each interactive
+      // child's own scroll factor rather than inheriting the parent
+      // container's, so without this the hit area silently drifts away from
+      // the rendered button by however far the camera has scrolled.
+      const readButton = drawRoundedButton(this, 0, -sy(12), sx(132), sy(28), 0x3a4f8f, 0x99c7ff, 12)
+        .setScrollFactor(0);
+      const readText = this.add.text(0, -sy(12), 'READ ALOUD', {
         fontFamily: 'system-ui',
-        fontSize: '11px',
+        fontSize: '22px',
         color: '#ffffff'
       }).setOrigin(0.5);
 
@@ -821,31 +869,34 @@ export class WorldScene extends Phaser.Scene {
       panel.add(readText);
     }
 
-    const skipButton = drawRoundedButton(this, GAME_WIDTH / 2, GAME_HEIGHT / 2 + skipY, 132, 28, 0x3a2208, 0xc9a66b, 6)
-      .setScrollFactor(0)
-      .setDepth(31);
-    const skipText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + skipY, 'Skip bonus', {
+    // Local (0, skipY) instead of the previous screen-absolute position: as
+    // panel children now, they're already carried by the panel's own
+    // position, and destroying the panel below cleans them up too.
+    const skipButton = drawRoundedButton(this, 0, skipY, sx(132), sy(28), 0x3a2208, 0xc9a66b, 12)
+      .setScrollFactor(0);
+    const skipText = this.add.text(0, skipY, 'Skip bonus', {
       fontFamily: 'system-ui',
-      fontSize: '12px',
+      fontSize: '24px',
       color: '#c9a66b'
-    }).setOrigin(0.5).setScrollFactor(0).setDepth(32);
+    }).setOrigin(0.5);
+    panel.add(skipButton);
+    panel.add(skipText);
     const destroyPrompt = (): void => {
       panel.destroy();
-      skipButton.destroy();
-      skipText.destroy();
     };
 
     prompt.choices.forEach((choice, index) => {
-      const x = -110 + index * 110;
+      const x = sx(-110 + index * 110);
       const choiceLabel = String(choice);
-      const btn = drawRoundedButton(this, x, choicesY, 102, 46, 0x5f3d12, 0xffd666, 6);
+      const btn = drawRoundedButton(this, x, choicesY, sx(102), sy(46), 0x5f3d12, 0xffd666, 12)
+        .setScrollFactor(0);
 
       const txt = this.add.text(x, choicesY, choiceLabel, {
         fontFamily: 'system-ui',
-        fontSize: choiceLabel.length > 12 ? '9px' : '17px',
+        fontSize: choiceLabel.length > 12 ? '18px' : '34px',
         color: '#ffffff',
         align: 'center',
-        wordWrap: { width: 92 }
+        wordWrap: { width: sx(92) }
       }).setOrigin(0.5);
 
       btn.on('pointerdown', () => {
@@ -959,8 +1010,8 @@ export class WorldScene extends Phaser.Scene {
     this.refreshHud();
 
     if (goldReward > 0) {
-      this.showFloatingReward(`+${goldReward} Gold`, this.player.x, this.player.y - 26, '#ffd666');
-      this.createSparkleBurst(this.player.x, this.player.y - 12);
+      this.showFloatingReward(`+${goldReward} Gold`, this.player.x, this.player.y - sy(26), '#ffd666');
+      this.createSparkleBurst(this.player.x, this.player.y - sy(12));
       this.playSfx('sfx-reward', 0.45);
     }
   }
@@ -968,10 +1019,10 @@ export class WorldScene extends Phaser.Scene {
   private showFloatingReward(message: string, x: number, y: number, color: string, emphasize = false): void {
     const text = this.add.text(x, y, message, {
       fontFamily: 'system-ui',
-      fontSize: emphasize ? '15px' : '12px',
+      fontSize: emphasize ? '30px' : '24px',
       color,
       stroke: '#1a1208',
-      strokeThickness: emphasize ? 4 : 3
+      strokeThickness: emphasize ? 8 : 6
     }).setOrigin(0.5).setDepth(20).setScale(emphasize ? 0.6 : 1);
 
     if (emphasize) {
@@ -985,7 +1036,7 @@ export class WorldScene extends Phaser.Scene {
 
     this.tweens.add({
       targets: text,
-      y: y - (emphasize ? 30 : 22),
+      y: y - (emphasize ? sy(30) : sy(22)),
       alpha: 0,
       delay: emphasize ? 120 : 0,
       duration: emphasize ? 1500 : 1200,
@@ -996,11 +1047,11 @@ export class WorldScene extends Phaser.Scene {
 
   private createSparkleBurst(x: number, y: number, big = false): void {
     const sparkleCount = big ? 14 : 8;
-    const distanceX = big ? 34 : 22;
-    const distanceY = big ? 26 : 16;
+    const distanceX = big ? sx(34) : sx(22);
+    const distanceY = big ? sy(26) : sy(16);
     const duration = big ? 680 : 520;
     const color = big ? 0xfff6cf : 0xfff0a3;
-    const radius = big ? 3 : 2;
+    const radius = big ? sx(3) : sx(2);
     for (let index = 0; index < sparkleCount; index += 1) {
       const angle = (Math.PI * 2 * index) / sparkleCount;
       const sparkle = this.add.circle(x, y, radius, color, 0.95).setDepth(19);
@@ -1033,7 +1084,12 @@ export class WorldScene extends Phaser.Scene {
     this.resetJoystick();
     this.player.setVelocity(0, 0);
 
-    const panel = this.add.container(GAME_WIDTH / 2, GAME_HEIGHT / 2).setScrollFactor(0).setDepth(100);
+    // Every child below uses purely local design-space numbers, so scaling
+    // this one container reproduces the whole panel at GAME_SCALE.
+    const panel = this.add.container(GAME_WIDTH / 2, GAME_HEIGHT / 2)
+      .setScrollFactor(0)
+      .setScale(GAME_SCALE)
+      .setDepth(100);
     this.statsContainer = panel;
 
     const bg = drawRoundedPanelBackground(this, 0, 0, 380, 240, 0x1a1208, 0xffd666, 10);
@@ -1179,9 +1235,24 @@ export class WorldScene extends Phaser.Scene {
     });
 
     // --- CLOSE BUTTON ---
-    const closeBtn = drawRoundedButton(this, 0, 100, 100, 24, 0x5f3d12, 0xffd666, 6)
-      .setName(STATS_CLOSE_BUTTON_NAME);
+    // Drawn (non-interactively) inside the scaled panel like everything else
+    // above; a separate unscaled zone (tracked in this.statsCloseZone, named
+    // STATS_CLOSE_BUTTON_NAME) handles the actual click, since Phaser's
+    // custom-hitArea input test doesn't account for an ancestor container's
+    // scale (see openBonusPrompt for the same issue/fix).
+    const closeBtn = this.add.graphics();
+    closeBtn.fillStyle(0x5f3d12, 1);
+    closeBtn.fillRoundedRect(-50, 88, 100, 24, 6);
+    closeBtn.lineStyle(2, 0xffd666, 1);
+    closeBtn.strokeRoundedRect(-50, 88, 100, 24, 6);
     panel.add(closeBtn);
+
+    this.statsCloseZone = this.add.zone(GAME_WIDTH / 2, GAME_HEIGHT / 2 + sy(100), sx(100), sy(24))
+      .setName(STATS_CLOSE_BUTTON_NAME)
+      .setScrollFactor(0)
+      .setDepth(101)
+      .setInteractive({ useHandCursor: true });
+    this.statsCloseZone.on('pointerdown', () => this.closeStatsPanel());
 
     const closeTxt = this.add.text(0, 100, 'CLOSE', {
       fontFamily: 'system-ui',
@@ -1189,8 +1260,6 @@ export class WorldScene extends Phaser.Scene {
       color: '#ffffff'
     }).setOrigin(0.5);
     panel.add(closeTxt);
-
-    closeBtn.on('pointerdown', () => this.closeStatsPanel());
   }
 
   private closeStatsPanel(): void {
@@ -1199,6 +1268,8 @@ export class WorldScene extends Phaser.Scene {
       this.statsContainer.destroy();
       this.statsContainer = undefined;
     }
+    this.statsCloseZone?.destroy();
+    this.statsCloseZone = undefined;
     this.statsPanelOpen = false;
     this.busy = false;
   }
@@ -1209,7 +1280,10 @@ export class WorldScene extends Phaser.Scene {
       fontSize: '13px',
       color: '#ffffff',
       align: 'center',
-      wordWrap: { width: GAME_WIDTH - 64 }
+      // LEGACY_GAME_WIDTH (not GAME_WIDTH): this text lives inside `toast`,
+      // which is itself scaled by GAME_SCALE below, so its local layout math
+      // stays in the original 480-wide design space.
+      wordWrap: { width: LEGACY_GAME_WIDTH - 64 }
     }).setOrigin(0.5);
 
     const paddingX = 14;
@@ -1224,21 +1298,21 @@ export class WorldScene extends Phaser.Scene {
     // Sits below the objective banner (which spans y 34-62) rather than
     // drifting up into it, since this toast fires most often in exactly
     // the moment the objective banner's text is also changing.
-    const toast = this.add.container(GAME_WIDTH / 2, 80, [bg, text])
+    const toast = this.add.container(GAME_WIDTH / 2, sy(80), [bg, text])
       .setScrollFactor(0)
       .setDepth(40)
-      .setScale(0.85);
+      .setScale(GAME_SCALE * 0.85);
 
     this.tweens.add({
       targets: toast,
-      scale: 1,
+      scale: GAME_SCALE,
       duration: 160,
       ease: 'Back.easeOut'
     });
 
     this.tweens.add({
       targets: toast,
-      y: 70,
+      y: sy(70),
       alpha: 0,
       delay: 260,
       duration: 2000,

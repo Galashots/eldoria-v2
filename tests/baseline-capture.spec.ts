@@ -1,27 +1,16 @@
 import { expect, test, type Page } from '@playwright/test';
+import { CANVAS, clickGame } from './support/canvas';
+
+const IPAD_LANDSCAPE_VIEWPORT = { width: 1180, height: 820 } as const;
 
 /**
- * Baseline visual evidence for docs/beautification/BEAUTIFICATION_BASELINE_2026-07.md.
+ * Visual evidence inherited from the pre-migration beautification baseline.
  *
- * These screenshots are not regression assertions (see the other specs for
- * that); they exist so the pre-migration look is captured once, on an
- * unmodified build, for later before/after comparison. Coordinates below are
- * expressed in the *current* 480x320 game-canvas space and will need
- * updating alongside the other specs' clickGame helpers once the canvas
- * resolution migration lands.
+ * These screenshots are not pixel-regression assertions; they keep the same
+ * named review states available after the 960x640 migration so CI artifacts
+ * provide a direct before/after comparison. Coordinates use the current game
+ * space and the shared canvas helper rather than legacy hardcoded divisors.
  */
-
-const CANVAS = 'canvas';
-
-async function clickGame(page: Page, gameX: number, gameY: number): Promise<void> {
-  const box = await page.locator(CANVAS).boundingBox();
-  if (!box) throw new Error('Canvas was not visible.');
-
-  await page.mouse.click(
-    box.x + (gameX / 480) * box.width,
-    box.y + (gameY / 320) * box.height
-  );
-}
 
 async function holdKey(page: Page, key: string, ms = 100): Promise<void> {
   await page.keyboard.down(key);
@@ -41,8 +30,8 @@ async function freshBoot(page: Page): Promise<void> {
 }
 
 async function enterFarmDirectly(page: Page, profileId: 'grade2-mage' | 'grade5-adventurer'): Promise<void> {
-  // Skip the one-time Waking Gate (already captured by opening-scene.spec.ts)
-  // so this spec can focus on the farm/HUD/prompt screens.
+  // Skip the one-time Waking Gate (captured by opening-scene.spec.ts) so this
+  // evidence spec can focus on farm, HUD, prompt, and Stats presentation.
   await page.goto('/');
   await page.evaluate((id) => {
     localStorage.clear();
@@ -51,7 +40,7 @@ async function enterFarmDirectly(page: Page, profileId: 'grade2-mage' | 'grade5-
   await page.reload();
   await expect(page.locator(CANVAS)).toBeVisible();
   await page.waitForFunction(() => Boolean(window.__ELDORIA_GAME__?.scene.getScene('TitleScene')));
-  await clickGame(page, 240, profileId === 'grade2-mage' ? 116 : 184);
+  await clickGame(page, 480, profileId === 'grade2-mage' ? 232 : 368);
   await page.waitForFunction(() => window.__ELDORIA_GAME__?.scene.isActive('WorldScene'));
 }
 
@@ -68,40 +57,54 @@ async function setPlayerPosition(page: Page, x: number, y: number): Promise<void
   await page.waitForTimeout(150);
 }
 
-test('baseline: title screen', async ({ page }) => {
+test('baseline comparison: title screen', async ({ page }) => {
   await freshBoot(page);
   await page.screenshot({ path: 'test-results/baseline-title.png', fullPage: true });
 });
 
-test('baseline: Ranger farm arrival', async ({ page }) => {
+test('baseline comparison: Ranger farm arrival', async ({ page }) => {
   await enterFarmDirectly(page, 'grade5-adventurer');
   await page.waitForTimeout(300);
   await page.screenshot({ path: 'test-results/baseline-ranger-farm-arrival.png', fullPage: true });
 });
 
-test('baseline: Mage farm arrival', async ({ page }) => {
+test('baseline comparison: Mage farm arrival', async ({ page }) => {
   await enterFarmDirectly(page, 'grade2-mage');
   await page.waitForTimeout(300);
   await page.screenshot({ path: 'test-results/baseline-mage-farm-arrival.png', fullPage: true });
 });
 
-test('baseline: Mira interaction area', async ({ page }) => {
+test('baseline comparison: Mira interaction area', async ({ page }) => {
   await enterFarmDirectly(page, 'grade5-adventurer');
-  await setPlayerPosition(page, 416, 256);
+  await setPlayerPosition(page, 832, 512);
   await page.screenshot({ path: 'test-results/baseline-mira-interaction.png', fullPage: true });
 });
 
-test('baseline: crop-bonus optional-learning prompt', async ({ page }) => {
+test('baseline comparison: crop-bonus optional-learning prompt', async ({ page }) => {
   await enterFarmDirectly(page, 'grade5-adventurer');
-  await setPlayerPosition(page, 240, 416);
-  await clickGame(page, 426, 268);
+  await setPlayerPosition(page, 480, 832);
+  await clickGame(page, 852, 536);
   await page.waitForTimeout(300);
   await page.screenshot({ path: 'test-results/baseline-crop-bonus-prompt.png', fullPage: true });
 });
 
-test('baseline: Stats & Mastery panel', async ({ page }) => {
+test('baseline comparison: Stats & Mastery panel', async ({ page }) => {
   await enterFarmDirectly(page, 'grade5-adventurer');
   await holdKey(page, 'KeyI', 100);
   await page.waitForTimeout(200);
   await page.screenshot({ path: 'test-results/baseline-stats-panel.png', fullPage: true });
+});
+
+test('iPad-like landscape comparison: Mage farm arrival', async ({ page }) => {
+  await page.setViewportSize(IPAD_LANDSCAPE_VIEWPORT);
+  await enterFarmDirectly(page, 'grade2-mage');
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: 'test-results/baseline-ipad-landscape-mage.png', fullPage: true });
+});
+
+test('iPad-like landscape comparison: Ranger farm arrival', async ({ page }) => {
+  await page.setViewportSize(IPAD_LANDSCAPE_VIEWPORT);
+  await enterFarmDirectly(page, 'grade5-adventurer');
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: 'test-results/baseline-ipad-landscape-ranger.png', fullPage: true });
 });

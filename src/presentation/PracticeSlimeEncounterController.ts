@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { GAME_SCALE, sx, sy } from '../gameDimensions';
 import type { ProfileId } from '../data/profiles';
 import type { HeroPresentationController } from './HeroPresentationController';
 
@@ -63,7 +64,7 @@ export class PracticeSlimeEncounterController {
     if (this.pips.some((pip) => pip.active)) return;
 
     for (let index = 0; index < TOTAL_HITS; index += 1) {
-      const pip = this.scene.add.circle(0, 0, 4, 0x18211b, 1)
+      const pip = this.scene.add.circle(0, 0, sx(4), 0x18211b, 1)
         .setName(`${HEALTH_PIP_NAME}-${index + 1}`)
         .setStrokeStyle(1.5, 0xffd666, 0.95)
         .setDepth(5);
@@ -75,7 +76,7 @@ export class PracticeSlimeEncounterController {
 
   update(): void {
     this.pips.forEach((pip, index) => {
-      pip.setPosition(this.slime.x - 13 + index * 13, this.slime.y - 43);
+      pip.setPosition(this.slime.x - sx(13) + index * sx(13), this.slime.y - sy(43));
     });
   }
 
@@ -103,7 +104,7 @@ export class PracticeSlimeEncounterController {
     this.hitCount = 0;
     this.completed = false;
     this.setLocked(false);
-    this.slime.setVisible(true).setAlpha(1).setScale(1).setAngle(0);
+    this.slime.setVisible(true).setAlpha(1).setScale(GAME_SCALE).setAngle(0);
     this.slime.play('practice-slime-idle', true);
     this.pips.forEach((pip) => pip.setVisible(true).setAlpha(1).setScale(1));
     this.update();
@@ -135,14 +136,14 @@ export class PracticeSlimeEncounterController {
     const isMage = this.profileId === 'grade2-mage';
     const start = this.projectileStart();
     const targetX = this.slime.x;
-    const targetY = this.slime.y - 16;
+    const targetY = this.slime.y - sy(16);
 
     if (isMage) {
-      const projectile = this.scene.add.circle(start.x, start.y, 6, 0x9fd7ff, 1)
+      const projectile = this.scene.add.circle(start.x, start.y, sx(6), 0x9fd7ff, 1)
         .setName(PROJECTILE_NAME)
         .setStrokeStyle(2, 0xffffff, 0.95)
         .setDepth(7);
-      const glow = this.scene.add.circle(start.x, start.y, 11, 0x8f63ff, 0.18).setDepth(6);
+      const glow = this.scene.add.circle(start.x, start.y, sx(11), 0x8f63ff, 0.18).setDepth(6);
 
       this.scene.tweens.add({
         targets: [projectile, glow],
@@ -162,12 +163,12 @@ export class PracticeSlimeEncounterController {
     const dx = targetX - start.x;
     const dy = targetY - start.y;
     const angle = Math.atan2(dy, dx);
-    const shot = this.scene.add.rectangle(start.x, start.y, 25, 4, 0xa9e783, 1)
+    const shot = this.scene.add.rectangle(start.x, start.y, sx(25), sx(4), 0xa9e783, 1)
       .setName(PROJECTILE_NAME)
       .setStrokeStyle(1, 0xffffff, 0.9)
       .setRotation(angle)
       .setDepth(7);
-    const tracker = this.scene.add.circle(targetX, targetY, 14, 0x72b95c, 0.05)
+    const tracker = this.scene.add.circle(targetX, targetY, sx(14), 0x72b95c, 0.05)
       .setStrokeStyle(2, 0xd7ffb8, 0.9)
       .setDepth(6)
       .setScale(0.45);
@@ -195,14 +196,14 @@ export class PracticeSlimeEncounterController {
   private projectileStart(): { x: number; y: number } {
     const hero = this.heroPresentation.sprite;
     return {
-      x: (hero?.x ?? this.player.x) + (this.slime.x >= this.player.x ? 16 : -16),
-      y: (hero?.y ?? this.player.y) - 22
+      x: (hero?.x ?? this.player.x) + (this.slime.x >= this.player.x ? sx(16) : -sx(16)),
+      y: (hero?.y ?? this.player.y) - sy(22)
     };
   }
 
   private spawnTrail(x: number, y: number, color: number): void {
     if (Phaser.Math.Between(0, 1) === 0) return;
-    const trail = this.scene.add.circle(x, y, 2, color, 0.65).setDepth(6);
+    const trail = this.scene.add.circle(x, y, sx(2), color, 0.65).setDepth(6);
     this.scene.tweens.add({
       targets: trail,
       alpha: 0,
@@ -251,17 +252,22 @@ export class PracticeSlimeEncounterController {
     this.scene.tweens.killTweensOf(this.slime);
     this.scene.tweens.add({
       targets: this.slime,
-      x: this.slime.x + direction * (finalHit ? 8 : 4),
-      y: this.slime.y - (finalHit ? 8 : 4),
-      scaleX: finalHit ? 1.4 : 1.22,
-      scaleY: finalHit ? 0.62 : 0.78,
+      x: this.slime.x + direction * (finalHit ? sx(8) : sx(4)),
+      y: this.slime.y - (finalHit ? sy(8) : sy(4)),
+      // The slime sprite carries a persistent GAME_SCALE baseline (set where
+      // it's created), so — unlike the transient burst objects below, which
+      // start at Phaser's default scale of 1 — these absolute scaleX/scaleY
+      // targets must be scaled up too, or the squash/stretch would shrink it
+      // down from 2x toward 1x instead of animating around its real baseline.
+      scaleX: (finalHit ? 1.4 : 1.22) * GAME_SCALE,
+      scaleY: (finalHit ? 0.62 : 0.78) * GAME_SCALE,
       angle: direction * (finalHit ? 6 : 3),
       duration: finalHit ? 170 : 120,
       yoyo: true,
       ease: 'Quad.easeOut',
       onComplete: () => {
         if (!this.slime.active) return;
-        this.slime.setScale(1).setAngle(0);
+        this.slime.setScale(GAME_SCALE).setAngle(0);
         this.slime.play('practice-slime-idle', true);
       }
     });
@@ -269,8 +275,8 @@ export class PracticeSlimeEncounterController {
 
   private createImpactBurst(accent: number, finalHit: boolean): void {
     const targetX = this.slime.x;
-    const targetY = this.slime.y - 16;
-    const ring = this.scene.add.circle(targetX, targetY, 8, accent, 0.08)
+    const targetY = this.slime.y - sy(16);
+    const ring = this.scene.add.circle(targetX, targetY, sx(8), accent, 0.08)
       .setName(IMPACT_NAME)
       .setStrokeStyle(finalHit ? 4 : 2, 0xffffff, 0.95)
       .setDepth(8);
@@ -289,14 +295,14 @@ export class PracticeSlimeEncounterController {
       const particle = this.scene.add.circle(
         targetX,
         targetY,
-        finalHit && index % 4 === 0 ? 4 : 2,
+        finalHit && index % 4 === 0 ? sx(4) : sx(2),
         index % 3 === 0 ? 0xffd666 : accent,
         1
       ).setDepth(8);
       this.scene.tweens.add({
         targets: particle,
-        x: targetX + Math.cos(angle) * (finalHit ? 34 + (index % 4) * 5 : 19),
-        y: targetY + Math.sin(angle) * (finalHit ? 28 + (index % 3) * 4 : 15),
+        x: targetX + Math.cos(angle) * (finalHit ? sx(34) + (index % 4) * sx(5) : sx(19)),
+        y: targetY + Math.sin(angle) * (finalHit ? sy(28) + (index % 3) * sy(4) : sy(15)),
         alpha: 0,
         scale: 0.2,
         duration: finalHit ? 480 : 260,
@@ -307,18 +313,18 @@ export class PracticeSlimeEncounterController {
   }
 
   private playCompletion(accent: number): void {
-    const text = this.scene.add.text(this.slime.x, this.slime.y - 62, 'Practice complete!', {
+    const text = this.scene.add.text(this.slime.x, this.slime.y - sy(62), 'Practice complete!', {
       fontFamily: 'system-ui',
-      fontSize: '13px',
+      fontSize: '26px',
       color: '#fff3c9',
       fontStyle: 'bold',
       stroke: '#162018',
-      strokeThickness: 3
+      strokeThickness: 6
     }).setName(COMPLETE_TEXT_NAME).setOrigin(0.5).setDepth(9).setScale(0.65);
 
     this.scene.tweens.add({
       targets: text,
-      y: text.y - 10,
+      y: text.y - sy(10),
       scale: 1,
       alpha: { from: 1, to: 0 },
       duration: 680,
@@ -335,7 +341,7 @@ export class PracticeSlimeEncounterController {
       ease: 'Sine.easeOut'
     });
 
-    const poof = this.scene.add.circle(this.slime.x, this.slime.y - 14, 13, accent, 0.18)
+    const poof = this.scene.add.circle(this.slime.x, this.slime.y - sy(14), sx(13), accent, 0.18)
       .setStrokeStyle(3, 0xffffff, 0.85)
       .setDepth(7);
     this.scene.tweens.add({

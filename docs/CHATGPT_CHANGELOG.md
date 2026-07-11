@@ -2,6 +2,31 @@
 
 This file records repository changes made through ChatGPT so future work can see what changed, who made it, and when.
 
+## 2026-07-10 - Claude Code (beautification Phase 1: canvas resolution migration)
+
+- Branch: `claude/beautification-phase1-canvas-960x640`
+- Files changed:
+  - `src/gameDimensions.ts` (new)
+  - `src/gameConfig.ts`
+  - `src/scenes/WorldScene.ts`, `src/scenes/PolishedWorldScene.ts`, `src/scenes/OpeningScene.ts`, `src/scenes/TitleScene.ts`
+  - `src/presentation/HeroPresentationController.ts`, `src/presentation/PracticeSlimeEncounterController.ts`, `src/presentation/WildbloomDiscoveryController.ts`
+  - `src/systems/SaveSystem.ts`
+  - `tests/support/canvas.ts` (new)
+  - `tests/vertical-slice.spec.ts`, `tests/opening-scene.spec.ts`, `tests/practice-slime-encounter.spec.ts`, `tests/ranger-identity.spec.ts`, `tests/wildbloom-discovery.spec.ts`, `tests/system-foundations.spec.ts`
+  - `docs/CURRENT_STATE.md`
+- Summary: Implements Stage 2 of `docs/beautification/ELDORIA_BEAUTIFICATION_EXECUTION_PLAN.md` (Stage 1, the baseline audit, shipped separately as `claude/beautification-phase0-baseline`) — doubles the game canvas from `480x320` to `960x640` while preserving the 3:2 aspect ratio, visible world coverage, gameplay timing, touch behavior, stable interaction IDs, saves, quests, curriculum, and both profiles.
+- Implementation notes:
+  - `src/gameDimensions.ts` is a new Phaser-free leaf module holding `GAME_WIDTH`/`GAME_HEIGHT`/`GAME_SCALE`/`LEGACY_GAME_WIDTH`/`LEGACY_GAME_HEIGHT` and `sx()`/`sy()` scaling helpers. `gameConfig.ts` re-exports from it. Every scene/controller imports dimensions from this module (not `gameConfig.ts`), which avoids a circular-import crash: `gameConfig.ts` transitively imports every scene, and those scenes' controllers had module-level `const` initializers calling `sx()` at import time, so importing the scale helpers back from `gameConfig.ts` triggered a `ReferenceError: Cannot access 'sx' before initialization` mid-cycle.
+  - All pixel literals in the affected scenes/controllers are doubled via `sx()`/`sy()`/`GAME_SCALE`, or the containing object is scaled 2x directly, per file. `pixelArt`, `roundPixels`, `Phaser.Scale.FIT`, and `Phaser.Scale.CENTER_BOTH` are unchanged; no `devicePixelRatio` renderer multiplier was added.
+  - `SaveSystem.ts`: `CURRENT_SAVE_VERSION` bumped 1→2 with a new migration that doubles a saved `player.x`/`player.y` (the only save-shape change the resolution doubling requires); existing v1 saves load and continue seamlessly.
+  - **Two real Phaser input bugs found and fixed during migration**, both affecting interactive Graphics/Zones nested in a `Container`:
+    1. A `Container`'s own scale is not applied to its children's custom `Geom.Rectangle` hit areas during hit-testing (only the container's position is). Fixed by removing the scale from the bonus-prompt panel container (doubling its internal literals by hand instead) and by pulling the Stats-panel close button and the Opening Scene's gate zone out into unscaled, position-only `Zone`s.
+    2. Separately, an interactive child does not inherit a parent `Container`'s `scrollFactor(0)` — Phaser's hit-test uses the child's own scroll factor, so once the camera has scrolled, a screen-fixed container's interactive children silently drift out of their visually-rendered hit area unless each child also gets its own `setScrollFactor(0)`. This was the root cause of the crop-bonus/practice-slime prompt panel's buttons (read-aloud, skip, answer choices) becoming unclickable after the player had moved; fixed by adding `setScrollFactor(0)` to each interactive button individually.
+  - **One pre-existing timing regression found and fixed**: `PolishedWorldScene`'s legacy E2E interaction bridge (added for the Practice Slime combat feature, PR #64) auto-fires two follow-up strikes at fixed `440ms`/`880ms` offsets after a direct `tryInteract()` call, with only ~50ms of slack against the encounter's own hit-unlock timer. Confirmed via a side-by-side worktree run against unmodified `main` (4/4 passes there vs. intermittent failures on this branch) that the heavier 960x640 render load was enough to occasionally overrun that margin, silently dropping the second auto-strike and stranding the Practice Slime encounter at 2/3 hits. Replaced the fixed two-call schedule with a retry loop that polls every 80ms until the encounter completes — this only changes the E2E-only compatibility bridge (gated on `window.__ELDORIA_E2E__`), not any real player-facing input or timing.
+  - Playwright coordinate literals across all six E2E spec files are doubled to match; a shared `tests/support/canvas.ts` helper (`clickGame()`, deriving from `GAME_WIDTH`/`GAME_HEIGHT`) replaces five near-duplicate local implementations.
+- Verification: `npm run check`, `npm run test:unit` (48/48), `npm run test:asset-pipeline`, and the full Playwright smoke suite (38/38) all pass, repeated twice for stability. Also did a manual visual pass across both profiles at a 1280x720 viewport and an iPad-landscape viewport, covering the title screen, both profiles' farm entry, the Practice Slime encounter, the crop-bonus prompt panel, both Wildbloom discovery states, and the Stats panel.
+- Reason: Follow the beautification execution plan's explicit "First Claude Code Command" instruction to land the canvas resolution migration as its own reviewable PR, ahead of any art/palette/lighting work in later stages.
+
 ## 2026-07-10 - Claude Code (beautification Phase 0: baseline audit and screenshot lock)
 
 - Branch: `claude/beautification-phase0-baseline`

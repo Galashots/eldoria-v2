@@ -1,6 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-
-const CANVAS = 'canvas';
+import { CANVAS, clickGame } from './support/canvas';
 
 type EncounterSnapshot = {
   completed: boolean;
@@ -17,16 +16,6 @@ type WorldState = {
   questStep: string;
 };
 
-async function clickGame(page: Page, gameX: number, gameY: number): Promise<void> {
-  const box = await page.locator(CANVAS).boundingBox();
-  if (!box) throw new Error('Canvas was not visible.');
-
-  await page.mouse.click(
-    box.x + (gameX / 480) * box.width,
-    box.y + (gameY / 320) * box.height
-  );
-}
-
 async function startAtSlime(page: Page, profile: 'grade2-mage' | 'grade5-adventurer'): Promise<void> {
   await page.goto('/');
   await page.evaluate((profileId) => {
@@ -36,7 +25,7 @@ async function startAtSlime(page: Page, profile: 'grade2-mage' | 'grade5-adventu
   await page.reload();
   await expect(page.locator(CANVAS)).toBeVisible();
   await page.waitForFunction(() => window.__ELDORIA_GAME__?.scene.isActive('TitleScene'));
-  await clickGame(page, 240, profile === 'grade2-mage' ? 116 : 184);
+  await clickGame(page, 480, profile === 'grade2-mage' ? 232 : 368);
   await page.waitForFunction(() => window.__ELDORIA_GAME__?.scene.isActive('WorldScene'));
 
   await page.evaluate(() => {
@@ -49,7 +38,7 @@ async function startAtSlime(page: Page, profile: 'grade2-mage' | 'grade5-adventu
     // Stand just inside the 42px interaction radius instead of directly on
     // top of the slime, so screenshots show the hero, projectile path, slime,
     // and health pips as a readable encounter composition.
-    scene.player.setPosition(670, 320);
+    scene.player.setPosition(1340, 640);
     scene.player.setVelocity(0, 0);
     scene.updateHint();
   });
@@ -97,7 +86,7 @@ async function hasCanvasText(page: Page, text: string): Promise<boolean> {
 }
 
 async function strike(page: Page): Promise<void> {
-  await clickGame(page, 426, 268);
+  await clickGame(page, 852, 536);
 }
 
 test('Mage completes three deliberate Practice Slime hits before the optional prompt', async ({ page }) => {
@@ -145,7 +134,7 @@ test('Mage completes three deliberate Practice Slime hits before the optional pr
 
   // Grade 2 remains audio-first and skipping still advances the existing quest.
   expect(await hasCanvasText(page, 'READ ALOUD')).toBe(true);
-  await clickGame(page, 240, 254);
+  await clickGame(page, 480, 508);
   await expect.poll(async () => (await worldState(page)).questStep).toBe('return-to-mira');
   await expect.poll(async () => snapshot(page)).toMatchObject({
     completed: false,

@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_HEIGHT, GAME_WIDTH } from '../gameConfig';
+import { GAME_HEIGHT, GAME_SCALE, GAME_WIDTH, LEGACY_GAME_HEIGHT, LEGACY_GAME_WIDTH, sx, sy } from '../gameDimensions';
 import { DEFAULT_PROFILE, PROFILES, type ProfileId } from '../data/profiles';
 import { drawRoundedButton, drawRoundedPanelBackground } from '../presentation/uiHelpers';
 import { loadAudioMuted } from '../systems/AudioPreference';
@@ -57,9 +57,20 @@ export class OpeningScene extends Phaser.Scene {
   private gateCracks!: Phaser.GameObjects.Graphics;
   private gateRunes: Phaser.GameObjects.Arc[] = [];
   private progressPips: Phaser.GameObjects.Arc[] = [];
+  // Everything decorative (background, hero, gate, and every VFX burst) is
+  // parented to this single container, scaled by GAME_SCALE, instead of
+  // doubling each of the dozens of HERO_X/GATE_X-relative literals below by
+  // hand. Only the screen-fixed controls (ACTION/SKIP) stay outside it.
+  private worldContainer!: Phaser.GameObjects.Container;
 
   constructor() {
     super('OpeningScene');
+  }
+
+  /** Parents a freshly created game object to `worldContainer` and returns it, so creation chains read unchanged. */
+  private toWorld<T extends Phaser.GameObjects.GameObject>(obj: T): T {
+    this.worldContainer.add(obj);
+    return obj;
   }
 
   init(data: OpeningSceneData): void {
@@ -74,6 +85,7 @@ export class OpeningScene extends Phaser.Scene {
 
   create(): void {
     this.sound.mute = loadAudioMuted();
+    this.worldContainer = this.add.container(0, 0).setScale(GAME_SCALE);
     this.drawBackground();
     this.drawHero();
     this.drawGate();
@@ -92,15 +104,19 @@ export class OpeningScene extends Phaser.Scene {
   }
 
   private drawBackground(): void {
-    const sky = this.add.graphics();
+    // Every literal below is in the original 480x320 design space
+    // (LEGACY_GAME_WIDTH/HEIGHT, not the real doubled GAME_WIDTH/HEIGHT):
+    // all of it is parented to worldContainer, which is scaled by
+    // GAME_SCALE, so nothing here needs to be doubled by hand.
+    const sky = this.toWorld(this.add.graphics());
     sky.fillGradientStyle(0x07101f, 0x07101f, 0x1a1730, 0x1a1730, 1, 1, 1, 1);
-    sky.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    sky.fillRect(0, 0, LEGACY_GAME_WIDTH, LEGACY_GAME_HEIGHT);
 
-    const horizon = this.add.graphics();
+    const horizon = this.toWorld(this.add.graphics());
     horizon.fillGradientStyle(0x182e2b, 0x182e2b, 0x0b1d16, 0x0b1d16, 0.72, 0.72, 1, 1);
-    horizon.fillRect(0, GAME_HEIGHT * 0.57, GAME_WIDTH, GAME_HEIGHT * 0.43);
+    horizon.fillRect(0, LEGACY_GAME_HEIGHT * 0.57, LEGACY_GAME_WIDTH, LEGACY_GAME_HEIGHT * 0.43);
 
-    const hills = this.add.graphics().setDepth(0);
+    const hills = this.toWorld(this.add.graphics()).setDepth(0);
     hills.fillStyle(0x111f32, 0.9);
     hills.fillTriangle(0, 202, 84, 124, 172, 202);
     hills.fillTriangle(100, 202, 214, 112, 320, 202);
@@ -113,10 +129,10 @@ export class OpeningScene extends Phaser.Scene {
     }
 
     for (let index = 0; index < 24; index += 1) {
-      const x = 12 + ((index * 83) % (GAME_WIDTH - 24));
+      const x = 12 + ((index * 83) % (LEGACY_GAME_WIDTH - 24));
       const y = 18 + ((index * 47) % 205);
       const color = index % 5 === 0 ? 0x9fd7ff : 0xffedaa;
-      const mote = this.add.circle(x, y, index % 4 === 0 ? 2 : 1, color, 0.18 + (index % 4) * 0.1)
+      const mote = this.toWorld(this.add.circle(x, y, index % 4 === 0 ? 2 : 1, color, 0.18 + (index % 4) * 0.1))
         .setDepth(1);
       this.tweens.add({
         targets: mote,
@@ -130,7 +146,7 @@ export class OpeningScene extends Phaser.Scene {
       });
     }
 
-    const groundGlow = this.add.ellipse(GATE_X, 235, 150, 34, 0x7757cc, 0.12).setDepth(1);
+    const groundGlow = this.toWorld(this.add.ellipse(GATE_X, 235, 150, 34, 0x7757cc, 0.12)).setDepth(1);
     this.tweens.add({
       targets: groundGlow,
       scaleX: 1.14,
@@ -146,7 +162,7 @@ export class OpeningScene extends Phaser.Scene {
     const isMage = this.profileId === 'grade2-mage';
     const accent = isMage ? 0x9fd7ff : 0xa9e783;
 
-    const shadow = this.add.ellipse(HERO_X, HERO_Y + 3, 68, 18, 0x05070d, 0.55).setDepth(2);
+    const shadow = this.toWorld(this.add.ellipse(HERO_X, HERO_Y + 3, 68, 18, 0x05070d, 0.55)).setDepth(2);
     this.tweens.add({
       targets: shadow,
       scaleX: 1.05,
@@ -158,7 +174,7 @@ export class OpeningScene extends Phaser.Scene {
     });
 
     this.createMageAnimations();
-    this.heroSprite = this.add.sprite(HERO_X, HERO_Y, 'grade2-mage-idle-v001', 12)
+    this.heroSprite = this.toWorld(this.add.sprite(HERO_X, HERO_Y, 'grade2-mage-idle-v001', 12))
       .setOrigin(0.5, 1)
       .setScale(2.25)
       .setDepth(4);
@@ -170,7 +186,7 @@ export class OpeningScene extends Phaser.Scene {
       // development placeholder in this high-focus scene. Tint + bow make the
       // temporary role clear until approved Ranger production art lands.
       this.heroSprite.setTint(0xb8d59a);
-      const bow = this.add.graphics().setPosition(HERO_X + 29, HERO_Y - 43).setDepth(5);
+      const bow = this.toWorld(this.add.graphics()).setPosition(HERO_X + 29, HERO_Y - 43).setDepth(5);
       bow.lineStyle(3, accent, 1);
       bow.beginPath();
       bow.arc(0, 0, 22, Phaser.Math.DegToRad(-72), Phaser.Math.DegToRad(72));
@@ -181,7 +197,7 @@ export class OpeningScene extends Phaser.Scene {
       bow.lineTo(7, 21);
       bow.strokePath();
 
-      const quiver = this.add.graphics().setPosition(HERO_X - 17, HERO_Y - 55).setDepth(3);
+      const quiver = this.toWorld(this.add.graphics()).setPosition(HERO_X - 17, HERO_Y - 55).setDepth(3);
       quiver.fillStyle(0x6b4423, 1);
       quiver.fillRoundedRect(-4, -9, 8, 24, 3);
       quiver.lineStyle(1.5, 0xd7ffb8, 0.9);
@@ -193,7 +209,7 @@ export class OpeningScene extends Phaser.Scene {
       quiver.strokePath();
     }
 
-    const heroAura = this.add.circle(HERO_X + 22, HERO_Y - 52, 8, accent, 0.18)
+    const heroAura = this.toWorld(this.add.circle(HERO_X + 22, HERO_Y - 52, 8, accent, 0.18))
       .setStrokeStyle(2, 0xffffff, 0.7)
       .setDepth(5);
     this.tweens.add({
@@ -206,27 +222,27 @@ export class OpeningScene extends Phaser.Scene {
       ease: 'Sine.easeInOut'
     });
 
-    drawRoundedPanelBackground(this, HERO_X, 275, 150, 38, 0x17110d, 0x9b6b2e, 8).setDepth(3);
-    this.add.circle(HERO_X - 55, 275, 12, isMage ? 0x5b3f9c : 0x315f36, 1)
+    this.toWorld(drawRoundedPanelBackground(this, HERO_X, 275, 150, 38, 0x17110d, 0x9b6b2e, 8)).setDepth(3);
+    this.toWorld(this.add.circle(HERO_X - 55, 275, 12, isMage ? 0x5b3f9c : 0x315f36, 1))
       .setStrokeStyle(2, accent, 1)
       .setDepth(4);
-    this.add.text(HERO_X - 55, 275, isMage ? '✦' : '➶', {
+    this.toWorld(this.add.text(HERO_X - 55, 275, isMage ? '✦' : '➶', {
       fontFamily: 'system-ui',
       fontSize: '15px',
       color: '#ffffff',
       fontStyle: 'bold'
-    }).setOrigin(0.5).setDepth(5);
-    this.add.text(HERO_X - 34, 266, PROFILES[this.profileId].label, {
+    })).setOrigin(0.5).setDepth(5);
+    this.toWorld(this.add.text(HERO_X - 34, 266, PROFILES[this.profileId].label, {
       fontFamily: 'system-ui',
       fontSize: '13px',
       color: '#ffffff',
       fontStyle: 'bold'
-    }).setDepth(5);
-    this.add.text(HERO_X - 34, 281, isMage ? 'Magic awakened' : 'Trail awakened', {
+    })).setDepth(5);
+    this.toWorld(this.add.text(HERO_X - 34, 281, isMage ? 'Magic awakened' : 'Trail awakened', {
       fontFamily: 'system-ui',
       fontSize: '9px',
       color: '#ffd666'
-    }).setDepth(5);
+    })).setDepth(5);
   }
 
   private createMageAnimations(): void {
@@ -254,43 +270,43 @@ export class OpeningScene extends Phaser.Scene {
     const accent = isMage ? 0x78cfff : 0x9fdf77;
     const magic = isMage ? 0x8f63ff : 0x72b95c;
 
-    this.gateGlow = this.add.circle(GATE_X, GATE_Y, 69, magic, 0.1).setDepth(2);
-    this.gateOuter = this.add.circle(GATE_X, GATE_Y, 55, 0x0c1220, 0.96)
+    this.gateGlow = this.toWorld(this.add.circle(GATE_X, GATE_Y, 69, magic, 0.1)).setDepth(2);
+    this.gateOuter = this.toWorld(this.add.circle(GATE_X, GATE_Y, 55, 0x0c1220, 0.96))
       .setStrokeStyle(7, 0x5d6682, 1)
       .setDepth(3);
-    this.gateMiddle = this.add.circle(GATE_X, GATE_Y, 42, 0x111a31, 0.98)
+    this.gateMiddle = this.toWorld(this.add.circle(GATE_X, GATE_Y, 42, 0x111a31, 0.98))
       .setStrokeStyle(4, accent, 0.82)
       .setDepth(3);
-    const goldRing = this.add.circle(GATE_X, GATE_Y, 30, 0x15102a, 0.98)
+    const goldRing = this.toWorld(this.add.circle(GATE_X, GATE_Y, 30, 0x15102a, 0.98))
       .setStrokeStyle(3, 0xffd666, 0.82)
       .setDepth(4);
-    this.gateCore = this.add.circle(GATE_X, GATE_Y, 16, magic, 0.75)
+    this.gateCore = this.toWorld(this.add.circle(GATE_X, GATE_Y, 16, magic, 0.75))
       .setStrokeStyle(3, 0xeaf8ff, 0.95)
       .setDepth(5);
 
     for (let index = 0; index < 8; index += 1) {
       const angle = (Math.PI * 2 * index) / 8 - Math.PI / 2;
-      const rune = this.add.circle(
+      const rune = this.toWorld(this.add.circle(
         GATE_X + Math.cos(angle) * 47,
         GATE_Y + Math.sin(angle) * 47,
         4,
         0x26314d,
         1
-      ).setStrokeStyle(1.5, accent, 0.6).setDepth(5);
+      )).setStrokeStyle(1.5, accent, 0.6).setDepth(5);
       this.gateRunes.push(rune);
     }
 
     for (let index = 0; index < 7; index += 1) {
       const angle = (Math.PI * 2 * index) / 7 + 0.3;
       const radius = 72 + (index % 3) * 8;
-      const shard = this.add.rectangle(
+      const shard = this.toWorld(this.add.rectangle(
         GATE_X + Math.cos(angle) * radius,
         GATE_Y + Math.sin(angle) * radius,
         7 + (index % 2) * 4,
         5 + (index % 3) * 2,
         0x5d6682,
         0.72
-      ).setRotation(angle * 1.6).setDepth(3);
+      )).setRotation(angle * 1.6).setDepth(3);
       this.tweens.add({
         targets: shard,
         rotation: shard.rotation + (index % 2 === 0 ? 0.35 : -0.35),
@@ -302,7 +318,7 @@ export class OpeningScene extends Phaser.Scene {
       });
     }
 
-    this.gateCracks = this.add.graphics().setDepth(6);
+    this.gateCracks = this.toWorld(this.add.graphics()).setDepth(6);
 
     this.tweens.add({
       targets: [this.gateGlow, this.gateMiddle, goldRing],
@@ -314,12 +330,18 @@ export class OpeningScene extends Phaser.Scene {
       ease: 'Sine.easeInOut'
     });
 
-    const gateZone = this.add.zone(GATE_X, GATE_Y, 142, 142)
+    // Deliberately NOT parented via toWorld(): Phaser's input hit-test for a
+    // Zone's interactive bounds doesn't account for an ancestor container's
+    // scale (only its position), so a zone inside worldContainer would
+    // silently stop responding to real clicks/taps. Real screen coordinates
+    // (GATE_X/GATE_Y * GAME_SCALE) instead, matching the gate's true
+    // on-screen position.
+    const gateZone = this.add.zone(GATE_X * GAME_SCALE, GATE_Y * GAME_SCALE, sx(142), sy(142))
       .setInteractive({ useHandCursor: true });
     gateZone.on('pointerdown', () => this.strikeGate());
 
     for (let index = 0; index < TOTAL_HITS; index += 1) {
-      const pip = this.add.circle(GATE_X - 24 + index * 24, 236, 7, 0x17110d, 1)
+      const pip = this.toWorld(this.add.circle(GATE_X - 24 + index * 24, 236, 7, 0x17110d, 1))
         .setStrokeStyle(2, 0xffd666, 0.95)
         .setDepth(6);
       this.progressPips.push(pip);
@@ -327,36 +349,42 @@ export class OpeningScene extends Phaser.Scene {
   }
 
   private drawInstructions(): void {
-    this.add.text(GAME_WIDTH / 2, 24, 'BREAK THE WAKING GATE!', {
+    // LEGACY_GAME_WIDTH/2 (not GAME_WIDTH/2): these two titles are parented
+    // to worldContainer alongside the hero/gate composition above.
+    this.toWorld(this.add.text(LEGACY_GAME_WIDTH / 2, 24, 'BREAK THE WAKING GATE!', {
       fontFamily: 'system-ui',
       fontSize: '20px',
       color: '#ffd666',
       fontStyle: 'bold',
       stroke: '#1a1208',
       strokeThickness: 4
-    }).setOrigin(0.5).setDepth(8);
+    })).setOrigin(0.5).setDepth(8);
 
-    this.add.text(GAME_WIDTH / 2, 52, 'Tap ACTION 3 times', {
+    this.toWorld(this.add.text(LEGACY_GAME_WIDTH / 2, 52, 'Tap ACTION 3 times', {
       fontFamily: 'system-ui',
       fontSize: '16px',
       color: '#ffffff',
       fontStyle: 'bold',
       stroke: '#111827',
       strokeThickness: 3
-    }).setOrigin(0.5).setDepth(8);
+    })).setOrigin(0.5).setDepth(8);
 
-    this.instructionText = this.add.text(GATE_X, 266, '', {
+    this.instructionText = this.toWorld(this.add.text(GATE_X, 266, '', {
       fontFamily: 'system-ui',
       fontSize: '12px',
       color: '#f5e6c8',
       fontStyle: 'bold',
       stroke: '#1a1208',
       strokeThickness: 3
-    }).setOrigin(0.5).setDepth(8);
+    })).setOrigin(0.5).setDepth(8);
   }
 
+  // Unlike everything above, these controls are real screen-space UI (not
+  // parented to worldContainer) — their positions use the real GAME_WIDTH/
+  // GAME_HEIGHT and their literal offsets/sizes are doubled via sx()/sy(),
+  // matching WorldScene's own HUD/ACTION-button treatment.
   private createControls(): void {
-    const actionGlow = this.add.circle(GAME_WIDTH - 54, GAME_HEIGHT - 48, 42, 0xffc94d, 0.12)
+    const actionGlow = this.add.circle(GAME_WIDTH - sx(54), GAME_HEIGHT - sy(48), sx(42), 0xffc94d, 0.12)
       .setDepth(7);
     this.tweens.add({
       targets: actionGlow,
@@ -368,25 +396,25 @@ export class OpeningScene extends Phaser.Scene {
       ease: 'Sine.easeInOut'
     });
 
-    const action = this.add.circle(GAME_WIDTH - 54, GAME_HEIGHT - 48, 36, 0x5f3d12, 0.96)
+    const action = this.add.circle(GAME_WIDTH - sx(54), GAME_HEIGHT - sy(48), sx(36), 0x5f3d12, 0.96)
       .setStrokeStyle(4, 0xffd666, 1)
       .setDepth(8)
       .setInteractive({ useHandCursor: true });
-    this.add.text(GAME_WIDTH - 54, GAME_HEIGHT - 48, 'ACTION', {
+    this.add.text(GAME_WIDTH - sx(54), GAME_HEIGHT - sy(48), 'ACTION', {
       fontFamily: 'system-ui',
-      fontSize: '11px',
+      fontSize: '22px',
       color: '#fff1b5',
       fontStyle: 'bold',
       stroke: '#3a2108',
-      strokeThickness: 2
+      strokeThickness: 4
     }).setOrigin(0.5).setDepth(9);
     action.on('pointerdown', () => this.strikeGate());
 
-    const skip = drawRoundedButton(this, GAME_WIDTH - 38, 20, 58, 22, 0x17110d, 0xc9a66b, 5)
+    const skip = drawRoundedButton(this, GAME_WIDTH - sx(38), sy(20), sx(58), sy(22), 0x17110d, 0xc9a66b, 10)
       .setDepth(9);
-    this.add.text(GAME_WIDTH - 38, 20, 'SKIP', {
+    this.add.text(GAME_WIDTH - sx(38), sy(20), 'SKIP', {
       fontFamily: 'system-ui',
-      fontSize: '9px',
+      fontSize: '18px',
       color: '#e5c88e',
       fontStyle: 'bold'
     }).setOrigin(0.5).setDepth(10);
@@ -437,12 +465,12 @@ export class OpeningScene extends Phaser.Scene {
   private fireMageSpark(): void {
     const startX = HERO_X + 35;
     const startY = HERO_Y - 58;
-    const spark = this.add.circle(startX, startY, 7, 0x9fd7ff, 1)
+    const spark = this.toWorld(this.add.circle(startX, startY, 7, 0x9fd7ff, 1))
       .setStrokeStyle(2, 0xffffff, 0.95)
       .setDepth(10);
 
     for (let index = 0; index < 5; index += 1) {
-      const trail = this.add.circle(startX - index * 5, startY + (index % 2 === 0 ? 2 : -2), 4 - index * 0.5, 0x8f63ff, 0.8)
+      const trail = this.toWorld(this.add.circle(startX - index * 5, startY + (index % 2 === 0 ? 2 : -2), 4 - index * 0.5, 0x8f63ff, 0.8))
         .setDepth(9);
       this.tweens.add({
         targets: trail,
@@ -468,10 +496,10 @@ export class OpeningScene extends Phaser.Scene {
   }
 
   private fireRangerShot(): void {
-    const shot = this.add.rectangle(HERO_X + 38, HERO_Y - 43, 28, 4, 0xa9e783, 1)
+    const shot = this.toWorld(this.add.rectangle(HERO_X + 38, HERO_Y - 43, 28, 4, 0xa9e783, 1))
       .setStrokeStyle(1, 0xffffff, 0.9)
       .setDepth(10);
-    const trail = this.add.rectangle(HERO_X + 24, HERO_Y - 43, 18, 2, 0xd7ffb8, 0.55).setDepth(9);
+    const trail = this.toWorld(this.add.rectangle(HERO_X + 24, HERO_Y - 43, 18, 2, 0xd7ffb8, 0.55)).setDepth(9);
     this.tweens.add({
       targets: [shot, trail],
       x: GATE_X,
@@ -542,7 +570,7 @@ export class OpeningScene extends Phaser.Scene {
   }
 
   private createImpactBurst(accent: number, completedHits: number): void {
-    const ring = this.add.circle(GATE_X, GATE_Y, 17, accent, 0.08)
+    const ring = this.toWorld(this.add.circle(GATE_X, GATE_Y, 17, accent, 0.08))
       .setStrokeStyle(4, 0xffffff, 0.95)
       .setDepth(11);
     this.tweens.add({
@@ -557,7 +585,7 @@ export class OpeningScene extends Phaser.Scene {
     const particleCount = 8 + completedHits * 3;
     for (let index = 0; index < particleCount; index += 1) {
       const angle = (Math.PI * 2 * index) / particleCount;
-      const particle = this.add.circle(GATE_X, GATE_Y, index % 3 === 0 ? 3 : 2, index % 2 === 0 ? accent : 0xffd666, 1)
+      const particle = this.toWorld(this.add.circle(GATE_X, GATE_Y, index % 3 === 0 ? 3 : 2, index % 2 === 0 ? accent : 0xffd666, 1))
         .setDepth(12);
       this.tweens.add({
         targets: particle,
@@ -581,7 +609,7 @@ export class OpeningScene extends Phaser.Scene {
 
     for (let index = 0; index < 22; index += 1) {
       const angle = (Math.PI * 2 * index) / 22;
-      const sparkle = this.add.circle(GATE_X, GATE_Y, index % 4 === 0 ? 4 : 2, index % 2 === 0 ? 0xfff0a3 : 0x9fd7ff, 1)
+      const sparkle = this.toWorld(this.add.circle(GATE_X, GATE_Y, index % 4 === 0 ? 4 : 2, index % 2 === 0 ? 0xfff0a3 : 0x9fd7ff, 1))
         .setDepth(13);
       this.tweens.add({
         targets: sparkle,
