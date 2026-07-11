@@ -23,7 +23,8 @@ A planning document does not prove implementation. A browser-emulated iPad viewp
 
 ## Active beautification milestone
 
-- [`beautification/ELDORIA_BEAUTIFICATION_EXECUTION_PLAN.md`](beautification/ELDORIA_BEAUTIFICATION_EXECUTION_PLAN.md) — approved multi-phase beautification direction. Phases 0 and 1 are complete; Phase 2 environment-art production is active.
+- [`beautification/README.md`](beautification/README.md) — current phase status and the correct starting point for new beautification work.
+- [`beautification/ELDORIA_BEAUTIFICATION_EXECUTION_PLAN.md`](beautification/ELDORIA_BEAUTIFICATION_EXECUTION_PLAN.md) — approved multi-phase direction and acceptance criteria. Its completed Phase 0/1 command is historical.
 - [`beautification/BEAUTIFICATION_BASELINE_2026-07.md`](beautification/BEAUTIFICATION_BASELINE_2026-07.md) — pre-migration visual and renderer baseline.
 - [`art-pipeline/FARM_ENVIRONMENT_GENERATION_HANDOFF_V1.md`](art-pipeline/FARM_ENVIRONMENT_GENERATION_HANDOFF_V1.md) — current authoritative Batch A–F farm source-art generation order and acceptance gates.
 - [`visual-targets/FARM_ENVIRONMENT_PALETTE_V1.md`](visual-targets/FARM_ENVIRONMENT_PALETTE_V1.md) and [`visual-targets/farm_environment_palette_v1.json`](visual-targets/farm_environment_palette_v1.json) — approved farm palette lock.
@@ -49,8 +50,8 @@ Use these terms precisely:
 
 ## Product, curriculum, and gameplay
 
-- [`ATTENTION_FIRST_OPENING_PLAN_2026-07.md`](ATTENTION_FIRST_OPENING_PLAN_2026-07.md) — implemented historical brief for the first-minute fantasy hook.
-- [`WILDBLOOM_DISCOVERY_LOOP_2026-07.md`](WILDBLOOM_DISCOVERY_LOOP_2026-07.md) — implemented historical brief for the optional Sprig discovery loop.
+- [`ATTENTION_FIRST_OPENING_PLAN_2026-07.md`](ATTENTION_FIRST_OPENING_PLAN_2026-07.md) — implemented historical record for the first-minute fantasy hook.
+- [`WILDBLOOM_DISCOVERY_LOOP_2026-07.md`](WILDBLOOM_DISCOVERY_LOOP_2026-07.md) — implemented historical record for the optional Sprig discovery loop.
 - Current quest, curriculum, save, mastery, and interaction behavior must be confirmed in code/tests and summarized in `CURRENT_STATE.md`.
 
 ## Playtesting and device validation
@@ -69,5 +70,5 @@ Research reports under `docs/research/` explain why decisions were made. They ar
 - Update `CURRENT_STATE.md` only for material capability, milestone, next-step, or risk changes.
 - Update `CHATGPT_CHANGELOG.md` for meaningful repository changes.
 - Update durable contracts only when a durable rule changes.
-- Add a status banner to completed execution plans instead of deleting their historical detail.
+- Mark completed execution plans as implemented history rather than leaving runnable prompts at the top level.
 - Avoid copying the same volatile roadmap list into multiple documents.
