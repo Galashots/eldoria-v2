@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "id": "review_tile_farm_path_dirt_center",
+  "_reviewOnly": "This manifest is a review/evidence artifact only. It is NOT the production manifest for tile_farm_path_dirt (only the center variant exists here; edge_*, corner_*, and inner_corner_* variants do not exist yet) and its output is NOT a runtime asset. Do not load target.outputPath in Phaser or reference it from a production manifest.",
+  "_sourceNote": "The approved runtime master is a 16x16 PNG that already passed ChatGPT's visual audit (docs/art-pipeline/review/tile_farm_path_dirt_center/dirt_center.approved-master-16x16.png, identical to the originally attached dirt_center_candidate3_16x16.png). The original AI-generated high-resolution image was deliberately NOT used as the production source because it still carried high-resolution plus/cross-like motifs that violate the production art spec, even though they disappear after normalization. assets/source/generated/tile_farm_path_dirt/center.png is instead a canonical high-resolution source produced by exact 64x nearest-neighbour block-replication of the approved 16x16 master (scripts/upscale-nearest-neighbor.mjs) so the pipeline has a normal high-resolution source input; it introduces no new pixel information beyond the approved master.",
+  "target": {
+    "outputPath": "center.review-normalized.png",
+    "cellPx": [
+      16,
+      16
+    ],
+    "cols": 1,
+    "rows": 1
+  },
+  "sources": {
+    "center_source": {
+      "path": "../../../../assets/source/generated/tile_farm_path_dirt/center.png",
+      "background": {
+        "mode": "alpha"
+      }
+    }
+  },
+  "frames": [
+    {
+      "sourceRef": "center_source",
+      "destCell": [
+        0,
+        0
+      ],
+      "trim": "none",
+      "fit": "fill",
+      "anchor": "top_left"
+    }
+  ]
+}
