@@ -1,186 +1,166 @@
 # Eldoria-V2 Agent Instructions
 
-## Project
+## Purpose
 
-This repository is `Galashots/eldoria-v2`, an intentionally public fantasy-learning 2D RPG for two boys preparing for Grade 2 and Grade 5 in Calgary, Alberta.
+This repository is `Galashots/eldoria-v2`, a public, family-friendly fantasy-learning 2D RPG for Grade 2 and Grade 5 players.
 
-Because the repository is public, never commit secrets, credentials, or additional sensitive personal data. Keep any personal details already present (such as first names and city) general and do not expand them.
+The game must feel like a polished fantasy RPG first. Learning is embedded as optional help and bonuses, never as a barrier to play.
 
-The game should feel like a beautiful, fun, low-friction fantasy RPG first. Learning should be embedded into play as optional bonuses, not presented as worksheets or blocking quizzes.
+Because the repository is public:
 
-## Non-negotiable product rule
+- never commit credentials, secrets, private conversations, photos, recordings, or additional identifying information;
+- refer to playtesters by profile only;
+- keep any existing personal context general and do not expand it.
 
-Learning must never gate adventure.
+## Non-negotiable product rules
 
-Correct answers may grant bonuses such as gold, harvest boosts, critical hits, clues, cosmetics, crafting help, better loot, pets, mounts, or convenience rewards.
+1. **Learning never gates adventure.** Wrong answers and skipped prompts must not block movement, exploration, quest progress, baseline rewards, retries, or story progression.
+2. Preserve the Grade 2 audio-first path and Grade 5 reader-mode path.
+3. Preserve stable internal profile IDs, especially `grade2-mage` and `grade5-adventurer`, unless an explicit migration is approved and tested.
+4. Do not add random loot, variable-reward pressure, countdown pressure, daily/streak pressure, manipulative retention loops, or punishment for disengaging.
+5. Preserve save compatibility unless a migration is explicitly approved, implemented, and tested.
+6. Do not destructively rewrite curriculum, quests, mastery, rewards, or interaction IDs.
+7. Keep gameplay authority out of visual-only controllers.
+8. Do not copy protected game assets or UI. Reference art defines quality, hierarchy, mood, and technique only.
+9. Generated concept or style-reference art is not automatically production-ready source art.
+10. Do not claim physical-iPad or child validation unless it actually occurred.
 
-Wrong answers or skipped prompts must not block quest progress.
+## Player assumptions
 
-## Current implementation baseline
+### Grade 2 Mage
 
-Current `main` includes:
+- Audio-first and usable without independent reading.
+- Short prompts, simple choices, clear visual direction, large touch targets, and read-aloud support.
+- Encouraging feedback with no punishment for wrong answers.
 
-- Phaser + Vite + TypeScript + Tiled architecture.
-- Grade 2 audio-first profile.
-- Grade 5 reader-mode profile.
-- Grade 2 read-aloud support for prompts.
-- Curriculum-aware question engine foundation.
-- Starter Mira quest/objective loop.
-- Objective HUD.
-- Persistent `firstQuestStep` save data.
-- Dynamic lower-left virtual joystick.
-- Lower-right ACTION button.
-- Playwright vertical-slice smoke-test coverage.
-- Data-driven Mira first-errand quest content.
-- Floating reward text, sparkle feedback, and the persistent Sunberry Charm keepsake.
-- Per-skill mastery tracking for seen, attempted, correct, wrong, skipped, and streak outcomes.
-- Contextual Grade 2 and Grade 5 prompt templates plus a development/test-only deterministic preview.
-- A validated visual asset contract, production target specs, and generated-art normalization tooling.
-- The normalized Practice Slime v001 asset, loaded into the world with idle and interaction feedback.
-- Five Playwright vertical-slice smoke tests covering both profiles, quest/save behavior, prompt contracts, side-effect safety, and portrait guidance.
-- A renderer-independent farm quest system for both Mira errands.
-- A profile-configured hero presentation controller with the Grade 2 Mage production animations and Grade 5 placeholder fallback.
+### Grade 5 Ranger Explorer
 
-Before adding new features, preserve all of the above unless the task explicitly says otherwise.
+- Reader-mode with richer text and multi-step reasoning.
+- May use evidence, estimation, fractions/decimals, area/perimeter, science, and social-studies reasoning.
+- Must still feel like capable RPG play rather than schoolwork.
+- The player-facing identity is **Ranger Explorer**; the stable internal ID remains `grade5-adventurer`.
 
-Read [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) for the active milestone and current next step. Keep volatile roadmap status there instead of duplicating it in this file.
+## Design priorities
 
-## Target player assumptions
-
-### Grade 2 profile
-
-- Audio-first.
-- Minimal reading burden.
-- Short prompts.
-- Clear visual direction.
-- Simple choices.
-- Encouraging feedback.
-- No punishment for wrong answers.
-
-### Grade 5 profile
-
-- Reader-mode.
-- Can handle richer text.
-- Can handle multi-step reasoning.
-- Can use evidence, estimation, area/perimeter, decimals, science concepts, and social-studies reasoning.
-- Still should feel like RPG play, not homework.
-
-## Design pillars
-
-Use the deep-research findings as direction:
-
-1. Build one excellent vertical slice before expanding scope.
+1. Build and polish one strong vertical slice before expanding scope.
 2. Prioritize cohesive feel over feature volume.
-3. Use readable premium pixel art and clear silhouettes.
-4. Make every 10-15 minute session create permanent progress.
+3. Use readable silhouettes, consistent perspective, and premium pixel-art presentation.
+4. Make short sessions create understandable permanent progress.
 5. Design quests as playable learning arcs, not quizzes in disguise.
-6. Keep early systems small, polished, and easy to understand.
-7. Preserve child-friendly safety and accessibility defaults.
-8. Prefer visible curiosity, clear objectives, and low-friction traversal.
+6. Prefer visible curiosity, clear objectives, low-friction traversal, and child-safe feedback.
+7. Keep systems small, isolated, testable, and easy to understand.
 
-Visual asset work must follow [`docs/VISUAL_ASSET_CONTRACT.md`](docs/VISUAL_ASSET_CONTRACT.md).
+## Documentation source of truth
 
-## ChatGPT vs Codex split
+Start with [`docs/README.md`](docs/README.md), which identifies the canonical document for each topic.
 
-Use Codex for:
+Key rules:
 
-- Reading and editing repo files.
-- Running `npm install`, `npm run check`, `npm run build`, and `npm run dev`.
-- Running `npm run smoke` for repeatable browser-game regression coverage.
-- Debugging TypeScript/runtime issues.
-- Implementing scoped PRs.
-- Inspecting changed files and command output.
-- Refactoring code.
-- Validating game behavior locally.
-- Planning and self-merging routine, previously agreed, narrowly scoped PRs after full verification.
+- [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) owns volatile implementation status, the active milestone, known risks, and the next checkpoint.
+- [`docs/VISUAL_ASSET_CONTRACT.md`](docs/VISUAL_ASSET_CONTRACT.md) owns durable visual rules.
+- Machine-readable files under `docs/visual-targets/` are authoritative for target geometry, variants, pivots, palettes, and metadata.
+- [`docs/art-pipeline/FARM_ENVIRONMENT_GENERATION_HANDOFF_V1.md`](docs/art-pipeline/FARM_ENVIRONMENT_GENERATION_HANDOFF_V1.md) owns the current farm-art generation order while that milestone is active.
+- Completed milestone plans are historical records. Do not re-execute them without a new approved scope.
+- Keep volatile status out of this file.
 
-Tell the user to switch back to ChatGPT when the task needs:
+## Agent responsibilities
 
-- Product direction or prioritization.
-- Curriculum design decisions.
-- Alberta curriculum mapping.
-- 2D RPG design synthesis.
-- Kid UX/accessibility judgment.
-- Milestone audit after a related run of routine PRs.
-- Sprite/image prompt design.
-- Story, quest, dialogue, naming, or worldbuilding.
-- Larger architectural tradeoff decisions.
-- Any question where the right answer is not mainly in the codebase.
+Engineering agents such as Claude Code or Codex are appropriate for:
 
-Routine PRs may be squash-merged by Codex without a separate ChatGPT audit when they remain within an agreed objective, all targeted and standard checks pass, gameplay/UI changes receive browser inspection, and the final diff contains no unrelated work. Stop for user or ChatGPT review if scope expands or the work changes curriculum direction, kid UX, story, asset-generation direction, save compatibility, economy, quest design, major dependencies, or architecture.
+- reading and editing repository files;
+- implementing agreed, scoped changes;
+- debugging TypeScript, Phaser, tests, maps, and build tooling;
+- running automated checks and browser playtests;
+- preparing focused pull requests;
+- documenting exact changes, evidence, and remaining risks.
+
+Return to ChatGPT or the user for:
+
+- product direction and prioritization;
+- curriculum or Alberta-alignment decisions;
+- kid UX and accessibility judgment;
+- story, dialogue, naming, worldbuilding, reward/economy direction, or quest design;
+- sprite/image generation and source-art approval;
+- visual quality judgment against reference art;
+- save-schema, architecture, major-dependency, or broad-scope tradeoffs;
+- milestone audits after a run of implementation work.
 
 ## Required workflow
 
-For each task:
+For every task:
 
-1. Start from latest `main` unless told otherwise.
-2. Inspect relevant files before editing.
-3. Run checks before and after meaningful code changes when possible.
-4. Keep PRs small and focused.
-5. Do not silently rewrite unrelated systems.
-6. Preserve the bonus-only learning rule.
-7. Preserve Grade 2 audio-first support.
-8. Preserve current save compatibility unless explicitly migrating saves.
+1. Start from current `main` unless an explicit branch or stacked-PR base is provided.
+2. Confirm the repository, branch, base, and exact head before editing.
+3. Read the relevant source-of-truth documents and inspect the affected code/assets first.
+4. State any material ambiguity or risk before implementation.
+5. Keep the change narrowly scoped; do not modify unrelated files or systems.
+6. Preserve the product rules, profile IDs, save compatibility, curriculum, quests, and interaction semantics unless the task explicitly changes them.
+7. Add or update tests when behavior changes.
+8. Add reviewable browser evidence for gameplay, UI, map, or visual changes.
 9. Record meaningful repository changes in `docs/CHATGPT_CHANGELOG.md`.
-10. Update `docs/CURRENT_STATE.md` when a merge changes the active milestone, current capabilities, or next planned step.
+10. Update `docs/CURRENT_STATE.md` only when capabilities, active milestone, known risks, or next steps materially change.
+11. Open a focused PR. Do not merge a draft, red CI, unreviewed visual change, or branch with unrelated history.
 
-## Changelog rule
+## Verification
 
-Every meaningful repo change must include an entry in:
-
-`docs/CHATGPT_CHANGELOG.md`
-
-Include:
-
-- Date.
-- Agent identity.
-- Branch name.
-- Files changed.
-- Summary.
-- Implementation notes.
-- Reason for change.
-
-Use this identity unless the user says otherwise:
-
-`Codex via OpenAI, coordinated with GPT-5.5 Thinking`
-
-## Testing expectation
-
-Before opening or merging a PR, attempt:
+Use reproducible installation for CI-equivalent checks:
 
 ```bash
-npm install
+npm ci
 npm run check
-npm run build
+npm run test:asset-pipeline
+npm run test:unit
 npm run smoke
 ```
 
-For gameplay/UI changes, also run:
+`npm run check` includes visual-target validation, type checking, and the production build. Use `npm install` only when intentionally changing dependencies or the lockfile.
 
-```bash
-npm run dev
-```
+Additional expectations:
 
-Then manually inspect the browser game when possible.
+- Gameplay/UI/map changes: run the game, interact with the changed flow in a browser, and inspect screenshots.
+- Visual PRs: include before/after evidence, Mage and Ranger evidence when relevant, an iPad-like landscape viewport, and a contact sheet or clearly named image set.
+- Generated assets: normalize and validate every relevant manifest, inspect 1x and 3x previews, and record provenance.
+- Save migrations: add focused tests proving old saves migrate exactly once and current saves do not remigrate.
+- Real-device claims: distinguish browser emulation from physical iPad Safari testing.
 
-For generated asset changes, also run the relevant manifest normalization/validation command and `npm run test:asset-pipeline`.
+If a check cannot be run, report why. Never describe an unrun check as passing.
 
-Report clearly:
+## Changelog rule
 
-- What passed.
-- What failed.
-- What was not run.
-- What changed.
-- What remains risky.
-- Whether the user should switch back to ChatGPT for design/audit.
+Every meaningful change should add a concise entry to `docs/CHATGPT_CHANGELOG.md` containing:
 
-## Default response format to user
+- date;
+- actual agent or author;
+- branch and PR when known;
+- concise scope;
+- principal files or systems changed;
+- verification results;
+- compatibility or migration notes;
+- remaining risk.
 
-When done with a task, report:
+Do not use a hard-coded model identity. Historical entries may retain the identity recorded when they were created.
 
-1. Branch or PR number.
-2. Files changed.
-3. Checks run and results.
-4. Gameplay behavior verified.
-5. Risks or unknowns.
-6. Whether the next step should stay in Codex or switch back to ChatGPT.
+## Merge policy
+
+A routine PR may be squash-merged without another product-design review only when:
+
+- it remains inside a previously approved objective;
+- the exact final head is green;
+- gameplay/UI/visual changes have reviewable browser evidence;
+- no save, curriculum, quest, economy, kid-UX, story, asset-direction, dependency, or architecture decision expanded the scope;
+- the final diff contains no unrelated work.
+
+Stop for user or ChatGPT review when those conditions are not met. Preserve draft status while evidence or design approval is incomplete.
+
+## Completion report
+
+Report:
+
+1. branch and PR number;
+2. exact final head;
+3. files or systems changed;
+4. checks run and results;
+5. gameplay or visual evidence reviewed;
+6. compatibility and migration impact;
+7. remaining risks and unverified device behavior;
+8. the correct next owner: engineering agent, ChatGPT, or user playtest.
