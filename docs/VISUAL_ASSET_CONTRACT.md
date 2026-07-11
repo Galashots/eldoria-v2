@@ -1,54 +1,65 @@
 # Eldoria-V2 Visual Asset Contract
 
-Source reference: [Executable 2D RPG Visual Design Guide for Eldoria V2](research/visual-design/Executable_2D_RPG_Visual_Design_Guide_for_Eldoria_V2.pdf)
+Source references:
 
-Additional source reference (2026-07-10): [Stardew-Caliber Visual Research](research/visual-design/STARDEW_CALIBER_VISUAL_RESEARCH_2026-07.md), which produced Sections 4a, 8a, and 13-15 below.
+- [Executable 2D RPG Visual Design Guide for Eldoria V2](research/visual-design/Executable_2D_RPG_Visual_Design_Guide_for_Eldoria_V2.pdf)
+- [Stardew-Caliber Visual Research](research/visual-design/STARDEW_CALIBER_VISUAL_RESEARCH_2026-07.md)
 
 ## 1. Purpose
 
-Eldoria-V2 is a fantasy-learning RPG first. This contract prevents visual drift and gives Codex, Claude, artists, and asset-generation tools one consistent specification for sprites, tiles, UI, VFX, buildings, and related metadata.
+Eldoria-V2 is a fantasy-learning RPG first. This contract prevents visual drift across sprites, tiles, props, buildings, UI, VFX, source generation, normalization, and runtime integration.
 
-This contract does not override the product rule that learning never gates adventure. It also protects the Grade 2 audio-first experience and keeps the current vertical slice ahead of broad asset expansion.
+It does not override the product rules in `AGENTS.md`: learning never gates adventure, Grade 2 remains audio-first, stable profile IDs are preserved, and visual work must not silently alter gameplay or saves.
 
-## 2. Current Production Posture
+## 2. Production posture
 
-- Immediate production remains Phaser, Vite, TypeScript, and Tiled.
-- These rules are engine-agnostic enough to inform later Godot or Unity planning, but current repo work stays Phaser unless explicitly changed.
-- This PR does not rewrite the asset pipeline, add atlas loading, or change runtime behavior.
+- Current production remains Phaser 4, Vite, TypeScript, and Tiled.
+- These rules may inform later engine experiments, but current repository work stays in the existing stack unless explicitly approved.
+- Asset status and active milestones belong in `docs/CURRENT_STATE.md`, not in this durable contract.
+- Machine-readable target JSON under `docs/visual-targets/` is authoritative for exact geometry, variants, palettes, pivots, layers, and metadata.
+- Generated style references and concepts are not automatically production source art.
 
-## 3. Canonical Visual Baseline
+## 3. Canonical visual baseline
 
-- Style: readable 3/4 top-down fantasy pixel-art RPG.
-- Presentation: mobile-friendly, low-friction, and readable before decorative.
-- World tile grammar: `16x16` pixels.
-- Standard human actor canvas: `32x48` pixels.
-- Standard actor footprint: `16x16` pixels.
-- Pivot: center-bottom of the footprint unless the category contract explicitly differs.
-- Directions: front, back, left, and right are the minimum production set.
-- Eight directions are a later enhancement for heroes, bosses, or combat-critical enemies only.
-- Runtime export: PNG by default.
-- Editable source: `.aseprite` or `.ase` when available.
-- Gameplay rendering: nearest/point sampling; avoid smoothing and mipmaps unless specifically justified.
-- Do not mix ad hoc gameplay sprite resolutions. Larger assets must remain multiples of the `16x16` grammar and declare their canvas, footprint, and pivot.
+- Style: readable 3/4 top-down family-friendly fantasy pixel art.
+- Priority: mobile readability before decoration.
+- World tile grammar: `16×16` pixels.
+- Standard human actor canvas: `32×48` pixels.
+- Standard actor footprint: `16×16` pixels.
+- Default pivot: centre-bottom of the footprint unless the target explicitly differs.
+- Minimum production directions for actors: front, back, left, and right.
+- Eight directions require a justified later scope for combat-critical heroes, bosses, or enemies.
+- Runtime export: PNG.
+- Preferred editable source: `.aseprite` or `.ase` when available.
+- Runtime rendering: nearest/point sampling; avoid smoothing and mipmaps unless specifically justified.
+- Larger assets must use clear multiples of the `16×16` grammar and declare canvas, footprint, and pivot.
+- Do not mix ad hoc gameplay resolutions or hide unsuitable targets through blurry runtime scaling.
 
-## 4. Palette And Lighting
+## 4. Palette and light
 
-- Target one limited master palette of roughly 48-64 colors.
-- Declare one named sub-palette for every asset. Initial names are `forest`, `ruins`, `arcane`, `lava`, `ui_neutral`, `metal`, `wood_leather`, and `skin_hair`.
-- Use a consistent upper-left, slightly front-facing key light; default shadows fall down-right/back.
-- Establish a readable silhouette and major color clusters before adding shading detail.
-- Avoid noisy dithering on actors, combat-readable elements, icons, and UI. Reserve restrained dithering for broad environmental surfaces when useful.
-- Sub-palette names are a starting point, not the finished contract. Before committing production art in a given sub-palette, lock its actual hex values in a small swatch reference alongside that asset's PR so later assets in the same family cannot silently drift (see the research doc's Finding 3).
+- Aim for a limited master palette of roughly 48–64 colours.
+- Every production asset declares a named palette family.
+- Common families include `forest`, `water`, `metal_stone`, `wood_leather`, `arcane`, `ruins`, `lava`, `ui_neutral`, and `skin_hair`.
+- Lock exact hex values before committing production art for a family.
+- The active farm palette source of truth is:
+  - `docs/visual-targets/farm_environment_palette_v1.json`
+  - `docs/visual-targets/FARM_ENVIRONMENT_PALETTE_V1.md`
+- Use a consistent upper-left, slightly front-facing key light. Shadows fall down-right/back.
+- Establish silhouette and major colour clusters before shading detail.
+- Avoid noisy dithering on actors, combat cues, icons, and UI. Use restrained dithering only on broad environmental surfaces when it improves texture.
+- Do not bake a scene-level warm/cool atmosphere wash into individual assets; atmosphere is applied once in code.
 
-## 4a. Perspective Discipline
+## 5. Perspective discipline
 
-- The ground plane (tiles, floors) renders as a true top-down/3-4 projection.
-- Anything with height — trees, buildings, fences, standing characters, props — is flattened toward the camera rather than drawn in true isometric or true top-down, the same "pop-up book" technique Stardew Valley and comparable top-down RPGs use. This keeps tall objects visually grounded on the tile grid instead of appearing to float or lean incorrectly.
-- Do not mix true-isometric art with this flattened style in the same scene; pick the flattened convention for all new environment and building art.
+- Ground-plane tiles and floors use the established top-down/3/4 projection.
+- Anything with height—trees, fences, buildings, standing characters, rocks, and tall props—uses a flattened camera-facing presentation above a grounded footprint.
+- Tall objects should read like a grounded “pop-up” form, not true isometric and not true top-down.
+- Do not mix true-isometric assets into the farm or village world.
+- The declared footprint remains the gameplay footprint even when the visual canvas extends upward.
 
-## 5. Asset Naming Contract
+## 6. Naming contract
 
-Use lowercase `snake_case` only. Do not use spaces, mixed separators, vague generated names, or engine defaults such as `sprite_12`.
+Use lowercase `snake_case` only. Do not use spaces, mixed separators, vague generated names, or engine defaults.
 
 Canonical long-form ID:
 
@@ -62,7 +73,7 @@ Allowed domains:
 char npc armor weapon mob boss env bld ui fx cut port icon tile sfx
 ```
 
-Use the long form for animated or directional assets. Static assets may omit fields that genuinely do not apply, but must preserve field order. Controlled multiword states such as `attack_light` are valid; metadata remains authoritative.
+Animated and directional assets should use the long form. Static assets may omit fields that do not apply but must preserve field order. Metadata remains authoritative.
 
 Examples:
 
@@ -76,9 +87,11 @@ ui_hud_panel_idle_base_v001
 fx_sparkle_gold_loop_core_f03_v001
 ```
 
-## 6. Asset Metadata Contract
+## 7. Metadata contract
 
-Every exported sheet or loose gameplay asset should eventually have a JSON sidecar. Coordinates use a top-left canvas origin; the standard actor pivot below is bottom-center.
+Every exported sheet or loose gameplay asset should have machine-readable metadata through a target spec, manifest, sidecar, or equivalent authoritative file.
+
+Coordinates use a top-left canvas origin. A typical actor target:
 
 ```json
 {
@@ -102,58 +115,129 @@ Every exported sheet or loose gameplay asset should eventually have a JSON sidec
 }
 ```
 
-## 7. Category Rules
+Declare when relevant:
 
-- **Hero sprites:** Use the standard actor canvas, footprint, pivot, and four-direction set. Favor a heroic, readable silhouette with chunky forms and stable attachment slices. Reserve eight directions for a justified later pass.
-- **NPCs:** Reuse the human actor grammar and compatible rigs where possible. Differentiate NPCs with costume accents, props, idle/emote/talk states, and clear silhouettes.
-- **Armor overlays:** Inherit the base body canvas, pivot, direction set, frame count, and per-frame timing exactly. No independent drift is permitted. Layers must remain compatible with future armor, cape, helm, and weapon overlays.
-- **Weapons:** Declare hand/holster sockets, view, foreground/background layer, and attack timing. Weapon motion must align with the owning actor and its hit windows.
-- **Monsters:** Give each monster one readable silhouette, one dominant material story, and one accent hue. Standard mobs usually occupy `32x32` to `64x64` canvases and declare their footprint separately.
-- **Bosses:** Prioritize readable anticipation and telegraphs. Split assets larger than roughly `96x96` into declared modules when that improves reuse, culling, or layering.
-- **Landscape tiles:** Build on `16x16` cells or clear multiples. Group by biome, favor large readable masses over micro-detail, and keep walkability and interaction cues visible.
-- **Buildings:** Match the world projection and upper-left light. Block from tile modules first, mark entrances clearly, then add trim and limited ambient motion.
-- **UI:** Use high-contrast, low-noise panels and icons. Prefer 9-slice panels where scaling is needed. Preserve touch readability and Grade 2 audio-first/non-reading-friendly presentation.
-- **VFX:** Current primitive Phaser bursts are acceptable for low-cost feedback. Future flipbook VFX use `16x16`, `32x32`, or `64x64` cells. VFX must reinforce, not replace, readable combat animation.
-- **Cutscenes and portraits:** Reuse gameplay palette and light rules unless an intentional scene override is documented. Use `cut` and `port` domains and keep portrait swaps, mouth frames, and overlay effects separately named.
+- canvas, footprint, pivot, PPU, and view;
+- variants and directions;
+- animation tags, frame timing, loop behavior, and event frames;
+- collision body, hurtbox, hitboxes, and interaction rectangle;
+- sockets, overlay slices, or attachment points;
+- palette family and light direction;
+- render layer and atlas family;
+- source, manifest, normalized output, and provenance.
 
-## 8. Animation Rules
+## 8. Category rules
+
+### Heroes and NPCs
+
+- Use the standard actor grammar unless a target explicitly justifies a larger canvas.
+- Favour chunky readable silhouettes and stable feet alignment.
+- Reuse compatible rigs where possible.
+- Differentiate NPCs through costume, props, idle/talk/emote states, and silhouette rather than arbitrary scale drift.
+
+### Armor overlays
+
+- Inherit the base body's canvas, pivot, directions, frame count, timing, and anchor exactly.
+- No independent scale, baseline, or frame drift.
+- Preserve compatibility with future cape, helm, torso, and weapon layers.
+
+### Weapons
+
+- Declare sockets, view, foreground/background layer, and action timing.
+- Motion must align with the owning actor and any gameplay hit window.
+
+### Monsters and bosses
+
+- Give each monster one readable silhouette, one dominant material story, and one accent hue.
+- Standard mobs usually occupy `32×32` to `64×64` canvases and declare their footprint separately.
+- Bosses prioritize anticipation and telegraphs. Split assets larger than roughly `96×96` when modules improve reuse, culling, collision, or layering.
+
+### Landscape tiles and decals
+
+- Build on `16×16` cells or clear multiples.
+- Favour broad readable masses over micro-detail.
+- Preserve walkability and interaction readability.
+- Keep base terrain quiet; use separate decals for scatter, crops, flowers, lilies, rocks, and similar details.
+
+### Buildings and props
+
+- Match the world projection and upper-left light.
+- Ground tall visuals on a declared lower footprint.
+- Mark entrances and interaction points clearly.
+- Use variable-size targets rather than forcing detail into an undersized cell.
+
+### UI
+
+- Use high-contrast, low-noise panels and icons.
+- Prefer reusable nine-slice components where scaling is required.
+- Preserve large touch targets, Grade 2 readability, and screen-safe margins.
+- Decorative treatment must not obscure interaction state.
+
+### VFX
+
+- Primitive Phaser feedback remains acceptable when it is clear and inexpensive.
+- Flipbook VFX normally use `16×16`, `32×32`, or `64×64` cells.
+- Effects reinforce readable action; they do not replace animation or blot out actors.
+- Avoid permanent particle spam and full-screen effects without profiling.
+
+### Cutscenes and portraits
+
+- Reuse the gameplay palette and lighting unless a deliberate scene override is documented.
+- Keep portrait swaps, mouth frames, and overlays separately named.
+
+## 9. Animation rules
 
 | Animation | Production target |
 | --- | --- |
-| Idle | 4-6 frames |
-| Walk | 6-8 frames |
-| Light attack | 6-8 frames |
-| Heavy attack | 8-12 frames |
-| Cast | 6-10 frames |
-| Hurt | 2-4 frames |
-| Death | 8-12 frames |
-| Item idle | 4-6 frames |
+| Idle | 4–6 frames |
+| Walk | 6–8 frames |
+| Light attack | 6–8 frames |
+| Heavy attack | 8–12 frames |
+| Cast | 6–10 frames |
+| Hurt | 2–4 frames |
+| Death | 8–12 frames |
+| Item idle | 4–6 frames |
 
-- Record intended per-frame timing, loop behavior, and tag names in source/metadata.
-- Attacks must identify anticipation, contact, and recovery timing; combat clips must declare hitbox windows.
-- Prototype frame counts may be reduced, but the intended production timing and direction set must still be documented.
+- Record intended frame timing, loop behavior, and tag names.
+- Attacks identify anticipation, contact, and recovery.
+- Combat clips declare gameplay event or hitbox windows.
+- Prototype clips may use fewer frames, but the intended production target must remain documented.
+- Keep feet and bottom-centre anchors stable to prevent sprite jumping.
 
-## 8a. Grounding And Shadows
+## 10. Grounding and shadows
 
-- Every dynamic actor, NPC, monster, and interactive world object (Mira, the Practice Slime, crop/quest markers, and anything similar) must render a soft, semi-transparent ground shadow anchored under its feet/base, offset down-right to match the upper-left key light.
-- This is the cheapest available fix for sprites otherwise reading as flat markers floating over the tile grid (see the research doc's Finding 4); it renders on the existing `actors_feet` layer and requires no new art asset (a drawn ellipse/soft circle is sufficient).
-- Placeholder markers (colored circles/diamonds standing in for un-produced art) are not exempt: they still need a shadow so they read as objects in the world rather than UI floating over it.
+- Every dynamic actor, NPC, monster, and interactive world object renders a soft semi-transparent grounding shadow.
+- The shadow anchors under the feet/base and falls slightly down-right to match the upper-left light.
+- Engine-drawn shadows normally live on `actors_feet` and remain separate from animation art.
+- Placeholder markers are not exempt.
+- Do not bake shadows into dynamic or Y-sorted source art.
+- A baked shadow is allowed only for a truly static asset whose target explicitly permits it.
 
-## 9. Layering And Render Order
+## 11. Layering and render order
 
-Use this canonical order:
+Canonical order:
 
 ```text
 background -> terrain -> decals_low -> actors_feet -> actors_body -> actors_head -> armor_overlays -> weapons_front -> vfx_low -> vfx_high -> weather -> world_ui -> screen_ui
 ```
 
-Use explicit layer groups first, then local offsets or Y-sorting within a group. Assets that cross groups must declare their slices or attachment points.
+Use explicit layer groups first, then local offsets or Y-sorting within a group. Assets that cross groups must declare slices or attachment points.
 
-## 10. Atlas And Folder Direction
+## 12. Source, runtime, and atlas organization
 
-Do not implement atlas loading as part of this contract. The future target is feature/scene atlases, not one mega-atlas.
+Keep source, manifests, normalized output, and metadata separate.
 
-Likely atlas families:
+Current practical folders include:
+
+```text
+assets/source/generated/<asset_id>/
+assets/manifests/
+assets/sprites/
+assets/tilesets/
+assets/buildings/
+```
+
+Future atlas families may include:
 
 ```text
 characters
@@ -163,69 +247,88 @@ environment_village
 ui
 ```
 
-Keep source, runtime exports, and metadata separate:
+Prefer feature/scene atlases over one mega-atlas. Do not reorganize existing assets merely to satisfy a future folder ideal.
 
-```text
-assets/art/<category>/<entity>/src/
-assets/art/<category>/<entity>/export/
-assets/art/<category>/<entity>/meta/
-assets/atlases/<family>/
-assets/manifests/
-```
+## 13. Terrain blending
 
-This is a future folder direction, not a request to move current files.
+Any adjacent terrain types must use authored transitions rather than a hard grid boundary.
 
-## 11. Validation Checklist
+Default reduced set per boundary:
 
-Every future visual asset PR should confirm:
+- 1 centre;
+- 4 edges;
+- 4 outer corners;
+- 4 inner corners.
 
-- [ ] Canonical lowercase `snake_case` name and domain.
-- [ ] Declared canvas, footprint, and pivot.
-- [ ] Declared palette family and consistent upper-left light.
-- [ ] Readable silhouette at 1x and 3x scale.
-- [ ] Animation tags, loop behavior, frame counts, and intended timing.
-- [ ] Armor/weapon overlays align exactly with the base actor.
+That is the full 13-variant set. Use a larger blob set only when a specific boundary proves it is necessary.
+
+Additional rules:
+
+- Generate and approve centre tiles before edges and corners.
+- Centre tiles must be seamless in a 3×3 repeat and contain no decorative perimeter.
+- Edge/corner assets must preserve the approved centre texture, palette, density, and light.
+- Author static map transitions with Tiled terrain/Wangset tools when practical.
+- Runtime gameplay states such as dry/wet/seeded soil are same-cell state swaps, not neighbour blending.
+- Do not add a runtime autotile dependency without a separate compatibility spike for the project's Phaser version.
+
+## 14. Lighting and atmosphere
+
+- Establish source-art light consistency first.
+- Apply one restrained scene atmosphere layer before adding many local lights.
+- Local point lights may support torches, windows, spell impacts, magical props, and similar controlled sources.
+- Do not build a full day/night or heavy dynamic-lighting system as incidental visual polish.
+- Profile on physical iPad before adopting expensive full-screen alpha, shader, or light stacks.
+
+## 15. Feedback and juice
+
+Acceptable techniques include:
+
+- squash and stretch on landing or impact;
+- short, restrained camera shake for strong impacts;
+- readable hit flashes and projectiles;
+- brief particles or decals that leave a visible trace;
+- pressed/disabled states on touch controls;
+- persistent landmarks after meaningful discovery.
+
+Restrictions:
+
+- feedback must not hide actors, prompts, or navigation;
+- no permanent particle spam;
+- no glow on every object;
+- no rapid flashing that undermines comfort or photosensitivity;
+- reduced-motion behavior must remain respected where implemented.
+
+## 16. Asset-status and source-audit rules
+
+Use these terms precisely:
+
+- **STYLE REFERENCE ONLY** — approved direction, not pipeline-ready.
+- **APPROVED SOURCE CANDIDATE** — clean source ready for manifest work.
+- **NORMALIZED RUNTIME ASSET** — exact validated output exists.
+- **RUNTIME-INTEGRATED ASSET** — loaded and browser-verified in the game.
+- **REGENERATE** — failed production constraints.
+- **CHANGE TARGET SIZE** — target canvas is unsuitable.
+
+The prompting and audit process is defined in `docs/art-pipeline/IMAGE_PROMPTING_GUIDE.md`.
+
+## 17. Visual-asset PR checklist
+
+Every visual asset PR should confirm:
+
+- [ ] Canonical `snake_case` ID and valid domain.
+- [ ] Declared canvas, footprint, pivot, PPU, layer, and atlas family.
+- [ ] Declared palette with locked hex values and upper-left light.
+- [ ] Correct perspective for terrain versus tall objects.
+- [ ] Readable silhouette at 1x and 3x.
+- [ ] Animation tags, timing, events, and loop behavior when relevant.
+- [ ] Overlay alignment with the base actor when relevant.
 - [ ] Collision, hitbox, hurtbox, interaction, or socket metadata when relevant.
-- [ ] Declared atlas family.
-- [ ] Nearest/point rendering expectation for gameplay pixel art.
-- [ ] Ground shadow present for dynamic actors/NPCs/interactive objects (Section 8a).
-- [ ] Flattened "pop-up book" perspective for anything with height, not true isometric (Section 4a).
-- [ ] Terrain tiles that border another terrain type declare edge/corner blend variants rather than a hard grid boundary (Section 13).
-- [ ] No unrelated runtime changes.
+- [ ] Source provenance and explicit source-audit verdict.
+- [ ] Manifest normalization and validation pass.
+- [ ] Reviewable contact sheet or preview set.
+- [ ] Browser screenshots for affected profile/game states.
+- [ ] iPad-like landscape viewport evidence for visual/UI changes.
+- [ ] Physical-iPad claims are made only after real-device testing.
+- [ ] No unrelated runtime, save, curriculum, quest, or economy change.
 
-## 12. Near-Term Eldoria Application
-
-The next practical visual milestones, each requiring its own reviewed scope, are:
-
-1. Production-spec hero actor target.
-2. Matching armor overlay target.
-3. Consistent Practice Slime target.
-4. Farm/village tile polish.
-5. UI panel/icon polish.
-
-None of those assets or runtime changes are implemented by this contract.
-
-## 13. Terrain Blending (Autotiling)
-
-Source: [Stardew-Caliber Visual Research, Finding 1](research/visual-design/STARDEW_CALIBER_VISUAL_RESEARCH_2026-07.md).
-
-- Any two adjacent terrain tile types (grass/dirt, dirt/water, grass/village-stone, etc.) must be authored with edge and corner blend variants rather than meeting at a hard grid line. This is the single highest-leverage fix identified for the "reads like a development grid" problem.
-- Default to a reduced ~13-tile blend set per terrain boundary (1 center + 4 edges + 4 outer corners + 4 inner corners) rather than the full 47-tile blob set, unless a specific boundary is proven to need the full set. `tile_farm_path_dirt` already declares most of this set (center, 4 edges, 4 corners) and should be finished under this rule rather than redesigned.
-- Author and paint static terrain blending using Tiled's built-in Terrain Brush / Wangset feature. This requires no plugin or runtime code for tiles that do not change during gameplay.
-- Tiles whose state changes at runtime from gameplay (for example `tile_farm_tilled_soil`'s dry/wet/seeded states) are a same-cell sprite swap, not a neighbor blend, and do not need autotiling.
-- If a future feature requires tiles that blend based on changing gameplay state (not just static map authoring), evaluate `phaser3-autotile` for runtime Wangset lookups, but first spike its compatibility with this project's Phaser `^4.2.0` — it targets the Phaser 3 API and compatibility is unverified.
-
-## 14. Lighting And Atmosphere
-
-Source: [Stardew-Caliber Visual Research, Finding 5](research/visual-design/STARDEW_CALIBER_VISUAL_RESEARCH_2026-07.md).
-
-- Phaser's native `this.add.pointlight(x, y, color, radius, intensity, attenuation)` (available in the project's Phaser `^4.2.0`) is the preferred tool for future controlled light sources — torches, windows, spell impacts, muzzle flashes — without needing normal maps or a `Light2D` setup.
-- Before any per-light work, apply a single cheap atmosphere layer first: a full-scene, semi-transparent color-tint rectangle (warm gold for daytime; reserve cooler tones for any future evening/interior scene) blended with `MULTIPLY` or `SCREEN`. This is a few lines of Phaser code, not an art asset, and is what makes visually disconnected sprites read as lit by the same light source.
-- Do not build a full day/night cycle or weather system as part of this pass; it is explicitly out of scope until the core vertical slice is further along (see the research doc's non-goals).
-
-## 15. Feedback And Juice
-
-Source: [Stardew-Caliber Visual Research, Finding 6](research/visual-design/STARDEW_CALIBER_VISUAL_RESEARCH_2026-07.md).
-
-- Squash-and-stretch on impact/landing, brief screen shake on impact, and particles/decals that leave a lasting trace (rather than only flying and vanishing) are expected, standard techniques ("juice") for making sprites feel reactive. Eldoria-V2 already uses versions of the first two (the Waking Gate's camera shake, the Practice Slime's squash/hop reaction); keep using and naming this pattern deliberately in future PRs instead of reinventing it ad hoc each time.
-- Non-negotiable: juice must echo gameplay that already works. It must never gate, replace, or stand in for an actual gameplay or clarity improvement, and it must never be used in a way that pressures the player (no juice tied to countdowns, streak loss, or punishment). This is the same spirit as the existing "learning never gates adventure" rule and extends it to visual feedback.
+Current production priorities and implementation status belong in `docs/CURRENT_STATE.md` and the active execution handoff, not in this contract.

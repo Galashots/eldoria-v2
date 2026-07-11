@@ -1,6 +1,6 @@
 # Realm of Eldoria v2
 
-A fresh Phaser + Vite + Tiled build for a kid-focused 2D educational fantasy RPG.
+A Phaser + Vite + Tiled fantasy-learning RPG designed for Grade 2 and Grade 5 players.
 
 ## Play on iPad or in a browser
 
@@ -8,12 +8,18 @@ A fresh Phaser + Vite + Tiled build for a kid-focused 2D educational fantasy RPG
 
 On iPad, open the link in Safari and turn the device to landscape. Use Safari's Share menu and **Add to Home Screen** for a game-like launcher icon.
 
+Browser viewport coverage is not the same as physical-iPad validation. See the [real-child playtest guide](docs/REAL_CHILD_PLAYTEST_GUIDE.md) for supervised device testing.
+
 ## Core design rule
 
-**Learning never gates adventure.**  
-Learning creates bonuses only: extra harvest, bonus gold, critical hits, faster crafting, better loot, cosmetics, pets, mounts, or convenience rewards.
+**Learning never gates adventure.**
 
-Players can always explore, farm, talk, fight, retry, and progress slowly without answering correctly.
+Learning may provide optional bonuses such as extra harvest, gold, combat help, clues, cosmetics, pets, mounts, or convenience rewards. Wrong answers and skipped prompts never block movement, quests, baseline rewards, retries, exploration, or story progress.
+
+## Current profiles
+
+- **Grade 2 Mage:** audio-first, short prompts, read-aloud support, simple choices, and clear magical feedback.
+- **Grade 5 Ranger Explorer:** reader-mode, richer clues and reasoning, tracking and tactical presentation. The stable internal profile ID remains `grade5-adventurer`.
 
 ## Stack
 
@@ -22,68 +28,72 @@ Players can always explore, farm, talk, fight, retry, and progress slowly withou
 - TypeScript
 - Tiled JSON maps
 - Local-first browser saves
-- GitHub Pages-friendly static build
+- GitHub Pages static deployment
 
 ## Quick start
 
+Use the lockfile for a reproducible setup:
+
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
-Open the local URL printed by Vite.
-
-## Build
-
-```bash
-npm run build
-```
-
-The production site is written to `dist/`.
+Use `npm install` only when intentionally changing dependencies or the lockfile. Open the local URL printed by Vite.
 
 ## Controls
 
 - Arrow keys / WASD: move
 - Space / E: interact
-- I / Tab or the on-screen STATS button: toggle Stats & Mastery
-- On touch devices, drag in the lower-left area to move and tap ACTION in the lower-right to interact
-
-For supervised iPad sessions, see the [real-child playtest guide](docs/REAL_CHILD_PLAYTEST_GUIDE.md).
+- I / Tab or the on-screen **STATS** button: toggle Stats & Mastery
+- Touch: drag in the lower-left area to move and tap **ACTION** in the lower-right to interact
 
 ## Current vertical slice
 
-- Loads a Tiled-compatible farm map
-- Pixel-perfect Phaser renderer
-- Keyboard and dynamic touch movement with collision and camera follow
-- Grade 2 audio-first Mage and Grade 5 reader-mode Ranger Explorer profiles
-- A short, skippable first-run Waking Gate action scene with profile-specific spell/tracking feedback before the farm begins
-- Mira's first errand plus the optional Whispering Scarecrow and Sleepy Sprouts follow-ups
-- Optional crop and Practice Slime learning bonuses that never gate progress
-- Persistent quest, reward, inventory, position, and per-skill mastery data
+- 960×640 internal canvas with pixel-art rendering and landscape tablet support
+- Short, skippable first-run Waking Gate action scene for both profiles
+- Tiled farm with movement, collision, camera follow, objectives, and persistent saves
+- Mira's first errand, Whispering Scarecrow, and Sleepy Sprouts
+- Optional crop and three-hit Practice Slime learning bonuses
+- Optional Wildbloom Sprig discovery loop with profile-specific reveal abilities
 - Production Grade 2 Mage and Practice Slime presentation assets
-- Landscape tablet guidance and Playwright browser coverage for the opening and vertical slice
-- Interactive Stats & Mastery panel with gold, keepsakes, and per-skill progress
-- GitHub Actions validation, build, and browser smoke checks
-- Automatic GitHub Pages deployment from verified `main` builds
+- Ranger Explorer bridge presentation pending dedicated production sprites
+- Stats & Mastery panel with gold, keepsakes, and per-skill progress
+- GitHub Actions validation, browser smoke tests, visual-playtest artifacts, and deployment from verified `main`
+
+For volatile implementation status and the active milestone, read [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md).
 
 ## Verification
 
 ```bash
+npm ci
 npm run check
-npm run test:unit
 npm run test:asset-pipeline
+npm run test:unit
 npm run smoke
 ```
 
+`npm run check` includes visual-target validation, type checking, and the production build. The production site is written to `dist/`.
+
+## Documentation
+
+Start with [`docs/README.md`](docs/README.md).
+
+- [`AGENTS.md`](AGENTS.md) — durable product, workflow, testing, and merge rules
+- [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) — active milestone, current capabilities, and risks
+- [`docs/VISUAL_ASSET_CONTRACT.md`](docs/VISUAL_ASSET_CONTRACT.md) — visual production contract
+- [`docs/art-pipeline/SPRITE_ASSET_PIPELINE.md`](docs/art-pipeline/SPRITE_ASSET_PIPELINE.md) — asset normalization pipeline
+- [`docs/beautification/ELDORIA_BEAUTIFICATION_EXECUTION_PLAN.md`](docs/beautification/ELDORIA_BEAUTIFICATION_EXECUTION_PLAN.md) — approved beautification phases
+
 ## Tiled workflow
 
-Use `public/maps/eldoria.tiled-project` in Tiled. The starter map is `public/maps/farm.json`.
+Use `public/maps/eldoria.tiled-project` in Tiled. The current farm map is `public/maps/farm.json`.
 
-Recommended map layers:
+Recommended layers:
 
 1. `Ground`
 2. `Decor`
 3. `Collision`
 4. `Objects`
 
-Use object properties for gameplay metadata instead of hardcoding all map logic in scenes.
+Use object properties and stable `interactionId` values for gameplay metadata instead of coupling behavior to display labels.

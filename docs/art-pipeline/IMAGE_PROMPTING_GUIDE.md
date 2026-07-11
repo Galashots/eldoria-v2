@@ -1,94 +1,112 @@
 # Image Prompting Guide for Eldoria-V2 Source Art
 
-Eldoria uses AI-generated images as **source art**, not final runtime assets. Final repo-ready PNGs must be produced through the asset normalization pipeline.
+Eldoria uses generated images as **source material**, not as final game assets. Repository-ready PNGs must pass the manifest-driven normalization and validation pipeline.
 
-## Core rule
+## Core workflow
 
 ```text
-Prompt for clean source art -> audit result -> normalize through manifest -> validate output -> then integrate
+approved direction -> clean source generation -> source audit verdict -> manifest -> normalize -> validate -> runtime-scale preview -> integrate
 ```
 
-Do not assume generated images are final game assets.
+Do not skip the source-audit verdict. Do not describe concept art, a style sheet, or a generated mock-up as production source art merely because it looks attractive.
 
-## What image generation does well
+## Asset-status vocabulary
 
-AI image generation is useful for:
+Use one explicit verdict after every generation:
 
-- art direction
-- style exploration
-- source sprite sheets
-- source building/prop images
-- character, crop, monster, and VFX concepts
-- readable high-resolution pixel-art source material
+- **APPROVED SOURCE CANDIDATE** — clean enough to become manifest input.
+- **STYLE REFERENCE ONLY** — useful direction, but not exact or clean enough for normalization.
+- **REGENERATE** — failed important production constraints.
+- **CHANGE TARGET SIZE** — viable art, but the declared runtime canvas is unsuitable.
 
-## What image generation does not reliably guarantee
+After normalization, distinguish:
 
-Do not rely on generation for:
+- **NORMALIZED RUNTIME ASSET** — exact output exists and validates.
+- **RUNTIME-INTEGRATED ASSET** — the normalized asset is loaded and browser-verified in the game.
 
-- exact tiny runtime dimensions like `32x32`, `128x96`, or `192x128`
-- mathematically exact background color
-- true transparent backgrounds
-- perfect grid discipline
-- perfectly empty unused cells
-- exact asset-scale consistency
-- no background noise
-- no edge artifacts
+## What generation is good at
 
-The normalizer and validator are responsible for final dimensions and transparency.
+- visual direction and style exploration;
+- readable high-resolution pixel-art source material;
+- isolated character, creature, prop, crop, building, tile, and VFX candidates;
+- same-geometry sprite sheets and animation strips;
+- producing a controlled family from an approved seed.
 
-## Standard source-art prompt rules
+## What generation does not reliably guarantee
 
-Every production source prompt should include:
+- exact tiny runtime dimensions;
+- mathematically exact background colour;
+- true transparency;
+- perfect grid divisibility or empty cells;
+- exact scale consistency across independently generated images;
+- seamless tiling;
+- clean edges or absence of background contamination;
+- correct pivot, footprint, or collision metadata;
+- detail that survives at runtime size.
 
-- source art for an automated normalization pipeline
-- not a presentation sheet
-- no text unless explicitly allowed
-- no labels
-- no arrows
-- no captions
-- no UI
-- no decorative frame
-- no checkerboard
-- no shadows unless intentionally part of the sprite
-- no ground tile unless intentionally part of the sprite
-- no sprite bleeding into adjacent cells
-- flat magenta background requested as `RGB 255,0,255, hex #FF00FF`
-- wide padding around every sprite
-- readable at the intended runtime size
+The manifest, normalizer, validator, and human runtime preview are responsible for those guarantees.
 
-## Grid sprite sheet rules
+## Standard production prompt rules
 
-For sprite sheets, use:
+Every production source prompt should state:
+
+- source art for an automated normalization pipeline;
+- production asset, not a poster, gameplay screenshot, or presentation board;
+- exact subject, variant, direction/state, and intended runtime canvas;
+- same approved identity, palette family, outline language, perspective, and upper-left light;
+- no text, labels, arrows, captions, UI, decorative frame, or watermark;
+- no checkerboard;
+- no unrelated scenery;
+- no sprite bleeding into adjacent cells;
+- no baked ground shadow for dynamic or Y-sorted objects;
+- readable silhouette and major colour clusters at intended runtime size.
+
+For isolated padded assets, request a flat uniform key background:
+
+```text
+RGB 255,0,255 / #FF00FF
+```
+
+Also request wide padding and no contact with the image edge.
+
+For full-bleed seamless terrain, do **not** request magenta padding. Request an edge-to-edge tileable texture with no decorative perimeter.
+
+## One asset versus a sheet
+
+Default to **one generated image per asset variant**.
+
+A family sheet is acceptable only when every cell shares:
+
+- the same source and runtime geometry;
+- the same scale and pivot logic;
+- the same background treatment;
+- a clearly declared row/column layout.
+
+Never build a mixed-size production sheet.
+
+For a production sheet, use the phrase:
 
 ```text
 strict invisible grid
 ```
 
-Avoid saying:
-
-```text
-visually separated cells
-```
-
-That phrase can cause the model to draw grid lines or borders.
-
-Use wording like:
+Also state:
 
 ```text
 The grid is layout-only. Do not draw grid lines, borders, dividers, white lines, or outlines between cells.
 ```
 
-For 6x4 sheets, prefer a 3:2 aspect ratio.
+Avoid “visually separated cells,” which often causes drawn borders.
 
-For 6x2 sheets, prefer a 3:1 aspect ratio.
+The generated dimensions must divide cleanly by the declared grid. Common source shapes:
 
-The generated source size does not need to equal runtime size, but it should divide cleanly into the declared source grid.
+- 6×4 sheet: 3:2 aspect ratio;
+- 6×2 sheet: 3:1 aspect ratio;
+- horizontal animation strip: exact frame count and equal slot widths.
 
-## Background cleanup lesson
+## Background cleanup
 
-Even when prompted for pure `#FF00FF`, generated backgrounds usually contain nearby magenta-family colors instead of one exact color.
-
-Typical observed backgrounds:
+Generated “#FF00FF” backgrounds often drift into nearby values such as:
 
 ```text
 #FB03FA
@@ -97,9 +115,9 @@ Typical observed backgrounds:
 #FA02F7
 ```
 
-Use manifest color-key tolerance rather than tolerance `0`.
+Do not assume tolerance `0` will work.
 
-Suggested starting values:
+Typical starting point:
 
 ```json
 {
@@ -109,7 +127,7 @@ Suggested starting values:
 }
 ```
 
-For noisy backgrounds or edge artifacts, use edge-flood cleanup when enclosed key-colored sprite pixels must be preserved:
+Use edge-flood cleanup when enclosed key-coloured pixels must remain:
 
 ```json
 {
@@ -119,146 +137,145 @@ For noisy backgrounds or edge artifacts, use edge-flood cleanup when enclosed ke
 }
 ```
 
-## Asset sizing lessons
+Audit the actual image before choosing the key colour and tolerance.
 
-### Small animated mobs
+## Size and occupancy rules
 
-Example: Practice Slime
+### Small animated actors and creatures
 
-- Source sheet: 6x4
-- Source aspect ratio: 3:2
-- Runtime target: 192x128
-- Runtime cells: 32x32
-- Prompt for centered sprites with consistent baseline.
-- Keep unused cells empty magenta.
-- Avoid shadows and ground ovals.
+- Generate the whole strip or same-geometry sheet together to reduce drift.
+- Keep a consistent baseline and bottom-centre anchor.
+- Keep unused cells fully key-coloured.
+- Do not include ground ovals or effects outside the declared cells.
 
-### Crop overlays
+The Practice Slime is the working reference: approved source, normalized `192×128` sheet with `32×32` cells, and runtime integration complete.
 
-Crops need more padding than expected.
+### Decals, crops, flowers, and scatter
 
-Use:
+These need more padding than intuitive.
+
+Use language such as:
 
 ```text
-Each crop should occupy only the center 40-50% of its invisible cell.
-Do not draw anything in the outer 25% margin of any cell.
+The subject occupies only the centre 40–50% of the invisible cell.
+Leave the outer 25% margin empty.
 ```
 
-This prevents beautiful but oversized crop illustrations.
+Scatter should be sparse and often off-centre. It must not create a second visible tile grid.
+
+### Trees and tall props
+
+- Use a canvas taller than the gameplay footprint.
+- Ground the base in the lower footprint band.
+- Leave clean key-coloured space above and around the silhouette.
+- Use the flattened 3/4 “pop-up book” perspective, not true isometric or true top-down.
+- Do not bake a shadow when the object will Y-sort or receive an engine-drawn shadow.
 
 ### Buildings and large props
 
-Buildings should use larger runtime targets when detail matters.
+Use the variable-size pipeline rather than squeezing important detail into an arbitrary small target. If detail fails at 1x, choose **CHANGE TARGET SIZE** instead of hiding the problem with blurry runtime scaling.
 
-A detailed shop should likely use:
+## Terrain production rules
 
-```text
-192x144
-```
+### Centre tiles first
 
-rather than:
+Generate and approve the centre tile before any edges or corners.
 
-```text
-128x96
-```
+A centre tile must:
 
-Use the variable-size pipeline instead of forcing every asset into small cells.
+- be seamless in a 3×3 repeat;
+- contain no perimeter grass, shore, flowers, rocks, lilies, or border treatment;
+- avoid a large directional gradient that exposes repetition;
+- remain quieter than actors and interactable objects.
 
-## Required audit after generation
+### Edges and corners
 
-Before committing source art, audit:
-
-- aspect ratio
-- source dimensions
-- grid divisibility
-- background color family
-- visible grid lines or borders
-- text/label artifacts
-- edge contact
-- sprite bleed between cells
-- whether detail survives at runtime size
-- whether the target runtime size should change
-
-## Decision categories
-
-Use one of these after every source-art audit:
+Generate each edge or corner from the approved centre language. The prompt should say, for example:
 
 ```text
-APPROVED SOURCE CANDIDATE
-Use as source art; proceed to manifest/normalization.
+Use the same texture, palette, density, and light as the approved centre tile. Change only the north edge into a narrow soft grass-to-dirt transition.
 ```
 
-```text
-STYLE REFERENCE ONLY
-Good art direction, but not clean enough for pipeline use.
-```
+Do not rely on rotating or mirroring lit assets when that would reverse the approved upper-left light.
 
-```text
-REGENERATE
-Prompt failed major production constraints.
-```
+For the farm's reduced terrain set, author all 13 variants:
 
-```text
-CHANGE TARGET SIZE
-Art is good, but the intended runtime size is too small.
-```
+- 1 centre;
+- 4 edges;
+- 4 outer corners;
+- 4 inner corners.
 
-## Current learned examples
+### Water
+
+A water-base tile contains only water texture and subtle highlights. Lilies, flowers, reeds, rocks, shoreline, and shimmer frames are separate targets.
+
+## Lighting and shadows
+
+- Use one consistent upper-left key light.
+- Do not bake a scene-level warm/gold ambient wash into source art; atmosphere is applied once in code.
+- Dynamic actors, NPCs, monsters, interactive props, and Y-sorted objects use engine-drawn grounding shadows.
+- A baked shadow is acceptable only for a truly static asset whose target specification explicitly permits it.
+
+## Required source audit
+
+Before committing source art, record:
+
+- target ID and variant;
+- source dimensions and aspect ratio;
+- grid divisibility, if applicable;
+- background/key-colour family;
+- text, border, UI, checkerboard, or watermark artifacts;
+- edge contact or cell bleed;
+- perspective, light, palette, silhouette, and identity consistency;
+- seamless 3×3 result for terrain;
+- 1x and 3x runtime preview readability;
+- whether the declared target size remains viable;
+- one explicit verdict from the approved vocabulary.
+
+Only an **APPROVED SOURCE CANDIDATE** proceeds to a manifest.
+
+## Current farm-environment direction
+
+The approved external farm style-lock is **STYLE REFERENCE ONLY**. It establishes palette direction, material language, painterly pixel-art finish, outline weight, upper-left lighting, flattened 3/4 perspective, vegetation density, and magical-landmark treatment. It is not committed, cropped, normalized, or treated as a production sheet.
+
+The authoritative production order is:
+
+[`FARM_ENVIRONMENT_GENERATION_HANDOFF_V1.md`](FARM_ENVIRONMENT_GENERATION_HANDOFF_V1.md)
+
+The palette source of truth is:
+
+- `docs/visual-targets/farm_environment_palette_v1.json`
+- `docs/visual-targets/FARM_ENVIRONMENT_PALETTE_V1.md`
+
+Batch A must establish the process before later generation:
+
+- seamless grass centre;
+- seamless dirt centre;
+- seamless water centre;
+- oak tree;
+- horizontal fence segment;
+- medium landmark rock;
+- revealed Root-Star landmark.
+
+Do not batch-generate the remaining farm kit until Batch A is approved at source size and in 1x/3x previews.
+
+## Learned examples
 
 ### Practice Slime
 
-Status: approved source and normalized runtime asset committed; runtime display is pending.
+- Approved source, normalized asset, and runtime integration complete.
+- Invisible-grid wording worked.
+- Background cleanup still required asset-specific edge-flood tolerance.
+- Consistent baseline and whole-sheet generation reduced frame drift.
 
-Prompting lesson:
+### Crop and scatter candidates
 
-- invisible grid wording worked
-- no grid lines appeared
-- background still required color-key tolerance
-- final runtime target remains 32x32 cells in a 6x4 sheet
-- edge-flood cleanup with asset-specific tolerance removed the generated magenta fringe while preserving enclosed poof colors
+- Attractive generations often occupy too much of the cell.
+- Use 40–50% occupancy, wide padding, and a runtime preview before approval.
 
-### Crop overlays
+### Village General Store direction
 
-Status: promising but not locked.
+- Useful art direction, but important building detail requires a larger variable target.
+- Treat any earlier mock-up according to its recorded audit status rather than assuming it is production-ready.
 
-Prompting lesson:
-
-- crops must be much smaller than intuitive
-- use 40-50% cell occupancy
-- wide magenta padding is essential
-- background tolerance or edge-flood cleanup is needed
-
-### Village General Store
-
-Status: approved art direction.
-
-Prompting lesson:
-
-- excellent as a large building source
-- too detailed for 128x96
-- better target is likely 192x144
-- variable asset sizes are necessary
-
-## Prompting for Stardew-caliber techniques (2026-07-10)
-
-Added following [Stardew-Caliber Visual Research](../research/visual-design/STARDEW_CALIBER_VISUAL_RESEARCH_2026-07.md) and contract Sections 4a, 8a, 13-15. Not yet exercised against a real generation run; treat as the starting prompt strategy and update this section with the actual learned lesson the first time each is tried.
-
-### Terrain-blend (autotile) tiles
-
-Generating a 1-center + 4-edge + 4-corner blend set (contract Section 13) in one pass is unreliable — models drift on hue/detail between separately-implied variants. Prefer generating the **center tile alone first**, get it approved, then generate each edge/corner variant as its own prompt that explicitly references the approved center tile's described palette and texture, asking for "the same grass texture and palette as tile X, but fading into dirt only along the top edge of the tile" (substitute the correct edge). Treat each variant as its own audited source-art candidate, not as one sheet.
-
-Do not ask the model to draw the blend/gradient itself pixel-perfectly — ask for a soft, small transition band near the relevant edge only; the normalization step should tighten it and the target's `[8, 15]` pivot and `16x16` grid still apply exactly as any other tile.
-
-### Grass/decoration scatter tiles
-
-Prompt each scatter variant (`tile_farm_grass_scatter`) as a small, off-center detail on top of a transparent or magenta-keyed 16x16 cell, explicitly asking for "one small tuft/pebble/flower positioned off-center, not filling the cell, on a flat magenta background" — the crop-overlay lesson above (40-50% cell occupancy, wide padding) applies here too, since scatter decoration that fills its cell will look like a second competing tile grid instead of sparse detail.
-
-### Ground shadows (contract Section 8a)
-
-Do not bake a ground shadow into animated actor/NPC source art — the shadow is drawn by engine code under the `actors_feet` layer so it can move and resize independently of the sprite. Baking it into the sprite sheet would double it or make it move incorrectly during animation.
-
-For static, single-image assets that never move (buildings, large props), a baked shadow following the same upper-left light (so the shadow falls down-right) is acceptable and often looks better than one drawn in code.
-
-### Lighting neutrality in source art
-
-Always prompt for the contract's consistent upper-left key light on any new source art (Section 4). Do not prompt for a warm/gold or otherwise tinted ambient wash baked into the sprite or tile itself — the atmosphere tint described in contract Section 14 is applied once, at the scene level, in code. Baking a scene-level tint into individual source art would double it inconsistently as lighting conditions change per scene.
+Update this guide only when a repeated production lesson becomes durable. Keep one-off asset status in `docs/CURRENT_STATE.md`, target specs, manifests, or PR evidence.
