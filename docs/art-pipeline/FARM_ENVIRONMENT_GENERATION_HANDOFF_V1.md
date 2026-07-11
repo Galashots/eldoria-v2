@@ -158,16 +158,16 @@ Audit criteria (Batch F):
 - Accents match the pinned values exactly: Root-Star `#FFD666`/`#8FD14F` (star rune), Moonwell Echo `#9FD7FF`/`#8F63FF` (waves rune), Foxfire Seed `#A9E783`/`#72B95C` (flame rune).
 - `indicator` states read as quiet/dormant (small hum/glow); `revealed` states read as a permanent landmark. No baked shadow.
 
-### Addendum — pre-specified farm targets not enumerated in Batches A–F
+### Addendum — pre-specified farm targets (batch assignment resolved 2026-07-11)
 
-These were specified before this handoff (in `farm_village_tile_targets.json`) and are part of the farm plot, but the reviewer's batch list did not place them. Recommended slotting (please confirm — see §6):
+These were specified before this handoff (in `farm_village_tile_targets.json`) and are part of the farm plot. The reviewer resolved their placement: **grass scatter generates with Batch C; tilled soil, crop sprouts, harvest crops, and crop-row overlays generate with Batch D.**
 
-| Target ID | Variants | Canvas / Foot / Pivot | Layer | Cat | Suggested batch |
+| Target ID | Variants | Canvas / Foot / Pivot | Layer | Cat | Assigned batch |
 | --- | --- | --- | --- | --- | --- |
-| `tile_farm_grass_scatter` | `tuft_a`, `tuft_b`, `pebble_a`, `flower_a` | 16×16 / 16×16 / [8,15] | decals_low | B | with Batch C (grass decoration) |
-| `tile_farm_tilled_soil` | `dry`, `wet`, `seeded` | 16×16 / 16×16 / [8,15] | terrain | A | with Batch D (crop plot family) |
-| `tile_farm_crop_sprout` | `sprout_a`, `sprout_b` | 16×16 / 16×16 / [8,15] | decals_low | B | with Batch D |
-| `tile_farm_crop_harvest` | `ready_a`, `ready_b`, `sparkle_optional` | 16×16 / 16×16 / [8,15] | decals_low | B | with Batch D |
+| `tile_farm_grass_scatter` | `tuft_a`, `tuft_b`, `pebble_a`, `flower_a` | 16×16 / 16×16 / [8,15] | decals_low | B | **Batch C** (grass decoration) |
+| `tile_farm_tilled_soil` | `dry`, `wet`, `seeded` | 16×16 / 16×16 / [8,15] | terrain | A | **Batch D** (crop plot family) |
+| `tile_farm_crop_sprout` | `sprout_a`, `sprout_b` | 16×16 / 16×16 / [8,15] | decals_low | B | **Batch D** |
+| `tile_farm_crop_harvest` | `ready_a`, `ready_b`, `sparkle_optional` | 16×16 / 16×16 / [8,15] | decals_low | B | **Batch D** |
 
 Village targets (`tile_village_shop_wall`/`door`, `tile_village_interaction_sign`) are **out of scope** for the farm environment kit and this handoff.
 
@@ -181,11 +181,48 @@ When authoring `assets/manifests/<id>.manifest.json` after source approval:
 
 Follow the committed `mob_slime_practice_v001.manifest.json` as the working reference for structure.
 
-## 6. Remaining ambiguity to resolve before Batch A
+### 5.1 Runtime packed-sheet layout, one deterministic PNG per target ID (decision #2)
 
-1. **Addendum slotting (§4 addendum):** confirm `tile_farm_grass_scatter`, `tile_farm_tilled_soil`, `tile_farm_crop_sprout`, and `tile_farm_crop_harvest` should generate alongside Batches C/D as suggested (they are required for a complete farm but were not in the A–F list).
-2. **Multi-variant output packing:** several targets output to a single PNG holding all variants (e.g. all 13 dirt tiles in `tile_farm_path_dirt.png`). Confirm the preferred runtime layout (single packed sheet per target vs. one file per variant) so manifest `cols/rows` can be fixed; this handoff assumes one packed sheet per target ID.
-3. **Water shimmer runtime mechanism** is deferred to Phase 3 (Tiled animated tile vs. lightweight texture swap); the shimmer frames are authored here but their runtime loop is not decided.
-4. **`env_farm_shore_rock` vs `env_farm_rock_medium` distinction** at 16×16 vs 32×32 — confirm shore rocks stay small decals (Category B) while the medium rock is the landmark (Category C), as specified.
+Per the reviewer's decision, each target ID normalizes to **one deterministic packed runtime PNG** with the fixed layout below (source generation may stay one image per variant — the manifest maps each source into the packed cell). Cell size = the target canvas; order is row-major (left→right, top→bottom). Single-variant targets are trivially `1×1`.
 
-None of these block authoring the palette/target specs; they only need answering before the first production images are generated.
+| Target ID | Cell px | cols×rows | Cell order (row-major) | Empty cells |
+| --- | --- | --- | --- | --- |
+| `tile_farm_grass_base` | 16×16 | 3×1 | grass_a, grass_b, grass_c | — |
+| `tile_farm_grass_scatter` | 16×16 | 4×1 | tuft_a, tuft_b, pebble_a, flower_a | — |
+| `tile_farm_path_dirt` | 16×16 | 13×1 | center, edge_north, edge_south, edge_west, edge_east, corner_ne, corner_nw, corner_se, corner_sw, inner_corner_ne, inner_corner_nw, inner_corner_se, inner_corner_sw | — |
+| `tile_farm_tilled_soil` | 16×16 | 3×1 | dry, wet, seeded | — |
+| `tile_farm_crop_sprout` | 16×16 | 2×1 | sprout_a, sprout_b | — |
+| `tile_farm_crop_harvest` | 16×16 | 3×1 | ready_a, ready_b, sparkle_optional | — |
+| `tile_farm_crop_row` | 16×16 | 2×1 | furrow_a, furrow_b | — |
+| `tile_farm_water_base` | 16×16 | 6×1 | water_a, water_b, shimmer_f0, shimmer_f1, shimmer_f2, shimmer_f3 | — |
+| `tile_farm_water_shore` | 16×16 | 13×1 | center, edge_north, edge_south, edge_west, edge_east, corner_ne, corner_nw, corner_se, corner_sw, inner_corner_ne, inner_corner_nw, inner_corner_se, inner_corner_sw | — |
+| `tile_farm_water_lily` | 16×16 | 2×1 | lily_a, lily_b | — |
+| `tile_farm_water_flower` | 16×16 | 2×1 | flower_a, flower_b | — |
+| `env_farm_shore_rock` | 16×16 | 2×1 | cluster_a, cluster_b | — |
+| `env_farm_reed` | 16×32 | 2×1 | reed_a, reed_b | — |
+| `env_farm_tree` | 32×48 | 3×1 | oak, pine, blossom | — |
+| `env_farm_bush_small` | 16×16 | 2×1 | cluster_a, cluster_b | — |
+| `env_farm_bush_large` | 32×32 | 2×1 | cluster_a, cluster_b | — |
+| `env_farm_flower_cluster` | 16×16 | 4×1 | gold, violet, crimson, blue | — |
+| `env_farm_weed` | 16×16 | 3×1 | weed_a, fern_a, fern_b | — |
+| `env_farm_stone_small` | 16×16 | 2×1 | stone_a, stone_b | — |
+| `env_farm_rock_medium` | 32×32 | 2×1 | rock_a, rock_b | — |
+| `env_farm_log` | 32×16 | 1×1 | log_a | — |
+| `env_farm_fence` | 16×32 | 3×3 | post, rail_horizontal, rail_vertical, corner_ne, corner_nw, corner_se, corner_sw, broken_horizontal, broken_vertical | — |
+| `env_farm_gate` | 32×32 | 2×1 | closed, broken | — |
+| `env_farm_signpost` | 16×32 | 1×1 | idle | — |
+| `env_farm_storage_prop` | 16×16 | 3×1 | crate, barrel, basket | — |
+| `env_wildbloom_landmark` | 32×32 | 2×3 | root_star_indicator, root_star_revealed, moonwell_echo_indicator, moonwell_echo_revealed, foxfire_seed_indicator, foxfire_seed_revealed | — |
+
+The shimmer frame count is fixed at 4 for a deterministic sheet; if generation approves only 3, drop `shimmer_f3` and set `tile_farm_water_base` to `5×1`.
+
+## 6. Resolved handoff decisions
+
+The four questions raised in the initial handoff were resolved by the reviewer (2026-07-11); they are now baked into this document:
+
+1. **Addendum slotting — resolved.** Grass scatter generates with **Batch C**; tilled soil, crop sprouts, harvest crops, and crop-row overlays generate with **Batch D** (see §4 addendum).
+2. **Multi-variant output packing — resolved.** One deterministic packed runtime PNG per target ID with the fixed manifest layout in §5.1; source generation may remain one image per variant.
+3. **Water shimmer runtime mechanism — deferred to Phase 3.** Author the shimmer frames now (§5.1); the runtime loop mechanism (Tiled animated tile vs. lightweight texture swap) is decided in Phase 3.
+4. **Shore rock vs medium rock — resolved.** `env_farm_shore_rock` stays a small `16×16` decal (Category B); `env_farm_rock_medium` is the `32×32` landmark (Category C).
+
+Nothing further blocks Batch A production generation.
