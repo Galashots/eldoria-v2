@@ -2,25 +2,33 @@
   "version": 1,
   "id": "review_tile_farm_grass_base_grass_a",
   "_reviewOnly": "This manifest is a review/evidence artifact only. It is NOT the production manifest for tile_farm_grass_base (grass_b and grass_c do not exist yet) and its output is NOT a runtime asset. Do not load target.outputPath in Phaser or reference it from a production manifest.",
-  "_sourceNote": "scripts/normalize-asset-sheet.mjs rejects a plain-RGB source under background.mode 'alpha' (it only accepts alpha-mode sources that already carry an alpha channel, or RGB sources declared with a color-key mode). The approved grass_a source has no alpha channel and this full-bleed terrain has no color key to remove. Rather than mis-declare a color_key mode against a texture with no key color, this manifest points at grass_a.rgba-adapter.png: a byte-exact RGBA copy of the approved source (verified 0/1,572,516 RGB pixel differences, alpha=255 everywhere) produced by round-tripping through this same script's own readPng/writePng. The approved source at assets/source/generated/tile_farm_grass_base/grass_a.png is untouched. See AUDIT.md for detail and the pipeline-limitation note.",
+  "_sourceNote": "Pipeline limitation fixed generically in scripts/normalize-asset-sheet.mjs: RGB sources are now accepted under background.mode 'alpha' (readPng already synthesizes alpha=255 for RGB input), and fit:'fill' is now implemented (independent X/Y nearest-neighbour scaling to fully cover the destination cell). This manifest now points directly at the approved source at assets/source/generated/tile_farm_grass_base/grass_a.png; the temporary RGBA-adapter copy has been removed.",
   "target": {
     "outputPath": "grass_a.review-normalized.png",
-    "cellPx": [16, 16],
+    "cellPx": [
+      16,
+      16
+    ],
     "cols": 1,
     "rows": 1
   },
   "sources": {
     "grass_a_source": {
-      "path": "grass_a.rgba-adapter.png",
-      "background": { "mode": "alpha" }
+      "path": "../../../../assets/source/generated/tile_farm_grass_base/grass_a.png",
+      "background": {
+        "mode": "alpha"
+      }
     }
   },
   "frames": [
     {
       "sourceRef": "grass_a_source",
-      "destCell": [0, 0],
+      "destCell": [
+        0,
+        0
+      ],
       "trim": "none",
-      "fit": "contain",
+      "fit": "fill",
       "anchor": "top_left"
     }
   ]
