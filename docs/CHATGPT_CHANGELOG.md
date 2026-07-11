@@ -4,6 +4,16 @@ This file keeps recent, high-value change summaries. Full historical entries thr
 
 Entries should remain concise: date/author, branch or PR, scope, compatibility impact, verification, and remaining risk. Detailed implementation narratives belong in the PR description and commits.
 
+## 2026-07-11 — Batch A dirt_center source acceptance and review-only normalization
+
+- Branch/PR: `claude/beautification-phase2-batch-a-dirt-center` (draft PR pending).
+- Scope: accepted ChatGPT's runtime audit of `tile_farm_path_dirt` / `center` (`dirt_center_candidate3_16x16.png`, already-approved at exact runtime size) and produced a canonical high-resolution production source plus review-only normalization evidence. Deliberately did **not** use the original AI-generated high-resolution image, since it still carried high-resolution plus/cross-like motifs that violate the production art spec (even though they disappear after normalization). Instead, `assets/source/generated/tile_farm_path_dirt/center.png` (1024×1024, RGB) is an exact 64× nearest-neighbour block-replication of the approved 16×16 master — verified 0 pixel mismatches across all 1,048,576 output pixels, and the review manifest's round trip back through the real pipeline (`fit: "fill"`) reproduces the master exactly (0 RGB differences across all 256 pixels).
+- New generic pipeline utility: `scripts/upscale-nearest-neighbor.mjs` (exported `upscaleNearestNeighborRgbOnly`), for the "approved low-resolution runtime master → canonical high-resolution production source" transform; reusable by any future variant that goes through the same locally-audited-16×16-first workflow.
+- Principal files: `assets/source/generated/tile_farm_path_dirt/center.png` (new, canonical source); `docs/art-pipeline/review/tile_farm_path_dirt_center/` (new review manifest, approved-master copy, normalized output, evidence images, `AUDIT.md`); `scripts/upscale-nearest-neighbor.mjs` (new).
+- Compatibility: no runtime, map, save, quest, curriculum, mastery, or interaction change. `public/maps/farm.json` untouched. Nothing loaded in Phaser. No production `tile_farm_path_dirt` manifest or packed sheet was created — the target is a 13-variant reference blend set and only 1 of 13 variants (`center`) exists.
+- Verification: `npm ci`, `npm run check`, `npm run test:visual-targets`, `npm run test:asset-pipeline`, `npm run test:unit` all pass locally; the review manifest itself was normalized and validated through the repo's actual `normalize-asset-sheet.mjs`/`validate-asset-sheet.mjs` scripts. Local `npm run smoke` hits the same pre-existing local-sandbox Playwright browser-revision limitation noted in prior PRs (not a code issue; Playwright config untouched) — GitHub CI's pinned browser suite is the source of truth.
+- Remaining risk: awaiting ChatGPT's review of this evidence set before the remaining 12 `tile_farm_path_dirt` variants (`edge_*`, `corner_*`, `inner_corner_*`) or other Batch A/B assets are generated.
+
 ## 2026-07-11 — Asset-pipeline fix: RGB+alpha sources and fit:"fill"
 
 - Branch/PR: `claude/beautification-phase2-batch-a-grass-a` (draft PR #72, addressing ChatGPT's review comment).
