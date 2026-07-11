@@ -23,6 +23,7 @@ These are target specifications only. They add no art, runtime behavior, map edi
 - Preferred editable source: `.aseprite` or `.ase`.
 - Atlas family: `environment_farm`.
 - Readability: low-noise and child-friendly at 1x and 3x.
+- Colors: farm-scope families (`forest`, `wood_leather`) draw only from the locked hex values in [`FARM_ENVIRONMENT_PALETTE_V1.md`](FARM_ENVIRONMENT_PALETTE_V1.md) / [`farm_environment_palette_v1.json`](farm_environment_palette_v1.json). Village stone/UI colors (`ruins`, `ui_neutral`) are locked when village art lands.
 
 ## Targets
 
@@ -36,7 +37,7 @@ A `decals_low` scatter layer of small, non-repeating detail (grass tufts, pebble
 
 ### `tile_farm_path_dirt`
 
-Walkable dirt using `wood_leather` and `forest`, with center, edge, and corner variants that connect cleanly to grass and village tiles. Per Section 13, this is the project's reference terrain-blend set: 1 center + 4 edge + 4 corner variants (the reduced ~13-tile blend approach, not the full 47-tile blob set) authored for use with Tiled's Terrain Brush.
+Walkable dirt using `wood_leather` and `forest`, with center, edge, outer-corner, and inner-corner variants that connect cleanly to grass and village tiles. Per Section 13, this is the project's reference terrain-blend set: the full reduced 13-tile blend (1 center + 4 edges + 4 outer corners named `corner_*` + 4 inner corners named `inner_corner_*`), not the full 47-tile blob set, authored for use with Tiled's Terrain Brush. The inner corners let the path follow an irregular, concave outline rather than only convex rectangular shapes.
 
 ### `tile_farm_tilled_soil`
 
@@ -72,7 +73,7 @@ A non-verbal `world_ui` sign marker with idle and attention variants. It support
 - [ ] Includes every declared variant.
 - [ ] Collision and interaction metadata match the JSON target.
 - [ ] Grass/path/building edges prove seamlessness and alignment where relevant.
-- [ ] Grass/path boundary uses declared blend variants (center/edge/corner), not a hard grid edge (Section 13).
+- [ ] Grass/path boundary uses all 13 declared blend variants (center/edge/outer-corner/inner-corner), not a hard grid edge (Section 13).
 - [ ] Scatter/decoration variants are sparse and non-repeating, not a second visible tile grid.
 - [ ] Crop overlays preserve soil readability.
 - [ ] Door and sign are visually obvious but add no runtime behavior.

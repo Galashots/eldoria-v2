@@ -17,10 +17,12 @@ const targetFields = [
   'notes'
 ];
 const idPattern = /^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$/;
+const hexPattern = /^#[0-9a-fA-F]{6}$/;
 const errors = [];
 const targetLocations = new Map();
 const references = [];
 let targetCount = 0;
+let paletteCount = 0;
 
 function fileLabel(filePath) {
   return relative(process.cwd(), filePath).replaceAll('\\', '/');
@@ -141,6 +143,50 @@ function validateTarget(filePath, target, index) {
   }
 }
 
+function validateHexArray(filePath, paletteId, label, swatches) {
+  if (!Array.isArray(swatches) || swatches.length === 0) {
+    addError(filePath, paletteId, `${label} must be a non-empty array of #rrggbb hex strings`);
+    return;
+  }
+  swatches.forEach((hex, index) => {
+    if (typeof hex !== 'string' || !hexPattern.test(hex)) {
+      addError(filePath, paletteId, `${label}[${index}] must be a #rrggbb hex string`);
+    }
+  });
+}
+
+function validatePalette(filePath, document) {
+  paletteCount += 1;
+  const paletteId = typeof document.paletteId === 'string' ? document.paletteId : 'palette';
+
+  if (typeof document.paletteId !== 'string' || !idPattern.test(document.paletteId)) {
+    addError(filePath, paletteId, 'paletteId must be lowercase snake_case');
+  }
+  if (document.status !== 'locked') {
+    addError(filePath, paletteId, 'status must equal locked');
+  }
+  if (!document.families || typeof document.families !== 'object' || Array.isArray(document.families)
+    || Object.keys(document.families).length === 0) {
+    addError(filePath, paletteId, 'families must be a non-empty object');
+  } else {
+    for (const [familyName, swatches] of Object.entries(document.families)) {
+      validateHexArray(filePath, paletteId, `families.${familyName}`, swatches);
+    }
+  }
+
+  if (hasOwn(document, 'wildbloomAccents')) {
+    const accents = document.wildbloomAccents;
+    if (!accents || typeof accents !== 'object' || Array.isArray(accents)) {
+      addError(filePath, paletteId, 'wildbloomAccents must be an object');
+    } else {
+      for (const [key, value] of Object.entries(accents)) {
+        if (key.startsWith('_')) continue; // metadata keys such as _source
+        validateHexArray(filePath, paletteId, `wildbloomAccents.${key}`, value);
+      }
+    }
+  }
+}
+
 function collectTopLevelReference(filePath, document, field) {
   if (hasOwn(document, field)) {
     references.push({ filePath, targetId: null, field, value: document[field] });
@@ -179,6 +225,8 @@ for (const filePath of jsonFiles) {
     }
   }
 
+  if (hasOwn(document, 'paletteId')) validatePalette(filePath, document);
+
   collectTopLevelReference(filePath, document, 'baseTarget');
   collectTopLevelReference(filePath, document, 'inheritsTarget');
 }
@@ -195,5 +243,5 @@ if (errors.length > 0) {
   for (const error of errors) console.error(error);
   process.exitCode = 1;
 } else {
-  console.log(`Visual target validation passed: ${jsonFiles.length} files, ${targetCount} targets.`);
+  console.log(`Visual target validation passed: ${jsonFiles.length} files, ${targetCount} targets, ${paletteCount} palettes.`);
 }
