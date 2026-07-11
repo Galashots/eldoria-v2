@@ -4,6 +4,26 @@ This file keeps recent, high-value change summaries. Full historical entries thr
 
 Entries should remain concise: date/author, branch or PR, scope, compatibility impact, verification, and remaining risk. Detailed implementation narratives belong in the PR description and commits.
 
+## 2026-07-11 — Asset-pipeline fix: RGB+alpha sources and fit:"fill"
+
+- Branch/PR: `claude/beautification-phase2-batch-a-grass-a` (draft PR #72, addressing ChatGPT's review comment).
+- Scope: generic fix to `scripts/normalize-asset-sheet.mjs` requested during ChatGPT's visual review of PR #72. `background.mode: "alpha"` now accepts an RGB source (readPng already synthesizes alpha=255 for RGB input; `writePng`/output remain RGBA), and `fit: "fill"` is now implemented alongside `fit: "contain"` (independent X/Y nearest-neighbour scaling that fully covers the destination cell, no letterboxing). Removes the need for a per-source RGBA-adapter workaround for every future full-bleed terrain source.
+- Principal files: `scripts/normalize-asset-sheet.mjs` (validation + `paste()` fit handling), `scripts/test-asset-pipeline.mjs` (new focused tests: RGB+alpha normalization producing fully-opaque RGBA output with source RGB preserved; `fit: "contain"` vs `fit: "fill"` behavior on a non-square source; confirmation an unknown `fit` value is still rejected).
+- Grass_a review evidence updated to match: `docs/art-pipeline/review/tile_farm_grass_base_grass_a/grass_a.review.manifest.json` now points directly at the approved source (`assets/source/generated/tile_farm_grass_base/grass_a.png`) with `background.mode: "alpha"` and `fit: "fill"`; the temporary `grass_a.rgba-adapter.png` was deleted. The regenerated normalized 16×16 output is **byte-identical** to the prior adapter-based output (confirmed by SHA-256), so all previously-audited seam/gradient/palette findings still hold; evidence preview images were regenerated (nearest-neighbour only) from the same normalized pixels.
+- Compatibility: pipeline-script and review-evidence change only; no runtime, map, save, quest, curriculum, mastery, or interaction change. No production `tile_farm_grass_base` manifest exists; `grass_a` remains 1 of 3 required cells.
+- Verification: `npm ci`, `npm run check`, `npm run test:asset-pipeline` (including the two new tests), `npm run test:unit` all pass locally; `npm run smoke` hit the same local Playwright browser-revision/proxy limitation noted previously (not a code issue) — GitHub CI's pinned browser suite is the source of truth.
+- Remaining risk: awaiting ChatGPT's final review of this pipeline fix before `grass_b`/`grass_c` or `tile_farm_path_dirt` generation begins.
+
+## 2026-07-11 — Batch A grass_a source acceptance and review-only normalization
+
+- Branch/PR: `claude/beautification-phase2-batch-a-grass-a` (draft PR pending).
+- Scope: accepted the first Phase 2 Batch A production source candidate (`tile_farm_grass_base` / `grass_a`, ChatGPT-approved as **APPROVED SOURCE CANDIDATE**); verified the received PNG's format/dimensions/SHA-256 against the expected values before committing it byte-for-byte; produced a clearly review-only manifest/normalization (16×16, Category A settings) plus nearest-neighbor evidence previews (enlarged tile, 3×3 repeat, 12×8 field, comparison panel) and a deterministic seam/gradient/palette audit, all under `docs/art-pipeline/review/tile_farm_grass_base_grass_a/`, not under the production manifest/output paths.
+- Principal files: `assets/source/generated/tile_farm_grass_base/grass_a.png` (new, approved source); `docs/art-pipeline/review/tile_farm_grass_base_grass_a/` (new review manifest, RGBA input adapter, normalized output, evidence images, `AUDIT.md`).
+- Compatibility: no runtime, map, save, quest, curriculum, mastery, or interaction change. `public/maps/farm.json` untouched. Nothing loaded in Phaser. No production `tile_farm_grass_base` manifest or packed sheet was created — the target is a 3-cell (`grass_a`/`grass_b`/`grass_c`) sheet and only 1 of 3 cells exists.
+- Verification: `npm ci`, `npm run check`, `npm run test:asset-pipeline`, `npm run test:unit`, `npm run smoke` all run (see PR report for results); the review manifest itself was normalized and validated through the repo's actual `normalize-asset-sheet.mjs`/`validate-asset-sheet.mjs` scripts.
+- Pipeline note: found and worked around a real gap between `FARM_ENVIRONMENT_GENERATION_HANDOFF_V1.md`'s Category A guidance (`background: alpha`, `fit: fill`) and the current `normalize-asset-sheet.mjs`, which rejects an alpha-less RGB source under `mode: alpha` and only accepts `fit: "contain"`. Full detail and the exact workaround (a byte-exact RGBA round-trip of the approved source, verified 0 pixel differences) are in `AUDIT.md` — relevant to whoever authors the eventual production manifest for this target.
+- Remaining risk: awaiting ChatGPT visual review of this evidence set before `grass_b`/`grass_c` or `tile_farm_path_dirt` generation begins. The two script/doc pipeline mismatches noted above will recur for the production manifest unless addressed.
+
 ## 2026-07-11 — ChatGPT guidance consolidation
 
 - Branch/PR: `chatgpt/guidance-doc-cleanup`, PR #71 (rebased onto `main` after PR #70's squash merge).

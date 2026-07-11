@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "id": "review_tile_farm_grass_base_grass_a",
+  "_reviewOnly": "This manifest is a review/evidence artifact only. It is NOT the production manifest for tile_farm_grass_base (grass_b and grass_c do not exist yet) and its output is NOT a runtime asset. Do not load target.outputPath in Phaser or reference it from a production manifest.",
+  "_sourceNote": "Pipeline limitation fixed generically in scripts/normalize-asset-sheet.mjs: RGB sources are now accepted under background.mode 'alpha' (readPng already synthesizes alpha=255 for RGB input), and fit:'fill' is now implemented (independent X/Y nearest-neighbour scaling to fully cover the destination cell). This manifest now points directly at the approved source at assets/source/generated/tile_farm_grass_base/grass_a.png; the temporary RGBA-adapter copy has been removed.",
+  "target": {
+    "outputPath": "grass_a.review-normalized.png",
+    "cellPx": [
+      16,
+      16
+    ],
+    "cols": 1,
+    "rows": 1
+  },
+  "sources": {
+    "grass_a_source": {
+      "path": "../../../../assets/source/generated/tile_farm_grass_base/grass_a.png",
+      "background": {
+        "mode": "alpha"
+      }
+    }
+  },
+  "frames": [
+    {
+      "sourceRef": "grass_a_source",
+      "destCell": [
+        0,
+        0
+      ],
+      "trim": "none",
+      "fit": "fill",
+      "anchor": "top_left"
+    }
+  ]
+}
