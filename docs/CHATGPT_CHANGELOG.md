@@ -2,6 +2,29 @@
 
 This file records repository changes made through ChatGPT so future work can see what changed, who made it, and when.
 
+## 2026-07-11 - Claude Code (beautification Phase 2: farm environment kit target specifications)
+
+- Branch: `claude/beautification-phase2-farm-kit-v1`
+- Files changed:
+  - `docs/visual-targets/FARM_WATER_SHORELINE_TARGETS.md` (new)
+  - `docs/visual-targets/farm_water_shoreline_targets.json` (new)
+  - `docs/visual-targets/FARM_VEGETATION_TARGETS.md` (new)
+  - `docs/visual-targets/farm_vegetation_targets.json` (new)
+  - `docs/visual-targets/FARM_PROPS_TARGETS.md` (new)
+  - `docs/visual-targets/farm_props_targets.json` (new)
+  - `docs/visual-targets/WILDBLOOM_MAGICAL_ENVIRONMENT_TARGET.md` (new)
+  - `docs/visual-targets/wildbloom_magical_environment_target.json` (new)
+  - `docs/CURRENT_STATE.md`
+- Summary: Executes the target-specification groundwork for Phase 2 of `docs/beautification/ELDORIA_BEAUTIFICATION_EXECUTION_PLAN.md` ("Environment Art Pipeline and Production Farm Kit v1") — **specs only, no art, no runtime changes**. This is a deliberately scoped subset of Phase 2, not the full "Add the production farm environment kit v1" PR the plan names.
+- Why scoped this way: auditing the existing pipeline (`docs/art-pipeline/SPRITE_ASSET_PIPELINE.md`, `docs/art-pipeline/IMAGE_PROMPTING_GUIDE.md`, and the committed Mage/Practice Slime manifests) confirmed every runtime asset in this repo originates as AI-generated source art produced *outside* the repo's own tooling — historically via ChatGPT, per `AGENTS.md`'s existing "Tell the user to switch back to ChatGPT when the task needs... Sprite/image prompt design" split. This Claude Code session has no image-generation or browser/computer-use tool, so it cannot originate the ~40 new pixel-art tile/prop variants Phase 2's kit requires. Rather than fake them with flat Phaser-drawn shapes (which would violate the plan's own "painterly pixel-art feel, not flat vector shapes" art-direction rule) or block entirely, this pass does the specification work the plan's own execution gate #1 asks for first ("Add or update machine-readable target specifications first") — real, reviewable, unblocked progress that a follow-up PR with actual source art can build directly on.
+- What's covered: `docs/visual-targets/farm_village_tile_targets.json` already specified grass/scatter/path-blend/tilled-soil/crop-overlay/village-shop targets before this pass. This pass adds the remaining Phase 2 kit categories with zero prior specs:
+  - **Water and shoreline** (`farm_water_shoreline_targets.json`): pond water base with a shimmer clip (the project's first animated-terrain-tile precedent, explicitly flagged as such since it's a new category beyond Section 13's static blending and `tile_farm_tilled_soil`'s state-swap pattern), a grass-to-water blend set reusing the exact reduced ~13-tile pattern already established by `tile_farm_path_dirt`, lily pads, water flowers, shore rocks, and reeds.
+  - **Vegetation and structures** (`farm_vegetation_targets.json`): three distinct tree silhouettes (oak/pine/blossom) sharing one canvas contract, small and large bush clusters as separate targets (canvas size is fixed per target in this schema, so "multiple sizes" needs two targets, not variants), four-palette flower clusters, weeds/ferns, small stones and a medium landmark-scale rock, a fallen log, and a modular fence kit with a two-tile gate and explicit broken variants for both.
+  - **Props** (`farm_props_targets.json`): a signpost reusing the existing `sign` interaction kind from `tile_village_interaction_sign`, a crate/barrel/basket storage-prop family sharing the fence kit's material story, and a crop-row furrow overlay that's additive to (not a replacement for) the already-specified soil/sprout/harvest targets.
+  - **Wildbloom magical family** (`wildbloom_magical_environment_target.json`): one target with six variants (three lore identities × indicator/revealed states) that directly replaces the procedural moss/stone/rune placeholder already live in `WildbloomDiscoveryController.ts`, with accent colors and rune motifs pinned to that file's actual `WILDBLOOM_SPOTS` definitions rather than invented fresh.
+- Verification: `npm ci`, `npm run validate:visual-targets` (9 files, 36 targets, all pass), `npm run check`, `npm run test:asset-pipeline`, `npm run test:unit` (48/48), and the full Playwright smoke suite (50/50) all pass — expected, since this pass touches no runtime code, map data, saves, quests, curriculum, or collisions.
+- Reason: Unblock Phase 2 art generation with reviewable, contract-compliant specifications while being transparent that the actual painterly pixel-art kit — and the PR titled "Add the production farm environment kit v1" — depends on source art this session cannot generate itself.
+
 ## 2026-07-10 - Claude Code (beautification Phase 1: canvas resolution migration)
 
 - Branch: `claude/beautification-phase1-canvas-960x640`

@@ -1,6 +1,6 @@
 # Eldoria-V2 Current State
 
-Last refreshed on 2026-07-10 (canvas resolution migration). This file records volatile project status; `AGENTS.md` remains the durable operating contract.
+Last refreshed on 2026-07-11 (Phase 2 farm environment kit target specifications). This file records volatile project status; `AGENTS.md` remains the durable operating contract.
 
 ## Playable Vertical Slice
 
@@ -55,6 +55,7 @@ Last refreshed on 2026-07-10 (canvas resolution migration). This file records vo
 - Mira now has a small code-drawn world-space NPC silhouette with the quest star above her rather than being represented only by a plain diamond marker. Final Mira production art remains pending.
 - Interactive farm objects now render soft ground shadows so they read as grounded rather than flat markers floating over the tile grid: the player and Mira already had shadows; the Practice Slime and the crop-bonus and sleepy-sprout quest markers now do too. Presentation-only, following visual contract Section 8a.
 - Equipment, farm/village, crop, building, and broader UI production art remain target specifications rather than final integrated assets.
+- Phase 2 of `docs/beautification/ELDORIA_BEAUTIFICATION_EXECUTION_PLAN.md` ("Environment Art Pipeline and Production Farm Kit v1") now has full machine-readable target specifications for water/shoreline, vegetation/structures, props, and the Wildbloom magical landmark family (`docs/visual-targets/FARM_WATER_SHORELINE_TARGETS.md`, `FARM_VEGETATION_TARGETS.md`, `FARM_PROPS_TARGETS.md`, `WILDBLOOM_MAGICAL_ENVIRONMENT_TARGET.md`) — 36 targets across 9 files, all passing `npm run validate:visual-targets`. **These are specifications only; no farm-kit art exists yet.** Producing it requires AI-generated source art from outside this repo's own tooling (this session has no image-generation or browser/computer-use capability), normalized through the existing manifest pipeline exactly like the Mage and Practice Slime assets were.
 
 ## Active Milestone
 

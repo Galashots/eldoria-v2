@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "sourceContract": "docs/VISUAL_ASSET_CONTRACT.md",
+  "targets": [
+    {
+      "id": "env_wildbloom_landmark",
+      "displayName": "Wildbloom Magical Landmark Family",
+      "status": "target_only",
+      "category": "env",
+      "canvasPx": [32, 32],
+      "footprintPx": [16, 16],
+      "pivotPx": [16, 31],
+      "ppu": 16,
+      "view": "top_down",
+      "directions": [],
+      "paletteFamilies": ["arcane", "forest"],
+      "lightDirection": "upper_left",
+      "renderLayer": "actors_body",
+      "variants": [
+        "root_star_indicator",
+        "root_star_revealed",
+        "moonwell_echo_indicator",
+        "moonwell_echo_revealed",
+        "foxfire_seed_indicator",
+        "foxfire_seed_revealed"
+      ],
+      "collision": { "solid": false, "body": null, "hurtbox": null, "hitboxes": [], "interaction": [0, 0, 32, 32] },
+      "interactionKind": "wildbloom_landmark",
+      "runtimeExport": "png",
+      "preferredSource": "aseprite",
+      "atlasFamily": "environment_farm",
+      "visualRule": "One cohesive magical-mossy-stone-and-rune material family used across all three existing Wildbloom secrets (root-star, moonwell-echo, foxfire-seed — see src/presentation/WildbloomDiscoveryController.ts), replacing the current code-drawn moss ellipse/stone circle/rune-graphics placeholder with real art of the same composition. Each of the three identities needs both a dormant 'indicator' state (a small, quiet hum/glow, matching the existing sensing radius behavior) and a 'revealed' state (the permanent landmark once discovered), sharing one silhouette language so all three read as the same magical family rather than three unrelated props. Accent colors per the existing runtime definitions: root-star gold/green (0xffd666 / 0x8fd14f), moonwell-echo blue/violet (0x9fd7ff / 0x8f63ff), foxfire-seed green/green (0xa9e783 / 0x72b95c). Rune motifs per existing runtime definitions: root-star = star, moonwell-echo = waves, foxfire-seed = flame.",
+      "notes": [
+        "Specification only; no art is included.",
+        "No runtime behavior is added.",
+        "This is the plan's 'one magical environmental family suitable for Wildbloom discoveries' Phase 2 requirement, and directly replaces the procedural drawRune()/moss/stone graphics already in WildbloomDiscoveryController.ts — do not design a new, unrelated magical motif.",
+        "Wildbloom quest/discovery/save logic, sensing radius, reveal timing, and inventory keys are all owned by WildbloomDiscoveryController.ts and FarmQuestSystem and are unaffected by this visual target."
+      ]
+    }
+  ]
+}
