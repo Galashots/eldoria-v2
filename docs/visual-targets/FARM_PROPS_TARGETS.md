@@ -20,6 +20,7 @@ Target specifications only. No art, runtime behavior, map edits, collision, or g
 - Lighting: consistent upper-left key light.
 - Runtime export: PNG. Preferred editable source: `.aseprite`/`.ase`.
 - Atlas family: `environment_farm`.
+- Colors: draw only from the locked `wood_leather` hex values in [`FARM_PALETTE.md`](FARM_PALETTE.md) / [`farm_palette.json`](farm_palette.json).
 
 ## Targets
 

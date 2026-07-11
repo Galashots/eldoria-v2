@@ -67,12 +67,12 @@
       "paletteFamilies": ["wood_leather", "forest"],
       "lightDirection": "upper_left",
       "renderLayer": "terrain",
-      "variants": ["center", "edge_north", "edge_south", "edge_west", "edge_east", "corner_ne", "corner_nw", "corner_se", "corner_sw"],
+      "variants": ["center", "edge_north", "edge_south", "edge_west", "edge_east", "corner_ne", "corner_nw", "corner_se", "corner_sw", "inner_corner_ne", "inner_corner_nw", "inner_corner_se", "inner_corner_sw"],
       "collision": { "solid": false, "body": null, "hurtbox": null, "hitboxes": [], "interaction": null },
       "runtimeExport": "png",
       "preferredSource": "aseprite",
       "atlasFamily": "environment_farm",
-      "visualRule": "Clear walkable dirt path with readable edges; must connect cleanly to grass and village tiles. This is the project's reference terrain-blend set per contract Section 13 (reduced ~13-tile blend, not the full 47-tile blob set), authored for Tiled's Terrain Brush.",
+      "visualRule": "Clear walkable dirt path with readable edges; must connect cleanly to grass and village tiles. This is the project's reference terrain-blend set per contract Section 13: the full reduced 13-tile blend (1 center + 4 edges + 4 outer corners named corner_* + 4 inner corners named inner_corner_*), not the full 47-tile blob set, authored for Tiled's Terrain Brush. The inner corners cover concave joins so the path can follow an irregular, non-rectangular outline.",
       "notes": ["Specification only; no art is included.", "No runtime behavior is added."]
     },
     {

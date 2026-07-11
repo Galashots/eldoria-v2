@@ -17,10 +17,12 @@ const targetFields = [
   'notes'
 ];
 const idPattern = /^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$/;
+const hexPattern = /^#[0-9a-fA-F]{6}$/;
 const errors = [];
 const targetLocations = new Map();
 const references = [];
 let targetCount = 0;
+let paletteCount = 0;
 
 function fileLabel(filePath) {
   return relative(process.cwd(), filePath).replaceAll('\\', '/');
@@ -141,6 +143,59 @@ function validateTarget(filePath, target, index) {
   }
 }
 
+function validateHexMap(filePath, paletteId, groupName, group) {
+  if (!group || typeof group !== 'object' || Array.isArray(group)) {
+    addError(filePath, paletteId, `${groupName} must be an object`);
+    return;
+  }
+  for (const [key, value] of Object.entries(group)) {
+    if (key.startsWith('_')) continue; // metadata keys such as _source
+    if (typeof value !== 'string' || !hexPattern.test(value)) {
+      addError(filePath, paletteId, `${groupName}.${key} must be a #rrggbb hex string`);
+    }
+  }
+}
+
+function validatePalette(filePath, document) {
+  paletteCount += 1;
+  const paletteId = typeof document.paletteId === 'string' ? document.paletteId : 'palette';
+
+  if (typeof document.paletteId !== 'string' || !idPattern.test(document.paletteId)) {
+    addError(filePath, paletteId, 'paletteId must be lowercase snake_case');
+  }
+  if (document.status !== 'locked') {
+    addError(filePath, paletteId, 'status must equal locked');
+  }
+  if (!document.families || typeof document.families !== 'object' || Array.isArray(document.families)
+    || Object.keys(document.families).length === 0) {
+    addError(filePath, paletteId, 'families must be a non-empty object');
+  } else {
+    for (const [familyName, family] of Object.entries(document.families)) {
+      if (!family || typeof family !== 'object' || !Array.isArray(family.ramp) || family.ramp.length === 0) {
+        addError(filePath, paletteId, `families.${familyName}.ramp must be a non-empty array`);
+        continue;
+      }
+      const seen = new Set();
+      family.ramp.forEach((swatch, index) => {
+        if (!swatch || typeof swatch !== 'object' || typeof swatch.name !== 'string' || swatch.name.length === 0) {
+          addError(filePath, paletteId, `families.${familyName}.ramp[${index}].name must be a non-empty string`);
+        } else if (seen.has(swatch.name)) {
+          addError(filePath, paletteId, `families.${familyName} has a duplicate swatch name ${swatch.name}`);
+        } else {
+          seen.add(swatch.name);
+        }
+        if (typeof swatch.hex !== 'string' || !hexPattern.test(swatch.hex)) {
+          addError(filePath, paletteId, `families.${familyName}.ramp[${index}].hex must be a #rrggbb hex string`);
+        }
+      });
+    }
+  }
+
+  for (const groupName of ['sharedAnchors', 'floraAccents', 'pinnedAccents']) {
+    if (hasOwn(document, groupName)) validateHexMap(filePath, paletteId, groupName, document[groupName]);
+  }
+}
+
 function collectTopLevelReference(filePath, document, field) {
   if (hasOwn(document, field)) {
     references.push({ filePath, targetId: null, field, value: document[field] });
@@ -179,6 +234,8 @@ for (const filePath of jsonFiles) {
     }
   }
 
+  if (hasOwn(document, 'paletteId')) validatePalette(filePath, document);
+
   collectTopLevelReference(filePath, document, 'baseTarget');
   collectTopLevelReference(filePath, document, 'inheritsTarget');
 }
@@ -195,5 +252,5 @@ if (errors.length > 0) {
   for (const error of errors) console.error(error);
   process.exitCode = 1;
 } else {
-  console.log(`Visual target validation passed: ${jsonFiles.length} files, ${targetCount} targets.`);
+  console.log(`Visual target validation passed: ${jsonFiles.length} files, ${targetCount} targets, ${paletteCount} palettes.`);
 }

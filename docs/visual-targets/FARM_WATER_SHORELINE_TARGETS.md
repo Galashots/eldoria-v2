@@ -21,6 +21,7 @@ Target specifications only. No art, runtime behavior, map edits, collision, or g
 - Lighting: consistent upper-left key light — no baked scene tint (Section 14 applies the atmosphere tint once, at the scene level).
 - Runtime export: PNG. Preferred editable source: `.aseprite`/`.ase`.
 - Atlas family: `environment_farm`.
+- Colors: draw only from the locked `arcane`/`forest`/`wood_leather`/`metal` hex values in [`FARM_PALETTE.md`](FARM_PALETTE.md) / [`farm_palette.json`](farm_palette.json).
 
 ## Targets
 
@@ -30,7 +31,7 @@ Calm pond water with two low-contrast variants and a subtle looping shimmer clip
 
 ### `tile_farm_water_shore`
 
-The grass-to-water blend set, following the exact reduced ~13-tile pattern (1 center + 4 edges + 4 outer corners) already established by `tile_farm_path_dirt`. Do not redesign the blend approach; reuse it for a second terrain boundary.
+The grass-to-water blend set, following the exact full reduced 13-tile pattern (1 center + 4 edges + 4 outer corners `corner_*` + 4 inner corners `inner_corner_*`) also declared on `tile_farm_path_dirt`. Do not redesign the blend approach; reuse it for a second terrain boundary. The inner corners are what let the pond read as a natural, concave, irregular shoreline instead of a convex rectangular pool.
 
 ### `tile_farm_water_lily` / `tile_farm_water_flower`
 
@@ -52,7 +53,7 @@ Tall, thin shoreline plants using the flattened perspective rule — the canvas 
 - [ ] Uses consistent upper-left lighting; no baked scene-level tint.
 - [ ] Remains readable and low-noise at 1x and 3x.
 - [ ] Includes every declared variant.
-- [ ] Water/grass boundary uses the declared blend variants (center/edge/corner), not a hard grid edge.
+- [ ] Water/grass boundary uses all 13 declared blend variants (center/edge/outer-corner/inner-corner), not a hard grid edge; inner corners give the pond a concave, non-rectangular outline.
 - [ ] Lily pads and water flowers stay sparse and off-center, not a second visible grid.
 - [ ] Reeds and shore rocks follow the flattened "pop-up book" perspective (Section 4a) rather than true top-down or true isometric.
 - [ ] Shimmer clip stays subtle — a gentle highlight ripple, not a bright animated effect.

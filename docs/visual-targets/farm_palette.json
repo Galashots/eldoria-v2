@@ -1,0 +1,88 @@
+{
+  "version": 1,
+  "sourceContract": "docs/VISUAL_ASSET_CONTRACT.md",
+  "paletteId": "eldoria_farm_master_v1",
+  "displayName": "Eldoria Farm Master Palette v1",
+  "status": "locked",
+  "lightDirection": "upper_left",
+  "rampOrder": "dark_to_light",
+  "scope": "Farm environment kit sub-palettes only (forest, wood_leather, metal, arcane). Character sub-palettes such as skin_hair and ui_neutral are locked elsewhere when their own production art lands and are intentionally out of scope here.",
+  "families": {
+    "forest": {
+      "role": "grass, foliage, tree canopy, meadow",
+      "ramp": [
+        { "name": "darkest", "hex": "#1f3a1c" },
+        { "name": "shadow", "hex": "#2f5a2a" },
+        { "name": "base", "hex": "#4f8f3d" },
+        { "name": "light", "hex": "#6fbf55" },
+        { "name": "highlight", "hex": "#a7e06f" },
+        { "name": "canopy_deep", "hex": "#264d24" }
+      ]
+    },
+    "wood_leather": {
+      "role": "dirt path, fences, gates, signposts, crates, logs",
+      "ramp": [
+        { "name": "wood_darkest", "hex": "#2e1c0e" },
+        { "name": "wood_shadow", "hex": "#5a3a1c" },
+        { "name": "wood_base", "hex": "#8a5a2e" },
+        { "name": "wood_light", "hex": "#b07d44" },
+        { "name": "wood_highlight", "hex": "#d8a866" },
+        { "name": "dirt_shadow", "hex": "#6e4a24" },
+        { "name": "dirt_base", "hex": "#9a6c3a" },
+        { "name": "dirt_light", "hex": "#c6a06a" }
+      ]
+    },
+    "metal": {
+      "role": "stones, rocks, shore rocks",
+      "ramp": [
+        { "name": "darkest", "hex": "#2a2e33" },
+        { "name": "shadow", "hex": "#464d55" },
+        { "name": "base", "hex": "#6d747c" },
+        { "name": "light", "hex": "#969ca3" },
+        { "name": "highlight", "hex": "#c6cacf" }
+      ]
+    },
+    "arcane": {
+      "role": "pond water (cool blues) and magical accents (violets, cyan glow)",
+      "ramp": [
+        { "name": "deep", "hex": "#22314f" },
+        { "name": "water_shadow", "hex": "#2f5b8a" },
+        { "name": "water_base", "hex": "#4f93c4" },
+        { "name": "water_light", "hex": "#7ec4e6" },
+        { "name": "water_foam", "hex": "#cdeefb" },
+        { "name": "violet_shadow", "hex": "#4b3f8f" },
+        { "name": "violet_base", "hex": "#8f63ff" },
+        { "name": "glow_blue", "hex": "#9fd7ff" },
+        { "name": "bright", "hex": "#c9b8ff" }
+      ]
+    }
+  },
+  "sharedAnchors": {
+    "outline": "#241a12",
+    "outline_soft": "#3a2a1e",
+    "shadow_cool": "#2c2440",
+    "highlight_warm": "#fff3c9"
+  },
+  "floraAccents": {
+    "gold": "#ffd666",
+    "violet": "#b877e0",
+    "crimson": "#e2534b",
+    "blue": "#5aa9e6"
+  },
+  "pinnedAccents": {
+    "_source": "Locked by src/presentation/WildbloomDiscoveryController.ts WILDBLOOM_SPOTS; these are authoritative gameplay values and must not drift.",
+    "wildbloom_rootstar_accent": "#ffd666",
+    "wildbloom_rootstar_secondary": "#8fd14f",
+    "wildbloom_moonwell_accent": "#9fd7ff",
+    "wildbloom_moonwell_secondary": "#8f63ff",
+    "wildbloom_foxfire_accent": "#a9e783",
+    "wildbloom_foxfire_secondary": "#72b95c"
+  },
+  "notes": [
+    "Specification only; no art is included.",
+    "No runtime behavior is added.",
+    "This is the concrete hex lock the visual contract Section 4 requires before farm production art is committed, so independently generated assets (e.g. via an external pixel-art generator) cannot silently drift on what 'forest' or 'arcane' mean. It is versioned (v1): revising a color is an explicit, reviewable palette change, not silent drift.",
+    "Ramps are ordered dark-to-light; the artist/generator applies the contract's upper-left key light so highlights land upper-left and shadows fall down-right. Do not bake a scene-level warm/gold ambient tint into source art (contract Section 14 applies that once, at the scene level).",
+    "The soft ground shadow under dynamic actors/props (contract Section 8a) is engine-drawn, not a palette color; it is intentionally not listed here."
+  ]
+}

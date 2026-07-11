@@ -194,9 +194,9 @@
       "displayName": "Fence Segments",
       "status": "target_only",
       "category": "env",
-      "canvasPx": [16, 16],
+      "canvasPx": [16, 32],
       "footprintPx": [16, 16],
-      "pivotPx": [8, 15],
+      "pivotPx": [8, 31],
       "ppu": 16,
       "view": "top_down",
       "directions": [],
@@ -208,7 +208,7 @@
       "runtimeExport": "png",
       "preferredSource": "aseprite",
       "atlasFamily": "environment_farm",
-      "visualRule": "Modular fence kit sharing one weathered-wood material story; the broken variant must read as clearly damaged (missing rail, leaning post) without looking unintentional or like an authoring error. Solid by target spec, matching the plan's 'fence posts, rails, corners, gates, and broken variants' requirement.",
+      "visualRule": "Modular fence kit sharing one weathered-wood material story; the broken variant must read as clearly damaged (missing rail, leaning post) without looking unintentional or like an authoring error. Solid by target spec, matching the plan's 'fence posts, rails, corners, gates, and broken variants' requirement. The 16x32 canvas over a 16x16 footprint gives posts and rails visible height under the flattened 'pop-up book' perspective (Section 4a) while keeping the gameplay footprint one tile; the upper 16px is drawn height, the lower 16px is the grounded footprint.",
       "notes": ["Specification only; no art is included.", "No runtime behavior is added."]
     },
     {
@@ -216,9 +216,9 @@
       "displayName": "Fence Gate",
       "status": "target_only",
       "category": "env",
-      "canvasPx": [32, 16],
+      "canvasPx": [32, 32],
       "footprintPx": [32, 16],
-      "pivotPx": [16, 15],
+      "pivotPx": [16, 31],
       "ppu": 16,
       "view": "top_down",
       "directions": [],
@@ -231,7 +231,7 @@
       "runtimeExport": "png",
       "preferredSource": "aseprite",
       "atlasFamily": "environment_farm",
-      "visualRule": "A two-tile-wide gate matching the env_farm_fence material story; the broken variant reuses the fence kit's damage language. The gate interaction box is metadata only and adds no transition/open behavior.",
+      "visualRule": "A two-tile-wide gate matching the env_farm_fence material story; the broken variant reuses the fence kit's damage language. The gate interaction box is metadata only and adds no transition/open behavior. The 32x32 canvas over a 32x16 footprint matches the fence's height treatment (Section 4a): the upper 16px is drawn height, the lower 16px is the grounded two-tile-wide footprint.",
       "notes": ["Specification only; no art is included.", "No runtime behavior is added."]
     }
   ]

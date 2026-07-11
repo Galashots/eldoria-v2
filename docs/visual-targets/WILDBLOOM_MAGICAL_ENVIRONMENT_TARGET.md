@@ -26,7 +26,7 @@ Six variants covering the three existing lore identities' two visual states:
 - `moonwell_echo_indicator` / `moonwell_echo_revealed` — blue/violet, waves rune, "ripples... below the soil" (a future water/stone landmark).
 - `foxfire_seed_indicator` / `foxfire_seed_revealed` — green/green, flame rune, "a sleeping green flame" (a future meadow/log/flower landmark).
 
-Accent colors and rune motifs are pinned to the exact hex values and identities already live in `WildbloomDiscoveryController.ts`'s `WILDBLOOM_SPOTS` definition — this target does not invent new lore or colors.
+Accent colors and rune motifs are pinned to the exact hex values and identities already live in `WildbloomDiscoveryController.ts`'s `WILDBLOOM_SPOTS` definition — this target does not invent new lore or colors. Those same pinned values are mirrored in [`FARM_PALETTE.md`](FARM_PALETTE.md) / [`farm_palette.json`](farm_palette.json) under `pinnedAccents` as the authoritative cross-reference; the surrounding moss/stone draws from the locked `forest`/`arcane` families.
 
 ## Future Art PR Acceptance Checklist
 
