@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import zlib from 'node:zlib';
 import { pathToFileURL } from 'node:url';
+import { HEX_COLOR_PATTERN } from './lib/hex-color.mjs';
 
 const SIG = Buffer.from([137,80,78,71,13,10,26,10]);
 const CRC = (() => {
@@ -123,7 +124,7 @@ const loadJson = (p) => JSON.parse(fs.readFileSync(p, 'utf8'));
 const err = (mp, ctx, msg) => `${mp}${ctx ? ` [${ctx}]` : ''}: ${msg}`;
 
 function hex(c) {
-  if (typeof c !== 'string' || !/^#[0-9a-f]{6}$/i.test(c)) throw new Error(`Invalid color key ${c}; expected #rrggbb.`);
+  if (typeof c !== 'string' || !HEX_COLOR_PATTERN.test(c)) throw new Error(`Invalid color key ${c}; expected #rrggbb.`);
   return [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)];
 }
 

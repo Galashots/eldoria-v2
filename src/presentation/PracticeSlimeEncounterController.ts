@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_SCALE, sx, sy } from '../gameDimensions';
+import { fpx, GAME_SCALE, sscale, sx, sy } from '../gameDimensions';
 import type { ProfileId } from '../data/profiles';
 import type { HeroPresentationController } from './HeroPresentationController';
 
@@ -259,8 +259,8 @@ export class PracticeSlimeEncounterController {
       // start at Phaser's default scale of 1 — these absolute scaleX/scaleY
       // targets must be scaled up too, or the squash/stretch would shrink it
       // down from 2x toward 1x instead of animating around its real baseline.
-      scaleX: (finalHit ? 1.4 : 1.22) * GAME_SCALE,
-      scaleY: (finalHit ? 0.62 : 0.78) * GAME_SCALE,
+      scaleX: sscale(finalHit ? 1.4 : 1.22),
+      scaleY: sscale(finalHit ? 0.62 : 0.78),
       angle: direction * (finalHit ? 6 : 3),
       duration: finalHit ? 170 : 120,
       yoyo: true,
@@ -315,7 +315,7 @@ export class PracticeSlimeEncounterController {
   private playCompletion(accent: number): void {
     const text = this.scene.add.text(this.slime.x, this.slime.y - sy(62), 'Practice complete!', {
       fontFamily: 'system-ui',
-      fontSize: '26px',
+      fontSize: fpx(13),
       color: '#fff3c9',
       fontStyle: 'bold',
       stroke: '#162018',

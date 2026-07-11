@@ -1,5 +1,6 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { join, relative, resolve } from 'node:path';
+import { HEX_COLOR_PATTERN } from './lib/hex-color.mjs';
 
 const targetDirectory = resolve('docs/visual-targets');
 const expectedSourceContract = 'docs/VISUAL_ASSET_CONTRACT.md';
@@ -17,7 +18,7 @@ const targetFields = [
   'notes'
 ];
 const idPattern = /^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$/;
-const hexPattern = /^#[0-9a-fA-F]{6}$/;
+const hexPattern = HEX_COLOR_PATTERN;
 const errors = [];
 const targetLocations = new Map();
 const references = [];
@@ -155,6 +156,33 @@ function validateHexArray(filePath, paletteId, label, swatches) {
   });
 }
 
+// Any top-level field whose value is a plain object is treated as a swatch
+// group: every non-underscore-prefixed entry that is itself an array gets
+// hex-validated. This is generic on purpose — a future field following the
+// same shape as `wildbloomAccents` (an object of named hex-swatch arrays,
+// with optional `_`-prefixed metadata keys such as `_source`) is validated
+// automatically instead of silently passing until a matching hardcoded
+// branch is added. Entries that aren't arrays (e.g. `contractFamilyMapping`'s
+// plain descriptive strings) are left alone; they aren't swatch data.
+function validateSwatchGroup(filePath, paletteId, groupName, group) {
+  if (!group || typeof group !== 'object' || Array.isArray(group)) {
+    addError(filePath, paletteId, `${groupName} must be an object`);
+    return;
+  }
+  for (const [key, value] of Object.entries(group)) {
+    if (key.startsWith('_')) continue; // metadata keys such as _source, _note
+    if (!Array.isArray(value)) continue; // non-swatch descriptive field
+    validateHexArray(filePath, paletteId, `${groupName}.${key}`, value);
+  }
+}
+
+// Palette document fields with a known, non-swatch shape (string/enum
+// metadata already validated individually below). Anything else that's a
+// plain object is assumed to be a swatch group and checked generically.
+const PALETTE_METADATA_FIELDS = new Set([
+  'version', 'sourceContract', 'paletteId', 'displayName', 'status', 'lightDirection', 'provenance', 'notes'
+]);
+
 function validatePalette(filePath, document) {
   paletteCount += 1;
   const paletteId = typeof document.paletteId === 'string' ? document.paletteId : 'palette';
@@ -169,21 +197,13 @@ function validatePalette(filePath, document) {
     || Object.keys(document.families).length === 0) {
     addError(filePath, paletteId, 'families must be a non-empty object');
   } else {
-    for (const [familyName, swatches] of Object.entries(document.families)) {
-      validateHexArray(filePath, paletteId, `families.${familyName}`, swatches);
-    }
+    validateSwatchGroup(filePath, paletteId, 'families', document.families);
   }
 
-  if (hasOwn(document, 'wildbloomAccents')) {
-    const accents = document.wildbloomAccents;
-    if (!accents || typeof accents !== 'object' || Array.isArray(accents)) {
-      addError(filePath, paletteId, 'wildbloomAccents must be an object');
-    } else {
-      for (const [key, value] of Object.entries(accents)) {
-        if (key.startsWith('_')) continue; // metadata keys such as _source
-        validateHexArray(filePath, paletteId, `wildbloomAccents.${key}`, value);
-      }
-    }
+  for (const [field, value] of Object.entries(document)) {
+    if (field === 'families' || PALETTE_METADATA_FIELDS.has(field)) continue;
+    if (!value || typeof value !== 'object' || Array.isArray(value)) continue;
+    validateSwatchGroup(filePath, paletteId, field, value);
   }
 }
 

@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_SCALE } from '../gameDimensions';
+import { GAME_SCALE, sscale, sy } from '../gameDimensions';
 import type { ProfileId } from '../data/profiles';
 
 export type HeroFacing = 'front' | 'back' | 'left' | 'right';
@@ -60,7 +60,7 @@ const rangerClip = (motion: HeroMotion, frameRate: number, repeat: number): Hero
 export const HERO_PRESENTATION_CONFIGS: Partial<Record<ProfileId, HeroPresentationConfig>> = {
   'grade2-mage': {
     profileId: 'grade2-mage',
-    verticalOffset: 16 * GAME_SCALE,
+    verticalOffset: sy(16),
     clips: {
       idle: {
         textureKey: 'grade2-mage-idle-v001',
@@ -94,7 +94,7 @@ export const HERO_PRESENTATION_CONFIGS: Partial<Record<ProfileId, HeroPresentati
   },
   'grade5-adventurer': {
     profileId: 'grade5-adventurer',
-    verticalOffset: 16 * GAME_SCALE,
+    verticalOffset: sy(16),
     clips: {
       idle: rangerClip('idle', 1, -1),
       walk: rangerClip('walk', 4, -1),
@@ -464,8 +464,8 @@ export class HeroPresentationController {
     // would shrink the ranger from its 2x baseline down toward 1x.
     this.scene.tweens.add({
       targets,
-      scaleX: (kind === 'action' ? 1.12 : 0.9) * GAME_SCALE,
-      scaleY: (kind === 'action' ? 0.92 : 1.08) * GAME_SCALE,
+      scaleX: sscale(kind === 'action' ? 1.12 : 0.9),
+      scaleY: sscale(kind === 'action' ? 0.92 : 1.08),
       duration: 85,
       yoyo: true,
       ease: 'Sine.easeInOut',
