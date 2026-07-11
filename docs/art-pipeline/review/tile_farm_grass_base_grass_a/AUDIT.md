@@ -34,26 +34,28 @@ Category A settings used, per the handoff:
 - background mode: `alpha` (preserve source)
 - trim: `none`
 - anchor: `top_left`
-- fit: as declared below (see pipeline-limitation note)
+- fit: `fill`
 
-### Pipeline limitation found and how it was handled
+### Pipeline limitation — fixed generically (2026-07-11)
 
-`scripts/normalize-asset-sheet.mjs` rejects a source frame under `background.mode: "alpha"` unless the source PNG **already has an alpha channel** (`colorType 6`). It only tolerates an alpha-less RGB source when the frame instead declares `color_key` or `edge_flood_color_key` (see `collectManifestErrors`, the `source PNG must have alpha or declare a color-key background mode` check). The approved `grass_a` source is plain RGB (no alpha), and — correctly, per the handoff's own rule for full-bleed terrain — has no magenta/key color to remove, so declaring a color-key mode would be semantically wrong (there is nothing to key out, and doing so risks false-positive transparency on legitimate texture pixels).
+Originally, `scripts/normalize-asset-sheet.mjs` rejected a source frame under `background.mode: "alpha"` unless the source PNG already had an alpha channel (`colorType 6`), and `collectManifestErrors` only accepted `fit: "contain"` even though the handoff's Category A guidance specifies `fit: "fill"`. This review manifest originally worked around the first issue with a byte-exact RGBA round-trip copy (`grass_a.rgba-adapter.png`) and worked around the second by relying on the fact that a square source into a square cell makes `contain` and `fill` numerically identical.
 
-This is a **real gap between the documented Category A guidance and the current script**, worth flagging for whoever authors the eventual production `tile_farm_grass_base` manifest (this will block that manifest too, not just this review pass).
+Per ChatGPT's review comment on PR #72, both gaps have now been fixed generically in `scripts/normalize-asset-sheet.mjs` rather than left as a per-source workaround:
 
-Resolution used (no new architecture, no edit to the approved source): the script's own `readPng`/`writePng` functions already decode any RGB source into an in-memory RGBA buffer (alpha filled to 255). Round-tripping the approved source through those same functions produces a byte-exact RGBA copy — verified **0 RGB pixel differences across all 1,572,516 pixels**, alpha uniformly 255. That copy (`grass_a.rgba-adapter.png`, committed alongside the review manifest, clearly named and documented in the manifest's own `_sourceNote`) is what the review manifest's `sources.grass_a_source.path` points at. The approved source at `assets/source/generated/tile_farm_grass_base/grass_a.png` was never touched by this step (confirmed unchanged by hash after normalization ran).
+- `background.mode: "alpha"` now explicitly accepts an RGB (alpha-less) source; `readPng()` already synthesizes a fully-opaque (alpha=255) RGBA buffer for RGB PNGs, so no new architecture was needed — only the validation gate that previously rejected this case.
+- `fit: "fill"` is now implemented in `paste()`: it scales independently in X and Y to exactly the destination cell size (`dw = cw`, `dh = ch`), using the same nearest-neighbour sampling as `contain`, fully covering the cell with no transparent padding. `fit: "contain"` is unchanged. An unknown `fit` value (e.g. `"cover"`) is still rejected.
+- Two new focused tests were added to `scripts/test-asset-pipeline.mjs` covering both changes (RGB+alpha normalization; `contain` vs `fill` on a non-square source; rejection of an unknown `fit` value).
 
-### `fit` value note
+This manifest was updated to match: `sources.grass_a_source.path` now points **directly** at the approved source (`assets/source/generated/tile_farm_grass_base/grass_a.png`, resolved via a relative path from this manifest's directory), `background.mode` remains `"alpha"`, and `frames[0].fit` is now `"fill"`. `grass_a.rgba-adapter.png` was deleted — it is no longer needed.
 
-`FARM_ENVIRONMENT_GENERATION_HANDOFF_V1.md` §5.1/§3 says Category A should use `fit: "fill"`, but the current `normalize-asset-sheet.mjs` only accepts `fit: "contain"` (`collectManifestErrors` rejects any other value) and does not actually branch on the `fit` value internally — it always scales `Math.min(cw/sr.w, ch/sr.h)`. Since the source rect (full 1254×1254, square) and the destination cell (16×16, square) share the same aspect ratio, `contain` and `fill` are numerically identical here: the computed scale factor is exact in both axes (`16/1254` both ways), producing a destination width/height of exactly 16×16 with zero letterboxing offset. The manifest declares `fit: "contain"` (the only value the script accepts) and the audited result is confirmed edge-to-edge with no padding — behaviorally equivalent to `fill` for this square-to-square case. This is a documented workaround for a script/doc mismatch, not a deviation from the intended full-bleed result.
+**Regenerated output is byte-identical to the prior adapter-based output.** Before regenerating, the prior `grass_a.review-normalized.png` SHA-256 was recorded as `40655a11051d5afaf61f5972b471c82419fda0f7e31793b3a2976498e6b5fddb`. After regenerating through the fixed pipeline (real source, `fit: "fill"`), the new output's SHA-256 is the same: `40655a11051d5afaf61f5972b471c82419fda0f7e31793b3a2976498e6b5fddb`. This is expected — the source is square (1254×1254) and the destination cell is square (16×16), so `fill` and `contain` compute the identical scale factor in both axes, and the RGBA-adapter copy was already byte-exact to the real source's RGB values with alpha=255. All seam/gradient/palette findings in this document (computed from the normalized pixel data) therefore still hold unchanged; the four evidence preview images below were regenerated (nearest-neighbour only, same method) from those identical pixels.
 
 ### Files
 
 | Purpose | Path |
 | --- | --- |
 | Review manifest | `docs/art-pipeline/review/tile_farm_grass_base_grass_a/grass_a.review.manifest.json` |
-| RGBA input adapter (pipeline-format workaround, see above; byte-exact vs. approved source in RGB, alpha=255 added) | `docs/art-pipeline/review/tile_farm_grass_base_grass_a/grass_a.rgba-adapter.png` |
+| Approved source used directly by the review manifest | `assets/source/generated/tile_farm_grass_base/grass_a.png` |
 | Normalized 16×16 review output | `docs/art-pipeline/review/tile_farm_grass_base_grass_a/grass_a.review-normalized.png` |
 
 `npm run normalize:asset -- --manifest docs/art-pipeline/review/tile_farm_grass_base_grass_a/grass_a.review.manifest.json` and `npm run validate:asset -- --manifest ...` both pass (see command log in the PR report). Output confirmed **16×16, RGBA, alpha uniformly 255** (no unexpected transparency).
@@ -120,11 +122,8 @@ Both correlations are close to 0 (far from ±1), meaning the luminance variation
 - **Source-audit status: APPROVED SOURCE CANDIDATE** (re-confirmed against the actual received binary — format, dimensions, and hash all match exactly).
 - **Review-only normalization: produced and passes the pipeline's own `normalize`/`validate` scripts.** Seam, gradient, and palette checks all pass, both visually and deterministically.
 - **Final runtime approval: NOT granted and not applicable yet.** `tile_farm_grass_base` is a 3-cell packed target and only 1 of 3 cells (`grass_a`) exists. This candidate is **not** a `NORMALIZED RUNTIME ASSET` and is **not** `RUNTIME-INTEGRATED` — it has not been placed at a production manifest/output path, has not been loaded in Phaser, and has not touched `public/maps/farm.json`.
-- **Next step is a ChatGPT visual review of this evidence set**, not further generation. `grass_b`/`grass_c` and `tile_farm_path_dirt` remain out of scope until that review completes.
+- **Next step is ChatGPT's final review of the pipeline fix described above**, not further generation. `grass_b`/`grass_c` and `tile_farm_path_dirt` remain out of scope until that review completes.
 
 ## 7. Pipeline note for the next author
 
-Before authoring the *production* `tile_farm_grass_base` manifest (once `grass_b`/`grass_c` are approved), account for the two script/doc mismatches found here:
-
-1. `background.mode: "alpha"` requires an alpha-channel source; a plain-RGB Category A source needs the same RGBA round-trip workaround shown here (or a script fix to synthesize alpha for `alpha`-mode RGB sources — a small, generically useful change to `normalize-asset-sheet.mjs` if the team wants to remove this friction for every future full-bleed terrain source, since none of them will have a color key by design).
-2. The script only accepts `fit: "contain"` even though the docs mention `"fill"` for Category A; for any non-square source/cell combination this could matter, though it made no difference for this square 1:1 case.
+Both script/doc mismatches noted in earlier revisions of this document have now been fixed generically in `scripts/normalize-asset-sheet.mjs` (see §3 above): `background.mode: "alpha"` accepts RGB sources, and `fit: "fill"` is implemented alongside `fit: "contain"`. Future full-bleed terrain sources (dirt, water, tilled soil, etc.) can declare `background.mode: "alpha"` and `fit: "fill"` directly against their approved RGB source with no adapter step required.
