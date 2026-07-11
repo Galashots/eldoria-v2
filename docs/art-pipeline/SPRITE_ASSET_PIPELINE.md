@@ -64,6 +64,20 @@ For production source sheets, prompt for:
 
 For 6x4 sprite sheets, prefer a **3:2 generated source image**. Common high-resolution outputs with a 3:2 shape divide cleanly into 6 columns and 4 rows.
 
+## Approved Runtime Master workflow
+
+Sometimes the AI-generated high-resolution source cannot be used directly, even after an otherwise-approved candidate normalizes cleanly to its runtime size — for example, high-resolution motifs that violate the art spec but disappear once downscaled. In that case:
+
+- The **runtime-approved normalized asset** (the exact pixel data that passed visual review at its real runtime size) becomes the **canonical master**, not the original high-resolution generation.
+- The canonical high-resolution **production source** is then generated from that master by **deterministic nearest-neighbour upscaling only** (`scripts/upscale-nearest-neighbor.mjs`) — every master pixel becomes one solid-color square block in the output. No filtering, interpolation, sharpening, antialiasing, color modification, or palette change.
+- Required verification before this source is treated as approved:
+  - **byte-identical round-trip** — normalizing the upscaled source back down through the real pipeline (`fit: "fill"`) must reproduce the original runtime-approved master with zero pixel differences;
+  - **seam audit** — wrap-boundary color step vs. average internal step, on both axes;
+  - **palette verification** — every pixel within tolerance of the target's locked palette families;
+  - **review evidence** — the same evidence set as any other candidate (normalized output, enlarged inspection preview, tiled-repeat previews, comparison panel), plus an `AUDIT.md` recording the above checks.
+
+See `docs/art-pipeline/review/tile_farm_path_dirt_center/AUDIT.md` for a worked example (`tile_farm_path_dirt` / `center`).
+
 ## Recommended folders
 
 Future asset PRs should use folders like:
