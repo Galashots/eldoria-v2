@@ -196,11 +196,17 @@ function alphaBounds(img, r) {
   return maxX < minX ? null : { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 };
 }
 
-function paste(src, sr, dst, destCell, cellPx, anchor) {
+function paste(src, sr, dst, destCell, cellPx, anchor, fit = 'contain') {
   const [cw, ch] = cellPx;
-  const scale = Math.min(cw / sr.w, ch / sr.h);
-  const dw = Math.max(1, Math.round(sr.w * scale));
-  const dh = Math.max(1, Math.round(sr.h * scale));
+  let dw, dh;
+  if (fit === 'fill') {
+    dw = cw;
+    dh = ch;
+  } else {
+    const scale = Math.min(cw / sr.w, ch / sr.h);
+    dw = Math.max(1, Math.round(sr.w * scale));
+    dh = Math.max(1, Math.round(sr.h * scale));
+  }
   const ox = anchor === 'top_left' ? 0 : Math.floor((cw - dw) / 2);
   const oy = anchor === 'top_left' ? 0 : anchor === 'center' ? Math.floor((ch - dh) / 2) : ch - dh;
   const baseX = destCell[0] * cw + ox;
@@ -246,7 +252,7 @@ export function collectManifestErrors(manifestPath, options = {}) {
     let img;
     try { img = readPng(p); } catch (e) { out.push(err(manifestPath, `sources.${s.ref}`, e.message)); continue; }
     sourceImages.set(s.ref, img);
-    if (img.colorType !== 6 && !['color_key', 'edge_flood_color_key'].includes(s.background?.mode)) out.push(err(manifestPath, `sources.${s.ref}`, 'source PNG must have alpha or declare a color-key background mode.'));
+    if (img.colorType !== 6 && !['color_key', 'edge_flood_color_key', 'alpha'].includes(s.background?.mode)) out.push(err(manifestPath, `sources.${s.ref}`, 'source PNG must have alpha or declare a color-key background mode.'));
     if (['color_key', 'edge_flood_color_key'].includes(s.background?.mode)) {
       try { keyConfig(s.background); } catch (e) { out.push(err(manifestPath, `sources.${s.ref}.background`, e.message)); }
     }
@@ -277,7 +283,7 @@ export function collectManifestErrors(manifestPath, options = {}) {
     let img = sourceImages.get(s.ref);
     if (!img) {
       try { img = readPng(sp); } catch (e) { out.push(err(manifestPath, c, e.message)); continue; }
-      if (img.colorType !== 6 && !['color_key', 'edge_flood_color_key'].includes(s.background?.mode)) out.push(err(manifestPath, c, 'source PNG must have alpha or declare a color-key background mode.'));
+      if (img.colorType !== 6 && !['color_key', 'edge_flood_color_key', 'alpha'].includes(s.background?.mode)) out.push(err(manifestPath, c, 'source PNG must have alpha or declare a color-key background mode.'));
       if (['color_key', 'edge_flood_color_key'].includes(s.background?.mode)) {
         try { keyConfig(s.background); } catch (e) { out.push(err(manifestPath, `${c}.background`, e.message)); }
       }
@@ -289,7 +295,7 @@ export function collectManifestErrors(manifestPath, options = {}) {
     }
     if (f.sourceRect !== undefined && (!rect(f.sourceRect) || f.sourceRect[0] + f.sourceRect[2] > img.width || f.sourceRect[1] + f.sourceRect[3] > img.height)) out.push(err(manifestPath, `${c}.sourceRect`, 'sourceRect is invalid or outside source image.'));
     if (f.trim !== undefined && !['alpha', 'none'].includes(f.trim)) out.push(err(manifestPath, `${c}.trim`, 'trim must be alpha or none.'));
-    if (f.fit !== undefined && f.fit !== 'contain') out.push(err(manifestPath, `${c}.fit`, 'only fit contain is supported.'));
+    if (f.fit !== undefined && !['contain', 'fill'].includes(f.fit)) out.push(err(manifestPath, `${c}.fit`, 'fit must be contain or fill.'));
     if (f.anchor !== undefined && !['center', 'center_bottom', 'top_left'].includes(f.anchor)) out.push(err(manifestPath, `${c}.anchor`, 'anchor must be center, center_bottom, or top_left.'));
   }
   if (t.expectedEmptyCells !== undefined && !Array.isArray(t.expectedEmptyCells)) out.push(err(manifestPath, 'target.expectedEmptyCells', 'expectedEmptyCells must be an array.'));
@@ -340,7 +346,7 @@ export function normalizeAssetSheet(manifestPath) {
     const img = applyEdgeFlood(sourceImage, s.background, sr);
     const bounds = alphaBounds(img, sr);
     if (!bounds) throw new Error(`frame ${JSON.stringify(f.destCell)} contains no non-transparent pixels.`);
-    paste(img, (f.trim ?? 'alpha') === 'none' ? sr : bounds, output, f.destCell, t.cellPx, f.anchor ?? 'center_bottom');
+    paste(img, (f.trim ?? 'alpha') === 'none' ? sr : bounds, output, f.destCell, t.cellPx, f.anchor ?? 'center_bottom', f.fit ?? 'contain');
   }
   const op = path.resolve(dir, t.outputPath);
   writePng(op, output);
