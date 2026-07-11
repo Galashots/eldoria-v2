@@ -1091,7 +1091,12 @@ export class WorldScene extends Phaser.Scene {
 
     const title = this.add.text(0, -100, 'STATS & MASTERY', {
       fontFamily: 'system-ui',
-      fontSize: fpx(7.5),
+      // Local design-space literal (not fpx()): this text is a child of
+      // `panel`, which is already .setScale(GAME_SCALE) below, so its own
+      // fontSize must stay in the same unscaled local space as every other
+      // literal here (-100, -90, 380, 240, ...) — using fpx() would apply
+      // GAME_SCALE twice if it ever changes.
+      fontSize: '15px',
       color: '#ffd666',
       fontStyle: 'bold'
     }).setOrigin(0.5);
@@ -1110,7 +1115,9 @@ export class WorldScene extends Phaser.Scene {
     const profile = PROFILES[this.profileId];
     const profileName = this.add.text(-90, -70, profile.label, {
       fontFamily: 'system-ui',
-      fontSize: fpx(7),
+      // Local design-space literal: see the comment on the STATS & MASTERY
+      // title above — this is also a child of the GAME_SCALE-scaled panel.
+      fontSize: '14px',
       color: '#ffffff',
       fontStyle: 'bold'
     }).setOrigin(0.5);
@@ -1118,14 +1125,16 @@ export class WorldScene extends Phaser.Scene {
 
     const profileDesc = this.add.text(-90, -50, profile.readingMode === 'audio-first' ? 'Grade 2 Mage' : 'Grade 5 Ranger Explorer', {
       fontFamily: 'system-ui',
-      fontSize: fpx(5),
+      // Local design-space literal: same GAME_SCALE-scaled panel as above.
+      fontSize: '10px',
       color: '#c9a66b'
     }).setOrigin(0.5);
     panel.add(profileDesc);
 
     const goldLabel = this.add.text(-90, -16, `Gold: ${this.gold}`, {
       fontFamily: 'system-ui',
-      fontSize: fpx(6),
+      // Local design-space literal: same GAME_SCALE-scaled panel as above.
+      fontSize: '12px',
       color: '#ffd666'
     }).setOrigin(0.5, 0.5);
     panel.add(goldLabel);
@@ -1133,7 +1142,8 @@ export class WorldScene extends Phaser.Scene {
 
     const keepsakeHeader = this.add.text(-90, 18, 'KEEPSAKES', {
       fontFamily: 'system-ui',
-      fontSize: fpx(5.5),
+      // Local design-space literal: same GAME_SCALE-scaled panel as above.
+      fontSize: '11px',
       color: '#ffd666',
       fontStyle: 'bold'
     }).setOrigin(0.5);
@@ -1154,7 +1164,8 @@ export class WorldScene extends Phaser.Scene {
 
       const hasCharm = (this.inventory[charm.key] ?? 0) > 0;
       if (hasCharm) {
-        const charmText = this.add.text(slotX, 52, charm.emoji, { fontSize: fpx(8) }).setOrigin(0.5);
+        // Local design-space literal: same GAME_SCALE-scaled panel as above.
+        const charmText = this.add.text(slotX, 52, charm.emoji, { fontSize: '16px' }).setOrigin(0.5);
         panel.add(charmText);
       }
 
@@ -1163,7 +1174,8 @@ export class WorldScene extends Phaser.Scene {
       // which one holds which charm once more than one exists.
       const slotCaption = this.add.text(slotX, 52 + slotSize / 2 + 12, hasCharm ? charm.name : '(Empty)', {
         fontFamily: 'system-ui',
-        fontSize: fpx(4),
+        // Local design-space literal: same GAME_SCALE-scaled panel as above.
+        fontSize: '8px',
         color: hasCharm ? '#d7ffb8' : '#6f5126',
         align: 'center',
         wordWrap: { width: slotSize + slotGap, useAdvancedWrap: true }
@@ -1174,7 +1186,8 @@ export class WorldScene extends Phaser.Scene {
     // --- RIGHT COLUMN: CURRICULUM MASTERY ---
     const masteryHeader = this.add.text(90, -70, 'CURRICULUM MASTERY', {
       fontFamily: 'system-ui',
-      fontSize: fpx(6),
+      // Local design-space literal: same GAME_SCALE-scaled panel as above.
+      fontSize: '12px',
       color: '#ffd666',
       fontStyle: 'bold'
     }).setOrigin(0.5);
@@ -1204,14 +1217,16 @@ export class WorldScene extends Phaser.Scene {
 
       const subLabel = this.add.text(90 - 70, yPos - 11, subject.label, {
         fontFamily: 'system-ui',
-        fontSize: fpx(5),
+        // Local design-space literal: same GAME_SCALE-scaled panel as above.
+        fontSize: '10px',
         color: '#ffffff'
       }).setOrigin(0, 0.5);
       panel.add(subLabel);
 
       const subProgressText = this.add.text(90 + 70, yPos - 11, `${correct}/${attempted}`, {
         fontFamily: 'system-ui',
-        fontSize: fpx(5),
+        // Local design-space literal: same GAME_SCALE-scaled panel as above.
+        fontSize: '10px',
         color: '#c9a66b'
       }).setOrigin(1, 0.5);
       panel.add(subProgressText);
@@ -1250,7 +1265,11 @@ export class WorldScene extends Phaser.Scene {
 
     const closeTxt = this.add.text(0, 100, 'CLOSE', {
       fontFamily: 'system-ui',
-      fontSize: fpx(6),
+      // Local design-space literal: this text is still a panel child (only
+      // the interactive button was moved to real screen coordinates above),
+      // so it stays in the same GAME_SCALE-scaled local space as the rest
+      // of the panel.
+      fontSize: '12px',
       color: '#ffffff'
     }).setOrigin(0.5);
     panel.add(closeTxt);
@@ -1271,7 +1290,12 @@ export class WorldScene extends Phaser.Scene {
   private showToast(message: string): void {
     const text = this.add.text(0, 0, message, {
       fontFamily: 'system-ui',
-      fontSize: fpx(6.5),
+      // Local design-space literal (not fpx()): this text lives inside
+      // `toast`, which is itself scaled by GAME_SCALE below, so its
+      // fontSize — like its wordWrap width — must stay in the original
+      // 480-wide design space. Using fpx() here would apply GAME_SCALE
+      // twice if it ever changes.
+      fontSize: '13px',
       color: '#ffffff',
       align: 'center',
       // LEGACY_GAME_WIDTH (not GAME_WIDTH): this text lives inside `toast`,

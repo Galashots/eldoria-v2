@@ -15,6 +15,7 @@
     "normalize:asset": "node scripts/normalize-asset-sheet.mjs",
     "validate:asset": "node scripts/validate-asset-sheet.mjs",
     "test:asset-pipeline": "node scripts/test-asset-pipeline.mjs",
+    "test:visual-targets": "node scripts/test-visual-targets.mjs",
     "test:unit": "vitest run"
   },
   "dependencies": {

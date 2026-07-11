@@ -47,5 +47,13 @@ export const sscale = (factor: number): number => factor * GAME_SCALE;
  * hand-doubling and writing out a literal px string, the same way `sx`/`sy`
  * cover pixel offsets — a future GAME_SCALE change only has to touch this
  * one function instead of every hardcoded font-size string.
+ *
+ * Only for text rendered directly in real screen space (a root scene child,
+ * or inside a container that is NOT itself `.setScale(GAME_SCALE)`'d). Text
+ * inside an already-GAME_SCALE-scaled container (e.g. WorldScene's stats
+ * panel, or the toast in `showToast()`) must use a plain local-design-space
+ * literal instead — the ancestor container's own scale already applies
+ * GAME_SCALE to it, so applying it again here would compound if GAME_SCALE
+ * ever changes (same rule LEGACY_GAME_WIDTH/HEIGHT document above).
  */
 export const fpx = (legacySize: number): string => `${legacySize * GAME_SCALE}px`;
