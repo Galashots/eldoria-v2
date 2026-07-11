@@ -31,10 +31,18 @@ export function resolveInteractionId(targetName: string): InteractionId {
   return INTERACTION_ID_BY_TARGET_NAME[targetName] ?? DEFAULT_INTERACTION_ID;
 }
 
-export function getTiledProperty(obj: { properties?: any }, name: string): any {
+// Tiled's exported "custom properties" shape is genuinely polymorphic
+// (Phaser's own TiledObject.properties is typed `any` for this reason): an
+// array of {name, value} entries in most Tiled JSON exports, or a plain
+// object map in some older/alternate exports. This narrows both accepted
+// shapes instead of trusting the caller with `any`.
+type TiledPropertyEntry = { name: string; value: unknown };
+type TiledPropertyBag = TiledPropertyEntry[] | Record<string, unknown>;
+
+export function getTiledProperty(obj: { properties?: TiledPropertyBag }, name: string): unknown {
   if (!obj.properties) return undefined;
   if (Array.isArray(obj.properties)) {
-    const prop = obj.properties.find((p: any) => p.name === name);
+    const prop = obj.properties.find((p) => p.name === name);
     return prop ? prop.value : undefined;
   }
   return obj.properties[name];

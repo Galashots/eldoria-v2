@@ -31,3 +31,29 @@ export const WORLD_COORDINATE_SCALE_V1_TO_V2 = 2;
 export const sx = (value: number): number => value * GAME_SCALE;
 /** Scales a screen-space pixel offset/size (not a GAME_WIDTH/HEIGHT-relative fraction) by GAME_SCALE. */
 export const sy = (value: number): number => value * GAME_SCALE;
+
+/**
+ * Scales a relative Phaser object-scale factor (e.g. a `.setScale()`/tween
+ * `scale` value) onto the GAME_SCALE baseline, the same way `sx`/`sy` scale
+ * a pixel offset. Use this instead of hand-multiplying by GAME_SCALE
+ * wherever a scale factor (not a position/size) needs to sit on that
+ * baseline, e.g. `sscale(0.2)` instead of `0.2 * GAME_SCALE`.
+ */
+export const sscale = (factor: number): number => factor * GAME_SCALE;
+
+/**
+ * Scales a legacy-design-space font size by GAME_SCALE and returns a
+ * Phaser-ready px string, e.g. `fpx(12)` -> `'24px'`. Use this instead of
+ * hand-doubling and writing out a literal px string, the same way `sx`/`sy`
+ * cover pixel offsets — a future GAME_SCALE change only has to touch this
+ * one function instead of every hardcoded font-size string.
+ *
+ * Only for text rendered directly in real screen space (a root scene child,
+ * or inside a container that is NOT itself `.setScale(GAME_SCALE)`'d). Text
+ * inside an already-GAME_SCALE-scaled container (e.g. WorldScene's stats
+ * panel, or the toast in `showToast()`) must use a plain local-design-space
+ * literal instead — the ancestor container's own scale already applies
+ * GAME_SCALE to it, so applying it again here would compound if GAME_SCALE
+ * ever changes (same rule LEGACY_GAME_WIDTH/HEIGHT document above).
+ */
+export const fpx = (legacySize: number): string => `${legacySize * GAME_SCALE}px`;

@@ -108,12 +108,13 @@ Use reproducible installation for CI-equivalent checks:
 ```bash
 npm ci
 npm run check
+npm run test:visual-targets
 npm run test:asset-pipeline
 npm run test:unit
 npm run smoke
 ```
 
-`npm run check` includes visual-target validation, type checking, and the production build. Use `npm install` only when intentionally changing dependencies or the lockfile.
+`npm run check` validates the actual committed visual-target documents (`docs/visual-targets/*.json`) against the schema, type checks, and builds. `npm run test:visual-targets` is a separate regression suite that exercises the validator itself with positive and negative in-memory cases (a well-formed future swatch group, an invalid hex, a malformed non-array swatch, etc.) — it does not touch the committed documents. Use `npm install` only when intentionally changing dependencies or the lockfile.
 
 Additional expectations:
 

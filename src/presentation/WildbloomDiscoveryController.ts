@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_SCALE, GAME_WIDTH, sx, sy } from '../gameDimensions';
+import { GAME_SCALE, GAME_WIDTH, sscale, sx, sy } from '../gameDimensions';
 import type { ProfileId } from '../data/profiles';
 import { drawRoundedPanelBackground } from './uiHelpers';
 import type { HeroPresentationController } from './HeroPresentationController';
@@ -29,8 +29,8 @@ const WILDBLOOM_SPOTS: readonly WildbloomSpotDefinition[] = [
     id: 'root-star',
     name: 'Root-Star Sigil',
     inventoryKey: 'wildbloomSecretRootStar',
-    x: 560 * GAME_SCALE,
-    y: 144 * GAME_SCALE,
+    x: sx(560),
+    y: sy(144),
     accent: 0xffd666,
     secondary: 0x8fd14f,
     lore: 'A tiny star was carved beneath the oldest roots.',
@@ -40,8 +40,8 @@ const WILDBLOOM_SPOTS: readonly WildbloomSpotDefinition[] = [
     id: 'moonwell-echo',
     name: 'Moonwell Echo',
     inventoryKey: 'wildbloomSecretMoonwellEcho',
-    x: 336 * GAME_SCALE,
-    y: 480 * GAME_SCALE,
+    x: sx(336),
+    y: sy(480),
     accent: 0x9fd7ff,
     secondary: 0x8f63ff,
     lore: 'Silver ripples answer the Sprig from below the soil.',
@@ -51,8 +51,8 @@ const WILDBLOOM_SPOTS: readonly WildbloomSpotDefinition[] = [
     id: 'foxfire-seed',
     name: 'Foxfire Seed',
     inventoryKey: 'wildbloomSecretFoxfireSeed',
-    x: 800 * GAME_SCALE,
-    y: 464 * GAME_SCALE,
+    x: sx(800),
+    y: sy(464),
     accent: 0xa9e783,
     secondary: 0x72b95c,
     lore: 'A sleeping green flame remembers the first garden.',
@@ -459,10 +459,10 @@ export class WildbloomDiscoveryController {
     if (animate) {
       // Pop-in animates around the container's real GAME_SCALE baseline
       // rather than 1, so it grows from small up to its true rest size.
-      reveal.setScale(0.2 * GAME_SCALE).setAlpha(0);
+      reveal.setScale(sscale(0.2)).setAlpha(0);
       this.scene.tweens.add({
         targets: reveal,
-        scale: GAME_SCALE,
+        scale: sscale(1),
         alpha: 1,
         duration: 420,
         ease: 'Back.easeOut'
@@ -558,12 +558,12 @@ export class WildbloomDiscoveryController {
     this.toast = this.scene.add.container(GAME_WIDTH / 2, sy(82), [background, title, detail])
       .setName('wildbloom-discovery-toast')
       .setScrollFactor(0)
-      .setScale(0.78 * GAME_SCALE)
+      .setScale(sscale(0.78))
       .setDepth(42);
 
     this.scene.tweens.add({
       targets: this.toast,
-      scale: GAME_SCALE,
+      scale: sscale(1),
       duration: 180,
       ease: 'Back.easeOut'
     });

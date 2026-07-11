@@ -6,36 +6,9 @@ import {
   type SaveState
 } from '../src/systems/SaveSystem';
 import { WORLD_COORDINATE_SCALE_V1_TO_V2 } from '../src/gameDimensions';
+import { MemoryStorage } from './support/memoryStorage';
 
 const SAVE_KEY = 'eldoria_v2_save_grade2-mage';
-
-class MemoryStorage implements Storage {
-  private readonly values = new Map<string, string>();
-
-  get length(): number {
-    return this.values.size;
-  }
-
-  clear(): void {
-    this.values.clear();
-  }
-
-  getItem(key: string): string | null {
-    return this.values.get(key) ?? null;
-  }
-
-  key(index: number): string | null {
-    return [...this.values.keys()][index] ?? null;
-  }
-
-  removeItem(key: string): void {
-    this.values.delete(key);
-  }
-
-  setItem(key: string, value: string): void {
-    this.values.set(key, value);
-  }
-}
 
 let storage: MemoryStorage;
 let originalWarn: typeof console.warn;

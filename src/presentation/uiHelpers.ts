@@ -9,6 +9,14 @@ import Phaser from 'phaser';
  * `x`/`y` are the button's center, in whatever coordinate space the caller
  * is drawing in (scene-root for HUD buttons, container-local for panel
  * buttons) — same convention `scene.add.rectangle(x, y, ...)` uses.
+ *
+ * Every button in this game is screen-fixed, and Phaser's input hit-test
+ * uses each interactive object's own scroll factor rather than inheriting
+ * an ancestor container's — so `setScrollFactor(0)` is applied here once
+ * instead of being hand-chained onto every call site. Callers still need
+ * to keep any scaled ancestor container free of this button's custom hit
+ * area (Phaser's hit-test doesn't account for an ancestor container's
+ * scale either); that part stays the caller's responsibility.
  */
 export function drawRoundedButton(
   scene: Phaser.Scene,
@@ -31,6 +39,7 @@ export function drawRoundedButton(
     new Phaser.Geom.Rectangle(left, top, width, height),
     Phaser.Geom.Rectangle.Contains
   );
+  graphics.setScrollFactor(0);
   if (graphics.input) graphics.input.cursor = 'pointer';
   return graphics;
 }

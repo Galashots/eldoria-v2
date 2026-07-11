@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_HEIGHT, GAME_WIDTH, sx, sy } from '../gameDimensions';
+import { fpx, GAME_HEIGHT, GAME_WIDTH, sx, sy } from '../gameDimensions';
 import { DEFAULT_PROFILE, PROFILES, type ProfileId } from '../data/profiles';
 import { drawRoundedButton } from '../presentation/uiHelpers';
 import { shouldPlayOpening } from './OpeningScene';
@@ -17,7 +17,7 @@ export class TitleScene extends Phaser.Scene {
 
     this.add.text(GAME_WIDTH / 2, sy(44), 'Realm of Eldoria v2', {
       fontFamily: 'system-ui',
-      fontSize: '48px',
+      fontSize: fpx(24),
       color: '#ffd666',
       stroke: '#3a2208',
       strokeThickness: 8
@@ -25,7 +25,7 @@ export class TitleScene extends Phaser.Scene {
 
     this.add.text(GAME_WIDTH / 2, sy(76), 'Old magic is waking in Eldoria. Learning helps — adventure never waits.', {
       fontFamily: 'system-ui',
-      fontSize: '24px',
+      fontSize: fpx(12),
       color: '#f5e6c8',
       align: 'center'
     }).setOrigin(0.5);
@@ -40,7 +40,7 @@ export class TitleScene extends Phaser.Scene {
     // this large to avoid feeling empty.
     this.add.text(GAME_WIDTH / 2, sy(238), 'Tap a hero to start', {
       fontFamily: 'system-ui',
-      fontSize: '26px',
+      fontSize: fpx(13),
       color: '#c9a66b'
     }).setOrigin(0.5);
   }
@@ -96,13 +96,13 @@ export class TitleScene extends Phaser.Scene {
 
     this.add.text(GAME_WIDTH / 2, y - sy(8), profile.label, {
       fontFamily: 'system-ui',
-      fontSize: '32px',
+      fontSize: fpx(16),
       color: '#ffffff'
     }).setOrigin(0.5);
 
     this.add.text(GAME_WIDTH / 2, y + sy(12), profile.subtitle, {
       fontFamily: 'system-ui',
-      fontSize: '22px',
+      fontSize: fpx(11),
       color: '#f5e6c8'
     }).setOrigin(0.5);
 

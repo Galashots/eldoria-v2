@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import type { BonusContext } from '../data/curriculum';
 import type { InteractionId } from '../data/interactions';
 import type { ProfileId } from '../data/profiles';
-import { GAME_HEIGHT, GAME_SCALE, GAME_WIDTH, sx, sy } from '../gameDimensions';
+import { fpx, GAME_HEIGHT, GAME_SCALE, GAME_WIDTH, sscale, sx, sy } from '../gameDimensions';
 import type { HeroPresentationController } from '../presentation/HeroPresentationController';
 import {
   PracticeSlimeEncounterController,
@@ -296,8 +296,8 @@ export class PolishedWorldScene extends WorldScene {
     vignette.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
     for (let index = 0; index < 14; index += 1) {
-      const x = sx(26) + ((index * 89) % (GAME_WIDTH - sx(52)));
-      const y = sy(76) + ((index * 53) % (GAME_HEIGHT - sy(112)));
+      const x = sx(26) + ((index * sx(89)) % (GAME_WIDTH - sx(52)));
+      const y = sy(76) + ((index * sy(53)) % (GAME_HEIGHT - sy(112)));
       const mote = this.add.circle(x, y, index % 4 === 0 ? sx(2) : sx(1), index % 3 === 0 ? 0xffe39a : 0xd7ffb8, 0.18)
         .setScrollFactor(0)
         .setDepth(2);
@@ -392,7 +392,7 @@ export class PolishedWorldScene extends WorldScene {
 
     this.tweens.add({
       targets: [glow, marker],
-      scale: 1.18 * GAME_SCALE,
+      scale: sscale(1.18),
       alpha: { from: 0.62, to: 1 },
       duration: 720,
       yoyo: true,
@@ -409,7 +409,7 @@ export class PolishedWorldScene extends WorldScene {
 
     this.presentationObjective = this.add.text(sx(16), sy(40), this.formatObjective(objectiveText.text), {
       fontFamily: 'system-ui',
-      fontSize: '22px',
+      fontSize: fpx(11),
       color: '#fff3c9',
       fontStyle: 'bold',
       stroke: '#102016',
@@ -419,7 +419,7 @@ export class PolishedWorldScene extends WorldScene {
 
     this.presentationHint = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - sy(18), this.formatHint(hintText.text), {
       fontFamily: 'system-ui',
-      fontSize: '22px',
+      fontSize: fpx(11),
       color: '#fff3c9',
       backgroundColor: '#1a140d',
       padding: { x: sx(10), y: sy(4) },
@@ -516,7 +516,7 @@ export class PolishedWorldScene extends WorldScene {
       // GAME_SCALE baseline, so this absolute scale target must too.
       this.tweens.add({
         targets: this.miraPulse,
-        scale: 1.45 * GAME_SCALE,
+        scale: sscale(1.45),
         alpha: 1,
         delay: 980,
         duration: 260,

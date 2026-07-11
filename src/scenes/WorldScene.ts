@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_HEIGHT, GAME_SCALE, GAME_WIDTH, LEGACY_GAME_WIDTH, sx, sy } from '../gameDimensions';
+import { fpx, GAME_HEIGHT, GAME_SCALE, GAME_WIDTH, LEGACY_GAME_WIDTH, sx, sy } from '../gameDimensions';
 import type { AnswerValue, BonusContext, LearningPrompt } from '../data/curriculum';
 import { REWARD_KIND_GOLD_VALUE } from '../data/curriculum';
 import { PROFILES, type ProfileId } from '../data/profiles';
@@ -71,7 +71,7 @@ export class WorldScene extends Phaser.Scene {
   private busy = false;
   private statsPanelOpen = false;
   private statsContainer?: Phaser.GameObjects.Container;
-  private statsCloseZone?: Phaser.GameObjects.Zone;
+  private statsCloseButton?: Phaser.GameObjects.Graphics;
   private activeUtterance: SpeechSynthesisUtterance | null = null;
   private hudText!: Phaser.GameObjects.Text;
   private objectiveText!: Phaser.GameObjects.Text;
@@ -300,7 +300,7 @@ export class WorldScene extends Phaser.Scene {
       this.add.circle(target.x, target.y - sy(12), sx(6), color).setStrokeStyle(2, 0x1a1208);
       this.add.text(target.x, target.y - sy(30), target.label, {
         fontFamily: 'system-ui',
-        fontSize: '9px',
+        fontSize: fpx(9),
         color: '#ffffff',
         stroke: '#1a1208',
         strokeThickness: 3
@@ -445,24 +445,22 @@ export class WorldScene extends Phaser.Scene {
 
     this.hudText = this.add.text(sx(16), sy(7), '', {
       fontFamily: 'system-ui',
-      fontSize: '24px',
+      fontSize: fpx(12),
       color: '#ffd666'
     }).setScrollFactor(0);
 
-    const statsBtn = drawRoundedButton(this, GAME_WIDTH - sx(50), sy(14), sx(56), sy(16), 0x5f3d12, 0xffd666, 10)
-      .setScrollFactor(0);
+    const statsBtn = drawRoundedButton(this, GAME_WIDTH - sx(50), sy(14), sx(56), sy(16), 0x5f3d12, 0xffd666, 10);
 
     this.add.text(GAME_WIDTH - sx(50), sy(14), 'STATS', {
       fontFamily: 'system-ui',
-      fontSize: '18px',
+      fontSize: fpx(9),
       color: '#ffd666',
       fontStyle: 'bold'
     }).setOrigin(0.5).setScrollFactor(0);
 
     statsBtn.on('pointerdown', () => this.toggleStatsPanel());
 
-    const muteBtn = drawRoundedButton(this, GAME_WIDTH - sx(96), sy(14), sx(24), sy(16), 0x5f3d12, 0xffd666, 10)
-      .setScrollFactor(0);
+    const muteBtn = drawRoundedButton(this, GAME_WIDTH - sx(96), sy(14), sx(24), sy(16), 0x5f3d12, 0xffd666, 10);
 
     this.muteIcon = this.add.graphics()
       .setScrollFactor(0)
@@ -479,14 +477,14 @@ export class WorldScene extends Phaser.Scene {
 
     this.objectiveText = this.add.text(sx(16), sy(40), '', {
       fontFamily: 'system-ui',
-      fontSize: '22px',
+      fontSize: fpx(11),
       color: '#d7ffb8',
       wordWrap: { width: GAME_WIDTH - sx(32) }
     }).setScrollFactor(0);
 
     this.hintText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - sy(18), '', {
       fontFamily: 'system-ui',
-      fontSize: '22px',
+      fontSize: fpx(11),
       color: '#f5e6c8',
       backgroundColor: '#2a1a08',
       padding: { x: sx(8), y: sy(4) }
@@ -537,7 +535,7 @@ export class WorldScene extends Phaser.Scene {
 
     this.add.text(GAME_WIDTH - sx(54), GAME_HEIGHT - sy(52), 'ACTION', {
       fontFamily: 'system-ui',
-      fontSize: '20px',
+      fontSize: fpx(10),
       color: '#ffd666'
     }).setOrigin(0.5).setScrollFactor(0).setAlpha(isTouchDevice ? 1 : actionAlpha);
 
@@ -617,15 +615,19 @@ export class WorldScene extends Phaser.Scene {
   private nearestTarget(): InteractionTarget | null {
     const px = this.player.x;
     const py = this.player.y;
+    // Squared distances avoid a sqrt per target per frame (this runs every
+    // frame via updateHint()); the ordering and threshold comparison are
+    // identical to comparing real distances since both sides are non-negative.
+    const rangeSquared = sx(42) ** 2;
 
     let best: InteractionTarget | null = null;
-    let bestDistance = Number.POSITIVE_INFINITY;
+    let bestDistanceSquared = Number.POSITIVE_INFINITY;
 
     for (const target of this.targets) {
-      const d = Phaser.Math.Distance.Between(px, py, target.x, target.y);
-      if (d < sx(42) && d < bestDistance) {
+      const dSquared = Phaser.Math.Distance.Squared(px, py, target.x, target.y);
+      if (dSquared < rangeSquared && dSquared < bestDistanceSquared) {
         best = target;
-        bestDistance = d;
+        bestDistanceSquared = dSquared;
       }
     }
 
@@ -838,29 +840,23 @@ export class WorldScene extends Phaser.Scene {
 
     panel.add(this.add.text(0, titleY, `${label}: optional learning bonus`, {
       fontFamily: 'system-ui',
-      fontSize: '28px',
+      fontSize: fpx(14),
       color: '#ffd666'
     }).setOrigin(0.5));
 
     panel.add(this.add.text(0, promptY, prompt.text, {
       fontFamily: 'system-ui',
-      fontSize: prompt.text.length > 55 ? '26px' : '34px',
+      fontSize: prompt.text.length > 55 ? fpx(13) : fpx(17),
       color: '#ffffff',
       align: 'center',
       wordWrap: { width: sx(324) }
     }).setOrigin(0.5));
 
     if (isAudioFirst) {
-      // setScrollFactor(0) here is required, not redundant with the panel's
-      // own setScrollFactor(0): Phaser's input hit-test uses each interactive
-      // child's own scroll factor rather than inheriting the parent
-      // container's, so without this the hit area silently drifts away from
-      // the rendered button by however far the camera has scrolled.
-      const readButton = drawRoundedButton(this, 0, -sy(12), sx(132), sy(28), 0x3a4f8f, 0x99c7ff, 12)
-        .setScrollFactor(0);
+      const readButton = drawRoundedButton(this, 0, -sy(12), sx(132), sy(28), 0x3a4f8f, 0x99c7ff, 12);
       const readText = this.add.text(0, -sy(12), 'READ ALOUD', {
         fontFamily: 'system-ui',
-        fontSize: '22px',
+        fontSize: fpx(11),
         color: '#ffffff'
       }).setOrigin(0.5);
 
@@ -872,11 +868,10 @@ export class WorldScene extends Phaser.Scene {
     // Local (0, skipY) instead of the previous screen-absolute position: as
     // panel children now, they're already carried by the panel's own
     // position, and destroying the panel below cleans them up too.
-    const skipButton = drawRoundedButton(this, 0, skipY, sx(132), sy(28), 0x3a2208, 0xc9a66b, 12)
-      .setScrollFactor(0);
+    const skipButton = drawRoundedButton(this, 0, skipY, sx(132), sy(28), 0x3a2208, 0xc9a66b, 12);
     const skipText = this.add.text(0, skipY, 'Skip bonus', {
       fontFamily: 'system-ui',
-      fontSize: '24px',
+      fontSize: fpx(12),
       color: '#c9a66b'
     }).setOrigin(0.5);
     panel.add(skipButton);
@@ -888,12 +883,11 @@ export class WorldScene extends Phaser.Scene {
     prompt.choices.forEach((choice, index) => {
       const x = sx(-110 + index * 110);
       const choiceLabel = String(choice);
-      const btn = drawRoundedButton(this, x, choicesY, sx(102), sy(46), 0x5f3d12, 0xffd666, 12)
-        .setScrollFactor(0);
+      const btn = drawRoundedButton(this, x, choicesY, sx(102), sy(46), 0x5f3d12, 0xffd666, 12);
 
       const txt = this.add.text(x, choicesY, choiceLabel, {
         fontFamily: 'system-ui',
-        fontSize: choiceLabel.length > 12 ? '18px' : '34px',
+        fontSize: choiceLabel.length > 12 ? fpx(9) : fpx(17),
         color: '#ffffff',
         align: 'center',
         wordWrap: { width: sx(92) }
@@ -1019,7 +1013,7 @@ export class WorldScene extends Phaser.Scene {
   private showFloatingReward(message: string, x: number, y: number, color: string, emphasize = false): void {
     const text = this.add.text(x, y, message, {
       fontFamily: 'system-ui',
-      fontSize: emphasize ? '30px' : '24px',
+      fontSize: emphasize ? fpx(15) : fpx(12),
       color,
       stroke: '#1a1208',
       strokeThickness: emphasize ? 8 : 6
@@ -1097,6 +1091,11 @@ export class WorldScene extends Phaser.Scene {
 
     const title = this.add.text(0, -100, 'STATS & MASTERY', {
       fontFamily: 'system-ui',
+      // Local design-space literal (not fpx()): this text is a child of
+      // `panel`, which is already .setScale(GAME_SCALE) below, so its own
+      // fontSize must stay in the same unscaled local space as every other
+      // literal here (-100, -90, 380, 240, ...) — using fpx() would apply
+      // GAME_SCALE twice if it ever changes.
       fontSize: '15px',
       color: '#ffd666',
       fontStyle: 'bold'
@@ -1116,6 +1115,8 @@ export class WorldScene extends Phaser.Scene {
     const profile = PROFILES[this.profileId];
     const profileName = this.add.text(-90, -70, profile.label, {
       fontFamily: 'system-ui',
+      // Local design-space literal: see the comment on the STATS & MASTERY
+      // title above — this is also a child of the GAME_SCALE-scaled panel.
       fontSize: '14px',
       color: '#ffffff',
       fontStyle: 'bold'
@@ -1124,6 +1125,7 @@ export class WorldScene extends Phaser.Scene {
 
     const profileDesc = this.add.text(-90, -50, profile.readingMode === 'audio-first' ? 'Grade 2 Mage' : 'Grade 5 Ranger Explorer', {
       fontFamily: 'system-ui',
+      // Local design-space literal: same GAME_SCALE-scaled panel as above.
       fontSize: '10px',
       color: '#c9a66b'
     }).setOrigin(0.5);
@@ -1131,6 +1133,7 @@ export class WorldScene extends Phaser.Scene {
 
     const goldLabel = this.add.text(-90, -16, `Gold: ${this.gold}`, {
       fontFamily: 'system-ui',
+      // Local design-space literal: same GAME_SCALE-scaled panel as above.
       fontSize: '12px',
       color: '#ffd666'
     }).setOrigin(0.5, 0.5);
@@ -1139,6 +1142,7 @@ export class WorldScene extends Phaser.Scene {
 
     const keepsakeHeader = this.add.text(-90, 18, 'KEEPSAKES', {
       fontFamily: 'system-ui',
+      // Local design-space literal: same GAME_SCALE-scaled panel as above.
       fontSize: '11px',
       color: '#ffd666',
       fontStyle: 'bold'
@@ -1160,6 +1164,7 @@ export class WorldScene extends Phaser.Scene {
 
       const hasCharm = (this.inventory[charm.key] ?? 0) > 0;
       if (hasCharm) {
+        // Local design-space literal: same GAME_SCALE-scaled panel as above.
         const charmText = this.add.text(slotX, 52, charm.emoji, { fontSize: '16px' }).setOrigin(0.5);
         panel.add(charmText);
       }
@@ -1169,6 +1174,7 @@ export class WorldScene extends Phaser.Scene {
       // which one holds which charm once more than one exists.
       const slotCaption = this.add.text(slotX, 52 + slotSize / 2 + 12, hasCharm ? charm.name : '(Empty)', {
         fontFamily: 'system-ui',
+        // Local design-space literal: same GAME_SCALE-scaled panel as above.
         fontSize: '8px',
         color: hasCharm ? '#d7ffb8' : '#6f5126',
         align: 'center',
@@ -1180,6 +1186,7 @@ export class WorldScene extends Phaser.Scene {
     // --- RIGHT COLUMN: CURRICULUM MASTERY ---
     const masteryHeader = this.add.text(90, -70, 'CURRICULUM MASTERY', {
       fontFamily: 'system-ui',
+      // Local design-space literal: same GAME_SCALE-scaled panel as above.
       fontSize: '12px',
       color: '#ffd666',
       fontStyle: 'bold'
@@ -1210,6 +1217,7 @@ export class WorldScene extends Phaser.Scene {
 
       const subLabel = this.add.text(90 - 70, yPos - 11, subject.label, {
         fontFamily: 'system-ui',
+        // Local design-space literal: same GAME_SCALE-scaled panel as above.
         fontSize: '10px',
         color: '#ffffff'
       }).setOrigin(0, 0.5);
@@ -1217,6 +1225,7 @@ export class WorldScene extends Phaser.Scene {
 
       const subProgressText = this.add.text(90 + 70, yPos - 11, `${correct}/${attempted}`, {
         fontFamily: 'system-ui',
+        // Local design-space literal: same GAME_SCALE-scaled panel as above.
         fontSize: '10px',
         color: '#c9a66b'
       }).setOrigin(1, 0.5);
@@ -1235,27 +1244,31 @@ export class WorldScene extends Phaser.Scene {
     });
 
     // --- CLOSE BUTTON ---
-    // Drawn (non-interactively) inside the scaled panel like everything else
-    // above; a separate unscaled zone (tracked in this.statsCloseZone, named
-    // STATS_CLOSE_BUTTON_NAME) handles the actual click, since Phaser's
-    // custom-hitArea input test doesn't account for an ancestor container's
-    // scale (see openBonusPrompt for the same issue/fix).
-    const closeBtn = this.add.graphics();
-    closeBtn.fillStyle(0x5f3d12, 1);
-    closeBtn.fillRoundedRect(-50, 88, 100, 24, 6);
-    closeBtn.lineStyle(2, 0xffd666, 1);
-    closeBtn.strokeRoundedRect(-50, 88, 100, 24, 6);
-    panel.add(closeBtn);
-
-    this.statsCloseZone = this.add.zone(GAME_WIDTH / 2, GAME_HEIGHT / 2 + sy(100), sx(100), sy(24))
+    // Drawn directly via drawRoundedButton in real screen coordinates (same
+    // approach as openBonusPrompt's buttons) instead of drawing the visible
+    // button inside the GAME_SCALE-scaled panel and hand-syncing a second,
+    // separately-computed unscaled hit zone to match its geometry — the
+    // button's own hit area now always matches what's drawn, by construction.
+    this.statsCloseButton = drawRoundedButton(
+      this,
+      GAME_WIDTH / 2,
+      GAME_HEIGHT / 2 + sy(100),
+      sx(100),
+      sy(24),
+      0x5f3d12,
+      0xffd666,
+      12
+    )
       .setName(STATS_CLOSE_BUTTON_NAME)
-      .setScrollFactor(0)
-      .setDepth(101)
-      .setInteractive({ useHandCursor: true });
-    this.statsCloseZone.on('pointerdown', () => this.closeStatsPanel());
+      .setDepth(101);
+    this.statsCloseButton.on('pointerdown', () => this.closeStatsPanel());
 
     const closeTxt = this.add.text(0, 100, 'CLOSE', {
       fontFamily: 'system-ui',
+      // Local design-space literal: this text is still a panel child (only
+      // the interactive button was moved to real screen coordinates above),
+      // so it stays in the same GAME_SCALE-scaled local space as the rest
+      // of the panel.
       fontSize: '12px',
       color: '#ffffff'
     }).setOrigin(0.5);
@@ -1268,8 +1281,8 @@ export class WorldScene extends Phaser.Scene {
       this.statsContainer.destroy();
       this.statsContainer = undefined;
     }
-    this.statsCloseZone?.destroy();
-    this.statsCloseZone = undefined;
+    this.statsCloseButton?.destroy();
+    this.statsCloseButton = undefined;
     this.statsPanelOpen = false;
     this.busy = false;
   }
@@ -1277,6 +1290,11 @@ export class WorldScene extends Phaser.Scene {
   private showToast(message: string): void {
     const text = this.add.text(0, 0, message, {
       fontFamily: 'system-ui',
+      // Local design-space literal (not fpx()): this text lives inside
+      // `toast`, which is itself scaled by GAME_SCALE below, so its
+      // fontSize — like its wordWrap width — must stay in the original
+      // 480-wide design space. Using fpx() here would apply GAME_SCALE
+      // twice if it ever changes.
       fontSize: '13px',
       color: '#ffffff',
       align: 'center',

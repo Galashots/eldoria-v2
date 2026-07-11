@@ -29,6 +29,8 @@ jobs:
           name: check-diagnostics-pr-${{ github.event.pull_request.number }}
           path: check-output.txt
           retention-days: 3
+      - name: Run visual-target validator tests
+        run: npm run test:visual-targets
       - run: npm run test:asset-pipeline
       - run: npm run test:unit
       - name: Get installed Playwright version
