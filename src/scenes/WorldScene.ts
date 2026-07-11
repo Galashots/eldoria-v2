@@ -615,15 +615,19 @@ export class WorldScene extends Phaser.Scene {
   private nearestTarget(): InteractionTarget | null {
     const px = this.player.x;
     const py = this.player.y;
+    // Squared distances avoid a sqrt per target per frame (this runs every
+    // frame via updateHint()); the ordering and threshold comparison are
+    // identical to comparing real distances since both sides are non-negative.
+    const rangeSquared = sx(42) ** 2;
 
     let best: InteractionTarget | null = null;
-    let bestDistance = Number.POSITIVE_INFINITY;
+    let bestDistanceSquared = Number.POSITIVE_INFINITY;
 
     for (const target of this.targets) {
-      const d = Phaser.Math.Distance.Between(px, py, target.x, target.y);
-      if (d < sx(42) && d < bestDistance) {
+      const dSquared = Phaser.Math.Distance.Squared(px, py, target.x, target.y);
+      if (dSquared < rangeSquared && dSquared < bestDistanceSquared) {
         best = target;
-        bestDistance = d;
+        bestDistanceSquared = dSquared;
       }
     }
 
