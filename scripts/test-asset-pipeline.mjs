@@ -167,4 +167,98 @@ fs.mkdirSync(ROOT, { recursive: true });
   assert.ok(result.errors.length >= 8, `expected aggregated errors, got ${result.errors.length}`);
 }
 
+{
+  // A. RGB source + background.mode "alpha": normalization/validation pass, output is RGBA
+  // with alpha=255 everywhere and RGB values preserved from the source.
+  const src = path.join(ROOT, 'rgb-alpha-source.png');
+  const out = path.join(ROOT, 'rgb-alpha-output.png');
+  const manifest = path.join(ROOT, 'rgb-alpha-manifest.json');
+  const rgbImg = image(20, 20, [0, 0, 0, 255]);
+  rect(rgbImg, 0, 0, 20, 20, [34, 90, 21, 255]);
+  rect(rgbImg, 5, 5, 6, 6, [140, 200, 60, 255]);
+  writePng(src, rgbImg, { colorType: 2 });
+  writeJson(manifest, {
+    version: 1,
+    id: 'test_rgb_alpha_full_bleed',
+    target: { outputPath: out, cellPx: [20, 20], cols: 1, rows: 1 },
+    sources: { tile: { path: src, background: { mode: 'alpha' } } },
+    frames: [{ sourceRef: 'tile', destCell: [0, 0], trim: 'none', fit: 'contain', anchor: 'top_left' }]
+  });
+  normalizeAssetSheet(manifest);
+  requireOk(validateAssetSheet(manifest));
+  const png = readPng(out);
+  assert.equal(png.colorType, 6);
+  assert.equal(png.width, 20);
+  assert.equal(png.height, 20);
+  for (let i = 3; i < png.data.length; i += 4) assert.equal(png.data[i], 255, 'expected fully opaque alpha for RGB source');
+  assert.deepEqual(pixel(png, 0, 0), [34, 90, 21, 255]);
+  assert.deepEqual(pixel(png, 7, 7), [140, 200, 60, 255]);
+}
+
+{
+  // B. fit "contain" vs fit "fill" on a non-square source pasted into a square cell,
+  // plus confirmation that an unknown fit value remains rejected.
+  const src = path.join(ROOT, 'fit-source.png');
+  const containOut = path.join(ROOT, 'fit-contain-output.png');
+  const fillOut = path.join(ROOT, 'fit-fill-output.png');
+  const containManifest = path.join(ROOT, 'fit-contain-manifest.json');
+  const fillManifest = path.join(ROOT, 'fit-fill-manifest.json');
+
+  // 40 wide x 20 tall, fully opaque, non-square source with four distinct quadrants.
+  // The corner assertions below prove fill performs independent X/Y nearest-neighbour mapping,
+  // rather than merely making all output pixels opaque.
+  const fitSrc = image(40, 20, [0, 0, 0, 255]);
+  rect(fitSrc, 0, 0, 20, 10, [200, 10, 10, 255]);
+  rect(fitSrc, 20, 0, 20, 10, [10, 200, 10, 255]);
+  rect(fitSrc, 0, 10, 20, 10, [10, 10, 200, 255]);
+  rect(fitSrc, 20, 10, 20, 10, [220, 180, 20, 255]);
+  writePng(src, fitSrc);
+
+  writeJson(containManifest, {
+    version: 1,
+    id: 'test_fit_contain',
+    target: { outputPath: containOut, cellPx: [20, 20], cols: 1, rows: 1 },
+    sources: { tile: { path: src, background: { mode: 'alpha' } } },
+    frames: [{ sourceRef: 'tile', destCell: [0, 0], trim: 'none', fit: 'contain', anchor: 'top_left' }]
+  });
+  normalizeAssetSheet(containManifest);
+  requireOk(validateAssetSheet(containManifest));
+  const containPng = readPng(containOut);
+  // contain preserves the 40x20 (2:1) aspect ratio inside a 20x20 cell: scale = 20/40 = 0.5 -> 20x10,
+  // leaving transparent padding below the pasted content.
+  assert.equal(pixel(containPng, 0, 0)[3], 255, 'contain: top-left should be opaque');
+  assert.equal(pixel(containPng, 0, 19)[3], 0, 'contain: bottom row should be transparent padding');
+
+  writeJson(fillManifest, {
+    version: 1,
+    id: 'test_fit_fill',
+    target: { outputPath: fillOut, cellPx: [20, 20], cols: 1, rows: 1 },
+    sources: { tile: { path: src, background: { mode: 'alpha' } } },
+    frames: [{ sourceRef: 'tile', destCell: [0, 0], trim: 'none', fit: 'fill', anchor: 'top_left' }]
+  });
+  normalizeAssetSheet(fillManifest);
+  requireOk(validateAssetSheet(fillManifest));
+  const fillPng = readPng(fillOut);
+  // fill covers every destination pixel via independent X/Y nearest-neighbour scaling: no transparent padding anywhere.
+  assert.equal(hasOpaque(fillPng), true);
+  for (let y = 0; y < 20; y += 1) for (let x = 0; x < 20; x += 1) assert.equal(pixel(fillPng, x, y)[3], 255, `fill: pixel (${x},${y}) should be fully opaque`);
+  assert.deepEqual(pixel(fillPng, 0, 0), [200, 10, 10, 255], 'fill: top-left quadrant should map to top-left');
+  assert.deepEqual(pixel(fillPng, 19, 0), [10, 200, 10, 255], 'fill: top-right quadrant should map to top-right');
+  assert.deepEqual(pixel(fillPng, 0, 19), [10, 10, 200, 255], 'fill: bottom-left quadrant should map to bottom-left');
+  assert.deepEqual(pixel(fillPng, 19, 19), [220, 180, 20, 255], 'fill: bottom-right quadrant should map to bottom-right');
+
+  // An unknown fit value (e.g. "cover") must still be rejected.
+  const badManifest = path.join(ROOT, 'fit-bad-manifest.json');
+  writeJson(badManifest, {
+    version: 1,
+    id: 'test_fit_bad',
+    target: { outputPath: path.join(ROOT, 'fit-bad-output.png'), cellPx: [20, 20], cols: 1, rows: 1 },
+    sources: { tile: { path: src, background: { mode: 'alpha' } } },
+    frames: [{ sourceRef: 'tile', destCell: [0, 0], trim: 'none', fit: 'cover', anchor: 'top_left' }]
+  });
+  const badResult = validateAssetSheet(badManifest);
+  assert.equal(badResult.ok, false);
+  assert.ok(badResult.errors.some((e) => e.includes('fit must be contain or fill')), 'expected fit rejection error');
+}
+
 console.log('Asset pipeline test passed.');
