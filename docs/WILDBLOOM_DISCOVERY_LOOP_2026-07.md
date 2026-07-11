@@ -1,48 +1,56 @@
-# Wildbloom Sprig Discovery Loop — July 2026
+# Wildbloom Sprig Discovery Loop — Historical Record
 
-## Goal
+> **Status: Implemented and browser-verified.**  
+> This document records the approved loop and its durable guardrails. Do not re-implement or redesign it without a new approved scope. Current milestone status lives in `docs/CURRENT_STATE.md`.
 
-Give the existing Wildbloom Sprig keepsake a concrete exploration purpose inside the current farm: it hums near hidden magical places, guides the player toward them, and lets each profile reveal them with its own ability.
+## Purpose
 
-## Player Loop
+Give the Wildbloom Sprig keepsake a concrete optional exploration purpose inside the farm: it hums near hidden magical places, guides the player toward them, and lets each profile reveal them with its own ability.
+
+## Implemented player loop
 
 1. Earn the Wildbloom Sprig through The Sleepy Sprouts.
-2. Explore the existing farm.
-3. Near one of three hidden spots, the Sprig produces a visible green-gold pulse and an in-world hint.
+2. Explore the farm.
+3. Near one of three hidden spots, the Sprig produces visible green-gold sensing feedback and an in-world hint.
 4. Move close and press ACTION.
-5. Mage casts a blue-violet reveal spell; Ranger fires a green-gold tracking shot.
-6. The spot blooms into a permanent-in-save visual landmark with a named lore reveal.
-7. Revealing all three completes the Sprig's song, with a larger final presentation beat but no random or variable reward.
+5. Mage casts a blue-violet reveal spell; Ranger Explorer fires a green-gold tracking shot.
+6. The spot becomes a named, persistent visual landmark with a lore reveal.
+7. Revealing all three completes the Sprig's song with a larger presentation beat and no random or variable reward.
 
-## Hidden Spots
+## Hidden spots
 
-- Root-Star Sigil — north farm roots.
-- Moonwell Echo — southwest field edge.
-- Foxfire Seed — eastern meadow.
+- **Root-Star Sigil** — north farm roots.
+- **Moonwell Echo** — southwest field edge.
+- **Foxfire Seed** — eastern meadow.
 
-The spots are intentionally code-drawn moss, stone, rune, leaf, and flower clusters so they feel more like world details than development markers while final farm art remains pending.
+The current landmarks are cohesive code-drawn bridge presentation. Production replacements are specified under the Phase 2 farm-environment art milestone and must preserve these identities, colours, motifs, persistence keys, and interaction semantics.
 
-## Technical Shape
+## Technical ownership
 
-- `WildbloomDiscoveryController` owns sensing, proximity state, profile-specific ability effects, reveal visuals, discovery presentation, and transient input locking.
-- `PolishedWorldScene` owns the controller through the existing narrow presentation seam and gives it inventory/save callbacks.
-- Discovery persistence reuses optional keys in the existing `inventory: Record<string, number>` save field; there is no schema version change or migration.
-- Existing quests, curriculum prompts, mastery, gold, rewards, and interaction targets remain unchanged.
-- Mira receives a small code-drawn NPC silhouette as a cheap bridge beyond the plain marker while final character art remains pending.
+- `WildbloomDiscoveryController` owns sensing, proximity state, profile-specific effects, reveal presentation, and transient input locking.
+- `PolishedWorldScene` owns the controller through the existing presentation seam and provides inventory/save callbacks.
+- Discovery persistence uses additive keys in the existing `inventory: Record<string, number>` save field.
+- The loop does not alter curriculum prompts, mastery, gold, quest progression, or baseline rewards.
 
-## Guardrails
+## Durable guardrails
 
-- no random loot;
-- no countdowns, streaks, daily pressure, or variable rewards;
-- no learning gate or prompt;
-- no quest rewrite or quest #4;
-- no save-schema change or migration;
+- no random loot or variable reward;
+- no countdown, streak, daily, or retention pressure;
+- no learning gate or required prompt;
+- no quest rewrite or quest #4 dependency;
+- no new save migration for discovery state;
 - no player damage, failure state, or enemy AI;
-- discoveries remain optional and do not block adventure progress.
+- discoveries remain optional and do not block adventure progress;
+- stable lore identities and persistence keys must survive visual replacement.
 
-## Verification Standard
+## Verification standard
 
-- full repository check, asset-pipeline tests, unit tests, and Playwright suite pass;
-- browser screenshots cover Sprig sensing, profile ability in flight, and the reveal for both Mage and Ranger;
-- all three spots persist after reload through the existing inventory record;
-- without the Wildbloom Sprig, spots remain hidden and inert.
+Future changes must preserve:
+
+- full repository checks, asset-pipeline tests, unit tests, and Playwright coverage;
+- Mage and Ranger screenshots for sensing, ability-in-flight, and reveal states;
+- all three discoveries persisting after reload;
+- dormant, inert spots when the Sprig has not been earned;
+- no quest, curriculum, mastery, reward, or save-schema regression.
+
+Physical-iPad behavior remains a separate real-device checkpoint.
