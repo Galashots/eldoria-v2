@@ -24,12 +24,12 @@
       "lightDirection": "upper_left",
       "renderLayer": "actors_body",
       "variants": ["idle"],
-      "collision": { "solid": false, "body": null, "hurtbox": null, "hitboxes": [], "interaction": [0, 0, 16, 16] },
+      "collision": { "solid": false, "body": null, "hurtbox": null, "hitboxes": [], "interaction": [0, 16, 16, 16] },
       "interactionKind": "sign",
       "runtimeExport": "png",
       "preferredSource": "aseprite",
       "atlasFamily": "environment_farm",
-      "visualRule": "A weathered wooden farm signpost, tall enough to Y-sort naturally against the player, readable as a landmark from a distance. Reuses the same 'sign' interaction kind as tile_village_interaction_sign for a consistent non-verbal navigation cue.",
+      "visualRule": "A weathered wooden farm signpost, tall enough to Y-sort naturally against the player, readable as a landmark from a distance. Reuses the same 'sign' interaction kind as tile_village_interaction_sign for a consistent non-verbal navigation cue. On the 16x32 canvas the upper 16px is drawn post height and the lower 16px is the grounded footprint; the interaction box sits on that lower [0,16,16,16] footprint.",
       "notes": ["Specification only; no art is included.", "No runtime behavior is added."]
     },
     {

@@ -143,17 +143,16 @@ function validateTarget(filePath, target, index) {
   }
 }
 
-function validateHexMap(filePath, paletteId, groupName, group) {
-  if (!group || typeof group !== 'object' || Array.isArray(group)) {
-    addError(filePath, paletteId, `${groupName} must be an object`);
+function validateHexArray(filePath, paletteId, label, swatches) {
+  if (!Array.isArray(swatches) || swatches.length === 0) {
+    addError(filePath, paletteId, `${label} must be a non-empty array of #rrggbb hex strings`);
     return;
   }
-  for (const [key, value] of Object.entries(group)) {
-    if (key.startsWith('_')) continue; // metadata keys such as _source
-    if (typeof value !== 'string' || !hexPattern.test(value)) {
-      addError(filePath, paletteId, `${groupName}.${key} must be a #rrggbb hex string`);
+  swatches.forEach((hex, index) => {
+    if (typeof hex !== 'string' || !hexPattern.test(hex)) {
+      addError(filePath, paletteId, `${label}[${index}] must be a #rrggbb hex string`);
     }
-  }
+  });
 }
 
 function validatePalette(filePath, document) {
@@ -170,29 +169,21 @@ function validatePalette(filePath, document) {
     || Object.keys(document.families).length === 0) {
     addError(filePath, paletteId, 'families must be a non-empty object');
   } else {
-    for (const [familyName, family] of Object.entries(document.families)) {
-      if (!family || typeof family !== 'object' || !Array.isArray(family.ramp) || family.ramp.length === 0) {
-        addError(filePath, paletteId, `families.${familyName}.ramp must be a non-empty array`);
-        continue;
-      }
-      const seen = new Set();
-      family.ramp.forEach((swatch, index) => {
-        if (!swatch || typeof swatch !== 'object' || typeof swatch.name !== 'string' || swatch.name.length === 0) {
-          addError(filePath, paletteId, `families.${familyName}.ramp[${index}].name must be a non-empty string`);
-        } else if (seen.has(swatch.name)) {
-          addError(filePath, paletteId, `families.${familyName} has a duplicate swatch name ${swatch.name}`);
-        } else {
-          seen.add(swatch.name);
-        }
-        if (typeof swatch.hex !== 'string' || !hexPattern.test(swatch.hex)) {
-          addError(filePath, paletteId, `families.${familyName}.ramp[${index}].hex must be a #rrggbb hex string`);
-        }
-      });
+    for (const [familyName, swatches] of Object.entries(document.families)) {
+      validateHexArray(filePath, paletteId, `families.${familyName}`, swatches);
     }
   }
 
-  for (const groupName of ['sharedAnchors', 'floraAccents', 'pinnedAccents']) {
-    if (hasOwn(document, groupName)) validateHexMap(filePath, paletteId, groupName, document[groupName]);
+  if (hasOwn(document, 'wildbloomAccents')) {
+    const accents = document.wildbloomAccents;
+    if (!accents || typeof accents !== 'object' || Array.isArray(accents)) {
+      addError(filePath, paletteId, 'wildbloomAccents must be an object');
+    } else {
+      for (const [key, value] of Object.entries(accents)) {
+        if (key.startsWith('_')) continue; // metadata keys such as _source
+        validateHexArray(filePath, paletteId, `wildbloomAccents.${key}`, value);
+      }
+    }
   }
 }
 

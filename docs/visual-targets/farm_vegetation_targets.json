@@ -203,13 +203,13 @@
       "paletteFamilies": ["wood_leather"],
       "lightDirection": "upper_left",
       "renderLayer": "actors_body",
-      "variants": ["post", "rail_horizontal", "rail_vertical", "corner", "broken"],
-      "collision": { "solid": true, "body": [0, 0, 16, 16], "hurtbox": null, "hitboxes": [], "interaction": null },
+      "variants": ["post", "rail_horizontal", "rail_vertical", "corner_ne", "corner_nw", "corner_se", "corner_sw", "broken_horizontal", "broken_vertical"],
+      "collision": { "solid": true, "body": [0, 16, 16, 16], "hurtbox": null, "hitboxes": [], "interaction": null },
       "runtimeExport": "png",
       "preferredSource": "aseprite",
       "atlasFamily": "environment_farm",
-      "visualRule": "Modular fence kit sharing one weathered-wood material story; the broken variant must read as clearly damaged (missing rail, leaning post) without looking unintentional or like an authoring error. Solid by target spec, matching the plan's 'fence posts, rails, corners, gates, and broken variants' requirement. The 16x32 canvas over a 16x16 footprint gives posts and rails visible height under the flattened 'pop-up book' perspective (Section 4a) while keeping the gameplay footprint one tile; the upper 16px is drawn height, the lower 16px is the grounded footprint.",
-      "notes": ["Specification only; no art is included.", "No runtime behavior is added."]
+      "visualRule": "Modular fence kit sharing one weathered-wood material story; the broken variants must read as clearly damaged (missing rail, leaning post) without looking unintentional or like an authoring error. Solid by target spec, matching the plan's 'fence posts, rails, corners, gates, and broken variants' requirement. The 16x32 canvas over a 16x16 footprint gives posts and rails visible height under the flattened 'pop-up book' perspective (Section 4a); the upper 16px is drawn height, the lower 16px is the grounded footprint (collision body [0,16,16,16]). Every orientation is authored as its own variant (rail_horizontal/rail_vertical, corner_ne/nw/se/sw, broken_horizontal/broken_vertical) so nothing depends on runtime rotation or mirroring, which would reverse the approved upper-left key light.",
+      "notes": ["Specification only; no art is included.", "No runtime behavior is added.", "Do not rely on runtime rotation or horizontal/vertical flipping to derive orientations; each is a distinct authored variant so the upper-left lighting stays correct."]
     },
     {
       "id": "env_farm_gate",
@@ -226,12 +226,12 @@
       "lightDirection": "upper_left",
       "renderLayer": "actors_body",
       "variants": ["closed", "broken"],
-      "collision": { "solid": true, "body": [0, 0, 32, 16], "hurtbox": null, "hitboxes": [], "interaction": [0, 0, 32, 16] },
+      "collision": { "solid": true, "body": [0, 16, 32, 16], "hurtbox": null, "hitboxes": [], "interaction": [0, 16, 32, 16] },
       "interactionKind": "gate",
       "runtimeExport": "png",
       "preferredSource": "aseprite",
       "atlasFamily": "environment_farm",
-      "visualRule": "A two-tile-wide gate matching the env_farm_fence material story; the broken variant reuses the fence kit's damage language. The gate interaction box is metadata only and adds no transition/open behavior. The 32x32 canvas over a 32x16 footprint matches the fence's height treatment (Section 4a): the upper 16px is drawn height, the lower 16px is the grounded two-tile-wide footprint.",
+      "visualRule": "A two-tile-wide gate matching the env_farm_fence material story; the broken variant reuses the fence kit's damage language. The gate interaction box is metadata only and adds no transition/open behavior. The 32x32 canvas over a 32x16 footprint matches the fence's height treatment (Section 4a): the upper 16px is drawn height, the lower 16px is the grounded two-tile-wide footprint, with collision body and interaction both on that lower [0,16,32,16] footprint.",
       "notes": ["Specification only; no art is included.", "No runtime behavior is added."]
     }
   ]

@@ -20,7 +20,7 @@ Target specifications only. No art, runtime behavior, map edits, collision, or g
 - Lighting: consistent upper-left key light.
 - Runtime export: PNG. Preferred editable source: `.aseprite`/`.ase`.
 - Atlas family: `environment_farm`.
-- Colors: draw only from the locked `forest`/`wood_leather`/`metal`/`arcane` hex values in [`FARM_PALETTE.md`](FARM_PALETTE.md) / [`farm_palette.json`](farm_palette.json).
+- Colors: draw only from the locked `forest`, `wood_leather`, `metal_stone` (contract `metal`), and `water` (contract `arcane`) hex values in [`FARM_ENVIRONMENT_PALETTE_V1.md`](FARM_ENVIRONMENT_PALETTE_V1.md) / [`farm_environment_palette_v1.json`](farm_environment_palette_v1.json).
 - Tall objects (`env_farm_tree`, `env_farm_bush_large`, `env_farm_rock_medium`, `env_farm_fence`, `env_farm_gate`) declare `renderLayer: actors_body` so they can Y-sort against the player and NPCs at integration time; this spec makes no Y-sort implementation. Each such target's canvas extends upward from its footprint (drawn height above, grounded footprint below) so the footprint — and therefore collision/gameplay — is unchanged by the taller art.
 - Per Section 8a, none of these targets bake a ground shadow into the source art — dynamic Y-sorted props get their shadow drawn by engine code at integration time, the same pattern already used for the player, Mira, and the Practice Slime.
 
@@ -48,7 +48,7 @@ A single fallen log spanning two tiles horizontally, lying flat.
 
 ### `env_farm_fence` / `env_farm_gate`
 
-One shared weathered-wood material story across posts, rails, corners, a two-tile gate, and explicit broken variants for both, matching the plan's "fence posts, rails, corners, gates, and broken variants" line item. Both sit on `actors_body` and so carry drawn height: the fence is a `16x32` canvas over a `16x16` footprint (`pivot [8,31]`) and the gate a `32x32` canvas over a `32x16` footprint (`pivot [16,31]`), giving posts and rails visible height under the flattened perspective without enlarging their one-tile-deep gameplay footprint.
+One shared weathered-wood material story. The fence declares nine explicit variants — `post`, `rail_horizontal`, `rail_vertical`, `corner_ne`, `corner_nw`, `corner_se`, `corner_sw`, `broken_horizontal`, `broken_vertical` — and the gate keeps `closed`/`broken`. Every orientation is its own authored variant precisely so nothing depends on runtime rotation or mirroring, which would reverse the approved upper-left key light. Both sit on `actors_body` and carry drawn height: the fence is a `16x32` canvas over a `16x16` footprint (`pivot [8,31]`, collision body `[0,16,16,16]`) and the gate a `32x32` canvas over a `32x16` footprint (`pivot [16,31]`, collision body and interaction both `[0,16,32,16]`) — visible post/rail height under the flattened perspective without enlarging the one-tile-deep gameplay footprint, which stays on the lower half of the canvas.
 
 ## Future Art PR Acceptance Checklist
 

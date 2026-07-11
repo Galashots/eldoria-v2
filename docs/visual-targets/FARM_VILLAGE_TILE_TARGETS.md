@@ -23,7 +23,7 @@ These are target specifications only. They add no art, runtime behavior, map edi
 - Preferred editable source: `.aseprite` or `.ase`.
 - Atlas family: `environment_farm`.
 - Readability: low-noise and child-friendly at 1x and 3x.
-- Colors: farm-scope families (`forest`, `wood_leather`) draw only from the locked hex values in [`FARM_PALETTE.md`](FARM_PALETTE.md) / [`farm_palette.json`](farm_palette.json). Village stone/UI colors (`ruins`, `ui_neutral`) are locked when village art lands.
+- Colors: farm-scope families (`forest`, `wood_leather`) draw only from the locked hex values in [`FARM_ENVIRONMENT_PALETTE_V1.md`](FARM_ENVIRONMENT_PALETTE_V1.md) / [`farm_environment_palette_v1.json`](farm_environment_palette_v1.json). Village stone/UI colors (`ruins`, `ui_neutral`) are locked when village art lands.
 
 ## Targets
 

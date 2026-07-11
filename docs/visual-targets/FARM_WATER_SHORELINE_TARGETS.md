@@ -21,7 +21,7 @@ Target specifications only. No art, runtime behavior, map edits, collision, or g
 - Lighting: consistent upper-left key light — no baked scene tint (Section 14 applies the atmosphere tint once, at the scene level).
 - Runtime export: PNG. Preferred editable source: `.aseprite`/`.ase`.
 - Atlas family: `environment_farm`.
-- Colors: draw only from the locked `arcane`/`forest`/`wood_leather`/`metal` hex values in [`FARM_PALETTE.md`](FARM_PALETTE.md) / [`farm_palette.json`](farm_palette.json).
+- Colors: draw only from the locked `water` (contract `arcane`), `forest`, `wood_leather`, and `metal_stone` (contract `metal`) hex values in [`FARM_ENVIRONMENT_PALETTE_V1.md`](FARM_ENVIRONMENT_PALETTE_V1.md) / [`farm_environment_palette_v1.json`](farm_environment_palette_v1.json).
 
 ## Targets
 

@@ -20,13 +20,13 @@ Target specifications only. No art, runtime behavior, map edits, collision, or g
 - Lighting: consistent upper-left key light.
 - Runtime export: PNG. Preferred editable source: `.aseprite`/`.ase`.
 - Atlas family: `environment_farm`.
-- Colors: draw only from the locked `wood_leather` hex values in [`FARM_PALETTE.md`](FARM_PALETTE.md) / [`farm_palette.json`](farm_palette.json).
+- Colors: draw only from the locked `wood_leather` hex values in [`FARM_ENVIRONMENT_PALETTE_V1.md`](FARM_ENVIRONMENT_PALETTE_V1.md) / [`farm_environment_palette_v1.json`](farm_environment_palette_v1.json).
 
 ## Targets
 
 ### `env_farm_signpost`
 
-A landmark-scale wooden signpost reusing the existing `sign` interaction kind already declared on `tile_village_interaction_sign`, so both share one non-verbal navigation language for Grade 2 audio-first play.
+A landmark-scale wooden signpost reusing the existing `sign` interaction kind already declared on `tile_village_interaction_sign`, so both share one non-verbal navigation language for Grade 2 audio-first play. On its `16x32` canvas (footprint `16x16`, pivot `[8,31]`) the interaction box sits on the lower `[0,16,16,16]` footprint, not the drawn post height above it.
 
 ### `env_farm_storage_prop`
 
