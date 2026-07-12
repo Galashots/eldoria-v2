@@ -64,6 +64,26 @@ For production source sheets, prompt for:
 
 For 6x4 sprite sheets, prefer a **3:2 generated source image**. Common high-resolution outputs with a 3:2 shape divide cleanly into 6 columns and 4 rows.
 
+## Runtime-first environment generation lessons
+
+The accepted grass, dirt, and water cells established a stricter review rule for small environment art:
+
+1. **Audit the actual runtime cell first.** For a `16×16` target, the decisive image is the normalized `16×16` output, not the high-resolution generation. Always inspect it at 1x and in nearest-neighbour 3x or larger previews, then inspect tiled repetition.
+2. **Treat enlarged source art as supporting evidence only.** Attractive high-resolution texture may disappear, alias, form accidental symbols, or create visible repetition after normalization.
+3. **Use explicit anti-pattern language in prompts.** Name the failure modes to avoid: no checkerboards, plus/cross motifs, repeated rows, obvious parity patterns, isolated symbols, hard border lines, painted frames, or decorative details that compete with the player at runtime size.
+4. **Approve the simplest clean runtime result.** Once a cell is readable, palette-compatible, and acceptably seamless at runtime size, stop regenerating. More source detail is not inherently better.
+5. **Promote accepted runtime pixels when necessary.** When the runtime result is correct but the original high-resolution source contains disqualifying detail, classify the normalized cell as an **APPROVED RUNTIME MASTER** and derive the production source by deterministic nearest-neighbour upscaling.
+6. **Require deterministic proof.** The upscaled production source must normalize back to the approved runtime master with zero pixel differences. Record hash, dimensions, alpha counts, seam metrics, palette distance, and tiled evidence.
+7. **Keep approval separate from integration.** Source acceptance does not authorize production-sheet packing, map edits, manifest activation, or Phaser loading. Those remain later milestone gates.
+
+Recommended candidate wording for small terrain cells:
+
+```text
+Design for the final <width>x<height> runtime cell first. Keep the silhouette and color grouping readable after nearest-neighbour reduction. Avoid checkerboards, plus/cross motifs, repeated rows, parity patterns, isolated symbols, visible border frames, and decorative micro-detail. The result must tile without an obvious seam or repeated focal mark.
+```
+
+For trees and other larger props, retain the same runtime-first principle but judge silhouette, pivot, occupied bounds, player overlap, and readability against the target cell dimensions rather than forcing terrain-specific seam criteria.
+
 ## Approved Runtime Master workflow
 
 Sometimes the AI-generated high-resolution source cannot be used directly, even after an otherwise-approved candidate normalizes cleanly to its runtime size — for example, high-resolution motifs that violate the art spec but disappear once downscaled. In that case:
@@ -76,7 +96,7 @@ Sometimes the AI-generated high-resolution source cannot be used directly, even 
   - **palette verification** — every pixel within tolerance of the target's locked palette families;
   - **review evidence** — the same evidence set as any other candidate (normalized output, enlarged inspection preview, tiled-repeat previews, comparison panel), plus an `AUDIT.md` recording the above checks.
 
-See `docs/art-pipeline/review/tile_farm_path_dirt_center/AUDIT.md` for a worked example (`tile_farm_path_dirt` / `center`).
+See `docs/art-pipeline/review/tile_farm_path_dirt_center/AUDIT.md` and `docs/art-pipeline/review/tile_farm_water_base_water_a/AUDIT.md` for worked examples.
 
 ## Recommended folders
 
