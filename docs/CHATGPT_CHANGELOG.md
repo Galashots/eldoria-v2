@@ -4,6 +4,17 @@ This file keeps recent, high-value change summaries. Full historical entries thr
 
 Entries should remain concise: date/author, branch or PR, scope, compatibility impact, verification, and remaining risk. Detailed implementation narratives belong in the PR description and commits.
 
+## 2026-07-12 — Fix: hero could get stuck sliding after a lost focus event
+
+- Branch/PR: `claude/fix-stuck-movement-on-focus-loss` (draft PR pending).
+- Scope: fixed a player-reported bug (playtesting on desktop keyboard) where the hero kept moving in one direction indefinitely after some interruption ("I might have hit the wrong button somewhere"). Root cause, verified empirically rather than assumed: if the browser loses focus while a movement key is physically held down, its keyup never reaches the page, so input state can stay stuck "down" forever. Two concrete, reproduced gaps: (1) `WorldScene`'s custom joystick state (`touchMove`/`joystickPointer`) is unknown to Phaser and was never reset on any focus-loss event — reproduced directly (velocity stuck at -177 after a mid-drag `blur` with no `pointerup`); (2) Phaser's own `KeyboardPlugin` only resets key state on window `blur`, not on `document.visibilitychange` — these two browser events are not guaranteed to co-fire on every OS/window-manager combination, and a `visibilitychange`-only interruption reproduced the bug directly for pure keyboard play (velocity stuck at -250) even though a `blur`-based repro was already handled by Phaser itself.
+- Fix: `WorldScene` now listens for both `window` `blur` and `document` `visibilitychange` and resets keyboard state (`this.input.keyboard.resetKeys()`) plus the custom joystick state (`resetJoystick()`) on either. Listeners are added in `create()` and removed in the existing `SHUTDOWN` cleanup.
+- Principal files: `src/scenes/WorldScene.ts` (fix; `PolishedWorldScene` inherits it), `tests/input-focus-recovery.spec.ts` (new, 3 tests), `tests/support/canvas.ts` (extracted `gameToCanvasPoint()` from `clickGame()` so the new tests can drive a raw mouse drag).
+- Verification method: each new test was run against the pre-fix code first (via a scoped `git stash` of just `WorldScene.ts`) to confirm it actually fails without the fix, not just passes trivially — 2 of 3 failed pre-fix as expected (joystick-drag-then-blur, and keyboard-then-visibilitychange-only); the plain keyboard-then-blur case passed even pre-fix, confirming Phaser's own built-in protection for that specific path and that the new coverage targets real, previously-unhandled gaps rather than restating existing behavior.
+- Compatibility: input-handling only; no save, quest, curriculum, mastery, or interaction change. Normal movement/joystick behavior during ordinary play is unaffected — the added listeners only fire on an actual focus-loss event.
+- Verification: `npm run check`, `npm run test:unit` (48 passed), and the full `npm run smoke` suite (53 passed, including the 3 new tests) all green locally.
+- Remaining risk: no physical-iPad validation was performed for this change (the joystick half is most relevant to touch devices); awaiting review before merge.
+
 ## 2026-07-11 — Batch A dirt_center source acceptance and review-only normalization
 
 - Branch/PR: `claude/beautification-phase2-batch-a-dirt-center` (draft PR pending).

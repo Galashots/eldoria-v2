@@ -15,12 +15,23 @@ export const CANVAS = 'canvas';
  * 480/320) so this helper — and every test that uses it — automatically
  * tracks the game's logical canvas resolution.
  */
-export async function clickGame(page: Page, gameX: number, gameY: number): Promise<void> {
+/**
+ * Maps a game-logical coordinate to a CSS pixel point on the actual canvas
+ * element, accounting for Phaser's Scale.FIT letterboxing. Shared by
+ * clickGame() and any test that needs to drive raw mouse.move/down/up
+ * sequences (e.g. simulating a joystick drag) rather than a single click.
+ */
+export async function gameToCanvasPoint(page: Page, gameX: number, gameY: number): Promise<{ x: number; y: number }> {
   const box = await page.locator(CANVAS).boundingBox();
   if (!box) throw new Error('Canvas was not visible.');
 
-  await page.mouse.click(
-    box.x + (gameX / GAME_WIDTH) * box.width,
-    box.y + (gameY / GAME_HEIGHT) * box.height
-  );
+  return {
+    x: box.x + (gameX / GAME_WIDTH) * box.width,
+    y: box.y + (gameY / GAME_HEIGHT) * box.height
+  };
+}
+
+export async function clickGame(page: Page, gameX: number, gameY: number): Promise<void> {
+  const point = await gameToCanvasPoint(page, gameX, gameY);
+  await page.mouse.click(point.x, point.y);
 }
