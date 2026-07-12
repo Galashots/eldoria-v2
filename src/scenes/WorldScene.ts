@@ -88,6 +88,15 @@ export class WorldScene extends Phaser.Scene {
   // Softer here reduces that risk until real licensed music replaces it.
   private readonly musicVolume = 0.22;
   private readonly musicDuckedVolume = 0.06;
+  // Bound once so addEventListener/removeEventListener target the same
+  // reference. Without this, losing window/tab focus while a movement key
+  // is physically held down never delivers its keyup to the canvas, so
+  // Phaser's cursor/key state stays stuck "down" forever afterward and the
+  // player keeps sliding in that direction even though nothing is pressed.
+  private readonly clearStuckInputOnFocusLoss = (): void => {
+    this.input.keyboard?.resetKeys();
+    this.resetJoystick();
+  };
 
   constructor() {
     super('WorldScene');
@@ -186,6 +195,8 @@ export class WorldScene extends Phaser.Scene {
 
     this.events.on(Phaser.Scenes.Events.PAUSE, this.stopPromptReadAloud, this);
     this.events.on(Phaser.Scenes.Events.SLEEP, this.stopPromptReadAloud, this);
+    window.addEventListener('blur', this.clearStuckInputOnFocusLoss);
+    document.addEventListener('visibilitychange', this.clearStuckInputOnFocusLoss);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.stopPromptReadAloud();
       this.resetJoystick();
@@ -196,6 +207,8 @@ export class WorldScene extends Phaser.Scene {
       this.music?.destroy();
       this.events.off(Phaser.Scenes.Events.PAUSE, this.stopPromptReadAloud, this);
       this.events.off(Phaser.Scenes.Events.SLEEP, this.stopPromptReadAloud, this);
+      window.removeEventListener('blur', this.clearStuckInputOnFocusLoss);
+      document.removeEventListener('visibilitychange', this.clearStuckInputOnFocusLoss);
     });
     this.events.once(Phaser.Scenes.Events.DESTROY, () => {
       this.stopPromptReadAloud();
