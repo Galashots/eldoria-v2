@@ -118,6 +118,22 @@ Run the pipeline self-test:
 npm run test:asset-pipeline
 ```
 
+Generate review evidence and deterministic metrics in one pass:
+
+```bash
+npm run review:asset -- --manifest <path> --palette docs/visual-targets/farm_environment_palette_v1.json --families forest,wood_leather
+```
+
+`review:asset` normalizes and validates the manifest, then writes four nearest-neighbour evidence images and `review.json` under `.tmp/asset-review/<asset_id>/` by default. The JSON records output dimensions, frame count, SHA-256, alpha counts, horizontal/vertical wrap-step ratios, and optional locked-palette distance metrics.
+
+For a multi-cell production sheet, create a one-cell review manifest for the candidate being approved; seam/repetition metrics across an entire packed sheet are not meaningful. Review output is derived evidence: normally commit only the concise audit verdict plus one useful comparison panel when line-level Git review needs visual context. Keep the other generated previews temporary or attach them as CI/PR artifacts instead of committing a full evidence bundle for every candidate.
+
+Run its focused test with:
+
+```bash
+npm run test:asset-review
+```
+
 ## Manifest basics
 
 A manifest declares the target sheet, the source art, and the exact source-to-destination frame mapping.

@@ -26,6 +26,15 @@ Entries should remain concise: date/author, branch or PR, scope, compatibility i
 - Verification: `npm ci`, `npm run check` (visual-target validation + typecheck + build), `npm run test:visual-targets`, `npm run test:asset-pipeline` (including the new regression test), `npm run test:unit` (48 passed), and the full local `npm run smoke` Playwright suite (50 passed) all ran clean on this machine — no sandbox browser-revision limitation encountered locally this session. GitHub CI on the pushed head remains the authoritative result for the PR.
 - Remaining risk: awaiting ChatGPT's review of this evidence set, and of the `upscale-nearest-neighbor.mjs` fix itself, before `water_b`, the shimmer clip frames, or other Batch A/B assets are generated.
 
+## 2026-07-12 - Automated asset-review fast path
+
+- Author/branch: Codex, `codex/asset-review-fast-path` (draft PR pending).
+- Scope: added one manifest-driven review command that normalizes, validates, generates four nearest-neighbour evidence images, and emits machine-readable dimensions, hash, alpha, seam, and optional palette metrics.
+- Principal files: `scripts/review-asset.mjs`, `scripts/test-asset-review.mjs`, `package.json`, and `docs/art-pipeline/SPRITE_ASSET_PIPELINE.md`.
+- Compatibility: tooling/docs only; existing manifest v1 format and normalizer behavior are unchanged. No runtime, maps, gameplay, saves, curriculum, quests, or art assets changed.
+- Verification: `npm run test:asset-review`, `npm run test:asset-pipeline`, `npm run test:visual-targets`, `npm run test:unit`, `npm run check`, and `npm run build` pass. The command also reproduced the approved `grass_a` runtime SHA-256 and palette result.
+- Remaining risk: seam metrics are meaningful for one-cell review manifests, not whole packed sheets; multi-cell candidates should continue using a one-cell review manifest per approval target.
+
 ## 2026-07-11 — Batch A dirt_center source acceptance and review-only normalization
 
 - Branch/PR: `claude/beautification-phase2-batch-a-dirt-center` (draft PR pending).
