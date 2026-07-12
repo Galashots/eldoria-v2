@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { normalizeAssetSheet, readPng, writePng } from './normalize-asset-sheet.mjs';
 import { validateAssetSheet } from './validate-asset-sheet.mjs';
+import { upscaleNearestNeighborRgbOnly } from './upscale-nearest-neighbor.mjs';
 
 const ROOT = path.resolve('.tmp/asset-pipeline');
 
@@ -259,6 +260,37 @@ fs.mkdirSync(ROOT, { recursive: true });
   const badResult = validateAssetSheet(badManifest);
   assert.equal(badResult.ok, false);
   assert.ok(badResult.errors.some((e) => e.includes('fit must be contain or fill')), 'expected fit rejection error');
+}
+
+{
+  // C. upscaleNearestNeighborRgbOnly on a colorType-2 (RGB, no alpha channel) source.
+  // readPng() always expands data to 4 bytes/pixel (RGBA) regardless of the source's
+  // original colorType, so the read stride inside the upscaler must always be 4 — a
+  // colorType-conditional 3-byte stride previously misaligned every pixel by one channel
+  // for exactly this RGB-source case (caught by the tile_farm_water_base/water_a audit).
+  const src = path.join(ROOT, 'upscale-rgb-source.png');
+  const rgbSrc = image(3, 1, [0, 0, 0, 255]);
+  const setPixel = (img, x, y, color) => { const i = (y * img.width + x) * 4; img.data[i] = color[0]; img.data[i + 1] = color[1]; img.data[i + 2] = color[2]; img.data[i + 3] = 255; };
+  setPixel(rgbSrc, 0, 0, [10, 96, 147]);
+  setPixel(rgbSrc, 1, 0, [200, 20, 5]);
+  setPixel(rgbSrc, 2, 0, [1, 2, 3]);
+  writePng(src, rgbSrc, { colorType: 2 });
+
+  const rgbSource = readPng(src);
+  assert.equal(rgbSource.colorType, 2);
+  const scale = 4;
+  const up = upscaleNearestNeighborRgbOnly(rgbSource, scale);
+  assert.equal(up.width, 12);
+  assert.equal(up.height, 4);
+  assert.deepEqual(pixel(up, 0, 0), [10, 96, 147, 255]);
+  assert.deepEqual(pixel(up, scale - 1, scale - 1), [10, 96, 147, 255], 'first block should be uniform');
+  assert.deepEqual(pixel(up, scale, 0), [200, 20, 5, 255], 'second block should start at the second source pixel with no channel shift');
+  assert.deepEqual(pixel(up, scale * 2, 0), [1, 2, 3, 255], 'third block should start at the third source pixel with no channel shift');
+
+  const upOut = path.join(ROOT, 'upscale-rgb-output.png');
+  writePng(upOut, up, { colorType: 2 });
+  const reread = readPng(upOut);
+  assert.deepEqual(pixel(reread, scale, 0), [200, 20, 5, 255], 'round-trip through disk preserves the second block');
 }
 
 console.log('Asset pipeline test passed.');
