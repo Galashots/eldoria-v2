@@ -1,6 +1,6 @@
 # Eldoria-V2 Current State
 
-Last refreshed on 2026-07-11 during the Phase 2 farm-environment art milestone. This file owns volatile project status; durable rules live in `AGENTS.md`, and the documentation map lives in `docs/README.md`.
+Last refreshed on 2026-07-12 after the Phase 2 farm-environment merge queue was cleared. This file owns volatile project status; durable rules live in `AGENTS.md`, and the documentation map lives in `docs/README.md`.
 
 ## Product invariant
 
@@ -29,11 +29,20 @@ Last refreshed on 2026-07-11 during the Phase 2 farm-environment art milestone. 
 - Practice Slime v001 idle and encounter presentation.
 - Code-drawn or layered bridge presentation for Ranger Explorer, Mira, Wildbloom landmarks, quest markers, crop/sprout markers, shadows, projectiles, and feedback effects.
 
+### Approved Phase 2 source assets — not yet runtime-integrated
+
+- `tile_farm_grass_base / grass_a` — approved high-resolution source candidate with review-only normalization evidence.
+- `tile_farm_path_dirt / center` — approved exact `16×16` runtime master, deterministically upscaled to the canonical source with a zero-drift round trip.
+- `tile_farm_water_base / water_a` — approved exact `16×16` runtime master, deterministically upscaled to the canonical source with a zero-drift round trip.
+- `npm run review:asset` now normalizes, validates, generates nearest-neighbour evidence, and reports deterministic seam, alpha, hash, and optional palette metrics for one-cell review manifests.
+
+These three assets are approved individually, but their target families remain incomplete. No production farm-environment manifest, packed terrain sheet, Phaser loading path, or map integration is complete.
+
 ### Pending production replacement
 
 - Dedicated Ranger Explorer sprite sheets.
 - Dedicated Mira sprite sheets.
-- Production farm terrain, shoreline, vegetation, fences, props, crop art, and Wildbloom landmark art.
+- Remaining production farm terrain, shoreline, vegetation, fences, props, crop art, and Wildbloom landmark art.
 - Production fantasy UI skin.
 - Final licensed audio replacement.
 
@@ -45,8 +54,9 @@ The repository includes:
 
 - visual-target schema validation;
 - manifest-driven asset normalization and validation;
+- automated one-cell asset-review evidence and metrics;
 - Vitest coverage for learning, mastery, interactions, curriculum templates, and save migration;
-- Playwright coverage for both profiles, the Waking Gate, movement/input, Mira quests, crop prompts, the Practice Slime encounter, Wildbloom discovery and persistence, Stats & Mastery, save/reload, and portrait guidance;
+- Playwright coverage for both profiles, the Waking Gate, movement/input, focus-loss recovery, Mira quests, crop prompts, the Practice Slime encounter, Wildbloom discovery and persistence, Stats & Mastery, save/reload, and portrait guidance;
 - reviewable screenshot artifacts, including iPad-like landscape browser viewports.
 
 Browser viewport evidence is not physical-iPad validation. The build remains technically and visually browser-verified rather than child-validated or physically iPad-certified.
@@ -67,14 +77,23 @@ Phase 2A specification groundwork is complete:
 - ordered production-generation handoff in `docs/art-pipeline/FARM_ENVIRONMENT_GENERATION_HANDOFF_V1.md`;
 - approved external style direction classified as **STYLE REFERENCE ONLY**, not committed or normalized.
 
-No production farm-environment source art or runtime kit has been approved yet.
+Batch A progress is **3 of 7 foundational assets approved**:
+
+1. `tile_farm_grass_base / grass_a` — complete.
+2. `tile_farm_path_dirt / center` — complete.
+3. `tile_farm_water_base / water_a` — complete.
+4. `env_farm_tree / oak` — next.
+5. `env_farm_fence / rail_horizontal` — pending.
+6. `env_farm_rock_medium / rock_a` — pending.
+7. `env_wildbloom_landmark / root_star_revealed` — pending.
 
 ## Immediate next steps
 
-1. Generate **Batch A foundational source candidates** one asset at a time: grass centre, dirt centre, water centre, oak tree, horizontal fence, medium rock, and revealed Root-Star landmark.
-2. Audit each result at source size and at 1x/3x runtime previews. Assign one of: `APPROVED SOURCE CANDIDATE`, `STYLE REFERENCE ONLY`, `REGENERATE`, or `CHANGE TARGET SIZE`.
-3. Only after Batch A establishes palette, seamlessness, outline weight, lighting, and perspective, proceed through terrain variants, vegetation, props, water decoration, and the remaining Wildbloom family.
-4. Do not recompose `public/maps/farm.json` until the complete kit passes the contact-sheet acceptance gate.
+1. Generate `env_farm_tree / oak` as the next Batch A production candidate.
+2. Audit the source, the exact normalized `32×48` result, and enlarged runtime previews before accepting it. The silhouette, grounded footprint, flattened 3/4 perspective, upper-left light, palette, padding, and absence of a baked shadow are mandatory.
+3. Continue Batch A in canonical order: horizontal fence, medium rock, then revealed Root-Star landmark.
+4. Only after all seven Batch A anchors are approved, begin Batch B terrain variations (`grass_b/c`, dirt transitions, `water_b`, and the complete shoreline set).
+5. Do not recompose `public/maps/farm.json` until the complete production kit passes the contact-sheet acceptance gate.
 
 ## Decisions for the generation handoff
 
@@ -95,6 +114,8 @@ No production farm-environment source art or runtime kit has been approved yet.
 ## Known risks
 
 - Physical touch comfort, safe-area behavior, audio balance, memory stability, and frame pacing remain unverified on an actual iPad.
-- Dense generated environment art may lose readability at `16×16`; target-size changes must be made explicitly rather than hidden through blurry scaling.
-- Terrain centres and transition tiles can easily become non-seamless or visually over-detailed; Batch A and Batch B are mandatory gates.
+- Dense generated environment art may lose readability at tiny runtime sizes; target-size changes must be made explicitly rather than hidden through blurry scaling.
+- High-resolution image generation tends to over-pattern quiet terrain and invent palette intermediates. Every candidate must be judged from its exact runtime pixels, not from the attractive high-resolution preview.
+- A high-resolution source can remain unsuitable even when its normalized runtime cell is good. In that case, freeze the approved runtime pixels and use the documented Approved Runtime Master workflow instead of repeatedly regenerating.
+- Terrain centres and transition tiles can easily become non-seamless or reveal periodic motifs; one-cell 3×3 and large-field repeats remain mandatory gates.
 - Ranger, Mira, and several interactive objects remain bridge art and may look inconsistent once production terrain arrives.

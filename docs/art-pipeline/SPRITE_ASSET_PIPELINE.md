@@ -7,10 +7,10 @@ Image generation can be excellent for style, concepts, and source sheets, but th
 ## Pipeline rule
 
 ```text
-AI source image -> manifest -> normalize -> validate -> repo asset
+AI source image -> source/runtime audit -> manifest -> normalize -> validate -> runtime review -> repo asset -> integration
 ```
 
-Concept sheets are for style approval only. Runtime assets should come from production source sheets or source frames.
+Concept sheets are for style approval only. Runtime assets should come from production source sheets or approved runtime masters that have been deterministically converted into canonical production sources.
 
 ## What the normalizer does
 
@@ -41,6 +41,9 @@ Out of scope:
 - automatic object segmentation,
 - background guessing,
 - AI-style correction,
+- motif removal,
+- seam repair,
+- palette reinterpretation,
 - animation timing,
 - Phaser runtime integration.
 
@@ -64,19 +67,73 @@ For production source sheets, prompt for:
 
 For 6x4 sprite sheets, prefer a **3:2 generated source image**. Common high-resolution outputs with a 3:2 shape divide cleanly into 6 columns and 4 rows.
 
+Detailed generation and audit wording lives in `IMAGE_PROMPTING_GUIDE.md`.
+
+## Approval gates
+
+Do not treat a generated image as production-ready until both source-scale and runtime-scale review have been completed.
+
+### Source-scale gate
+
+Check:
+
+- correct subject, state, and variant;
+- no text, border, UI, checkerboard, watermark, or unrelated scenery;
+- no edge contact or cell bleed;
+- correct palette direction, perspective, upper-left light, and silhouette;
+- no forbidden high-resolution motif that would make the source unsuitable as canonical production art.
+
+### Runtime-scale gate
+
+Check the exact normalized pixels, not a filtered preview:
+
+- declared dimensions and alpha mode;
+- silhouette and major colour clusters at `1×`;
+- enlarged nearest-neighbour inspection preview;
+- palette-distance metrics where a locked palette applies;
+- seam and repetition evidence for terrain;
+- contact-sheet or family consistency where multiple related assets exist.
+
+For terrain, a 3×3 repeat catches hard seams while a larger field repeat catches soft stripes, clusters, directional drift, and fixed-frequency motifs. Both matter.
+
+Metrics support the verdict but do not replace human visual review.
+
 ## Approved Runtime Master workflow
 
-Sometimes the AI-generated high-resolution source cannot be used directly, even after an otherwise-approved candidate normalizes cleanly to its runtime size — for example, high-resolution motifs that violate the art spec but disappear once downscaled. In that case:
+Sometimes the AI-generated high-resolution source cannot be used directly, even after an otherwise-promising candidate normalizes cleanly to its runtime size—for example, high-resolution plus/cross motifs, rosettes, ripples, scales, or other patterns that disappear once downscaled. In that case:
 
-- The **runtime-approved normalized asset** (the exact pixel data that passed visual review at its real runtime size) becomes the **canonical master**, not the original high-resolution generation.
-- The canonical high-resolution **production source** is then generated from that master by **deterministic nearest-neighbour upscaling only** (`scripts/upscale-nearest-neighbor.mjs`) — every master pixel becomes one solid-color square block in the output. No filtering, interpolation, sharpening, antialiasing, color modification, or palette change.
+- The **runtime-approved normalized asset**—the exact pixel data that passed visual review at its real runtime size—becomes the **canonical master**, not the original high-resolution generation.
+- Classify it explicitly as **APPROVED RUNTIME MASTER**, not **APPROVED SOURCE CANDIDATE**.
+- The canonical high-resolution **production source** is then generated from that master by **deterministic nearest-neighbour upscaling only** with `scripts/upscale-nearest-neighbor.mjs`. Every master pixel becomes one solid-colour square block in the output. No filtering, interpolation, sharpening, antialiasing, colour modification, or palette change is allowed.
 - Required verification before this source is treated as approved:
-  - **byte-identical round-trip** — normalizing the upscaled source back down through the real pipeline (`fit: "fill"`) must reproduce the original runtime-approved master with zero pixel differences;
-  - **seam audit** — wrap-boundary color step vs. average internal step, on both axes;
-  - **palette verification** — every pixel within tolerance of the target's locked palette families;
-  - **review evidence** — the same evidence set as any other candidate (normalized output, enlarged inspection preview, tiled-repeat previews, comparison panel), plus an `AUDIT.md` recording the above checks.
+  - **block exactness**—every high-resolution output pixel matches the expected source-master block;
+  - **zero-drift round trip**—normalizing the upscaled source back down through the real pipeline with `fit: "fill"` reproduces all original runtime-master pixels exactly;
+  - **seam audit**—wrap-boundary colour step vs. average internal step, on both axes;
+  - **palette verification**—every pixel is measured against the target's locked palette families and any tolerance exceptions are recorded;
+  - **repetition audit**—3×3 and large-field repeats show no hard seam, stripe, lattice, wallpaper motif, or unacceptable fixed-frequency pattern;
+  - **review evidence**—normalized output, enlarged inspection preview, tiled-repeat previews, comparison panel, and a concise `AUDIT.md`.
 
-See `docs/art-pipeline/review/tile_farm_path_dirt_center/AUDIT.md` for a worked example (`tile_farm_path_dirt` / `center`).
+The upscaler reads image data through `readPng()`, which always exposes an RGBA-expanded buffer even for RGB source PNGs. The upscaler therefore uses a four-byte read stride and writes an RGB canonical source. A dedicated colorType-2 regression test protects this path.
+
+Worked examples:
+
+- `docs/art-pipeline/review/tile_farm_path_dirt_center/AUDIT.md`
+- `docs/art-pipeline/review/tile_farm_water_base_water_a/AUDIT.md`
+
+Use this workflow when the exact runtime result is already good. Do not continue indefinite image regeneration solely to make the discarded high-resolution generation look cleaner.
+
+## Lessons from the first farm terrain approvals
+
+The approved grass, dirt, and water work established these operating rules:
+
+1. **A beautiful high-resolution image is not the acceptance target.** The exact runtime pixels are.
+2. **Quiet terrain must remain quieter than actors and interactables.** Decorative interest belongs in separate scatter, shore, flora, prop, shimmer, and landmark assets.
+3. **The generator may invent palette intermediates even when exact hex values are requested.** Measure the normalized pixels instead of trusting the prompt.
+4. **“Seamless” is insufficient wording.** Inspect wrap-step metrics and repeat images.
+5. **Hard seams and periodic motifs are different failures.** A tile may have acceptable opposite edges but still reveal repeated mottling across a large field.
+6. **One-cell review manifests are the unit of approval for terrain variants.** Packed-sheet-wide seam metrics are not meaningful.
+7. **Source verdict and runtime verdict can differ.** Record that distinction explicitly.
+8. **Do not create a production packed sheet until the required variant family is complete.** Approved individual cells remain review-only sources until then.
 
 ## Recommended folders
 
@@ -97,6 +154,14 @@ assets/source/generated/mob_slime_practice_v001/source_sheet.png
 assets/manifests/mob_slime_practice_v001.manifest.json
 assets/sprites/mob_slime_practice_v001.png
 ```
+
+Review-only evidence should remain clearly separated from production manifests and packed outputs, for example:
+
+```text
+docs/art-pipeline/review/<asset_id>_<variant>/
+```
+
+A review manifest must not imply that an incomplete target family is production-complete.
 
 ## Commands
 
@@ -126,13 +191,21 @@ npm run review:asset -- --manifest <path> --palette docs/visual-targets/farm_env
 
 `review:asset` normalizes and validates the manifest, then writes four nearest-neighbour evidence images and `review.json` under `.tmp/asset-review/<asset_id>/` by default. The JSON records output dimensions, frame count, SHA-256, alpha counts, horizontal/vertical wrap-step ratios, and optional locked-palette distance metrics.
 
-For a multi-cell production sheet, create a one-cell review manifest for the candidate being approved; seam/repetition metrics across an entire packed sheet are not meaningful. Review output is derived evidence: normally commit only the concise audit verdict plus one useful comparison panel when line-level Git review needs visual context. Keep the other generated previews temporary or attach them as CI/PR artifacts instead of committing a full evidence bundle for every candidate.
+For a multi-cell production sheet, create a one-cell review manifest for the candidate being approved; seam/repetition metrics across an entire packed sheet are not meaningful. Review output is derived evidence. Normally commit only the concise audit verdict plus one useful comparison panel when line-level Git review needs visual context. Keep the other generated previews temporary or attach them as CI/PR artifacts instead of committing a full evidence bundle for every candidate. Existing early review bundles remain valid historical evidence.
 
 Run its focused test with:
 
 ```bash
 npm run test:asset-review
 ```
+
+For an Approved Runtime Master, create the canonical high-resolution source with:
+
+```bash
+node scripts/upscale-nearest-neighbor.mjs --in <approved-runtime-master.png> --out <canonical-source.png> --scale <integer-scale>
+```
+
+Then normalize the canonical source back to the declared runtime size and verify zero pixel differences before committing it.
 
 ## Manifest basics
 
@@ -142,9 +215,14 @@ Manifest paths are resolved relative to the manifest file. A source can define a
 
 Background modes are:
 
-- `alpha`: preserve source alpha.
-- `color_key`: remove every pixel matching the configured color and tolerance.
+- `alpha`: preserve source alpha. RGB sources are accepted; the reader synthesizes opaque alpha for normalization.
+- `color_key`: remove every pixel matching the configured colour and tolerance.
 - `edge_flood_color_key`: remove matching pixels connected to the source frame/rectangle edge while preserving enclosed matches.
+
+Placement modes include:
+
+- `fit: "contain"`—preserve aspect ratio and fit inside the target cell;
+- `fit: "fill"`—nearest-neighbour scale independently on both axes to cover the full target cell, appropriate for exact full-bleed terrain cells.
 
 Target dimensions are computed from:
 
