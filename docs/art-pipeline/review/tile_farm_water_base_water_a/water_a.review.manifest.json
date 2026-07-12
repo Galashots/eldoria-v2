@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "id": "review_tile_farm_water_base_water_a",
+  "_reviewOnly": "This manifest is a review/evidence artifact only. It is NOT the production manifest for tile_farm_water_base (only the water_a variant exists here; water_b and the shimmer clip frames do not exist yet) and its output is NOT a runtime asset. Do not load target.outputPath in Phaser or reference it from a production manifest.",
+  "_sourceNote": "The approved runtime master is a 16x16 PNG that already passed ChatGPT's visual audit (docs/art-pipeline/review/tile_farm_water_base_water_a/water_a.approved-master-16x16.png, identical to the originally attached water_a_candidate3_16x16.png). Per the repository's documented Approved Runtime Master workflow, the original AI-generated high-resolution image was deliberately NOT used as the production source. assets/source/generated/tile_farm_water_base/water_a.png is instead a canonical high-resolution source produced by exact 64x nearest-neighbour block-replication of the approved 16x16 master (scripts/upscale-nearest-neighbor.mjs) so the pipeline has a normal high-resolution source input; it introduces no new pixel information beyond the approved master.",
+  "target": {
+    "outputPath": "water_a.review-normalized.png",
+    "cellPx": [
+      16,
+      16
+    ],
+    "cols": 1,
+    "rows": 1
+  },
+  "sources": {
+    "water_a_source": {
+      "path": "../../../../assets/source/generated/tile_farm_water_base/water_a.png",
+      "background": {
+        "mode": "alpha"
+      }
+    }
+  },
+  "frames": [
+    {
+      "sourceRef": "water_a_source",
+      "destCell": [
+        0,
+        0
+      ],
+      "trim": "none",
+      "fit": "fill",
+      "anchor": "top_left"
+    }
+  ]
+}

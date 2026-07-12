@@ -21,13 +21,18 @@ import { readPng, writePng } from './normalize-asset-sheet.mjs';
  */
 export function upscaleNearestNeighborRgbOnly(image, scale) {
   if (!Number.isInteger(scale) || scale < 1) throw new Error(`scale must be a positive integer, got ${scale}`);
-  const srcBpp = image.colorType === 6 ? 4 : 3;
+  // readPng() always expands its returned `data` to 4 bytes/pixel (RGBA),
+  // synthesizing alpha=255 for RGB (colorType 2) sources — so the read
+  // stride here must always be 4, regardless of the source's original
+  // colorType. (A colorType-conditional 3-byte stride previously caused a
+  // one-channel misalignment for every colorType-2 source: see the water_a
+  // block-exactness audit.)
   const outWidth = image.width * scale;
   const outHeight = image.height * scale;
   const out = new Uint8Array(outWidth * outHeight * 4);
   for (let sy = 0; sy < image.height; sy += 1) {
     for (let sx = 0; sx < image.width; sx += 1) {
-      const sIndex = (sy * image.width + sx) * srcBpp;
+      const sIndex = (sy * image.width + sx) * 4;
       const r = image.data[sIndex];
       const g = image.data[sIndex + 1];
       const b = image.data[sIndex + 2];
