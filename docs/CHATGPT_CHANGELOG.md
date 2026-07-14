@@ -4,6 +4,15 @@ This file keeps recent, high-value change summaries. Full historical entries thr
 
 Entries should remain concise: date/author, branch or PR, scope, compatibility impact, verification, and remaining risk. Detailed implementation narratives belong in the PR description and commits.
 
+## 2026-07-14 — Modular asset-review evidence
+
+- Author/branch: Sol with Luna implementation, `codex/modular-asset-review-evidence` (PR pending).
+- Scope: extended the optional asset-review fast path with axis-specific modular evidence: a five-cell repeated strip, enlarged connection-edge crop, and alpha-aware shared/unmatched boundary contact runs. Added positive horizontal-fence and broken-edge regression coverage while preserving the default terrain review outputs.
+- Principal files: `scripts/review-asset.mjs`, `scripts/test-asset-review.mjs`, and `docs/art-pipeline/SPRITE_ASSET_PIPELINE.md`.
+- Verification: `npm.cmd run check`, `npm.cmd run test:visual-targets`, `npm.cmd run test:asset-pipeline`, `npm.cmd run test:asset-review`, `npm.cmd run test:unit` (48 passed), and `npm.cmd run smoke` (53 passed) passed locally; the generated valid-fence horizontal/vertical strips and connection-edge crops were visually inspected. The first smoke attempt had an intermittent title-page fixture timeout while the other 52 tests passed; the isolated title test and full retry passed. `git diff --check` passed.
+- Compatibility: review tooling, tests, and documentation only. No asset manifests, generated art, runtime loading, map, collision, save, quest, curriculum, mastery, economy, interaction, or dependency change.
+- Remaining risk: boundary metrics diagnose alpha topology but do not approve visual semantics; reviewers must still reject doubled posts, decorative endcaps, wrong orientation, or a complete self-contained panel from the generated evidence.
+
 ## 2026-07-14 — Batch A oak runtime-master ingestion and visual-evidence retention
 
 - Author/branch: ChatGPT and Sol with Luna verification, `chatgpt/phase2-oak-and-visual-evidence` (draft PR #83).

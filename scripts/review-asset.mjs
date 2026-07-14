@@ -10,7 +10,12 @@ const parseArgs = (argv) => {
   const out = {};
   for (let i = 0; i < argv.length; i += 1) {
     if (!argv[i].startsWith('--')) continue;
-    out[argv[i].slice(2)] = argv[i + 1];
+    const next = argv[i + 1];
+    if (next === undefined || next.startsWith('--')) {
+      out[argv[i].slice(2)] = undefined;
+      continue;
+    }
+    out[argv[i].slice(2)] = next;
     i += 1;
   }
   return out;
@@ -42,6 +47,32 @@ function tileImage(image, cols, rows) {
       const dest = (((ty * image.height + y) * out.width) + tx * image.width + x) * 4;
       out.data.set(image.data.subarray(source, source + 4), dest);
     }
+  }
+  return out;
+}
+
+function compositeOnCheckerboard(image) {
+  const out = { width: image.width, height: image.height, colorType: 6, data: new Uint8Array(image.width * image.height * 4) };
+  const colors = [[214, 208, 220], [174, 167, 181]];
+  for (let y = 0; y < image.height; y += 1) for (let x = 0; x < image.width; x += 1) {
+    const source = (y * image.width + x) * 4;
+    const dest = source;
+    const background = colors[(Math.floor(x / 2) + Math.floor(y / 2)) % 2];
+    const alpha = image.data[source + 3] / 255;
+    out.data[dest] = Math.round(image.data[source] * alpha + background[0] * (1 - alpha));
+    out.data[dest + 1] = Math.round(image.data[source + 1] * alpha + background[1] * (1 - alpha));
+    out.data[dest + 2] = Math.round(image.data[source + 2] * alpha + background[2] * (1 - alpha));
+    out.data[dest + 3] = 255;
+  }
+  return out;
+}
+
+function cropImage(image, left, top, width, height) {
+  const out = { width, height, colorType: 6, data: new Uint8Array(width * height * 4) };
+  for (let y = 0; y < height; y += 1) for (let x = 0; x < width; x += 1) {
+    const source = ((top + y) * image.width + left + x) * 4;
+    const dest = (y * width + x) * 4;
+    out.data.set(image.data.subarray(source, source + 4), dest);
   }
   return out;
 }
@@ -97,6 +128,72 @@ function alphaMetrics(image) {
   return counts;
 }
 
+function contiguousRuns(indices) {
+  const runs = [];
+  for (const value of indices) {
+    const current = runs.at(-1);
+    if (current && value === current[1] + 1) current[1] = value;
+    else runs.push([value, value]);
+  }
+  return runs;
+}
+
+function edgeConnectivityMetrics(image, axis) {
+  const first = [];
+  const second = [];
+  const length = axis === 'horizontal' ? image.height : image.width;
+  for (let index = 0; index < length; index += 1) {
+    const firstPixel = axis === 'horizontal' ? pixel(image, 0, index) : pixel(image, index, 0);
+    const secondPixel = axis === 'horizontal'
+      ? pixel(image, image.width - 1, index)
+      : pixel(image, index, image.height - 1);
+    if (firstPixel[3] > 0) first.push(index);
+    if (secondPixel[3] > 0) second.push(index);
+  }
+  const firstSet = new Set(first);
+  const secondSet = new Set(second);
+  const shared = first.filter((index) => secondSet.has(index));
+  const firstOnly = first.filter((index) => !secondSet.has(index));
+  const secondOnly = second.filter((index) => !firstSet.has(index));
+  if (axis === 'horizontal') {
+    return {
+      leftRows: first,
+      rightRows: second,
+      sharedRuns: contiguousRuns(shared),
+      leftOnlyRows: firstOnly,
+      rightOnlyRows: secondOnly
+    };
+  }
+  return {
+    topColumns: first,
+    bottomColumns: second,
+    sharedRuns: contiguousRuns(shared),
+    topOnlyColumns: firstOnly,
+    bottomOnlyColumns: secondOnly
+  };
+}
+
+function modularEvidence(image, axis) {
+  const horizontal = axis === 'horizontal';
+  const strip = tileImage(image, horizontal ? 5 : 1, horizontal ? 1 : 5);
+  const stripPreview = resizeNearest(
+    compositeOnCheckerboard(strip),
+    strip.width * 8,
+    strip.height * 8
+  );
+  const pair = tileImage(image, horizontal ? 2 : 1, horizontal ? 1 : 2);
+  const seamDepth = Math.min(4, horizontal ? image.width : image.height);
+  const connection = horizontal
+    ? cropImage(pair, image.width - seamDepth, 0, seamDepth * 2, image.height)
+    : cropImage(pair, 0, image.height - seamDepth, image.width, seamDepth * 2);
+  const connectionPreview = resizeNearest(
+    compositeOnCheckerboard(connection),
+    connection.width * 20,
+    connection.height * 20
+  );
+  return { stripPreview, connectionPreview };
+}
+
 function paletteMetrics(image, palettePath, families, tolerance) {
   if (!palettePath || !families.length) return null;
   const palette = JSON.parse(fs.readFileSync(palettePath, 'utf8'));
@@ -128,6 +225,10 @@ function firstSourcePath(manifest, manifestDir) {
 }
 
 export function reviewAsset(manifestPath, options = {}) {
+  const modularAxis = options.modularAxis ?? null;
+  if (modularAxis !== null && !['horizontal', 'vertical'].includes(modularAxis)) {
+    throw new Error(`modularAxis must be horizontal or vertical, got ${modularAxis}`);
+  }
   const resolvedManifest = path.resolve(manifestPath);
   const manifestDir = path.dirname(resolvedManifest);
   const manifest = JSON.parse(fs.readFileSync(resolvedManifest, 'utf8'));
@@ -154,6 +255,18 @@ export function reviewAsset(manifestPath, options = {}) {
   containOn(panel, tileImage(runtime, 3, 3), 576, 0, 288, 288);
   writePng(path.join(outDir, 'comparison-panel.png'), panel);
 
+  const evidence = ['preview-20x.png', 'tile-3x3-8x.png', 'field-12x8-3x.png', 'comparison-panel.png'];
+  let connectivity = null;
+  if (modularAxis) {
+    const modular = modularEvidence(runtime, modularAxis);
+    const stripName = `strip-${modularAxis}-8x.png`;
+    const connectionName = `connection-edges-${modularAxis}-20x.png`;
+    writePng(path.join(outDir, stripName), modular.stripPreview);
+    writePng(path.join(outDir, connectionName), modular.connectionPreview);
+    evidence.push(stripName, connectionName);
+    connectivity = { [modularAxis]: edgeConnectivityMetrics(runtime, modularAxis) };
+  }
+
   const families = options.families ?? [];
   const report = {
     version: 1,
@@ -166,8 +279,9 @@ export function reviewAsset(manifestPath, options = {}) {
     alpha: alphaMetrics(runtime),
     seams: edgeMetrics(runtime),
     palette: paletteMetrics(runtime, options.palettePath, families, options.tolerance ?? 40),
-    evidence: ['preview-20x.png', 'tile-3x3-8x.png', 'field-12x8-3x.png', 'comparison-panel.png']
+    evidence
   };
+  if (connectivity) report.connectivity = connectivity;
   fs.writeFileSync(path.join(outDir, 'review.json'), `${JSON.stringify(report, null, 2)}\n`);
   console.log(`Asset review generated: ${manifest.id} -> ${outDir} (${runtime.width}x${runtime.height}, ${report.evidence.length} images + review.json)`);
   return { outDir, report };
@@ -176,15 +290,19 @@ export function reviewAsset(manifestPath, options = {}) {
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const args = parseArgs(process.argv.slice(2));
   if (!args.manifest) {
-    console.error('Usage: node scripts/review-asset.mjs --manifest <path> [--out-dir <path>] [--palette <path>] [--families a,b] [--tolerance 40]');
+    console.error('Usage: node scripts/review-asset.mjs --manifest <path> [--out-dir <path>] [--palette <path>] [--families a,b] [--tolerance 40] [--modular-axis horizontal|vertical]');
     process.exitCode = 1;
   } else {
     try {
+      if (Object.hasOwn(args, 'modular-axis') && args['modular-axis'] === undefined) {
+        throw new Error('--modular-axis requires a value: horizontal or vertical');
+      }
       reviewAsset(args.manifest, {
         outDir: args['out-dir'],
         palettePath: args.palette ? path.resolve(args.palette) : null,
         families: args.families ? args.families.split(',').map((value) => value.trim()).filter(Boolean) : [],
-        tolerance: args.tolerance === undefined ? 40 : Number(args.tolerance)
+        tolerance: args.tolerance === undefined ? 40 : Number(args.tolerance),
+        modularAxis: args['modular-axis']
       });
     } catch (error) {
       console.error(error.message);
