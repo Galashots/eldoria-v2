@@ -1,10 +1,14 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { normalizeAssetSheet, readPng, writePng } from './normalize-asset-sheet.mjs';
 import { validateAssetSheet } from './validate-asset-sheet.mjs';
-import { upscaleNearestNeighborRgbOnly } from './upscale-nearest-neighbor.mjs';
+import {
+  upscaleNearestNeighborRgbOnly,
+  upscaleNearestNeighborRgba
+} from './upscale-nearest-neighbor.mjs';
 
 const ROOT = path.resolve('.tmp/asset-pipeline');
 
@@ -291,6 +295,54 @@ fs.mkdirSync(ROOT, { recursive: true });
   writePng(upOut, up, { colorType: 2 });
   const reread = readPng(upOut);
   assert.deepEqual(pixel(reread, scale, 0), [200, 20, 5, 255], 'round-trip through disk preserves the second block');
+}
+
+{
+  // D. RGBA upscaling preserves every alpha value as well as RGB, including
+  // fully opaque, fully transparent, and semitransparent source pixels.
+  const src = image(3, 1);
+  rect(src, 0, 0, 1, 1, [18, 79, 29, 255]);
+  rect(src, 1, 0, 1, 1, [210, 15, 90, 0]);
+  rect(src, 2, 0, 1, 1, [40, 120, 230, 128]);
+
+  const scale = 3;
+  const up = upscaleNearestNeighborRgba(src, scale);
+  assert.equal(up.colorType, 6);
+  assert.equal(up.width, 9);
+  assert.equal(up.height, 3);
+
+  const expectedBlocks = [
+    [18, 79, 29, 255],
+    [210, 15, 90, 0],
+    [40, 120, 230, 128]
+  ];
+  for (let block = 0; block < expectedBlocks.length; block += 1) {
+    for (let y = 0; y < scale; y += 1) {
+      for (let x = 0; x < scale; x += 1) {
+        assert.deepEqual(
+          pixel(up, block * scale + x, y),
+          expectedBlocks[block],
+          `RGBA block ${block} should replicate uniformly at (${x},${y})`
+        );
+      }
+    }
+  }
+
+  const rgbaSourcePath = path.join(ROOT, 'upscale-rgba-source.png');
+  const upOut = path.join(ROOT, 'upscale-rgba-output.png');
+  writePng(rgbaSourcePath, src, { colorType: 6 });
+  execFileSync(process.execPath, [
+    path.resolve('scripts/upscale-nearest-neighbor.mjs'),
+    '--in', rgbaSourcePath,
+    '--out', upOut,
+    '--scale', String(scale),
+    '--mode', 'rgba'
+  ]);
+  const reread = readPng(upOut);
+  assert.equal(reread.colorType, 6);
+  assert.deepEqual(pixel(reread, 0, 0), expectedBlocks[0]);
+  assert.deepEqual(pixel(reread, scale, 0), expectedBlocks[1]);
+  assert.deepEqual(pixel(reread, scale * 2, 0), expectedBlocks[2]);
 }
 
 console.log('Asset pipeline test passed.');

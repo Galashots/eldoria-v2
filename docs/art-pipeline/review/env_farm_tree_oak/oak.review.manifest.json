@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "id": "review_env_farm_tree_oak",
+  "_reviewOnly": "This manifest is review/evidence only. It is not a production manifest and its output is not runtime-integrated. Do not load the output in Phaser or modify the farm map from this review asset.",
+  "_sourceNote": "The approved 32x48 runtime master is the source of truth. The original high-resolution AI generation was rejected. assets/source/generated/env_farm_tree/oak.png is an exact 32x nearest-neighbour block replication of that approved master.",
+  "target": {
+    "outputPath": "oak.review-normalized.png",
+    "cellPx": [32, 48],
+    "cols": 1,
+    "rows": 1
+  },
+  "sources": {
+    "oak_source": {
+      "path": "../../../../assets/source/generated/env_farm_tree/oak.png",
+      "background": {
+        "mode": "alpha"
+      }
+    }
+  },
+  "frames": [
+    {
+      "sourceRef": "oak_source",
+      "destCell": [0, 0],
+      "trim": "none",
+      "fit": "fill",
+      "anchor": "top_left"
+    }
+  ]
+}

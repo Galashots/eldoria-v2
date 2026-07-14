@@ -14,12 +14,7 @@
 import { pathToFileURL } from 'node:url';
 import { readPng, writePng } from './normalize-asset-sheet.mjs';
 
-/**
- * @param {{width:number,height:number,colorType:number,data:Uint8Array}} image
- * @param {number} scale - integer scale factor; output is width*scale x height*scale
- * @returns {{width:number,height:number,colorType:number,data:Uint8Array}} RGB-only (no alpha) output
- */
-export function upscaleNearestNeighborRgbOnly(image, scale) {
+function upscaleNearestNeighbor(image, scale, preserveAlpha) {
   if (!Number.isInteger(scale) || scale < 1) throw new Error(`scale must be a positive integer, got ${scale}`);
   // readPng() always expands its returned `data` to 4 bytes/pixel (RGBA),
   // synthesizing alpha=255 for RGB (colorType 2) sources — so the read
@@ -36,6 +31,7 @@ export function upscaleNearestNeighborRgbOnly(image, scale) {
       const r = image.data[sIndex];
       const g = image.data[sIndex + 1];
       const b = image.data[sIndex + 2];
+      const alpha = preserveAlpha ? image.data[sIndex + 3] : 255;
       for (let by = 0; by < scale; by += 1) {
         const oy = sy * scale + by;
         for (let bx = 0; bx < scale; bx += 1) {
@@ -44,12 +40,35 @@ export function upscaleNearestNeighborRgbOnly(image, scale) {
           out[oIndex] = r;
           out[oIndex + 1] = g;
           out[oIndex + 2] = b;
-          out[oIndex + 3] = 255;
+          out[oIndex + 3] = alpha;
         }
       }
     }
   }
-  return { width: outWidth, height: outHeight, colorType: 2, data: out };
+  return {
+    width: outWidth,
+    height: outHeight,
+    colorType: preserveAlpha ? 6 : 2,
+    data: out
+  };
+}
+
+/**
+ * @param {{width:number,height:number,colorType:number,data:Uint8Array}} image
+ * @param {number} scale - integer scale factor; output is width*scale x height*scale
+ * @returns {{width:number,height:number,colorType:number,data:Uint8Array}} RGB-only (no alpha) output
+ */
+export function upscaleNearestNeighborRgbOnly(image, scale) {
+  return upscaleNearestNeighbor(image, scale, false);
+}
+
+/**
+ * @param {{width:number,height:number,colorType:number,data:Uint8Array}} image
+ * @param {number} scale - integer scale factor; output is width*scale x height*scale
+ * @returns {{width:number,height:number,colorType:number,data:Uint8Array}} RGBA output preserving source alpha
+ */
+export function upscaleNearestNeighborRgba(image, scale) {
+  return upscaleNearestNeighbor(image, scale, true);
 }
 
 function args(argv) {
@@ -61,14 +80,19 @@ function args(argv) {
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const a = args(process.argv.slice(2));
   if (!a.in || !a.out || !a.scale) {
-    console.error('Usage: node scripts/upscale-nearest-neighbor.mjs --in <path> --out <path> --scale <integer>');
+    console.error('Usage: node scripts/upscale-nearest-neighbor.mjs --in <path> --out <path> --scale <integer> [--mode rgb|rgba]');
     process.exit(1);
   }
   try {
+    const mode = a.mode ?? 'rgb';
+    if (mode !== 'rgb' && mode !== 'rgba') throw new Error(`mode must be rgb or rgba, got ${mode}`);
     const source = readPng(a.in);
-    const upscaled = upscaleNearestNeighborRgbOnly(source, Number(a.scale));
-    writePng(a.out, upscaled, { colorType: 2 });
-    console.log(`Upscaled ${a.in} (${source.width}x${source.height}) -> ${a.out} (${upscaled.width}x${upscaled.height}), scale ${a.scale}x, RGB (no alpha).`);
+    const upscaled = mode === 'rgba'
+      ? upscaleNearestNeighborRgba(source, Number(a.scale))
+      : upscaleNearestNeighborRgbOnly(source, Number(a.scale));
+    writePng(a.out, upscaled, { colorType: upscaled.colorType });
+    const outputMode = mode === 'rgba' ? 'RGBA (alpha preserved)' : 'RGB (no alpha)';
+    console.log(`Upscaled ${a.in} (${source.width}x${source.height}) -> ${a.out} (${upscaled.width}x${upscaled.height}), scale ${a.scale}x, ${outputMode}.`);
   } catch (e) {
     console.error(e.message);
     process.exit(1);

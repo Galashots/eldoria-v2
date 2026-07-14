@@ -4,6 +4,15 @@ This file keeps recent, high-value change summaries. Full historical entries thr
 
 Entries should remain concise: date/author, branch or PR, scope, compatibility impact, verification, and remaining risk. Detailed implementation narratives belong in the PR description and commits.
 
+## 2026-07-14 — Batch A oak runtime-master ingestion and visual-evidence retention
+
+- Author/branch: ChatGPT and Sol with Luna verification, `chatgpt/phase2-oak-and-visual-evidence` (draft PR #83).
+- Scope: ingested the approved exact `32×48` `env_farm_tree / oak` runtime master, added an alpha-preserving deterministic upscale path and regression coverage, regenerated the canonical `1024×1536` RGBA source, added review-only normalization and compact visual evidence, advanced Batch A status to 4/7, and documented a bounded visual-evidence retention policy.
+- Principal files: `scripts/upscale-nearest-neighbor.mjs`, `scripts/test-asset-pipeline.mjs`, `assets/source/generated/env_farm_tree/oak.png`, `docs/art-pipeline/review/env_farm_tree_oak/`, `docs/art-pipeline/VISUAL_EVIDENCE_RETENTION_POLICY.md`, and `docs/CURRENT_STATE.md`.
+- Verification: approved-master SHA-256 `5d8212aafff7f5b2ee84b7dbc9c42ba087981a4de4115483e09f95571f06e030`; canonical SHA-256 `a731e9c1bdba5100b859363cdf4ddd3774293718f261b8dd87e473173cab3c48`; valid RGBA `1024×1536` PNG; zero block mismatches across 1,572,864 source pixels; zero decoded-RGBA round-trip mismatches across 1,536 runtime pixels; `763/763` opaque pixels within the target palette tolerance; exact `1×` and enlarged preview visually inspected. `npm ci`, `npm run check`, `npm run test:visual-targets`, `npm run test:asset-pipeline`, `npm run test:asset-review`, `npm run test:unit` (48 passed), and `npm run smoke` (53 passed) completed locally. The first smoke attempt hit a non-reproducible page-load timeout; the isolated failed test and full retry passed. Exact-head CI is recorded on PR #83.
+- Compatibility: source/review/tooling/docs only. No Phaser loading, map, collision, save, quest, curriculum, mastery, economy, interaction, or dependency change.
+- Remaining risk: the oak is individually approved but is not runtime-integrated; the tree family and Phase 2 environment kit remain incomplete. Physical-iPad behavior is unaffected and was not tested.
+
 ## 2026-07-13 — Closed-loop asset generation workflow
 
 - Author/branch: ChatGPT, `chatgpt/closed-loop-asset-workflow`.

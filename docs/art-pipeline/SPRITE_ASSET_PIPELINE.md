@@ -108,12 +108,11 @@ Sometimes the AI-generated high-resolution source cannot be used directly, even 
 - Required verification before this source is treated as approved:
   - **block exactness**—every high-resolution output pixel matches the expected source-master block;
   - **zero-drift round trip**—normalizing the upscaled source back down through the real pipeline with `fit: "fill"` reproduces all original runtime-master pixels exactly;
-  - **seam audit**—wrap-boundary colour step vs. average internal step, on both axes;
   - **palette verification**—every pixel is measured against the target's locked palette families and any tolerance exceptions are recorded;
-  - **repetition audit**—3×3 and large-field repeats show no hard seam, stripe, lattice, wallpaper motif, or unacceptable fixed-frequency pattern;
-  - **review evidence**—normalized output, enlarged inspection preview, tiled-repeat previews, comparison panel, and a concise `AUDIT.md`.
+  - **type-specific visual audit**—terrain receives wrap-boundary seam metrics plus `3×3` and large-field repetition views; modular fences/walls receive a repeated strip and connection-edge view; isolated props receive alpha/bounds, footprint/pivot, exact `1×`, and enlarged nearest-neighbour inspection;
+  - **review evidence**—normalized output, the applicable type-specific previews, and a concise `AUDIT.md` with hashes, measurements, reviewed paths, and verdict.
 
-The upscaler reads image data through `readPng()`, which always exposes an RGBA-expanded buffer even for RGB source PNGs. The upscaler therefore uses a four-byte read stride and writes an RGB canonical source. A dedicated colorType-2 regression test protects this path.
+The upscaler reads image data through `readPng()`, which always exposes an RGBA-expanded buffer even for RGB source PNGs. It therefore always uses a four-byte read stride. The default `rgb` mode writes an opaque RGB canonical source; `--mode rgba` preserves every source alpha value and writes an RGBA canonical source. Regression tests protect both paths, including transparent and semitransparent block replication.
 
 Worked examples:
 
@@ -204,6 +203,8 @@ For an Approved Runtime Master, create the canonical high-resolution source with
 ```bash
 node scripts/upscale-nearest-neighbor.mjs --in <approved-runtime-master.png> --out <canonical-source.png> --scale <integer-scale>
 ```
+
+Add `--mode rgba` when the approved master contains transparency that must survive the deterministic upscale. Omitting `--mode` preserves the historical opaque RGB behavior.
 
 Then normalize the canonical source back to the declared runtime size and verify zero pixel differences before committing it.
 
