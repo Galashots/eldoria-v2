@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "id": "review_env_farm_fence_rail_horizontal",
+  "_reviewOnly": "This manifest is review/evidence only. It is not a production manifest and its output is not runtime-integrated. Do not load the output in Phaser or modify the farm map from this review asset.",
+  "_sourceNote": "The user-approved 16x32 RGBA runtime master is the source of truth. The original high-resolution ChatGPT generation was unsuitable as canonical source art. assets/source/generated/env_farm_fence/rail_horizontal.png is an exact 32x nearest-neighbour block replication of the approved master.",
+  "target": {
+    "outputPath": "rail_horizontal.review-normalized.png",
+    "cellPx": [16, 32],
+    "cols": 1,
+    "rows": 1
+  },
+  "sources": {
+    "rail_horizontal_source": {
+      "path": "../../../../assets/source/generated/env_farm_fence/rail_horizontal.png",
+      "background": {
+        "mode": "alpha"
+      }
+    }
+  },
+  "frames": [
+    {
+      "sourceRef": "rail_horizontal_source",
+      "destCell": [0, 0],
+      "trim": "none",
+      "fit": "fill",
+      "anchor": "top_left"
+    }
+  ]
+}

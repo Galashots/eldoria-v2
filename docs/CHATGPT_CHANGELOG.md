@@ -4,6 +4,15 @@ This file keeps recent, high-value change summaries. Full historical entries thr
 
 Entries should remain concise: date/author, branch or PR, scope, compatibility impact, verification, and remaining risk. Detailed implementation narratives belong in the PR description and commits.
 
+## 2026-07-14 — Batch A fence runtime-master ingestion
+
+- Author/branch: Codex with Sol direction and Luna implementation, `codex/batch-a-fence-runtime-master` (PR pending); exact `env_farm_fence / rail_horizontal` runtime master approved by the user.
+- Scope: preserved the approved `16×32` RGBA runtime master, produced the canonical `512×1024` source by exact `32×` alpha-preserving block replication, proved a byte- and pixel-zero-drift real-pipeline round trip, retained compact modular/footprint evidence, and advanced Batch A from 4/7 to 5/7 with `rock_a` next.
+- Principal files: `assets/source/generated/env_farm_fence/rail_horizontal.png`, `docs/art-pipeline/review/env_farm_fence_rail_horizontal/`, `docs/CURRENT_STATE.md`, and this changelog.
+- Verification: exact manifest normalize/validate/review with scoped `wood_leather` tolerance 40 and horizontal modular evidence; canonical block-exactness 0/524,288 mismatches; normalized runtime 0/512 RGBA pixel mismatches and byte-identical SHA-256; `npm.cmd ci`, `npm.cmd run check`, `test:visual-targets`, `test:asset-pipeline`, `test:asset-review`, `test:contact-sheet`, `test:unit` (48 passed), and `smoke` (53 passed); retained preview, strip, connection, and footprint/pivot evidence visually inspected; `git diff --check` passed.
+- Compatibility: approved source and review evidence only. No packed fence sheet, production manifest, Phaser loader, map, collision activation, save, gameplay, curriculum, quest, profile, dependency, or migration change.
+- Remaining risk: the individual horizontal rail is approved but the fence family and environment kit remain incomplete; runtime/map integration stays blocked behind the full-family and Batch A contact-sheet gates. Physical-iPad and child validation were not performed.
+
 ## 2026-07-14 — Root-Star palette metadata and exact-accent audit prerequisite
 
 - Author/branch: Codex with Sol direction, `codex/root-star-palette-audit` (PR pending).
