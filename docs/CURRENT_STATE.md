@@ -1,6 +1,6 @@
 # Eldoria-V2 Current State
 
-Last refreshed on 2026-07-14 after the closed-loop workflow merge and Batch A oak runtime-master ingestion. This file owns volatile project status; durable rules live in `AGENTS.md`, and the documentation map lives in `docs/README.md`.
+Last refreshed on 2026-07-14 after Batch A fence runtime-master ingestion. This file owns volatile project status; durable rules live in `AGENTS.md`, and the documentation map lives in `docs/README.md`.
 
 ## Product invariant
 
@@ -35,9 +35,10 @@ Last refreshed on 2026-07-14 after the closed-loop workflow merge and Batch A oa
 - `tile_farm_path_dirt / center` — approved exact `16×16` runtime master, deterministically upscaled to the canonical source with a zero-drift round trip.
 - `tile_farm_water_base / water_a` — approved exact `16×16` runtime master, deterministically upscaled to the canonical source with a zero-drift round trip.
 - `env_farm_tree / oak` — approved exact `32×48` runtime master, deterministically upscaled to a `1024×1536` canonical source with a zero-drift round trip.
+- `env_farm_fence / rail_horizontal` — approved exact `16×32` runtime master, deterministically upscaled to a `512×1024` canonical source with a zero-drift round trip and retained modular connection evidence.
 - `npm run review:asset` normalizes, validates, generates nearest-neighbour evidence, and reports deterministic seam, alpha, hash, and optional palette metrics for one-cell review manifests.
 
-These four assets are approved individually, but their target families remain incomplete. No production farm-environment manifest, packed terrain sheet, Phaser loading path, or map integration is complete.
+These five assets are approved individually, but their target families remain incomplete. No production farm-environment manifest, packed terrain sheet, Phaser loading path, or map integration is complete.
 
 ### Pending production replacement
 
@@ -80,21 +81,21 @@ Phase 2A specification groundwork is complete:
 - ordered production-generation handoff in `docs/art-pipeline/FARM_ENVIRONMENT_GENERATION_HANDOFF_V1.md`;
 - approved external style direction classified as **STYLE REFERENCE ONLY**, not committed or normalized.
 
-Batch A progress is **4 of 7 foundational assets approved**:
+Batch A progress is **5 of 7 foundational assets approved**:
 
 1. `tile_farm_grass_base / grass_a` — complete.
 2. `tile_farm_path_dirt / center` — complete.
 3. `tile_farm_water_base / water_a` — complete.
 4. `env_farm_tree / oak` — complete.
-5. `env_farm_fence / rail_horizontal` — next; use one central post with rails connecting across the tile boundaries, not a complete two-post panel.
-6. `env_farm_rock_medium / rock_a` — pending.
+5. `env_farm_fence / rail_horizontal` — complete; one central post with rails connecting across tile boundaries, not a complete two-post panel.
+6. `env_farm_rock_medium / rock_a` — next.
 7. `env_wildbloom_landmark / root_star_revealed` — pending.
 
 ## Immediate next steps
 
-1. Generate and audit `env_farm_fence / rail_horizontal` through the closed-loop workflow.
-2. Require exact `16×32` runtime evidence, modular repetition-strip review, connection-edge inspection, footprint/pivot review, palette verification, and open-background connectivity.
-3. Continue Batch A in canonical order: medium rock, then revealed Root-Star landmark.
+1. Generate and audit `env_farm_rock_medium / rock_a` through the closed-loop workflow.
+2. Require exact `32×32` runtime evidence, grounded footprint/pivot review, `metal_stone` palette verification, silhouette readability, and transparent-background inspection.
+3. Continue Batch A in canonical order with the revealed Root-Star landmark after the medium rock.
 4. After all seven Batch A anchors are approved, review a Batch A family contact sheet before beginning Batch B terrain variations (`grass_b/c`, dirt transitions, `water_b`, and the complete shoreline set).
 5. Do not recompose `public/maps/farm.json` until the complete production kit passes the contact-sheet acceptance gate.
 
