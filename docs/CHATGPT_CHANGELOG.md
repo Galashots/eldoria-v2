@@ -4,6 +4,15 @@ This file keeps recent, high-value change summaries. Full historical entries thr
 
 Entries should remain concise: date/author, branch or PR, scope, compatibility impact, verification, and remaining risk. Detailed implementation narratives belong in the PR description and commits.
 
+## 2026-07-14 — Batch A review contact-sheet tooling
+
+- Author/branch: Codex with Luna implementation, `codex/batch-a-contact-sheet-tooling` (PR pending).
+- Scope: added a strict manifest-driven builder for the later seven-anchor Batch A comparison sheet, with fixed `1312×1072` geometry, uniform `8×` nearest-neighbour pixels, row pivot baselines, deterministic bitmap text, input/output hashes, explicit evidence claims, and fail-before-output validation. Independent-audit hardening locks the literal layout geometry, rejects absolute input paths, unknown or duplicate CLI flags, invalid JSON roots, and verifies those failures create no outputs. Added synthetic positive and negative regression coverage; no real Batch A manifest or contact sheet was created.
+- Principal files: `scripts/build-review-contact-sheet.mjs`, `scripts/test-review-contact-sheet.mjs`, `package.json`, and `docs/art-pipeline/SPRITE_ASSET_PIPELINE.md`.
+- Verification: `npm.cmd ci`, `npm.cmd run check`, `npm.cmd run test:visual-targets`, `npm.cmd run test:asset-pipeline`, `npm.cmd run test:asset-review`, `npm.cmd run test:contact-sheet`, `npm.cmd run test:unit` (48 passed), and `npm.cmd run smoke` (53 passed) passed locally; the synthetic exact-layout sheet was visually inspected and `git diff --check` passed.
+- Compatibility: review tooling, tests, and documentation only. No production art, manifests, runtime loading, map, collision, save, quest, curriculum, mastery, economy, interaction, or dependency change.
+- Remaining risk: the tool proves deterministic presentation and declared evidence integrity; human visual review still owns cross-asset palette, scale, perspective, material, and family-cohesion judgment after all seven anchors are approved.
+
 ## 2026-07-14 — Modular asset-review evidence
 
 - Author/branch: Sol with Luna implementation, `codex/modular-asset-review-evidence` (PR pending).

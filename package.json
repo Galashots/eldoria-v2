@@ -17,6 +17,8 @@
     "test:asset-pipeline": "node scripts/test-asset-pipeline.mjs",
     "review:asset": "node scripts/review-asset.mjs",
     "test:asset-review": "node scripts/test-asset-review.mjs",
+    "review:contact-sheet": "node scripts/build-review-contact-sheet.mjs",
+    "test:contact-sheet": "node scripts/test-review-contact-sheet.mjs",
     "test:visual-targets": "node scripts/test-visual-targets.mjs",
     "test:unit": "vitest run"
   },
