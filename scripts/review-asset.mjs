@@ -10,7 +10,12 @@ const parseArgs = (argv) => {
   const out = {};
   for (let i = 0; i < argv.length; i += 1) {
     if (!argv[i].startsWith('--')) continue;
-    out[argv[i].slice(2)] = argv[i + 1];
+    const next = argv[i + 1];
+    if (next === undefined || next.startsWith('--')) {
+      out[argv[i].slice(2)] = undefined;
+      continue;
+    }
+    out[argv[i].slice(2)] = next;
     i += 1;
   }
   return out;
@@ -177,7 +182,7 @@ function modularEvidence(image, axis) {
     strip.height * 8
   );
   const pair = tileImage(image, horizontal ? 2 : 1, horizontal ? 1 : 2);
-  const seamDepth = 4;
+  const seamDepth = Math.min(4, horizontal ? image.width : image.height);
   const connection = horizontal
     ? cropImage(pair, image.width - seamDepth, 0, seamDepth * 2, image.height)
     : cropImage(pair, 0, image.height - seamDepth, image.width, seamDepth * 2);
@@ -289,6 +294,9 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     process.exitCode = 1;
   } else {
     try {
+      if (Object.hasOwn(args, 'modular-axis') && args['modular-axis'] === undefined) {
+        throw new Error('--modular-axis requires a value: horizontal or vertical');
+      }
       reviewAsset(args.manifest, {
         outDir: args['out-dir'],
         palettePath: args.palette ? path.resolve(args.palette) : null,

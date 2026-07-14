@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { readPng, writePng } from './normalize-asset-sheet.mjs';
@@ -124,5 +125,35 @@ assert.deepEqual(
   [readPng(path.join(verticalOutDir, 'connection-edges-vertical-20x.png')).width, readPng(path.join(verticalOutDir, 'connection-edges-vertical-20x.png')).height],
   [320, 160]
 );
+
+const narrowFence = { width: 3, height: 5, colorType: 6, data: new Uint8Array(3 * 5 * 4) };
+fillRect(narrowFence, 0, 1, 3, 1, [103, 75, 31, 255]);
+fillRect(narrowFence, 0, 3, 3, 1, [146, 107, 42, 255]);
+const narrowSourcePath = path.join(root, 'narrow-fence-source.png');
+writePng(narrowSourcePath, narrowFence);
+const narrowManifestPath = path.join(root, 'narrow-fence-manifest.json');
+fs.writeFileSync(narrowManifestPath, JSON.stringify({
+  version: 1,
+  id: 'test_review_narrow_modular_fence',
+  target: { outputPath: 'narrow-fence-runtime.png', cellPx: [3, 5], cols: 1, rows: 1 },
+  sources: { source: { path: path.basename(narrowSourcePath), background: { mode: 'alpha' } } },
+  frames: [{ sourceRef: 'source', destCell: [0, 0], trim: 'none', fit: 'fill', anchor: 'top_left' }]
+}, null, 2));
+const narrowOutDir = path.join(root, 'narrow-fence-evidence');
+const narrowResult = reviewAsset(narrowManifestPath, { outDir: narrowOutDir, modularAxis: 'horizontal' });
+assert.deepEqual(narrowResult.report.connectivity.horizontal.sharedRuns, [[1, 1], [3, 3]]);
+assert.deepEqual(
+  [readPng(path.join(narrowOutDir, 'connection-edges-horizontal-20x.png')).width, readPng(path.join(narrowOutDir, 'connection-edges-horizontal-20x.png')).height],
+  [120, 100]
+);
+
+const missingAxisValue = spawnSync(process.execPath, [
+  path.resolve('scripts/review-asset.mjs'),
+  '--manifest', path.join(root, 'does-not-exist.json'),
+  '--modular-axis'
+], { encoding: 'utf8' });
+assert.equal(missingAxisValue.status, 1);
+assert.match(missingAxisValue.stderr, /--modular-axis requires a value: horizontal or vertical/);
+assert.doesNotMatch(missingAxisValue.stderr, /ENOENT/);
 
 console.log('Asset review test passed.');
