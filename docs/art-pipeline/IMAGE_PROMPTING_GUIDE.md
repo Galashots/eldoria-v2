@@ -323,7 +323,7 @@ An **APPROVED SOURCE CANDIDATE** proceeds directly to a production-source manife
 Use the automated one-cell review command where applicable:
 
 ```bash
-npm run review:asset -- --manifest <path> --palette docs/visual-targets/farm_environment_palette_v1.json --families <comma-separated-families>
+npm run review:asset -- --manifest <path> --palette docs/visual-targets/farm_environment_palette_v1.json --atlas-family environment_farm --families <comma-separated-families>
 ```
 
 Human visual review remains mandatory; metrics support the verdict but do not replace it.

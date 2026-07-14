@@ -43,6 +43,9 @@ function createValidationContext() {
     errors: [],
     targetLocations: new Map(),
     references: [],
+    targetPaletteRequests: [],
+    palettes: [],
+    deferredPaletteFamilyReferences: [],
     targetCount: 0,
     paletteCount: 0
   };
@@ -148,6 +151,28 @@ export function validateTarget(ctx, filePath, target, index) {
     if (!syncClipsValid) addError(ctx, filePath, targetId, 'syncClips must be a non-empty string array');
   }
 
+  if (hasOwn(target, 'paletteFamilies')) {
+    if (!Array.isArray(target.paletteFamilies) || target.paletteFamilies.length === 0) {
+      addError(ctx, filePath, targetId, 'paletteFamilies must be a non-empty array when present');
+    } else {
+      const seen = new Set();
+      const validFamilies = [];
+      target.paletteFamilies.forEach((family, familyIndex) => {
+        if (typeof family !== 'string' || !idPattern.test(family)) {
+          addError(ctx, filePath, targetId, `paletteFamilies[${familyIndex}] must be a lowercase identifier`);
+        } else if (seen.has(family)) {
+          addError(ctx, filePath, targetId, `paletteFamilies contains duplicate family ${family}`);
+        } else {
+          seen.add(family);
+          validFamilies.push(family);
+        }
+      });
+      if (validFamilies.length > 0) {
+        ctx.targetPaletteRequests.push({ filePath, targetId, atlasFamily: target.atlasFamily, families: validFamilies });
+      }
+    }
+  }
+
   if (hasOwn(target, 'inheritsTarget')) {
     ctx.references.push({ filePath, targetId, field: 'inheritsTarget', value: target.inheritsTarget });
   }
@@ -193,18 +218,23 @@ function validateSwatchGroup(ctx, filePath, paletteId, groupName, group) {
 // Palette document fields with a known, non-swatch shape: string/enum
 // metadata already validated individually below.
 const PALETTE_METADATA_FIELDS = new Set([
-  'version', 'sourceContract', 'paletteId', 'displayName', 'status', 'lightDirection', 'provenance', 'notes'
+  'version', 'sourceContract', 'paletteId', 'displayName', 'status', 'lightDirection', 'provenance', 'notes',
+  'appliesToAtlasFamilies', 'deferredContractFamilies'
 ]);
 
 // Known object-shaped fields that are descriptive metadata, not a swatch
 // group — their values are plain strings, not hex-swatch arrays, so they
 // are explicitly excluded from the generic swatch-group scan below instead
 // of being validated (and rejected) as one.
-const PALETTE_NON_SWATCH_OBJECT_FIELDS = new Set(['contractFamilyMapping']);
+const PALETTE_NON_SWATCH_OBJECT_FIELDS = new Set(['contractFamilyMapping', 'familyAliases']);
 
 export function validatePalette(ctx, filePath, document) {
   ctx.paletteCount += 1;
   const paletteId = typeof document.paletteId === 'string' ? document.paletteId : 'palette';
+  const directFamilies = new Set();
+  const aliases = new Map();
+  const deferredFamilies = new Set();
+  const atlasFamilies = new Set();
 
   if (typeof document.paletteId !== 'string' || !idPattern.test(document.paletteId)) {
     addError(ctx, filePath, paletteId, 'paletteId must be lowercase snake_case');
@@ -217,12 +247,118 @@ export function validatePalette(ctx, filePath, document) {
     addError(ctx, filePath, paletteId, 'families must be a non-empty object');
   } else {
     validateSwatchGroup(ctx, filePath, paletteId, 'families', document.families);
+    for (const family of Object.keys(document.families)) {
+      if (!family.startsWith('_') && idPattern.test(family)) directFamilies.add(family);
+    }
+  }
+
+  if (!Array.isArray(document.appliesToAtlasFamilies) || document.appliesToAtlasFamilies.length === 0) {
+    addError(ctx, filePath, paletteId, 'appliesToAtlasFamilies must be a non-empty array');
+  } else {
+    document.appliesToAtlasFamilies.forEach((atlasFamily, index) => {
+      if (typeof atlasFamily !== 'string' || !idPattern.test(atlasFamily)) {
+        addError(ctx, filePath, paletteId, `appliesToAtlasFamilies[${index}] must be a lowercase identifier`);
+      } else if (atlasFamilies.has(atlasFamily)) {
+        addError(ctx, filePath, paletteId, `appliesToAtlasFamilies contains duplicate atlas family ${atlasFamily}`);
+      } else {
+        atlasFamilies.add(atlasFamily);
+      }
+    });
+  }
+
+  if (hasOwn(document, 'familyAliases')) {
+    if (!document.familyAliases || typeof document.familyAliases !== 'object' || Array.isArray(document.familyAliases)) {
+      addError(ctx, filePath, paletteId, 'familyAliases must be an object when present');
+    } else {
+      for (const [alias, destination] of Object.entries(document.familyAliases)) {
+        if (!idPattern.test(alias)) {
+          addError(ctx, filePath, paletteId, `familyAliases key ${alias} must be a lowercase identifier`);
+          continue;
+        }
+        if (typeof destination !== 'string' || !idPattern.test(destination)) {
+          addError(ctx, filePath, paletteId, `familyAliases.${alias} must be a lowercase family identifier`);
+          continue;
+        }
+        if (!directFamilies.has(destination)) {
+          addError(ctx, filePath, paletteId, `familyAliases.${alias} references missing direct family ${destination}`);
+        } else if (directFamilies.has(alias)) {
+          addError(ctx, filePath, paletteId, `familyAliases.${alias} must not shadow a direct family`);
+        } else {
+          aliases.set(alias, destination);
+        }
+      }
+    }
+  }
+
+  if (hasOwn(document, 'deferredContractFamilies')) {
+    if (!Array.isArray(document.deferredContractFamilies) || document.deferredContractFamilies.length === 0) {
+      addError(ctx, filePath, paletteId, 'deferredContractFamilies must be a non-empty array when present');
+    } else {
+      const seen = new Set();
+      document.deferredContractFamilies.forEach((family, index) => {
+        if (typeof family !== 'string' || !idPattern.test(family)) {
+          addError(ctx, filePath, paletteId, `deferredContractFamilies[${index}] must be a lowercase identifier`);
+        } else if (seen.has(family)) {
+          addError(ctx, filePath, paletteId, `deferredContractFamilies contains duplicate family ${family}`);
+        } else {
+          seen.add(family);
+          deferredFamilies.add(family);
+        }
+      });
+    }
   }
 
   for (const [field, value] of Object.entries(document)) {
     if (field === 'families' || PALETTE_METADATA_FIELDS.has(field) || PALETTE_NON_SWATCH_OBJECT_FIELDS.has(field)) continue;
     if (!value || typeof value !== 'object' || Array.isArray(value)) continue;
     validateSwatchGroup(ctx, filePath, paletteId, field, value);
+  }
+
+  for (const family of deferredFamilies) {
+    if (directFamilies.has(family) || aliases.has(family)) {
+      addError(ctx, filePath, paletteId, `deferredContractFamilies family ${family} overlaps a direct family or alias`);
+    }
+  }
+
+  ctx.palettes.push({ filePath, paletteId, atlasFamilies, directFamilies, aliases, deferredFamilies });
+}
+
+function reconcileScopedPalettes(ctx) {
+  const claims = new Map();
+  for (const palette of ctx.palettes) {
+    for (const atlasFamily of palette.atlasFamilies) {
+      const claimants = claims.get(atlasFamily) ?? [];
+      claimants.push(palette);
+      claims.set(atlasFamily, claimants);
+    }
+  }
+
+  for (const [atlasFamily, claimants] of claims) {
+    if (claimants.length < 2) continue;
+    const sorted = [...claimants].sort((a, b) => `${a.paletteId}:${fileLabel(a.filePath)}`.localeCompare(`${b.paletteId}:${fileLabel(b.filePath)}`));
+    addError(
+      ctx,
+      sorted[0].filePath,
+      sorted[0].paletteId,
+      `atlas family ${atlasFamily} is claimed by multiple palettes: ${sorted.map((palette) => palette.paletteId).join(', ')}`
+    );
+  }
+
+  for (const request of ctx.targetPaletteRequests) {
+    const applicable = claims.get(request.atlasFamily) ?? [];
+    if (applicable.length === 0) continue;
+    if (applicable.length > 1) {
+      addError(ctx, request.filePath, request.targetId, `palette scope for atlas family ${request.atlasFamily} is ambiguous`);
+      continue;
+    }
+    const palette = applicable[0];
+    for (const family of request.families) {
+      if (palette.deferredFamilies.has(family)) {
+        ctx.deferredPaletteFamilyReferences.push({ ...request, family, paletteId: palette.paletteId });
+      } else if (!palette.directFamilies.has(family) && !palette.aliases.has(family)) {
+        addError(ctx, request.filePath, request.targetId, `paletteFamilies references unresolved family ${family} for atlas family ${request.atlasFamily}`);
+      }
+    }
   }
 }
 
@@ -286,13 +422,31 @@ export async function collectVisualTargetErrors(targetDirectory) {
     }
   }
 
-  return { errors: ctx.errors, jsonFiles, targetCount: ctx.targetCount, paletteCount: ctx.paletteCount };
+  reconcileScopedPalettes(ctx);
+
+  return {
+    errors: ctx.errors,
+    jsonFiles,
+    targetCount: ctx.targetCount,
+    paletteCount: ctx.paletteCount,
+    deferredPaletteFamilyReferences: ctx.deferredPaletteFamilyReferences
+  };
 }
 
 /** Test-only entry point: validates a single in-memory palette document without touching disk. */
 export function validatePaletteDocument(document, filePath = '<test palette>') {
   const ctx = createValidationContext();
   validatePalette(ctx, filePath, document);
+  reconcileScopedPalettes(ctx);
+  return ctx.errors;
+}
+
+/** Test-only entry point for optional target palette-family metadata and palette alias resolution. */
+export function validateTargetPaletteFamiliesDocument(target, palette, filePath = '<test target>') {
+  const ctx = createValidationContext();
+  validatePalette(ctx, '<test palette>', palette);
+  validateTarget(ctx, filePath, target, 0);
+  reconcileScopedPalettes(ctx);
   return ctx.errors;
 }
 

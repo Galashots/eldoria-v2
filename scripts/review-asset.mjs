@@ -5,17 +5,19 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { normalizeAssetSheet, readPng, writePng } from './normalize-asset-sheet.mjs';
 import { validateAssetSheet } from './validate-asset-sheet.mjs';
+import { HEX_COLOR_PATTERN } from './lib/hex-color.mjs';
 
 const parseArgs = (argv) => {
   const out = {};
+  const allowed = new Set(['manifest', 'out-dir', 'palette', 'atlas-family', 'families', 'tolerance', 'modular-axis', 'exact-group']);
   for (let i = 0; i < argv.length; i += 1) {
-    if (!argv[i].startsWith('--')) continue;
+    if (!argv[i].startsWith('--')) throw new Error(`Unexpected argument: ${argv[i]}`);
+    const key = argv[i].slice(2);
+    if (!allowed.has(key)) throw new Error(`Unknown option: --${key}`);
+    if (Object.hasOwn(out, key)) throw new Error(`Duplicate option: --${key}`);
     const next = argv[i + 1];
-    if (next === undefined || next.startsWith('--')) {
-      out[argv[i].slice(2)] = undefined;
-      continue;
-    }
-    out[argv[i].slice(2)] = next;
+    if (next === undefined || next.startsWith('--')) throw new Error(`--${key} requires a value`);
+    out[key] = next;
     i += 1;
   }
   return out;
@@ -194,22 +196,70 @@ function modularEvidence(image, axis) {
   return { stripPreview, connectionPreview };
 }
 
-function paletteMetrics(image, palettePath, families, tolerance) {
-  if (!palettePath || !families.length) return null;
+function hexToRgb(hex) {
+  return [Number.parseInt(hex.slice(1, 3), 16), Number.parseInt(hex.slice(3, 5), 16), Number.parseInt(hex.slice(5, 7), 16)];
+}
+
+function nestedSwatchGroup(palette, groupPath) {
+  let value = palette;
+  for (const segment of groupPath.split('.')) value = value?.[segment];
+  if (!Array.isArray(value) || value.length === 0 || value.some((hex) => typeof hex !== 'string' || !HEX_COLOR_PATTERN.test(hex))) {
+    throw new Error(`Exact palette group ${groupPath} must resolve to a non-empty array of #rrggbb colors`);
+  }
+  return value;
+}
+
+function validatePaletteAtlasScope(palette, palettePath, atlasFamily) {
+  const scopes = palette.appliesToAtlasFamilies;
+  if (!Array.isArray(scopes) || scopes.length === 0) return;
+  if (!atlasFamily) throw new Error(`Palette ${palette.paletteId ?? palettePath} requires an atlasFamily option`);
+  if (!scopes.includes(atlasFamily)) {
+    throw new Error(`Palette ${palette.paletteId ?? palettePath} does not apply to atlas family ${atlasFamily}`);
+  }
+}
+
+function paletteMetrics(image, palettePath, atlasFamily, families, tolerance, exactGroup) {
+  if (!families.length && !exactGroup) return null;
+  if (!palettePath) throw new Error('Palette metrics require --palette when families or an exact group are requested');
+  if (exactGroup && families.length === 0) throw new Error('Exact-group coverage requires at least one base palette family');
   const palette = JSON.parse(fs.readFileSync(palettePath, 'utf8'));
-  const swatches = families.flatMap((family) => palette.families?.[family] ?? []).map((hex) => [
-    Number.parseInt(hex.slice(1, 3), 16), Number.parseInt(hex.slice(3, 5), 16), Number.parseInt(hex.slice(5, 7), 16)
-  ]);
-  if (!swatches.length) throw new Error(`No palette swatches found for families: ${families.join(', ')}`);
+  validatePaletteAtlasScope(palette, palettePath, atlasFamily);
+  const familyResolution = families.map((requested) => {
+    const resolved = Object.hasOwn(palette.families ?? {}, requested) ? requested : palette.familyAliases?.[requested];
+    if (!resolved || !Object.hasOwn(palette.families ?? {}, resolved)) {
+      if (palette.deferredContractFamilies?.includes(requested)) {
+        throw new Error(`Palette family ${requested} is deferred and has no review swatches`);
+      }
+      throw new Error(`Unresolved palette family: ${requested}`);
+    }
+    return { requested, resolved };
+  });
+  const swatches = familyResolution.flatMap(({ resolved }) => palette.families[resolved]).map(hexToRgb);
+  const exactHexes = exactGroup ? nestedSwatchGroup(palette, exactGroup) : [];
+  const exactColors = exactHexes.map((hex) => ({ hex: hex.toUpperCase(), rgb: hexToRgb(hex), fullyOpaqueCount: 0, nonTransparentCount: 0 }));
   const distances = [];
+  let exactMatchPixels = 0;
+  let baseTolerancePixels = 0;
+  let uncoveredPixels = 0;
   for (let y = 0; y < image.height; y += 1) for (let x = 0; x < image.width; x += 1) {
     const p = pixel(image, x, y);
     if (p[3] === 0) continue;
-    distances.push(Math.min(...swatches.map((swatch) => rgbDistance(p, swatch))));
+    const exact = exactColors.find((color) => color.rgb[0] === p[0] && color.rgb[1] === p[1] && color.rgb[2] === p[2]);
+    if (exact) {
+      exact.nonTransparentCount += 1;
+      if (p[3] === 255) exact.fullyOpaqueCount += 1;
+      exactMatchPixels += 1;
+      continue;
+    }
+    const distance = Math.min(...swatches.map((swatch) => rgbDistance(p, swatch)));
+    distances.push(distance);
+    if (distance <= tolerance) baseTolerancePixels += 1;
+    else uncoveredPixels += 1;
   }
   distances.sort((a, b) => a - b);
-  return {
+  const result = {
     families,
+    atlasFamily: atlasFamily ?? null,
     tolerance,
     pixels: distances.length,
     withinTolerance: distances.filter((distance) => distance <= tolerance).length,
@@ -217,6 +267,24 @@ function paletteMetrics(image, palettePath, families, tolerance) {
     median: round(distances[Math.floor(distances.length / 2)] ?? 0),
     max: round(distances.at(-1) ?? 0)
   };
+  const aliasesUsed = familyResolution.filter(({ requested, resolved }) => requested !== resolved);
+  if (aliasesUsed.length) result.familyResolution = familyResolution;
+  if (exactGroup) {
+    const missing = exactColors.filter((color) => color.fullyOpaqueCount === 0).map((color) => color.hex);
+    if (missing.length) throw new Error(`Exact palette group ${exactGroup} is missing fully opaque colors: ${missing.join(', ')}`);
+    if (uncoveredPixels > 0) throw new Error(`Palette coverage failed: ${uncoveredPixels} non-transparent pixels match neither base tolerance nor exact group ${exactGroup}`);
+    result.exact = {
+      group: exactGroup,
+      colors: exactColors.map(({ hex, fullyOpaqueCount, nonTransparentCount }) => ({ hex, fullyOpaqueCount, nonTransparentCount })),
+      coverage: {
+        nonTransparentPixels: distances.length + exactMatchPixels,
+        exactMatchPixels,
+        baseTolerancePixels,
+        uncoveredPixels
+      }
+    };
+  }
+  return result;
 }
 
 function firstSourcePath(manifest, manifestDir) {
@@ -229,6 +297,15 @@ export function reviewAsset(manifestPath, options = {}) {
   if (modularAxis !== null && !['horizontal', 'vertical'].includes(modularAxis)) {
     throw new Error(`modularAxis must be horizontal or vertical, got ${modularAxis}`);
   }
+  const tolerance = options.tolerance ?? 40;
+  if (!Number.isFinite(tolerance) || tolerance < 0) {
+    throw new Error(`tolerance must be a finite non-negative number, got ${tolerance}`);
+  }
+  const families = options.families ?? [];
+  if (options.palettePath) {
+    const palette = JSON.parse(fs.readFileSync(options.palettePath, 'utf8'));
+    validatePaletteAtlasScope(palette, options.palettePath, options.atlasFamily ?? null);
+  }
   const resolvedManifest = path.resolve(manifestPath);
   const manifestDir = path.dirname(resolvedManifest);
   const manifest = JSON.parse(fs.readFileSync(resolvedManifest, 'utf8'));
@@ -238,6 +315,7 @@ export function reviewAsset(manifestPath, options = {}) {
 
   const outputPath = path.resolve(manifestDir, manifest.target.outputPath);
   const runtime = readPng(outputPath);
+  const palette = paletteMetrics(runtime, options.palettePath, options.atlasFamily ?? null, families, tolerance, options.exactGroup ?? null);
   const outDir = path.resolve(options.outDir ?? path.join('.tmp', 'asset-review', manifest.id));
   fs.mkdirSync(outDir, { recursive: true });
 
@@ -267,7 +345,6 @@ export function reviewAsset(manifestPath, options = {}) {
     connectivity = { [modularAxis]: edgeConnectivityMetrics(runtime, modularAxis) };
   }
 
-  const families = options.families ?? [];
   const report = {
     version: 1,
     id: manifest.id,
@@ -278,7 +355,7 @@ export function reviewAsset(manifestPath, options = {}) {
     sha256: crypto.createHash('sha256').update(fs.readFileSync(outputPath)).digest('hex'),
     alpha: alphaMetrics(runtime),
     seams: edgeMetrics(runtime),
-    palette: paletteMetrics(runtime, options.palettePath, families, options.tolerance ?? 40),
+    palette,
     evidence
   };
   if (connectivity) report.connectivity = connectivity;
@@ -288,25 +365,20 @@ export function reviewAsset(manifestPath, options = {}) {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const args = parseArgs(process.argv.slice(2));
-  if (!args.manifest) {
-    console.error('Usage: node scripts/review-asset.mjs --manifest <path> [--out-dir <path>] [--palette <path>] [--families a,b] [--tolerance 40] [--modular-axis horizontal|vertical]');
-    process.exitCode = 1;
-  } else {
-    try {
-      if (Object.hasOwn(args, 'modular-axis') && args['modular-axis'] === undefined) {
-        throw new Error('--modular-axis requires a value: horizontal or vertical');
-      }
+  try {
+    const args = parseArgs(process.argv.slice(2));
+    if (!args.manifest) throw new Error('Usage: node scripts/review-asset.mjs --manifest <path> [--out-dir <path>] [--palette <path> --atlas-family <name>] [--families a,b] [--tolerance 40] [--modular-axis horizontal|vertical] [--exact-group group.name]');
       reviewAsset(args.manifest, {
         outDir: args['out-dir'],
         palettePath: args.palette ? path.resolve(args.palette) : null,
+        atlasFamily: args['atlas-family'],
         families: args.families ? args.families.split(',').map((value) => value.trim()).filter(Boolean) : [],
         tolerance: args.tolerance === undefined ? 40 : Number(args.tolerance),
-        modularAxis: args['modular-axis']
+        modularAxis: args['modular-axis'],
+        exactGroup: args['exact-group']
       });
-    } catch (error) {
-      console.error(error.message);
-      process.exitCode = 1;
-    }
+  } catch (error) {
+    console.error(error.message);
+    process.exitCode = 1;
   }
 }

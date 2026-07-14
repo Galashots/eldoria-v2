@@ -185,15 +185,40 @@ npm run test:asset-pipeline
 Generate review evidence and deterministic metrics in one pass:
 
 ```bash
-npm run review:asset -- --manifest <path> --palette docs/visual-targets/farm_environment_palette_v1.json --families forest,wood_leather
+npm run review:asset -- --manifest <path> --palette docs/visual-targets/farm_environment_palette_v1.json --atlas-family environment_farm --families forest,wood_leather
 ```
 
 `review:asset` normalizes and validates the manifest, then writes four nearest-neighbour evidence images and `review.json` under `.tmp/asset-review/<asset_id>/` by default. The JSON records output dimensions, frame count, SHA-256, alpha counts, horizontal/vertical wrap-step ratios, and optional locked-palette distance metrics.
 
+When a palette declares `appliesToAtlasFamilies`, review requires the matching `--atlas-family`; this prevents farm aliases from leaking into character or creature review. Inside that scope, palette-family requests resolve either a direct key under `families` or one executable `familyAliases` hop. Unresolved and scoped-deferred names fail instead of silently contributing no swatches. Assets with separately locked identity colors may add an exact swatch-group path:
+
+```bash
+npm run review:asset -- --manifest <path> --palette docs/visual-targets/farm_environment_palette_v1.json --atlas-family environment_farm --families forest,metal_stone --exact-group wildbloomAccents.root_star
+```
+
+With `--exact-group`, `palette.pixels` and the ordinary tolerance statistics cover non-transparent pixels that are not exact accents. `palette.exact` has this additive schema:
+
+```json
+{
+  "group": "wildbloomAccents.root_star",
+  "colors": [
+    { "hex": "#FFD666", "fullyOpaqueCount": 1, "nonTransparentCount": 1 }
+  ],
+  "coverage": {
+    "nonTransparentPixels": 100,
+    "exactMatchPixels": 2,
+    "baseTolerancePixels": 98,
+    "uncoveredPixels": 0
+  }
+}
+```
+
+Every color listed by the exact group must occur in at least one fully opaque runtime pixel. Near substitutes do not count. Every non-transparent runtime pixel must either match an exact accent or fall within the requested base-family tolerance; otherwise review fails. Omitting `--exact-group` preserves the ordinary tolerance-only report and behavior.
+
 For a modular fence, wall, or rail, add `--modular-axis horizontal` or `--modular-axis vertical`. The review then also writes a five-cell repeated strip on a checkerboard background and a `20×` crop spanning four runtime pixels on each side of one connection. `review.json` records alpha-aware contact coordinates, shared contiguous runs, and contacts that occur on only one connection edge. Review the strip and connection crop together: matching contact runs diagnose boundary topology, but do not replace the human check for doubled posts, endcaps, wrong orientation, or a complete self-contained panel.
 
 ```bash
-npm run review:asset -- --manifest <path> --palette docs/visual-targets/farm_environment_palette_v1.json --families wood_leather --modular-axis horizontal
+npm run review:asset -- --manifest <path> --palette docs/visual-targets/farm_environment_palette_v1.json --atlas-family environment_farm --families wood_leather --modular-axis horizontal
 ```
 
 For a multi-cell production sheet, create a one-cell review manifest for the candidate being approved; seam/repetition metrics across an entire packed sheet are not meaningful. Review output is derived evidence. Normally commit only the concise audit verdict plus one useful comparison panel when line-level Git review needs visual context. Keep the other generated previews temporary or attach them as CI/PR artifacts instead of committing a full evidence bundle for every candidate. Existing early review bundles remain valid historical evidence.

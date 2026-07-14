@@ -28,7 +28,9 @@ Ordered darkest → lightest. The artist/generator applies the contract's upper-
 
 ## Wildbloom identity accents — preserved exactly, not environment base swatches
 
-Locked by `src/presentation/WildbloomDiscoveryController.ts` (`WILDBLOOM_SPOTS`); authoritative gameplay values. The Wildbloom magical-family art must match these exactly; the surrounding moss/stone draws from the `forest`/`water`/`metal_stone` base swatches.
+Locked by `src/presentation/WildbloomDiscoveryController.ts` (`WILDBLOOM_SPOTS`); authoritative gameplay values. The Wildbloom magical-family art must match these exactly; the current landmark target's surrounding moss/stone draws from the declared `forest`/`metal_stone` base swatches.
+
+Identity accents are not base-material families. For example, `env_wildbloom_landmark` declares `forest` and `metal_stone` as its base `paletteFamilies`; its Root-Star gold/green values remain separately locked under `wildbloomAccents.root_star` and are audited with exact RGB matching rather than base-family tolerance.
 
 | Identity | Accent | Secondary |
 | --- | --- | --- |
@@ -36,16 +38,18 @@ Locked by `src/presentation/WildbloomDiscoveryController.ts` (`WILDBLOOM_SPOTS`)
 | Moonwell Echo | `#9FD7FF` | `#8F63FF` |
 | Foxfire Seed | `#A9E783` | `#72B95C` |
 
-## Mapping to contract family names
+## Executable aliases and deferred contract families
 
-The target JSONs keep the contract's canonical Section 4 family vocabulary in their `paletteFamilies` arrays; this file locks the actual hex for the farm-environment subset:
+`appliesToAtlasFamilies: ["environment_farm"]` scopes this palette to farm-environment targets. Within that scope, `familyAliases` preserves existing contract vocabulary without duplicating swatches. Direct family keys resolve to themselves; aliases resolve as follows:
 
-| This palette | Contract family used in targets |
+| Direct swatch family | Legacy alias resolving to it |
 | --- | --- |
 | `forest` | `forest` |
 | `wood_leather` | `wood_leather` |
 | `water` | `arcane` (cool water range only) |
 | `metal_stone` | `metal` |
+
+The machine-readable `deferredContractFamilies` list contains `ruins` and `ui_neutral`. Existing `environment_farm` targets may retain those identifiers, and validation reports their use as deferred, but this palette does not pretend that swatches exist for them. Asset review requests for deferred families still fail until an appropriate locked palette supplies real swatches. Names used by other atlases, such as character `skin_hair`, are outside this namespace and receive no resolution from the farm palette.
 
 Village stone/UI colors (`ruins`, `ui_neutral`) and character colors (`skin_hair`) are out of scope and locked when their own art lands. This is not a master-palette redesign.
 

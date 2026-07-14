@@ -4,6 +4,7 @@
   "paletteId": "farm_environment_palette_v1",
   "displayName": "Farm Environment Palette v1",
   "status": "locked",
+  "appliesToAtlasFamilies": ["environment_farm"],
   "lightDirection": "upper_left",
   "provenance": "Sampled from the approved external Eldoria farm environment style-lock reference (generated from the approved farm and Waking Gate references). That style-lock image is STYLE REFERENCE ONLY and is intentionally NOT committed to this repository; only these sampled hex values are locked here.",
   "families": {
@@ -12,8 +13,13 @@
     "water": ["#0B4961", "#0A6089", "#3E9DC6"],
     "metal_stone": ["#30362E", "#4E4F41", "#786F50", "#A49577", "#ECE0B1"]
   },
+  "familyAliases": {
+    "arcane": "water",
+    "metal": "metal_stone"
+  },
+  "deferredContractFamilies": ["ruins", "ui_neutral"],
   "contractFamilyMapping": {
-    "_note": "These environment-palette family names map onto the contract's canonical Section 4 sub-palette vocabulary used by the target JSONs' paletteFamilies arrays. The target files keep the contract names; this file locks their actual hex.",
+    "_note": "Descriptive cross-reference between farm swatch families and legacy contract vocabulary. familyAliases is the executable resolver used by validators and review tooling.",
     "forest": "forest",
     "wood_leather": "wood_leather",
     "water": "arcane (cool water range only; magical violet/glow accents remain the Wildbloom accents below)",
@@ -31,6 +37,7 @@
     "This is the concrete hex lock the visual contract Section 4 requires before farm production art is committed, so independently generated assets cannot silently drift on what 'forest', 'wood_leather', water tones, or 'metal_stone' mean. It is versioned (v1): revising a color is an explicit, reviewable change, not silent drift.",
     "Family swatches are ordered darkest-to-lightest. The artist/generator applies the contract's upper-left key light so highlights land upper-left and shadows fall down-right. Do not bake a scene-level warm/gold ambient tint into source art (contract Section 14 applies that once, at the scene level).",
     "The environment base swatches do not replace the Wildbloom identity accents; both coexist. The soft ground shadow under dynamic actors/props (contract Section 8a) is engine-drawn, not a palette color, and is intentionally not listed here.",
-    "Scope: farm environment kit only. Character sub-palettes (skin_hair, ui_neutral, ruins, lava) are out of scope and locked separately when their own production art lands. This is not a master-palette redesign."
+    "appliesToAtlasFamilies scopes these swatches and aliases to environment_farm. familyAliases resolves arcane to water and metal to metal_stone only inside that scope. deferredContractFamilies preserves existing farm-target ruins and ui_neutral metadata without inventing review swatches.",
+    "Scope: farm environment kit only. Character sub-palettes (including skin_hair) and other non-farm palettes are locked separately when their own production art lands. This is not a master-palette redesign."
   ]
 }

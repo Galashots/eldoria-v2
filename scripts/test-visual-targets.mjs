@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import path from 'node:path';
-import { collectVisualTargetErrors, validatePaletteDocument } from './validate-visual-targets.mjs';
+import { collectVisualTargetErrors, validatePaletteDocument, validateTargetPaletteFamiliesDocument } from './validate-visual-targets.mjs';
 
 function basePalette(overrides = {}) {
   return {
@@ -10,11 +11,29 @@ function basePalette(overrides = {}) {
     paletteId: 'test_palette_v1',
     displayName: 'Test Palette v1',
     status: 'locked',
+    appliesToAtlasFamilies: ['environment_farm'],
     lightDirection: 'upper_left',
     provenance: 'test fixture',
     families: {
       forest: ['#0A3521', '#174F1D']
     },
+    notes: ['Specification only; no art is included.'],
+    ...overrides
+  };
+}
+
+function baseTarget(overrides = {}) {
+  return {
+    id: 'test_target',
+    status: 'target_only',
+    category: 'env',
+    canvasPx: [16, 16],
+    footprintPx: [16, 16],
+    pivotPx: [8, 15],
+    ppu: 16,
+    runtimeExport: 'png',
+    preferredSource: 'aseprite',
+    atlasFamily: 'environment_farm',
     notes: ['Specification only; no art is included.'],
     ...overrides
   };
@@ -27,6 +46,93 @@ function basePalette(overrides = {}) {
   const result = await collectVisualTargetErrors(path.resolve('docs/visual-targets'));
   assert.deepEqual(result.errors, [], `expected the real visual-target docs to validate cleanly, got: ${result.errors.join('; ')}`);
   assert.ok(result.paletteCount >= 1, 'expected at least one palette to be validated');
+  assert.deepEqual(
+    [...new Set(result.deferredPaletteFamilyReferences.map((reference) => reference.family))].sort(),
+    ['ruins', 'ui_neutral'],
+    'scoped farm families without swatches must be reported as deferred rather than falsely resolved'
+  );
+}
+
+{
+  const palette = basePalette({ familyAliases: { arcane: 'forest' } });
+  const errors = validatePaletteDocument(palette);
+  assert.deepEqual(errors, [], `familyAliases must be treated as executable metadata, not a swatch group: ${errors.join('; ')}`);
+}
+
+{
+  const palette = basePalette({ familyAliases: { arcane: 'missing_family' } });
+  const errors = validatePaletteDocument(palette);
+  assert.ok(errors.some((error) => error.includes('familyAliases.arcane references missing direct family missing_family')));
+}
+
+{
+  const malformedKey = validatePaletteDocument(basePalette({ familyAliases: { Arcane: 'forest' } }));
+  assert.ok(malformedKey.some((error) => error.includes('familyAliases key Arcane')));
+  const malformedDestination = validatePaletteDocument(basePalette({ familyAliases: { arcane: 'Forest' } }));
+  assert.ok(malformedDestination.some((error) => error.includes('familyAliases.arcane must be a lowercase family identifier')));
+  const shadow = validatePaletteDocument(basePalette({ familyAliases: { forest: 'forest' } }));
+  assert.ok(shadow.some((error) => error.includes('must not shadow a direct family')));
+}
+
+{
+  const palette = basePalette({ deferredContractFamilies: ['ruins', 'ui_neutral'] });
+  assert.deepEqual(validatePaletteDocument(palette), []);
+  assert.deepEqual(validateTargetPaletteFamiliesDocument(baseTarget({ paletteFamilies: ['ruins'] }), palette), []);
+  const duplicate = validatePaletteDocument(basePalette({ deferredContractFamilies: ['ruins', 'ruins'] }));
+  assert.ok(duplicate.some((error) => error.includes('deferredContractFamilies contains duplicate family ruins')));
+  const malformed = validatePaletteDocument(basePalette({ deferredContractFamilies: ['UI Neutral'] }));
+  assert.ok(malformed.some((error) => error.includes('deferredContractFamilies[0] must be a lowercase identifier')));
+  const overlap = validatePaletteDocument(basePalette({ deferredContractFamilies: ['forest'] }));
+  assert.ok(overlap.some((error) => error.includes('overlaps a direct family or alias')));
+}
+
+{
+  const palette = basePalette({ familyAliases: { arcane: 'forest' } });
+  assert.deepEqual(
+    validateTargetPaletteFamiliesDocument(baseTarget({ paletteFamilies: ['forest', 'arcane'] }), palette),
+    [],
+    'direct family names and one-hop aliases must resolve'
+  );
+  assert.deepEqual(
+    validateTargetPaletteFamiliesDocument(baseTarget(), palette),
+    [],
+    'paletteFamilies remains optional'
+  );
+}
+
+{
+  const palette = basePalette();
+  assert.deepEqual(
+    validateTargetPaletteFamiliesDocument(baseTarget({ atlasFamily: 'characters', paletteFamilies: ['arcane'] }), palette),
+    [],
+    'a target with no applicable palette receives syntax validation only; farm aliases must not leak into characters'
+  );
+  const scopedUnknown = validateTargetPaletteFamiliesDocument(
+    baseTarget({ atlasFamily: 'environment_farm', paletteFamilies: ['unknown_family'] }),
+    palette
+  );
+  assert.ok(scopedUnknown.some((error) => error.includes('unresolved family unknown_family for atlas family environment_farm')));
+}
+
+{
+  const missing = validatePaletteDocument(basePalette({ appliesToAtlasFamilies: undefined }));
+  assert.ok(missing.some((error) => error.includes('appliesToAtlasFamilies must be a non-empty array')));
+  const malformed = validatePaletteDocument(basePalette({ appliesToAtlasFamilies: ['Environment Farm'] }));
+  assert.ok(malformed.some((error) => error.includes('appliesToAtlasFamilies[0] must be a lowercase identifier')));
+  const duplicate = validatePaletteDocument(basePalette({ appliesToAtlasFamilies: ['environment_farm', 'environment_farm'] }));
+  assert.ok(duplicate.some((error) => error.includes('duplicate atlas family environment_farm')));
+}
+
+{
+  const palette = basePalette({ familyAliases: { arcane: 'forest' } });
+  const empty = validateTargetPaletteFamiliesDocument(baseTarget({ paletteFamilies: [] }), palette);
+  assert.ok(empty.some((error) => error.includes('paletteFamilies must be a non-empty array')));
+  const malformed = validateTargetPaletteFamiliesDocument(baseTarget({ paletteFamilies: ['Forest'] }), palette);
+  assert.ok(malformed.some((error) => error.includes('must be a lowercase identifier')));
+  const duplicate = validateTargetPaletteFamiliesDocument(baseTarget({ paletteFamilies: ['forest', 'forest'] }), palette);
+  assert.ok(duplicate.some((error) => error.includes('duplicate family forest')));
+  const unresolved = validateTargetPaletteFamiliesDocument(baseTarget({ paletteFamilies: ['unknown_family'] }), palette);
+  assert.ok(unresolved.some((error) => error.includes('unresolved family unknown_family')));
 }
 
 {
@@ -99,6 +205,36 @@ function basePalette(overrides = {}) {
   });
   const errors = validatePaletteDocument(palette);
   assert.deepEqual(errors, [], `expected well-formed families + wildbloomAccents to pass, got: ${errors.join('; ')}`);
+}
+
+{
+  const root = path.resolve('.tmp', 'visual-target-order-test');
+  fs.rmSync(root, { recursive: true, force: true });
+
+  const firstPalette = basePalette({ paletteId: 'first_palette' });
+  const secondPalette = basePalette({ paletteId: 'second_palette', families: { water: ['#123456'] } });
+  const targetDocument = {
+    version: 1,
+    sourceContract: 'docs/VISUAL_ASSET_CONTRACT.md',
+    targets: [baseTarget({ paletteFamilies: ['forest'] })]
+  };
+
+  const validateOrder = async (directory, firstPalette, secondPalette) => {
+    fs.mkdirSync(directory, { recursive: true });
+    fs.writeFileSync(path.join(directory, 'a_palette.json'), `${JSON.stringify(firstPalette, null, 2)}\n`);
+    fs.writeFileSync(path.join(directory, 'b_palette.json'), `${JSON.stringify(secondPalette, null, 2)}\n`);
+    fs.writeFileSync(path.join(directory, 'c_target.json'), `${JSON.stringify(targetDocument, null, 2)}\n`);
+    return collectVisualTargetErrors(directory);
+  };
+
+  const firstOrder = await validateOrder(path.join(root, 'first-order'), firstPalette, secondPalette);
+  const reversedOrder = await validateOrder(path.join(root, 'reversed-order'), secondPalette, firstPalette);
+  for (const result of [firstOrder, reversedOrder]) {
+    assert.equal(result.errors.length, 2, `expected duplicate-scope and target ambiguity errors, got: ${result.errors.join('; ')}`);
+    assert.ok(result.errors.some((error) => error.includes('atlas family environment_farm is claimed by multiple palettes: first_palette, second_palette')));
+    assert.ok(result.errors.some((error) => error.includes('palette scope for atlas family environment_farm is ambiguous')));
+  }
+  fs.rmSync(root, { recursive: true, force: true });
 }
 
 console.log('Visual target validation test passed.');
