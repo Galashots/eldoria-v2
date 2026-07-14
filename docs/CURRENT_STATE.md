@@ -1,6 +1,6 @@
 # Eldoria-V2 Current State
 
-Last refreshed on 2026-07-12 after the Phase 2 farm-environment merge queue was cleared. This file owns volatile project status; durable rules live in `AGENTS.md`, and the documentation map lives in `docs/README.md`.
+Last refreshed on 2026-07-14 after the closed-loop workflow merge and Batch A oak runtime-master ingestion. This file owns volatile project status; durable rules live in `AGENTS.md`, and the documentation map lives in `docs/README.md`.
 
 ## Product invariant
 
@@ -34,9 +34,10 @@ Last refreshed on 2026-07-12 after the Phase 2 farm-environment merge queue was 
 - `tile_farm_grass_base / grass_a` — approved high-resolution source candidate with review-only normalization evidence.
 - `tile_farm_path_dirt / center` — approved exact `16×16` runtime master, deterministically upscaled to the canonical source with a zero-drift round trip.
 - `tile_farm_water_base / water_a` — approved exact `16×16` runtime master, deterministically upscaled to the canonical source with a zero-drift round trip.
-- `npm run review:asset` now normalizes, validates, generates nearest-neighbour evidence, and reports deterministic seam, alpha, hash, and optional palette metrics for one-cell review manifests.
+- `env_farm_tree / oak` — approved exact `32×48` runtime master, deterministically upscaled to a `1024×1536` canonical source with a zero-drift round trip.
+- `npm run review:asset` normalizes, validates, generates nearest-neighbour evidence, and reports deterministic seam, alpha, hash, and optional palette metrics for one-cell review manifests.
 
-These three assets are approved individually, but their target families remain incomplete. No production farm-environment manifest, packed terrain sheet, Phaser loading path, or map integration is complete.
+These four assets are approved individually, but their target families remain incomplete. No production farm-environment manifest, packed terrain sheet, Phaser loading path, or map integration is complete.
 
 ### Pending production replacement
 
@@ -55,6 +56,8 @@ The repository includes:
 - visual-target schema validation;
 - manifest-driven asset normalization and validation;
 - automated one-cell asset-review evidence and metrics;
+- a closed-loop ChatGPT asset-generation workflow;
+- a visual-evidence retention policy requiring reviewable proof while keeping superseded galleries out of Git history;
 - Vitest coverage for learning, mastery, interactions, curriculum templates, and save migration;
 - Playwright coverage for both profiles, the Waking Gate, movement/input, focus-loss recovery, Mira quests, crop prompts, the Practice Slime encounter, Wildbloom discovery and persistence, Stats & Mastery, save/reload, and portrait guidance;
 - reviewable screenshot artifacts, including iPad-like landscape browser viewports.
@@ -77,22 +80,22 @@ Phase 2A specification groundwork is complete:
 - ordered production-generation handoff in `docs/art-pipeline/FARM_ENVIRONMENT_GENERATION_HANDOFF_V1.md`;
 - approved external style direction classified as **STYLE REFERENCE ONLY**, not committed or normalized.
 
-Batch A progress is **3 of 7 foundational assets approved**:
+Batch A progress is **4 of 7 foundational assets approved**:
 
 1. `tile_farm_grass_base / grass_a` — complete.
 2. `tile_farm_path_dirt / center` — complete.
 3. `tile_farm_water_base / water_a` — complete.
-4. `env_farm_tree / oak` — next.
-5. `env_farm_fence / rail_horizontal` — pending.
+4. `env_farm_tree / oak` — complete.
+5. `env_farm_fence / rail_horizontal` — next; use one central post with rails connecting across the tile boundaries, not a complete two-post panel.
 6. `env_farm_rock_medium / rock_a` — pending.
 7. `env_wildbloom_landmark / root_star_revealed` — pending.
 
 ## Immediate next steps
 
-1. Generate `env_farm_tree / oak` as the next Batch A production candidate.
-2. Audit the source, the exact normalized `32×48` result, and enlarged runtime previews before accepting it. The silhouette, grounded footprint, flattened 3/4 perspective, upper-left light, palette, padding, and absence of a baked shadow are mandatory.
-3. Continue Batch A in canonical order: horizontal fence, medium rock, then revealed Root-Star landmark.
-4. Only after all seven Batch A anchors are approved, begin Batch B terrain variations (`grass_b/c`, dirt transitions, `water_b`, and the complete shoreline set).
+1. Generate and audit `env_farm_fence / rail_horizontal` through the closed-loop workflow.
+2. Require exact `16×32` runtime evidence, modular repetition-strip review, connection-edge inspection, footprint/pivot review, palette verification, and open-background connectivity.
+3. Continue Batch A in canonical order: medium rock, then revealed Root-Star landmark.
+4. After all seven Batch A anchors are approved, review a Batch A family contact sheet before beginning Batch B terrain variations (`grass_b/c`, dirt transitions, `water_b`, and the complete shoreline set).
 5. Do not recompose `public/maps/farm.json` until the complete production kit passes the contact-sheet acceptance gate.
 
 ## Decisions for the generation handoff
@@ -117,5 +120,5 @@ Batch A progress is **3 of 7 foundational assets approved**:
 - Dense generated environment art may lose readability at tiny runtime sizes; target-size changes must be made explicitly rather than hidden through blurry scaling.
 - High-resolution image generation tends to over-pattern quiet terrain and invent palette intermediates. Every candidate must be judged from its exact runtime pixels, not from the attractive high-resolution preview.
 - A high-resolution source can remain unsuitable even when its normalized runtime cell is good. In that case, freeze the approved runtime pixels and use the documented Approved Runtime Master workflow instead of repeatedly regenerating.
-- Terrain centres and transition tiles can easily become non-seamless or reveal periodic motifs; one-cell 3×3 and large-field repeats remain mandatory gates.
+- Terrain centres and transition tiles can easily become non-seamless or reveal periodic motifs; one-cell `3×3` and large-field repeats remain mandatory gates.
 - Ranger, Mira, and several interactive objects remain bridge art and may look inconsistent once production terrain arrives.
