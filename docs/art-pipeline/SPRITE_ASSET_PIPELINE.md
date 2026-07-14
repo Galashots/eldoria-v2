@@ -204,6 +204,24 @@ Run its focused test with:
 npm run test:asset-review
 ```
 
+### Batch A review contact sheet
+
+After all seven Batch A anchors have their own approved exact runtime pixels, build one deterministic comparison sheet with:
+
+```bash
+npm run review:contact-sheet -- --manifest <review-contact-sheet.json> --out <contact-sheet.png> --report <contact-sheet.json>
+```
+
+The command is deliberately review-only. It places grass, dirt, water, and oak in the first row and fence, rock, and Root-Star in the centred second row. The fixed `1312×1072` layout uses `304×472` cards, `16px` gutters, a `256×384` evidence stage in every card, uniform `8×` nearest-neighbour scale, and a common pivot baseline within each comparison row. Deterministic bitmap header, labels, baselines, and footer avoid host-font drift. Its companion JSON records sheet/slot geometry, input and output SHA-256 values, approval verdicts, and explicit `packedSheet: false`, `targetFamiliesComplete: false`, `runtimeIntegrated: false`, and device/child-validation claims.
+
+The input manifest is strict and must declare `version: 1`, `expectedCount: 7`, and exactly seven items. Every item requires a unique `slot` and `order` covering `0` through `6`, a unique `id`/`variant`, a short bitmap-safe `label`, relative PNG `path`, exact `dimensions`, in-bounds `pivot`, lowercase SHA-256, and either `APPROVED SOURCE CANDIDATE` or `APPROVED RUNTIME MASTER`. The builder validates every file, dimension, hash, count, slot, order, and verdict before creating either output.
+
+This tool does not approve assets, infer verdicts, normalize sources, create a production packed sheet, load anything in Phaser, or modify the map. Do not create the real Batch A manifest until all seven individual approval gates have passed. Run the synthetic regression suite with:
+
+```bash
+npm run test:contact-sheet
+```
+
 For an Approved Runtime Master, create the canonical high-resolution source with:
 
 ```bash
