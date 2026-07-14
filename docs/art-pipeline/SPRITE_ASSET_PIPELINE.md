@@ -190,6 +190,12 @@ npm run review:asset -- --manifest <path> --palette docs/visual-targets/farm_env
 
 `review:asset` normalizes and validates the manifest, then writes four nearest-neighbour evidence images and `review.json` under `.tmp/asset-review/<asset_id>/` by default. The JSON records output dimensions, frame count, SHA-256, alpha counts, horizontal/vertical wrap-step ratios, and optional locked-palette distance metrics.
 
+For a modular fence, wall, or rail, add `--modular-axis horizontal` or `--modular-axis vertical`. The review then also writes a five-cell repeated strip on a checkerboard background and a `20×` crop spanning four runtime pixels on each side of one connection. `review.json` records alpha-aware contact coordinates, shared contiguous runs, and contacts that occur on only one connection edge. Review the strip and connection crop together: matching contact runs diagnose boundary topology, but do not replace the human check for doubled posts, endcaps, wrong orientation, or a complete self-contained panel.
+
+```bash
+npm run review:asset -- --manifest <path> --palette docs/visual-targets/farm_environment_palette_v1.json --families wood_leather --modular-axis horizontal
+```
+
 For a multi-cell production sheet, create a one-cell review manifest for the candidate being approved; seam/repetition metrics across an entire packed sheet are not meaningful. Review output is derived evidence. Normally commit only the concise audit verdict plus one useful comparison panel when line-level Git review needs visual context. Keep the other generated previews temporary or attach them as CI/PR artifacts instead of committing a full evidence bundle for every candidate. Existing early review bundles remain valid historical evidence.
 
 Run its focused test with:
