@@ -4,6 +4,15 @@ This file keeps recent, high-value change summaries. Full historical entries thr
 
 Entries should remain concise: date/author, branch or PR, scope, compatibility impact, verification, and remaining risk. Detailed implementation narratives belong in the PR description and commits.
 
+## 2026-07-13 — Closed-loop asset generation workflow
+
+- Author/branch: ChatGPT, `chatgpt/closed-loop-asset-workflow`.
+- Scope: added a durable minimal-touch protocol for ChatGPT-led generate → exact-runtime audit → corrective prompt → regenerate → user-approval loops, including interface limitations, type-specific evidence gates, deterministic runtime-master rescue, iteration limits, approval packages, session recovery, and repo handoff.
+- Principal files: `docs/art-pipeline/CLOSED_LOOP_ASSET_GENERATION_WORKFLOW.md`, `docs/README.md`, and `AGENTS.md`.
+- Compatibility: documentation and workflow only; no assets, manifests, runtime, map, gameplay, save, quest, curriculum, economy, or package changes.
+- Verification: diff reviewed against current `main`; documentation links and responsibilities remain consistent with the existing image-prompting and sprite-pipeline guides. GitHub CI remains authoritative after the draft PR is opened.
+- Remaining risk: the ChatGPT image-generation interface still requires a neutral continuation turn between generated batches; the workflow minimizes user prompting but does not claim unattended background image generation.
+
 ## 2026-07-12 — Fix: hero could get stuck sliding after a lost focus event
 
 - Branch/PR: `claude/fix-stuck-movement-on-focus-loss` (draft PR pending).
@@ -60,7 +69,7 @@ Entries should remain concise: date/author, branch or PR, scope, compatibility i
 - Branch/PR: `claude/beautification-phase2-batch-a-grass-a` (draft PR pending).
 - Scope: accepted the first Phase 2 Batch A production source candidate (`tile_farm_grass_base` / `grass_a`, ChatGPT-approved as **APPROVED SOURCE CANDIDATE**); verified the received PNG's format/dimensions/SHA-256 against the expected values before committing it byte-for-byte; produced a clearly review-only manifest/normalization (16×16, Category A settings) plus nearest-neighbor evidence previews (enlarged tile, 3×3 repeat, 12×8 field, comparison panel) and a deterministic seam/gradient/palette audit, all under `docs/art-pipeline/review/tile_farm_grass_base_grass_a/`, not under the production manifest/output paths.
 - Principal files: `assets/source/generated/tile_farm_grass_base/grass_a.png` (new, approved source); `docs/art-pipeline/review/tile_farm_grass_base_grass_a/` (new review manifest, RGBA input adapter, normalized output, evidence images, `AUDIT.md`).
-- Compatibility: no runtime, map, save, quest, curriculum, mastery, or interaction change. `public/maps/farm.json` untouched. Nothing loaded in Phaser. No production `tile_farm_grass_base` manifest or packed sheet was created — the target is a 3-cell (`grass_a`/`grass_b`/`grass_c`) sheet and only 1 of 3 cells exists.
+- Compatibility: no runtime, map, save, quest, curriculum, mastery, or interaction change. `public/maps/farm.json` untouched. Nothing loaded in Phaser. No production `tile_farm_grass_base` manifest exists; `grass_a` remains 1 of 3 required cells.
 - Verification: `npm ci`, `npm run check`, `npm run test:asset-pipeline`, `npm run test:unit`, `npm run smoke` all run (see PR report for results); the review manifest itself was normalized and validated through the repo's actual `normalize-asset-sheet.mjs`/`validate-asset-sheet.mjs` scripts.
 - Pipeline note: found and worked around a real gap between `FARM_ENVIRONMENT_GENERATION_HANDOFF_V1.md`'s Category A guidance (`background: alpha`, `fit: fill`) and the current `normalize-asset-sheet.mjs`, which rejects an alpha-less RGB source under `mode: alpha` and only accepts `fit: "contain"`. Full detail and the exact workaround (a byte-exact RGBA round-trip of the approved source, verified 0 pixel differences) are in `AUDIT.md` — relevant to whoever authors the eventual production manifest for this target.
 - Remaining risk: awaiting ChatGPT visual review of this evidence set before `grass_b`/`grass_c` or `tile_farm_path_dirt` generation begins. The two script/doc pipeline mismatches noted above will recur for the production manifest unless addressed.

@@ -32,6 +32,7 @@ A planning document does not prove implementation. A browser-emulated iPad viewp
 ## Visual and asset production
 
 - [`VISUAL_ASSET_CONTRACT.md`](VISUAL_ASSET_CONTRACT.md) — durable style, perspective, palette, naming, metadata, layering, terrain-blending, and grounding rules.
+- [`art-pipeline/CLOSED_LOOP_ASSET_GENERATION_WORKFLOW.md`](art-pipeline/CLOSED_LOOP_ASSET_GENERATION_WORKFLOW.md) — minimal-touch ChatGPT generation, self-audit, corrective prompting, user approval, runtime-master rescue, and repo handoff protocol.
 - [`art-pipeline/SPRITE_ASSET_PIPELINE.md`](art-pipeline/SPRITE_ASSET_PIPELINE.md) — manifest-driven source-to-runtime normalization and validation.
 - [`art-pipeline/IMAGE_PROMPTING_GUIDE.md`](art-pipeline/IMAGE_PROMPTING_GUIDE.md) — source-art prompting, audit verdicts, background cleanup, and production lessons.
 - `visual-targets/*.json` — authoritative machine-readable target specifications.
@@ -43,8 +44,10 @@ Use these terms precisely:
 
 - **STYLE REFERENCE ONLY** — establishes direction but is not clean or exact enough for normalization.
 - **APPROVED SOURCE CANDIDATE** — clean generated or authored source ready for a manifest and normalization.
+- **APPROVED RUNTIME MASTER** — exact runtime pixels pass review even though the original high-resolution generation is not suitable as the canonical source; use deterministic nearest-neighbour upscaling and a zero-drift round trip.
 - **NORMALIZED RUNTIME ASSET** — exact-dimension output produced and validated through the pipeline.
 - **RUNTIME-INTEGRATED ASSET** — normalized asset loaded and verified in the game.
+- **HOLD** — promising but not approved; must name the next deterministic test or correction.
 - **REGENERATE** — generation failed important production constraints.
 - **CHANGE TARGET SIZE** — the artwork is viable but the declared runtime target is too small or otherwise unsuitable.
 

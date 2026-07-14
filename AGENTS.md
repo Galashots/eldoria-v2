@@ -60,6 +60,7 @@ Key rules:
 - [`docs/VISUAL_ASSET_CONTRACT.md`](docs/VISUAL_ASSET_CONTRACT.md) owns durable visual rules.
 - Machine-readable files under `docs/visual-targets/` are authoritative for target geometry, variants, pivots, palettes, and metadata.
 - [`docs/art-pipeline/FARM_ENVIRONMENT_GENERATION_HANDOFF_V1.md`](docs/art-pipeline/FARM_ENVIRONMENT_GENERATION_HANDOFF_V1.md) owns the current farm-art generation order while that milestone is active.
+- [`docs/art-pipeline/CLOSED_LOOP_ASSET_GENERATION_WORKFLOW.md`](docs/art-pipeline/CLOSED_LOOP_ASSET_GENERATION_WORKFLOW.md) owns the minimal-touch ChatGPT generate → audit → correct → approve protocol and the boundary between visual approval and deterministic repo ingestion.
 - Completed milestone plans are historical records. Do not re-execute them without a new approved scope.
 - Keep volatile status out of this file.
 
@@ -85,6 +86,8 @@ Return to ChatGPT or the user for:
 - save-schema, architecture, major-dependency, or broad-scope tradeoffs;
 - milestone audits after a run of implementation work.
 
+For image-generation work, ChatGPT owns corrective prompting and visual QA. The user should not be asked to diagnose technical failures such as seam behavior, palette drift, key-colour contamination, runtime occupancy, modular connection logic, or pivot fit. Follow the closed-loop workflow and bring the user a passing approval package or a material target-size/art-direction decision.
+
 ## Required workflow
 
 For every task:
@@ -100,6 +103,15 @@ For every task:
 9. Record meaningful repository changes in `docs/CHATGPT_CHANGELOG.md`.
 10. Update `docs/CURRENT_STATE.md` only when capabilities, active milestone, known risks, or next steps materially change.
 11. Open a focused PR. Do not merge a draft, red CI, unreviewed visual change, or branch with unrelated history.
+
+For generated asset tasks specifically:
+
+1. Resolve the authoritative target geometry, palette, variant, footprint, pivot, and batch order before generation.
+2. Audit the high-resolution source and the exact runtime pixels.
+3. Use only the formal verdict vocabulary in the asset guides.
+4. Prefer a deterministic Approved Runtime Master correction only when the runtime composition is already correct and the remaining fixes are narrow and auditable.
+5. Preserve user approval as the final art-direction gate before repo ingestion.
+6. Do not create fake-complete packed sheets or start runtime/map integration for incomplete families.
 
 ## Verification
 
@@ -120,7 +132,7 @@ Additional expectations:
 
 - Gameplay/UI/map changes: run the game, interact with the changed flow in a browser, and inspect screenshots.
 - Visual PRs: include before/after evidence, Mage and Ranger evidence when relevant, an iPad-like landscape viewport, and a contact sheet or clearly named image set.
-- Generated assets: normalize and validate every relevant manifest, inspect 1x and 3x previews, and record provenance.
+- Generated assets: normalize and validate every relevant manifest, inspect exact 1× and enlarged nearest-neighbour previews, record provenance, and include type-specific evidence from the closed-loop workflow.
 - Save migrations: add focused tests proving old saves migrate exactly once and current saves do not remigrate.
 - Real-device claims: distinguish browser emulation from physical iPad Safari testing.
 
