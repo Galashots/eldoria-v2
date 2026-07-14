@@ -131,7 +131,8 @@ npm run smoke
 Additional expectations:
 
 - Gameplay/UI/map changes: run the game, interact with the changed flow in a browser, and inspect screenshots.
-- Visual PRs: include before/after evidence, Mage and Ranger evidence when relevant, an iPad-like landscape viewport, and a contact sheet or clearly named image set.
+- Runtime-integrated visual PRs: include before/after evidence, Mage and Ranger evidence when relevant, an iPad-like landscape viewport, and a contact sheet or clearly named image set.
+- Source-only asset PRs: full-game screenshots are not required before the asset is loaded; use exact runtime output, enlarged nearest-neighbour inspection, and the type-specific evidence required by the closed-loop workflow.
 - Generated assets: normalize and validate every relevant manifest, inspect exact 1× and enlarged nearest-neighbour previews, record provenance, and include type-specific evidence from the closed-loop workflow.
 - Save migrations: add focused tests proving old saves migrate exactly once and current saves do not remigrate.
 - Real-device claims: distinguish browser emulation from physical iPad Safari testing.

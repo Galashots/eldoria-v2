@@ -15,7 +15,7 @@ The original high-resolution AI-generated oak is not canonical source art. The a
 - Declared pivot: `[16,47]`
 - Render layer: `actors_body`
 - Approved-master SHA-256: `5d8212aafff7f5b2ee84b7dbc9c42ba087981a4de4115483e09f95571f06e030`
-- Canonical `1024×1536` source SHA-256: `6d5007977575faf506fae72875e53aaccd91a794d7816042259fe418ed9158ad`
+- Canonical `1024×1536` source SHA-256: `a731e9c1bdba5100b859363cdf4ddd3774293718f261b8dd87e473173cab3c48`
 
 ## Deterministic source creation
 
@@ -23,7 +23,7 @@ The canonical source at `assets/source/generated/env_farm_tree/oak.png` was crea
 
 - every runtime pixel becomes one solid `32×32` block;
 - no interpolation, smoothing, sharpening, recolouring, alpha modification, cropping, or repositioning;
-- block-exactness mismatches: **0**;
+- block-exactness mismatches: **0 / 1,572,864 pixels**;
 - canonical dimensions: `1024×1536` RGBA.
 
 ## Zero-drift round trip
@@ -31,7 +31,9 @@ The canonical source at `assets/source/generated/env_farm_tree/oak.png` was crea
 Normalizing the canonical source back to `32×48` with `background.mode: "alpha"`, `trim: "none"`, `fit: "fill"`, and `anchor: "top_left"` reproduces the approved master exactly:
 
 - RGBA mismatches: **0 / 1,536 pixels**;
-- normalized SHA-256: `5d8212aafff7f5b2ee84b7dbc9c42ba087981a4de4115483e09f95571f06e030`.
+- normalized SHA-256: `e7cdde2ad80cc645144eadbf629c331f26e853a1246c0284f891234bc812b0a7`.
+
+The approved master and normalized PNG use different deterministic PNG encodings, so their file hashes differ; their decoded RGBA pixels are identical.
 
 ## Independently derived runtime metrics
 
@@ -48,7 +50,7 @@ Normalizing the canonical source back to `32×48` with `background.mode: "alpha"
 
 ## Visual review
 
-At exact `1×` scale the prop reads as a broad, sturdy, welcoming oak. The asymmetric canopy, trunk, and major branch divisions remain legible. The base is compact, with no baked ground shadow or ground patch. Upper-left lighting and the locked `forest` plus `wood_leather` palette families are preserved.
+At exact `1×` scale and in `oak.preview-20x.png`, the prop reads as a broad, sturdy, welcoming oak. The asymmetric canopy, trunk, and major branch divisions remain legible. The base is compact, with no baked ground shadow or ground patch. Upper-left lighting and the locked `forest` plus `wood_leather` palette families are preserved.
 
 ## Scope
 
@@ -65,4 +67,4 @@ The broader `env_farm_tree` family and Phase 2 environment kit remain incomplete
 
 ## Evidence retention
 
-The durable repository evidence is intentionally minimal: the approved master, exact normalized round trip, this audit, and manifest. Larger inspection panels and unsuccessful/superseded generations belong in the PR or CI artifacts and should not remain in the repository after approval.
+The durable repository evidence is intentionally minimal: the approved master, exact normalized round trip, one enlarged nearest-neighbour preview, this audit, and manifest. Larger inspection panels and unsuccessful/superseded generations belong in the PR or CI artifacts and should not remain in the repository after approval.

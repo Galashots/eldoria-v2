@@ -33,6 +33,7 @@ A planning document does not prove implementation. A browser-emulated iPad viewp
 
 - [`VISUAL_ASSET_CONTRACT.md`](VISUAL_ASSET_CONTRACT.md) — durable style, perspective, palette, naming, metadata, layering, terrain-blending, and grounding rules.
 - [`art-pipeline/CLOSED_LOOP_ASSET_GENERATION_WORKFLOW.md`](art-pipeline/CLOSED_LOOP_ASSET_GENERATION_WORKFLOW.md) — minimal-touch ChatGPT generation, self-audit, corrective prompting, user approval, runtime-master rescue, and repo handoff protocol.
+- [`art-pipeline/VISUAL_EVIDENCE_RETENTION_POLICY.md`](art-pipeline/VISUAL_EVIDENCE_RETENTION_POLICY.md) — required visual proof by change type, game-level audit cadence, and retention rules for temporary versus durable evidence.
 - [`art-pipeline/SPRITE_ASSET_PIPELINE.md`](art-pipeline/SPRITE_ASSET_PIPELINE.md) — manifest-driven source-to-runtime normalization and validation.
 - [`art-pipeline/IMAGE_PROMPTING_GUIDE.md`](art-pipeline/IMAGE_PROMPTING_GUIDE.md) — source-art prompting, audit verdicts, background cleanup, and production lessons.
 - `visual-targets/*.json` — authoritative machine-readable target specifications.
