@@ -13,7 +13,7 @@
       "ppu": 16,
       "view": "top_down",
       "directions": [],
-      "paletteFamilies": ["arcane", "forest"],
+      "paletteFamilies": ["forest", "metal_stone"],
       "lightDirection": "upper_left",
       "renderLayer": "actors_body",
       "variants": [

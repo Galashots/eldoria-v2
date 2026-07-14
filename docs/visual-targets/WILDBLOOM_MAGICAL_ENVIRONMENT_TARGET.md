@@ -28,6 +28,8 @@ Six variants covering the three existing lore identities' two visual states:
 
 Accent colors and rune motifs are pinned to the exact hex values and identities already live in `WildbloomDiscoveryController.ts`'s `WILDBLOOM_SPOTS` definition — this target does not invent new lore or colors. Those same pinned values are mirrored in [`FARM_ENVIRONMENT_PALETTE_V1.md`](FARM_ENVIRONMENT_PALETTE_V1.md) / [`farm_environment_palette_v1.json`](farm_environment_palette_v1.json) under `wildbloomAccents` as the authoritative cross-reference; the surrounding moss/stone draws from the locked `forest` and `metal_stone` base swatches.
 
+Accordingly, the target's `paletteFamilies` contains exactly `forest` and `metal_stone`: these describe the landmark's base materials. The identity colors are deliberately separate exact-accent data, not an `arcane` base-material declaration. Root-Star review must combine base-family tolerance with exact `wildbloomAccents.root_star` presence and full opaque-pixel coverage.
+
 ## Future Art PR Acceptance Checklist
 
 - [ ] Uses the correct target ID and all six variants.
