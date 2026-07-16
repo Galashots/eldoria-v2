@@ -2,13 +2,13 @@
 
 **Status:** Durable project operating protocol  
 **Applies to:** ChatGPT-led image generation, visual auditing, corrective prompting, runtime-master rescue, and repo handoff  
-**Default owner:** ChatGPT for generation and visual judgment; user for final art-direction approval; repo-capable agent for deterministic ingestion when needed
+**Default owner:** ChatGPT for generation, visual judgment, routine asset approval, and advancement; user for strategic direction and material escalations; repo-capable agent for deterministic ingestion when needed
 
 ---
 
 ## 1. Purpose
 
-This workflow reduces the user's role from repeated prompt-writing and correction-writing to a small number of creative-direction decisions.
+This workflow makes asset production AI-led while preserving the user's authority over overall creative direction and material specification changes.
 
 The intended operating pattern is:
 
@@ -18,9 +18,9 @@ user sets target and direction
 → ChatGPT audits exact runtime result
 → ChatGPT writes its own corrective prompt
 → ChatGPT regenerates as needed
-→ ChatGPT presents only a passing approval package
-→ user approves, requests one focused change, or rejects the direction
-→ approved asset enters the deterministic repo pipeline
+→ ChatGPT records a passing approval package
+→ ChatGPT advances the approved asset into the deterministic repo pipeline
+→ user is involved only for a material direction/specification escalation or an optional review request
 ```
 
 The user should not need to diagnose magenta contamination, palette drift, seam problems, runtime occupancy, modularity, pivot placement, or normalization failures. Those are pipeline responsibilities.
@@ -38,7 +38,7 @@ Therefore, the default workflow is **minimal-touch closed loop**, not unattended
 3. ChatGPT audits the batch without asking the user to diagnose it.
 4. If nothing passes, ChatGPT generates the next corrected batch.
 5. The user again sends `continue`.
-6. This repeats until ChatGPT presents a passing approval package.
+6. This repeats until ChatGPT records a passing approval package and advances the asset, or escalates a material decision.
 
 The user's continuation signal is permission to proceed, not a request to rewrite or improve the prompt. ChatGPT owns the correction logic.
 
@@ -58,7 +58,8 @@ Unless the user overrides the workflow for a specific asset, ChatGPT is authoriz
 - create tiled repetition previews where applicable;
 - measure palette distance, alpha, bounds, occupancy, edge contact, and seam indicators;
 - perform narrow deterministic runtime-pixel corrections;
-- recommend **APPROVED RUNTIME MASTER** when the runtime pixels pass but the high-resolution generation does not;
+- assign **APPROVED SOURCE CANDIDATE** or **APPROVED RUNTIME MASTER** when all applicable gates pass;
+- initiate deterministic repo ingestion and merge a focused visual PR when repository evidence and exact-head CI satisfy the merge policy;
 - stop and escalate when the target specification itself appears unsuitable.
 
 ChatGPT is **not** authorized by this workflow alone to:
@@ -75,18 +76,16 @@ Those actions require the applicable repo rules and user authorization.
 
 ## 4. Roles
 
-### User — creative director
+### User — strategic creative director
 
 The user:
 
-- sets or approves the overall art direction;
-- approves the first representative asset in a visual family;
-- decides among materially different art directions;
-- approves a passing final candidate;
-- may request one focused aesthetic change;
-- decides when to abandon or resize a target after escalation.
+- sets or changes the overall art direction;
+- decides among materially different directions when ChatGPT escalates;
+- may request review or one focused aesthetic change at any time;
+- decides whether to abandon, resize, or respecify a target after escalation.
 
-The user should receive a compact approval package, not raw failed iterations unless requested.
+Routine passing candidates do not wait for per-asset user approval. When the user requests an update, provide the compact approval record rather than raw failed iterations unless requested.
 
 ### ChatGPT — generation and visual QA owner
 
@@ -100,7 +99,8 @@ ChatGPT:
 - writes corrective prompts;
 - selects or corrects the strongest candidate;
 - assigns the formal verdict;
-- prepares the final approval package;
+- prepares and records the final approval package;
+- approves and advances passing routine assets without waiting for a user response;
 - writes the repo-ingestion brief or performs repo work when tools permit.
 
 ### Repo-capable engineering agent
@@ -559,7 +559,7 @@ Do not burn unlimited generation attempts.
 
 ---
 
-## 12. User approval package
+## 12. AI approval record and optional user package
 
 Once a candidate passes, present only:
 
@@ -593,24 +593,19 @@ Exactly one:
 
 State any acceptable known limitation, such as visible single-tile periodicity pending later variants.
 
-### Decision requested
+### Advancement or escalation
 
-The user chooses one:
+- If all applicable gates pass, ChatGPT records the verdict and advances to repo ingestion without waiting for per-asset user approval.
+- If a material art-direction, target-size, geometry, palette, production-order, or model-capability decision is required, stop and present that decision to the user.
+- If the user requests a review, present the same compact package and accept a focused change or direction override.
 
-```text
-APPROVE
-ONE MORE PASS: <single focused direction>
-REJECT DIRECTION
-CHANGE TARGET
-```
-
-Do not ask the user to troubleshoot technical pipeline issues.
+Never ask the user to troubleshoot technical pipeline issues.
 
 ---
 
-## 13. Repo handoff after approval
+## 13. Repo handoff after ChatGPT approval
 
-After user approval:
+After ChatGPT records a passing verdict:
 
 1. Verify input format, dimensions, mode, and SHA-256.
 2. Preserve the approved file byte-for-byte.
@@ -678,4 +673,4 @@ Repository status remains authoritative over this snapshot.
 
 When this file is attached to the Eldoria-V2 ChatGPT Project, interpret asset-generation requests as follows:
 
-> Own the production loop. Read the repository target and palette. Generate a candidate batch, audit the exact runtime result, write the corrective prompt yourself, and continue through minimal-touch continuation turns until a candidate passes. Do not ask the user to diagnose technical failures. Present only a passing approval package unless a target-size or art-direction decision requires escalation.
+> Own the production loop. Read the repository target and palette. Generate a candidate batch, audit the exact runtime result, write the corrective prompt yourself, and continue through minimal-touch continuation turns until a candidate passes. Approve and advance passing routine assets without waiting for per-asset user approval. Do not ask the user to diagnose technical failures. Escalate only material target-size, specification, art-direction, repeated-failure, or scope decisions.

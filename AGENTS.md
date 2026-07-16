@@ -86,7 +86,7 @@ Return to ChatGPT or the user for:
 - save-schema, architecture, major-dependency, or broad-scope tradeoffs;
 - milestone audits after a run of implementation work.
 
-For image-generation work, ChatGPT owns corrective prompting and visual QA. The user should not be asked to diagnose technical failures such as seam behavior, palette drift, key-colour contamination, runtime occupancy, modular connection logic, or pivot fit. Follow the closed-loop workflow and bring the user a passing approval package or a material target-size/art-direction decision.
+For image-generation work, ChatGPT owns corrective prompting, visual QA, and routine per-asset approval after the full audit passes. The user should not be asked to diagnose technical failures such as seam behavior, palette drift, key-colour contamination, runtime occupancy, modular connection logic, or pivot fit. Follow the closed-loop workflow autonomously and escalate only a material target-size/art-direction decision, repeated generation failure, or scope change.
 
 ## Required workflow
 
@@ -110,7 +110,7 @@ For generated asset tasks specifically:
 2. Audit the high-resolution source and the exact runtime pixels.
 3. Use only the formal verdict vocabulary in the asset guides.
 4. Prefer a deterministic Approved Runtime Master correction only when the runtime composition is already correct and the remaining fixes are narrow and auditable.
-5. Preserve user approval as the final art-direction gate before repo ingestion.
+5. Treat ChatGPT's documented passing visual audit as the routine final art gate before repo ingestion. User approval is required only for a material change in art direction, target size/geometry, palette, production order, or other escalated scope decision.
 6. Do not create fake-complete packed sheets or start runtime/map integration for incomplete families.
 
 ## Verification
