@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "id": "review_env_wildbloom_landmark_root_star_revealed",
+  "_reviewOnly": "Review evidence only; do not load this output in Phaser or modify the farm map.",
+  "_sourceNote": "The approved 32x32 RGBA runtime master is the source of truth. The canonical 1024x1024 source is an exact 32x nearest-neighbour block replication.",
+  "target": {
+    "outputPath": "root_star_revealed.review-normalized.png",
+    "cellPx": [32, 32],
+    "cols": 1,
+    "rows": 1
+  },
+  "sources": {
+    "root_star_source": {
+      "path": "../../../../assets/source/generated/env_wildbloom_landmark/root_star_revealed.png",
+      "background": { "mode": "alpha" }
+    }
+  },
+  "frames": [
+    {
+      "sourceRef": "root_star_source",
+      "destCell": [0, 0],
+      "trim": "none",
+      "fit": "fill",
+      "anchor": "top_left"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # Eldoria-V2 Current State
 
-Last refreshed on 2026-07-15 after Batch A rock_a runtime-master ingestion and adoption of AI-led routine art approval. This file owns volatile project status; durable rules live in `AGENTS.md`, and the documentation map lives in `docs/README.md`.
+Last refreshed on 2026-07-16 after completion of all seven Batch A foundational asset approvals. This file owns volatile project status; durable rules live in `AGENTS.md`, and the documentation map lives in `docs/README.md`.
 
 ## Product invariant
 
@@ -37,9 +37,11 @@ Last refreshed on 2026-07-15 after Batch A rock_a runtime-master ingestion and a
 - `env_farm_tree / oak` — approved exact `32×48` runtime master, deterministically upscaled to a `1024×1536` canonical source with a zero-drift round trip.
 - `env_farm_fence / rail_horizontal` — approved exact `16×32` runtime master, deterministically upscaled to a `512×1024` canonical source with a zero-drift round trip and retained modular connection evidence.
 - `env_farm_rock_medium / rock_a` — approved exact `32×32` runtime master, deterministically upscaled to a `1024×1024` canonical source with a zero-drift round trip and retained footprint/pivot evidence.
+- `env_wildbloom_landmark / root_star_revealed` — approved exact `32×32` runtime master with exact Root-Star accent coverage, a reproducible colour-only correction recipe, deterministic `1024×1024` canonical source, and zero-drift round trip.
+- The deterministic seven-anchor Batch A contact sheet passes the family-level scale, palette, lighting, grounding, and readability gate; its report explicitly preserves incomplete-family and no-integration claims.
 - `npm run review:asset` normalizes, validates, generates nearest-neighbour evidence, and reports deterministic seam, alpha, hash, and optional palette metrics for one-cell review manifests.
 
-These six assets are approved individually, but their target families remain incomplete. No production farm-environment manifest, packed terrain sheet, Phaser loading path, or map integration is complete.
+These seven Batch A anchors are approved individually, but their target families remain incomplete. No production farm-environment manifest, packed terrain sheet, Phaser loading path, or map integration is complete.
 
 ### Pending production replacement
 
@@ -83,7 +85,7 @@ Phase 2A specification groundwork is complete:
 - scoped farm-palette validation/review tooling and a tested Category-C padded-`sourceRect` extraction contract;
 - approved external style direction classified as **STYLE REFERENCE ONLY**, not committed or normalized.
 
-Batch A progress is **6 of 7 foundational assets approved**:
+Batch A progress is **7 of 7 foundational assets approved**:
 
 1. `tile_farm_grass_base / grass_a` — complete.
 2. `tile_farm_path_dirt / center` — complete.
@@ -91,14 +93,14 @@ Batch A progress is **6 of 7 foundational assets approved**:
 4. `env_farm_tree / oak` — complete.
 5. `env_farm_fence / rail_horizontal` — complete; one central post with rails connecting across tile boundaries, not a complete two-post panel.
 6. `env_farm_rock_medium / rock_a` — complete.
-7. `env_wildbloom_landmark / root_star_revealed` — next.
+7. `env_wildbloom_landmark / root_star_revealed` — complete.
 
 ## Immediate next steps
 
-1. Generate and audit `env_wildbloom_landmark / root_star_revealed` through the AI-led closed-loop workflow.
-2. Require exact `32×32` runtime evidence, grounded footprint/pivot review, `forest` + `metal_stone` base-family verification, exact Root-Star accent presence/coverage, silhouette readability, and transparent-background inspection.
-3. After all seven Batch A anchors are approved, review a Batch A family contact sheet before beginning Batch B terrain variations (`grass_b/c`, dirt transitions, `water_b`, and the complete shoreline set).
-4. Do not recompose `public/maps/farm.json` until the complete production kit passes the contact-sheet acceptance gate.
+1. Begin Batch B in canonical order with `tile_farm_grass_base / grass_b`, explicitly matching the approved `grass_a` texture and palette while changing only quiet micro-detail.
+2. Continue with `grass_c`, dirt transitions, `water_b`, and the complete shoreline set only after each preceding reference cell passes.
+3. Keep every Batch B terrain variant on its one-cell seam/repetition gate before any packed family sheet.
+4. Do not recompose `public/maps/farm.json` until the complete production kit passes the later environment-kit contact-sheet acceptance gate.
 
 ## Decisions for the generation handoff
 
