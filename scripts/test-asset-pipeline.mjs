@@ -155,6 +155,36 @@ fs.mkdirSync(ROOT, { recursive: true });
 }
 
 {
+  // Category-C sources may share a larger source sheet. The sourceRect must
+  // retain connected key-colour padding on every side so edge flooding has
+  // frame-local seeds without reading artwork outside the declared crop.
+  const src = path.join(ROOT, 'category-c-padded-source-rect.png');
+  const out = path.join(ROOT, 'category-c-padded-source-rect-output.png');
+  const manifest = path.join(ROOT, 'category-c-padded-source-rect-manifest.json');
+  const sheet = image(40, 32, [255, 0, 255, 255]);
+  rect(sheet, 1, 1, 2, 2, [20, 180, 200, 255]); // unrelated art outside sourceRect
+  rect(sheet, 8, 10, 16, 12, [78, 79, 65, 255]); // grounded prop inside padded crop
+  rect(sheet, 15, 15, 1, 1, [255, 0, 255, 255]); // enclosed key-colour detail
+  writePng(src, sheet, { colorType: 2 });
+  writeJson(manifest, {
+    version: 1,
+    id: 'test_category_c_padded_source_rect',
+    target: { outputPath: out, cellPx: [16, 32], cols: 1, rows: 1 },
+    sources: { sheet: { path: src, background: { mode: 'edge_flood_color_key', color: '#ff00ff', tolerance: 0 } } },
+    frames: [{ sourceRef: 'sheet', sourceRect: [4, 4, 24, 24], destCell: [0, 0], trim: 'alpha', fit: 'contain', anchor: 'center_bottom' }]
+  });
+  normalizeAssetSheet(manifest);
+  requireOk(validateAssetSheet(manifest));
+  const png = readPng(out);
+  assert.deepEqual(pixel(png, 0, 0), [0, 0, 0, 0], 'edge-connected key padding should become transparent');
+  assert.deepEqual(pixel(png, 0, 19), [0, 0, 0, 0], 'trimmed prop should retain transparent space above its grounded placement');
+  assert.deepEqual(pixel(png, 0, 20), [78, 79, 65, 255], 'edge flood should expose the trimmed prop top');
+  assert.deepEqual(pixel(png, 7, 25), [255, 0, 255, 255], 'enclosed key-colour detail should survive edge flooding');
+  assert.deepEqual(pixel(png, 0, 31), [78, 79, 65, 255], 'center-bottom placement should ground the trimmed prop');
+  assert.equal(hasOpaqueColor(png, [20, 180, 200]), false, 'art outside sourceRect must not enter the output');
+}
+
+{
   const manifest = path.join(ROOT, 'invalid-manifest.json');
   writeJson(manifest, {
     version: 2,

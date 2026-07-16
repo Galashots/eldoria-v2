@@ -1,6 +1,6 @@
 # Eldoria-V2 Current State
 
-Last refreshed on 2026-07-14 after Batch A fence runtime-master ingestion. This file owns volatile project status; durable rules live in `AGENTS.md`, and the documentation map lives in `docs/README.md`.
+Last refreshed on 2026-07-15 after the Category-C padded-sourceRect prerequisite. This file owns volatile project status; durable rules live in `AGENTS.md`, and the documentation map lives in `docs/README.md`.
 
 ## Product invariant
 
@@ -79,6 +79,7 @@ Phase 2A specification groundwork is complete:
 - complete 13-variant dirt-path and shoreline blend sets;
 - corrected tall-prop geometry and pivots;
 - ordered production-generation handoff in `docs/art-pipeline/FARM_ENVIRONMENT_GENERATION_HANDOFF_V1.md`;
+- scoped farm-palette validation/review tooling and a tested Category-C padded-`sourceRect` extraction contract;
 - approved external style direction classified as **STYLE REFERENCE ONLY**, not committed or normalized.
 
 Batch A progress is **5 of 7 foundational assets approved**:

@@ -263,6 +263,8 @@ A manifest declares the target sheet, the source art, and the exact source-to-de
 
 Manifest paths are resolved relative to the manifest file. A source can define a uniform `grid` for `sourceCell` extraction, while individual frames can instead declare an exact `sourceRect`. Every frame maps to one `destCell` and may choose alpha trimming plus `center`, `center_bottom`, or `top_left` placement.
 
+For an isolated colour-keyed frame, `sourceRect` describes the complete padded frame, not the tight visible-object bounds. Keep connected key-colour padding on all four sides of the subject inside the rectangle. `edge_flood_color_key` begins at that rectangle's edges, ignores pixels outside it, removes only connected key-colour background inside it, and preserves enclosed matching pixels. Category-C props then use `trim: "alpha"` and `anchor: "center_bottom"` so the cleaned visible subject is grounded in the destination cell. If a crop cannot retain padding on every side, regenerate or repack the source rather than tightening the rectangle around the subject.
+
 Background modes are:
 
 - `alpha`: preserve source alpha. RGB sources are accepted; the reader synthesizes opaque alpha for normalization.
