@@ -4,6 +4,14 @@ This file keeps recent, high-value change summaries. Full historical entries thr
 
 Entries should remain concise: date/author, branch or PR, scope, compatibility impact, verification, and remaining risk. Detailed implementation narratives belong in the PR description and commits.
 
+## 2026-07-15 — Category-C padded-sourceRect prerequisite
+
+- Author/branch: Codex with ChatGPT direction, `codex/category-c-padded-source-rect` (PR pending).
+- Scope: documented that colour-keyed Category-C `sourceRect` values must retain connected key-colour padding on all four sides, and added a focused regression proving frame-local edge flooding removes connected padding, preserves enclosed matching pixels, excludes unrelated art outside the crop, and retains grounded `center_bottom` placement.
+- Principal files: `scripts/test-asset-pipeline.mjs`, `docs/art-pipeline/SPRITE_ASSET_PIPELINE.md`, `docs/art-pipeline/FARM_ENVIRONMENT_GENERATION_HANDOFF_V1.md`, `docs/CURRENT_STATE.md`, and this changelog.
+- Compatibility: documentation and regression coverage only. No normalizer behavior, asset, manifest, runtime, map, collision, save, gameplay, curriculum, quest, profile, or dependency change.
+- Remaining risk: generated sources must still visibly retain usable padding; the pipeline rejects out-of-bounds rectangles but cannot infer whether a tight in-bounds crop accidentally removed all flood seeds.
+
 ## 2026-07-14 — Batch A fence runtime-master ingestion
 
 - Author/branch: Codex with Sol direction and Luna implementation, `codex/batch-a-fence-runtime-master` (PR pending); exact `env_farm_fence / rail_horizontal` runtime master approved by the user.
