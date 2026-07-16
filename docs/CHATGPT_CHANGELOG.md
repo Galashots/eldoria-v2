@@ -4,6 +4,15 @@ This file keeps recent, high-value change summaries. Full historical entries thr
 
 Entries should remain concise: date/author, branch or PR, scope, compatibility impact, verification, and remaining risk. Detailed implementation narratives belong in the PR description and commits.
 
+## 2026-07-16 — Batch A Root-Star runtime master and completion gate
+
+- Author/branch: ChatGPT/Codex with Luna independent audit, `codex/batch-a-root-star` (PR pending).
+- Scope: accepted `env_wildbloom_landmark / root_star_revealed` as an **APPROVED RUNTIME MASTER**; retained its pre-correction runtime and deterministic 88-pixel colour-only recipe; locked the existing rune to exact Root-Star gold/green; advanced Batch A from 6/7 to 7/7; built and passed the required deterministic seven-anchor family contact sheet.
+- Principal files: `assets/source/generated/env_wildbloom_landmark/root_star_revealed.png`, `docs/art-pipeline/review/env_wildbloom_landmark_root_star_revealed/`, `docs/art-pipeline/review/batch_a_foundational/`, `docs/CURRENT_STATE.md`, and this changelog.
+- Verification: exact `32×32` master; binary alpha and bounds x `4–28`, y `2–31`; `440/440` base pixels within tolerance 40; exact `#FFD666` 42 pixels and `#8FD14F` 38 pixels; 520/520 complete coverage; reproducible 88-pixel correction with zero mismatches; exact `32×` canonical source replication and zero-drift real-pipeline round trip; deterministic `1312×1072` contact sheet from seven hash-validated exact inputs; independent Luna Root-Star verdict PASS.
+- Compatibility: source/review evidence only. No six-variant Wildbloom packed sheet, production manifest, Phaser loader, procedural-landmark replacement, map, collision, save, gameplay, quest, curriculum, profile, dependency, or migration change.
+- Remaining risk: the broader Wildbloom and farm-environment families remain incomplete; Batch B may begin, but runtime/map integration remains blocked behind the complete production-kit gate.
+
 ## 2026-07-15 — AI-led art approval and Batch A rock_a runtime master
 
 - Author/branch: ChatGPT/Codex with user-authorized AI-led art direction, `codex/ai-led-art-and-rock-a` (PR pending).

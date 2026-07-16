@@ -1,0 +1,91 @@
+{
+  "version": 1,
+  "id": "batch_a_foundational",
+  "expectedCount": 7,
+  "items": [
+    {
+      "slot": 0,
+      "order": 0,
+      "id": "tile_farm_grass_base",
+      "variant": "grass_a",
+      "label": "GRASS A",
+      "path": "../tile_farm_grass_base_grass_a/grass_a.review-normalized.png",
+      "dimensions": [16, 16],
+      "pivot": [8, 15],
+      "sha256": "40655a11051d5afaf61f5972b471c82419fda0f7e31793b3a2976498e6b5fddb",
+      "approvalVerdict": "APPROVED SOURCE CANDIDATE"
+    },
+    {
+      "slot": 1,
+      "order": 1,
+      "id": "tile_farm_path_dirt",
+      "variant": "center",
+      "label": "DIRT CENTER",
+      "path": "../tile_farm_path_dirt_center/dirt_center.approved-master-16x16.png",
+      "dimensions": [16, 16],
+      "pivot": [8, 15],
+      "sha256": "21d94be30b31fc2e18e366759c3a76bbe0d294e7f3c9e7ebb38db56136fad921",
+      "approvalVerdict": "APPROVED RUNTIME MASTER"
+    },
+    {
+      "slot": 2,
+      "order": 2,
+      "id": "tile_farm_water_base",
+      "variant": "water_a",
+      "label": "WATER A",
+      "path": "../tile_farm_water_base_water_a/water_a.approved-master-16x16.png",
+      "dimensions": [16, 16],
+      "pivot": [8, 15],
+      "sha256": "1fb64629d8514cfc34ca9cff2a452ccd3b54a71fb960901f6e9bf7339c161483",
+      "approvalVerdict": "APPROVED RUNTIME MASTER"
+    },
+    {
+      "slot": 3,
+      "order": 3,
+      "id": "env_farm_tree",
+      "variant": "oak",
+      "label": "OAK",
+      "path": "../env_farm_tree_oak/oak.approved-master-32x48.png",
+      "dimensions": [32, 48],
+      "pivot": [16, 47],
+      "sha256": "5d8212aafff7f5b2ee84b7dbc9c42ba087981a4de4115483e09f95571f06e030",
+      "approvalVerdict": "APPROVED RUNTIME MASTER"
+    },
+    {
+      "slot": 4,
+      "order": 4,
+      "id": "env_farm_fence",
+      "variant": "rail_horizontal",
+      "label": "FENCE RAIL",
+      "path": "../env_farm_fence_rail_horizontal/rail_horizontal.approved-master-16x32.png",
+      "dimensions": [16, 32],
+      "pivot": [8, 31],
+      "sha256": "62f54194234eabb7bc8ee0dda2da22c2b899b5381f849f35c7de4eae26c95b3b",
+      "approvalVerdict": "APPROVED RUNTIME MASTER"
+    },
+    {
+      "slot": 5,
+      "order": 5,
+      "id": "env_farm_rock_medium",
+      "variant": "rock_a",
+      "label": "ROCK A",
+      "path": "../env_farm_rock_medium_rock_a/rock_a.approved-master-32x32.png",
+      "dimensions": [32, 32],
+      "pivot": [16, 31],
+      "sha256": "d315f3397c7b8f6972095e20e430c60ee8ed63607a6a149d0a3b1a0ab38f2de0",
+      "approvalVerdict": "APPROVED RUNTIME MASTER"
+    },
+    {
+      "slot": 6,
+      "order": 6,
+      "id": "env_wildbloom_landmark",
+      "variant": "root_star_revealed",
+      "label": "ROOT STAR",
+      "path": "../env_wildbloom_landmark_root_star_revealed/root_star_revealed.approved-master-32x32.png",
+      "dimensions": [32, 32],
+      "pivot": [16, 31],
+      "sha256": "b7722b807396ca6164c7281008b2e87006ecfcc6d8e150817be53ea05a7a7041",
+      "approvalVerdict": "APPROVED RUNTIME MASTER"
+    }
+  ]
+}
