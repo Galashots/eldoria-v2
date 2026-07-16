@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "id": "review_env_farm_rock_medium_rock_a",
+  "_reviewOnly": "This manifest is review/evidence only. It is not a production manifest and its output is not runtime-integrated. Do not load the output in Phaser or modify the farm map from this review asset.",
+  "_sourceNote": "The ChatGPT-approved 32x32 RGBA runtime master is the source of truth. The original high-resolution generation was unsuitable as canonical source art because small key-colour fringe corrections were required. assets/source/generated/env_farm_rock_medium/rock_a.png is an exact 32x nearest-neighbour block replication of the corrected runtime master.",
+  "target": {
+    "outputPath": "rock_a.review-normalized.png",
+    "cellPx": [32, 32],
+    "cols": 1,
+    "rows": 1
+  },
+  "sources": {
+    "rock_a_source": {
+      "path": "../../../../assets/source/generated/env_farm_rock_medium/rock_a.png",
+      "background": { "mode": "alpha" }
+    }
+  },
+  "frames": [
+    {
+      "sourceRef": "rock_a_source",
+      "destCell": [0, 0],
+      "trim": "none",
+      "fit": "fill",
+      "anchor": "top_left"
+    }
+  ]
+}

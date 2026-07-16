@@ -4,6 +4,15 @@ This file keeps recent, high-value change summaries. Full historical entries thr
 
 Entries should remain concise: date/author, branch or PR, scope, compatibility impact, verification, and remaining risk. Detailed implementation narratives belong in the PR description and commits.
 
+## 2026-07-15 — AI-led art approval and Batch A rock_a runtime master
+
+- Author/branch: ChatGPT/Codex with user-authorized AI-led art direction, `codex/ai-led-art-and-rock-a` (PR pending).
+- Scope: changed the closed-loop workflow from mandatory per-asset user approval to ChatGPT-owned routine approval with user escalation for material decisions; accepted `env_farm_rock_medium / rock_a` as an **APPROVED RUNTIME MASTER** after padded Category-C normalization and six narrow, recorded pixel corrections; advanced Batch A from 5/7 to 6/7 with Root-Star next.
+- Principal files: `AGENTS.md`, `docs/art-pipeline/CLOSED_LOOP_ASSET_GENERATION_WORKFLOW.md`, `assets/source/generated/env_farm_rock_medium/rock_a.png`, `docs/art-pipeline/review/env_farm_rock_medium_rock_a/`, `docs/CURRENT_STATE.md`, and this changelog.
+- Verification: exact `32×32` master; `430/430` opaque pixels within `metal_stone` tolerance 40; visible bounds x `3–29`, y `10–31` with no top/left/right canvas contact; exact `32×` RGBA source replication with 0/1,048,576 block mismatches; byte-identical real-pipeline round trip; footprint/pivot and nearest-neighbour evidence visually inspected.
+- Compatibility: source/review/workflow documentation only. No production packed sheet, Phaser loader, map, collision, save, gameplay, curriculum, quest, profile, dependency, or migration change.
+- Remaining risk: `rock_b` and the rock family remain incomplete; routine AI art approval does not authorize material specification changes or premature runtime/map integration.
+
 ## 2026-07-15 — Category-C padded-sourceRect prerequisite
 
 - Author/branch: Codex with ChatGPT direction, `codex/category-c-padded-source-rect` (PR pending).
