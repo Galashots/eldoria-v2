@@ -177,7 +177,7 @@ When authoring `assets/manifests/<id>.manifest.json` after source approval:
 
 - **Category A (seamless terrain):** `target.cellPx: [16,16]`; `cols/rows` = variant count layout; per-frame `background: { mode: "alpha" }`, `trim: "none"`, `anchor: "top_left"`, `fit: "fill"`. No colour key (full-bleed).
 - **Category B (decals):** `cellPx: [16,16]` (or `[32,16]` for the log); `background: { mode: "edge_flood_color_key", color: "#FB03FA", tolerance: 20 }`; `trim: "alpha"`; `anchor: "center"` (`center_bottom` for log); `fit: "contain"`.
-- **Category C (tall props):** `cellPx` = the target canvas (e.g. `[16,32]`, `[32,32]`, `[32,48]`); `background: edge_flood_color_key`; `trim: "alpha"`; `anchor: "center_bottom"`; `fit: "contain"`. Footprint/pivot per the target JSON.
+- **Category C (tall props):** `cellPx` = the target canvas (e.g. `[16,32]`, `[32,32]`, `[32,48]`); `background: edge_flood_color_key`; `trim: "alpha"`; `anchor: "center_bottom"`; `fit: "contain"`. When extracting from a larger source, `sourceRect` must include connected key-colour padding on all four sides of the subject; it is the complete padded frame, not a tight object crop. Pixels outside the rectangle are ignored, while the frame-local edge flood removes connected key colour before trimming. Footprint/pivot per the target JSON.
 
 Follow the committed `mob_slime_practice_v001.manifest.json` as the working reference for structure.
 
