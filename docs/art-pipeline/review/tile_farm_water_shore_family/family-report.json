@@ -201,17 +201,17 @@
       },
       "swatch": {
         "waterInput": 128,
-        "grassInput": 91,
-        "innerSandBase": 11,
-        "innerSandAlt": 5,
-        "outerSandBase": 14,
-        "outerSandAlt": 2,
-        "lightMoss": 3,
-        "darkMoss": 2
+        "grassInput": 95,
+        "innerSandBase": 1,
+        "innerSandAlt": 15,
+        "outerSandBase": 0,
+        "outerSandAlt": 12,
+        "lightMoss": 4,
+        "darkMoss": 1
       },
       "colourOrigin": {
         "waterInput": 128,
-        "grassInput": 91,
+        "grassInput": 95,
         "unexpected": 0
       },
       "alpha": {
@@ -219,8 +219,8 @@
         "partial": 0,
         "transparent": 0
       },
-      "runtimeMasterSha256": "1c53b913dc82980b80d8716f532fe1c259d1b7bb702127536436a6fa3497db56",
-      "canonicalSourceSha256": "00f9e102a414164bfe632b08a85bf0e140981b2318afbb5b224b1de1bfefab3e",
+      "runtimeMasterSha256": "4e313c519256f641be86e7c777451b2ea509b8078e46eaeb5b46cccac9eeb8c1",
+      "canonicalSourceSha256": "11257f98ec715dab7fba59fa03eba8dcf81e30ce6a56b92eebebaacd2e005b9e",
       "centerReusesApprovedWaterA": false
     },
     {
@@ -241,17 +241,17 @@
       },
       "swatch": {
         "waterInput": 128,
-        "grassInput": 90,
-        "innerSandBase": 14,
-        "innerSandAlt": 2,
-        "outerSandBase": 14,
-        "outerSandAlt": 2,
-        "lightMoss": 3,
-        "darkMoss": 3
+        "grassInput": 95,
+        "innerSandBase": 0,
+        "innerSandAlt": 16,
+        "outerSandBase": 0,
+        "outerSandAlt": 10,
+        "lightMoss": 7,
+        "darkMoss": 0
       },
       "colourOrigin": {
         "waterInput": 128,
-        "grassInput": 90,
+        "grassInput": 95,
         "unexpected": 0
       },
       "alpha": {
@@ -259,8 +259,8 @@
         "partial": 0,
         "transparent": 0
       },
-      "runtimeMasterSha256": "97b3d334bcbf62b2c71699fa88a610d68e7cac59caf007b0032a203c56fdaa95",
-      "canonicalSourceSha256": "3f4d8155e412ad60d248186d80f0ef9818bec7c0786a08f9e9c359cd2bb25386",
+      "runtimeMasterSha256": "a5311779f96438fffe20bad14d58ea09d43eb2bdc847b75858d853fe70640738",
+      "canonicalSourceSha256": "54331f1b68dcce8e5c08ccc247680f283495a47fa3a1d98ac520e5b1f3062f24",
       "centerReusesApprovedWaterA": false
     },
     {
@@ -281,17 +281,17 @@
       },
       "swatch": {
         "waterInput": 128,
-        "grassInput": 91,
-        "innerSandBase": 11,
-        "innerSandAlt": 5,
-        "outerSandBase": 14,
-        "outerSandAlt": 2,
-        "lightMoss": 4,
+        "grassInput": 96,
+        "innerSandBase": 0,
+        "innerSandAlt": 16,
+        "outerSandBase": 0,
+        "outerSandAlt": 12,
+        "lightMoss": 3,
         "darkMoss": 1
       },
       "colourOrigin": {
         "waterInput": 128,
-        "grassInput": 91,
+        "grassInput": 96,
         "unexpected": 0
       },
       "alpha": {
@@ -299,8 +299,8 @@
         "partial": 0,
         "transparent": 0
       },
-      "runtimeMasterSha256": "acc20fa839bdbf98e34a86de89ce7c1e9192bd2be6f91df9bd867bd82a4ea98b",
-      "canonicalSourceSha256": "36e2398a77ad1b6b741fcf086aabd8f20422ef3177827c3071820a1cf32c529c",
+      "runtimeMasterSha256": "bc6d1178ec39b35fe6a5e50040d543423a613fafc8b1b2b9215bedc6a181de96",
+      "canonicalSourceSha256": "35cdab9bbe81743e4d74de02c4c9b362607a5918eaa8069e1932aba25c0f7f32",
       "centerReusesApprovedWaterA": false
     },
     {
@@ -322,12 +322,12 @@
       "swatch": {
         "waterInput": 128,
         "grassInput": 93,
-        "innerSandBase": 14,
-        "innerSandAlt": 2,
-        "outerSandBase": 13,
-        "outerSandAlt": 3,
-        "lightMoss": 1,
-        "darkMoss": 2
+        "innerSandBase": 2,
+        "innerSandAlt": 14,
+        "outerSandBase": 0,
+        "outerSandAlt": 10,
+        "lightMoss": 8,
+        "darkMoss": 1
       },
       "colourOrigin": {
         "waterInput": 128,
@@ -339,8 +339,8 @@
         "partial": 0,
         "transparent": 0
       },
-      "runtimeMasterSha256": "ac1bed8d64fc5ea1f94c36185fb8285469f8701b6424fb3f1f4d960b41855e76",
-      "canonicalSourceSha256": "248fa8072f54e6c394bd7c19ca976e7a2f5e2b7dfd255ee2dd602a979707b328",
+      "runtimeMasterSha256": "773edaba675ded91b83a8fc50aedc80927b8172d721a49aeaf71771218674987",
+      "canonicalSourceSha256": "f482de23262e45d359f6df6f5d3df326ae356ba5ee9de6836c7d3cdfafa8786b",
       "centerReusesApprovedWaterA": false
     },
     {
@@ -361,17 +361,17 @@
       },
       "swatch": {
         "waterInput": 41,
-        "grassInput": 181,
-        "innerSandBase": 13,
-        "innerSandAlt": 2,
-        "outerSandBase": 14,
-        "outerSandAlt": 0,
-        "lightMoss": 3,
+        "grassInput": 179,
+        "innerSandBase": 1,
+        "innerSandAlt": 14,
+        "outerSandBase": 0,
+        "outerSandAlt": 14,
+        "lightMoss": 5,
         "darkMoss": 2
       },
       "colourOrigin": {
         "waterInput": 41,
-        "grassInput": 181,
+        "grassInput": 179,
         "unexpected": 0
       },
       "alpha": {
@@ -379,8 +379,8 @@
         "partial": 0,
         "transparent": 0
       },
-      "runtimeMasterSha256": "7611e7fc3bf268f56f151d4b521751100a8fb1bc027235acdb24960276b4173c",
-      "canonicalSourceSha256": "d236ece7729b65e6df14e7f36da901f7c72dc12d751d52341f7ad97b9fa8d8fe",
+      "runtimeMasterSha256": "c7a00bd0d0b098a9eb13f3cf88aafb3c18ede12dc0a9663e6e16eaac76ffd7a0",
+      "canonicalSourceSha256": "58dc1d917957bbe96c3c1b109aaaa5a529af94f42ec57791351902dfdfe8f412",
       "centerReusesApprovedWaterA": false
     },
     {
@@ -401,17 +401,17 @@
       },
       "swatch": {
         "waterInput": 41,
-        "grassInput": 178,
-        "innerSandBase": 13,
-        "innerSandAlt": 2,
-        "outerSandBase": 10,
-        "outerSandAlt": 4,
-        "lightMoss": 6,
+        "grassInput": 177,
+        "innerSandBase": 1,
+        "innerSandAlt": 14,
+        "outerSandBase": 0,
+        "outerSandAlt": 13,
+        "lightMoss": 8,
         "darkMoss": 2
       },
       "colourOrigin": {
         "waterInput": 41,
-        "grassInput": 178,
+        "grassInput": 177,
         "unexpected": 0
       },
       "alpha": {
@@ -419,8 +419,8 @@
         "partial": 0,
         "transparent": 0
       },
-      "runtimeMasterSha256": "fb7eadfa35532ea15ad8b64c694a2f5a2c70d132c09fdca392fcf8a20b99ba7e",
-      "canonicalSourceSha256": "099f50a90afaa3595d7dea6e8803038bb18ca09b7ea3390b04ed4fca6f06ba6f",
+      "runtimeMasterSha256": "1058c59fa5f6d99eb1d0bde9cb7323f8cc97b61b89f1a97656f8a4dd2d0e1ae1",
+      "canonicalSourceSha256": "29a541dc6187ca12202a00d09112ad79b45105f55daeaea1ad8830b2e989d3ee",
       "centerReusesApprovedWaterA": false
     },
     {
@@ -442,12 +442,12 @@
       "swatch": {
         "waterInput": 41,
         "grassInput": 183,
-        "innerSandBase": 8,
-        "innerSandAlt": 7,
-        "outerSandBase": 12,
-        "outerSandAlt": 2,
-        "lightMoss": 0,
-        "darkMoss": 3
+        "innerSandBase": 0,
+        "innerSandAlt": 15,
+        "outerSandBase": 0,
+        "outerSandAlt": 10,
+        "lightMoss": 5,
+        "darkMoss": 2
       },
       "colourOrigin": {
         "waterInput": 41,
@@ -459,8 +459,8 @@
         "partial": 0,
         "transparent": 0
       },
-      "runtimeMasterSha256": "b35fd2f2fe2e55e1cbfaf2623b6803c818f18b710bca2c02dacd6b149ada9217",
-      "canonicalSourceSha256": "d26a3e92c09254df937b337b022675c3f901578568b9da307df04473a4956cca",
+      "runtimeMasterSha256": "5eb2758a430d5cc6d444d3f1a5c413d6d35383a135abb8f5da2c6aa79f5be327",
+      "canonicalSourceSha256": "0dca38d01e96a22b1ac007d975942d4468a0804f9d9b5b9729db8cb4e5105089",
       "centerReusesApprovedWaterA": false
     },
     {
@@ -482,11 +482,11 @@
       "swatch": {
         "waterInput": 41,
         "grassInput": 182,
-        "innerSandBase": 11,
-        "innerSandAlt": 4,
-        "outerSandBase": 12,
-        "outerSandAlt": 2,
-        "lightMoss": 3,
+        "innerSandBase": 0,
+        "innerSandAlt": 15,
+        "outerSandBase": 0,
+        "outerSandAlt": 9,
+        "lightMoss": 8,
         "darkMoss": 1
       },
       "colourOrigin": {
@@ -499,8 +499,8 @@
         "partial": 0,
         "transparent": 0
       },
-      "runtimeMasterSha256": "041a8e4417b0dc62c69b09d4ce973609c42799f49b17553b25e1333fea79a439",
-      "canonicalSourceSha256": "746a867d8f841aebac497933b9db76e158d0a28619d7c4018a084235763e55e1",
+      "runtimeMasterSha256": "60be347509606fabb58839cdf60341f24f8e802b8db8deff9a7230d9a01999ec",
+      "canonicalSourceSha256": "13bea05e8bba1618217d390d42c934683f66e5dfb963d447cc12b6b9d53ea579",
       "centerReusesApprovedWaterA": false
     },
     {
@@ -521,17 +521,17 @@
       },
       "swatch": {
         "waterInput": 215,
-        "grassInput": 23,
-        "innerSandBase": 5,
-        "innerSandAlt": 4,
-        "outerSandBase": 8,
-        "outerSandAlt": 0,
-        "lightMoss": 0,
-        "darkMoss": 1
+        "grassInput": 21,
+        "innerSandBase": 0,
+        "innerSandAlt": 9,
+        "outerSandBase": 0,
+        "outerSandAlt": 7,
+        "lightMoss": 4,
+        "darkMoss": 0
       },
       "colourOrigin": {
         "waterInput": 215,
-        "grassInput": 23,
+        "grassInput": 21,
         "unexpected": 0
       },
       "alpha": {
@@ -539,8 +539,8 @@
         "partial": 0,
         "transparent": 0
       },
-      "runtimeMasterSha256": "d32d84f00e3ef400394a1279fc1eea88fdf0039290eac215400c0eac96ad3a36",
-      "canonicalSourceSha256": "6c57613887a3364a925f71f08d6f228940d462e2f42a614e9f67fa7b88aaab9c",
+      "runtimeMasterSha256": "b6caefe991334871ce5b124404f34ee5ae0c771064cb806f2a83505a5f448e96",
+      "canonicalSourceSha256": "4c54cb08c627b607010a251f9e85b1f4edb20c789fca6cf95c72359bafb29445",
       "centerReusesApprovedWaterA": false
     },
     {
@@ -561,17 +561,17 @@
       },
       "swatch": {
         "waterInput": 215,
-        "grassInput": 22,
-        "innerSandBase": 8,
-        "innerSandAlt": 1,
-        "outerSandBase": 6,
-        "outerSandAlt": 2,
-        "lightMoss": 2,
-        "darkMoss": 0
+        "grassInput": 25,
+        "innerSandBase": 2,
+        "innerSandAlt": 7,
+        "outerSandBase": 0,
+        "outerSandAlt": 6,
+        "lightMoss": 0,
+        "darkMoss": 1
       },
       "colourOrigin": {
         "waterInput": 215,
-        "grassInput": 22,
+        "grassInput": 25,
         "unexpected": 0
       },
       "alpha": {
@@ -579,8 +579,8 @@
         "partial": 0,
         "transparent": 0
       },
-      "runtimeMasterSha256": "e55c47c819bb6950f81f4e27e60b46566607a8d0ec378fb66416d5db963f6022",
-      "canonicalSourceSha256": "d3a447d10f708fa6334d9a8af2095549441e449608020d2d3817e6c30acf8cc3",
+      "runtimeMasterSha256": "bfa1d6ad4e24c504411e5a71cb0ffb02ad692abc6829c3d74317cf5285b17be8",
+      "canonicalSourceSha256": "e3ff2662659147e0c5fe15a274ee47098e4d07d101d62bd6f6395f6ddc5a3735",
       "centerReusesApprovedWaterA": false
     },
     {
@@ -602,12 +602,12 @@
       "swatch": {
         "waterInput": 215,
         "grassInput": 23,
-        "innerSandBase": 6,
-        "innerSandAlt": 3,
-        "outerSandBase": 8,
-        "outerSandAlt": 0,
-        "lightMoss": 0,
-        "darkMoss": 1
+        "innerSandBase": 0,
+        "innerSandAlt": 9,
+        "outerSandBase": 0,
+        "outerSandAlt": 6,
+        "lightMoss": 1,
+        "darkMoss": 2
       },
       "colourOrigin": {
         "waterInput": 215,
@@ -619,8 +619,8 @@
         "partial": 0,
         "transparent": 0
       },
-      "runtimeMasterSha256": "d687a7240291d998c92cfb15936ce264cbe9eee2cc71f9767b05aee25734135d",
-      "canonicalSourceSha256": "1720e677ded2f0937a339eeec8756f3343c63866633c516402136caf500ed969",
+      "runtimeMasterSha256": "106b46ffb24b9f86048b16e21710b3dd381df582eaed2a3c66baba8b820a9304",
+      "canonicalSourceSha256": "4e4e81de0ec0b76a769c8e29e53dee0c73c45a3b440efb81d2291f6ca0165260",
       "centerReusesApprovedWaterA": false
     },
     {
@@ -641,17 +641,17 @@
       },
       "swatch": {
         "waterInput": 215,
-        "grassInput": 21,
-        "innerSandBase": 8,
-        "innerSandAlt": 1,
-        "outerSandBase": 7,
-        "outerSandAlt": 1,
+        "grassInput": 20,
+        "innerSandBase": 4,
+        "innerSandAlt": 5,
+        "outerSandBase": 0,
+        "outerSandAlt": 9,
         "lightMoss": 3,
         "darkMoss": 0
       },
       "colourOrigin": {
         "waterInput": 215,
-        "grassInput": 21,
+        "grassInput": 20,
         "unexpected": 0
       },
       "alpha": {
@@ -659,14 +659,16 @@
         "partial": 0,
         "transparent": 0
       },
-      "runtimeMasterSha256": "0da722542e350a78dc5968c4d5534f6f887b66b5b78e1d5739e99c6959d83775",
-      "canonicalSourceSha256": "cee90a565e7cce1c5b05ec3e15774f856d7d85a203d32e6ad6f83a82844ef67c",
+      "runtimeMasterSha256": "3302797259317fa00e55d9beb9ca291446b63b3b1a1be8570f95839a7253c462",
+      "canonicalSourceSha256": "e72c55e43302276693240f89f9db9508d124a38b6c274aac684b4a0f5eebc122",
       "centerReusesApprovedWaterA": false
     }
   ],
   "centerByteIdenticalToWaterA": true,
   "sharedEdge": {
-    "pairs": 84,
+    "pairs": 100,
+    "horizontalPairs": 50,
+    "verticalPairs": 50,
     "bandMismatches": 0,
     "sandRgbMismatches": 0
   },
@@ -712,12 +714,12 @@
     "shorelineWaterToWaterSeamStep": {
       "mean": 10.677373,
       "max": 26.645825,
-      "samples": 768
+      "samples": 800
     },
     "shorelineGrassToGrassSeamStep": {
-      "mean": 20.304131,
+      "mean": 20.303592,
       "max": 50.299105,
-      "samples": 528
+      "samples": 728
     }
   },
   "packed": {
@@ -725,7 +727,7 @@
     "sheet": "assets/tilesets/tile_farm_water_shore.png",
     "width": 208,
     "height": 16,
-    "sheetSha256": "a334a5986b820730db8d41222a2db37dd6f3b42404694bb2c8df54cad9eb6e09",
+    "sheetSha256": "281c2f639d501b7a868fdbf974c8ed4a14dc31f019d3f305b80f8724091daaff",
     "cells": [
       {
         "name": "center",
@@ -736,73 +738,73 @@
       {
         "name": "edge_north",
         "index": 1,
-        "packedCellSha256": "1c53b913dc82980b80d8716f532fe1c259d1b7bb702127536436a6fa3497db56",
+        "packedCellSha256": "4e313c519256f641be86e7c777451b2ea509b8078e46eaeb5b46cccac9eeb8c1",
         "zeroDriftMismatches": 0
       },
       {
         "name": "edge_south",
         "index": 2,
-        "packedCellSha256": "97b3d334bcbf62b2c71699fa88a610d68e7cac59caf007b0032a203c56fdaa95",
+        "packedCellSha256": "a5311779f96438fffe20bad14d58ea09d43eb2bdc847b75858d853fe70640738",
         "zeroDriftMismatches": 0
       },
       {
         "name": "edge_west",
         "index": 3,
-        "packedCellSha256": "acc20fa839bdbf98e34a86de89ce7c1e9192bd2be6f91df9bd867bd82a4ea98b",
+        "packedCellSha256": "bc6d1178ec39b35fe6a5e50040d543423a613fafc8b1b2b9215bedc6a181de96",
         "zeroDriftMismatches": 0
       },
       {
         "name": "edge_east",
         "index": 4,
-        "packedCellSha256": "ac1bed8d64fc5ea1f94c36185fb8285469f8701b6424fb3f1f4d960b41855e76",
+        "packedCellSha256": "773edaba675ded91b83a8fc50aedc80927b8172d721a49aeaf71771218674987",
         "zeroDriftMismatches": 0
       },
       {
         "name": "corner_ne",
         "index": 5,
-        "packedCellSha256": "7611e7fc3bf268f56f151d4b521751100a8fb1bc027235acdb24960276b4173c",
+        "packedCellSha256": "c7a00bd0d0b098a9eb13f3cf88aafb3c18ede12dc0a9663e6e16eaac76ffd7a0",
         "zeroDriftMismatches": 0
       },
       {
         "name": "corner_nw",
         "index": 6,
-        "packedCellSha256": "fb7eadfa35532ea15ad8b64c694a2f5a2c70d132c09fdca392fcf8a20b99ba7e",
+        "packedCellSha256": "1058c59fa5f6d99eb1d0bde9cb7323f8cc97b61b89f1a97656f8a4dd2d0e1ae1",
         "zeroDriftMismatches": 0
       },
       {
         "name": "corner_se",
         "index": 7,
-        "packedCellSha256": "b35fd2f2fe2e55e1cbfaf2623b6803c818f18b710bca2c02dacd6b149ada9217",
+        "packedCellSha256": "5eb2758a430d5cc6d444d3f1a5c413d6d35383a135abb8f5da2c6aa79f5be327",
         "zeroDriftMismatches": 0
       },
       {
         "name": "corner_sw",
         "index": 8,
-        "packedCellSha256": "041a8e4417b0dc62c69b09d4ce973609c42799f49b17553b25e1333fea79a439",
+        "packedCellSha256": "60be347509606fabb58839cdf60341f24f8e802b8db8deff9a7230d9a01999ec",
         "zeroDriftMismatches": 0
       },
       {
         "name": "inner_corner_ne",
         "index": 9,
-        "packedCellSha256": "d32d84f00e3ef400394a1279fc1eea88fdf0039290eac215400c0eac96ad3a36",
+        "packedCellSha256": "b6caefe991334871ce5b124404f34ee5ae0c771064cb806f2a83505a5f448e96",
         "zeroDriftMismatches": 0
       },
       {
         "name": "inner_corner_nw",
         "index": 10,
-        "packedCellSha256": "e55c47c819bb6950f81f4e27e60b46566607a8d0ec378fb66416d5db963f6022",
+        "packedCellSha256": "bfa1d6ad4e24c504411e5a71cb0ffb02ad692abc6829c3d74317cf5285b17be8",
         "zeroDriftMismatches": 0
       },
       {
         "name": "inner_corner_se",
         "index": 11,
-        "packedCellSha256": "d687a7240291d998c92cfb15936ce264cbe9eee2cc71f9767b05aee25734135d",
+        "packedCellSha256": "106b46ffb24b9f86048b16e21710b3dd381df582eaed2a3c66baba8b820a9304",
         "zeroDriftMismatches": 0
       },
       {
         "name": "inner_corner_sw",
         "index": 12,
-        "packedCellSha256": "0da722542e350a78dc5968c4d5534f6f887b66b5b78e1d5739e99c6959d83775",
+        "packedCellSha256": "3302797259317fa00e55d9beb9ca291446b63b3b1a1be8570f95839a7253c462",
         "zeroDriftMismatches": 0
       }
     ],

@@ -12,7 +12,7 @@ import {
   qValue, cornerCode, hashPixel, isOuterEdgePixel,
   shorelineBand, shorelineBandCounts, composeShorelineCell,
   validateShorelineRecipe, composeShorelineFamily, computeWrapMetrics,
-  composeFamily,
+  assertNoSharedEdgeMismatches, composeFamily,
 } from './compose-terrain-blend-family.mjs';
 import { readPng, writePng } from './normalize-asset-sheet.mjs';
 
@@ -112,7 +112,7 @@ test('no hashed variation reaches any outer row or column, for any seed', () => 
 
 // --- 4. exact per-pixel material rules (bands + variation formulas) --------
 
-test('per-pixel material assignment follows the exact band/hash rules', () => {
+test('per-pixel material assignment follows the exact v2 band/hash rules (ChatGPT PR #99 correction)', () => {
   for (const t of TOPOLOGY) {
     const composed = composeShorelineCell(WATER_FIXTURE, GRASS_FIXTURE, t.corners, { seed: SEED });
     for (let y = 0; y < CELL; y += 1) {
@@ -122,19 +122,33 @@ test('per-pixel material assignment follows the exact band/hash rules', () => {
         const idx = (y * CELL + x) * 4;
         const got = [composed.data[idx], composed.data[idx + 1], composed.data[idx + 2]];
         const edge = isOuterEdgePixel(x, y);
+        const grassPx = [GRASS_FIXTURE.data[idx], GRASS_FIXTURE.data[idx + 1], GRASS_FIXTURE.data[idx + 2]];
         const hx = () => hashPixel(x, y, SEED);
         let expected;
         if (band === 'water') expected = [WATER_FIXTURE.data[idx], WATER_FIXTURE.data[idx + 1], WATER_FIXTURE.data[idx + 2]];
-        else if (band === 'grass') expected = [GRASS_FIXTURE.data[idx], GRASS_FIXTURE.data[idx + 1], GRASS_FIXTURE.data[idx + 2]];
-        else if (band === 'inner_sand') expected = (!edge && hx() % 4 === 0) ? hexToRgb(SHORELINE_SWATCHES.innerSandAlt) : hexToRgb(SHORELINE_SWATCHES.innerSandBase);
-        else if (band === 'outer_sand') expected = (!edge && hx() % 6 === 0) ? hexToRgb(SHORELINE_SWATCHES.outerSandAlt) : hexToRgb(SHORELINE_SWATCHES.outerSandBase);
-        else { // moss
-          if (edge) expected = [GRASS_FIXTURE.data[idx], GRASS_FIXTURE.data[idx + 1], GRASS_FIXTURE.data[idx + 2]];
+        else if (band === 'grass') expected = grassPx;
+        else if (band === 'inner_sand') {
+          // v2: base #B98535; interior hash%11==0 -> #D5A342.
+          expected = (!edge && hx() % 11 === 0) ? hexToRgb(SHORELINE_SWATCHES.innerSandBase) : hexToRgb(SHORELINE_SWATCHES.innerSandAlt);
+        } else if (band === 'outer_sand') {
+          // v2: edge base #926B2A; interior hash%4==0 -> grass_a; else hash%3==0 -> #6C8B15; else #926B2A.
+          if (edge) expected = hexToRgb(SHORELINE_SWATCHES.outerSandAlt);
           else {
             const h = hx();
-            if (h % 11 === 0) expected = hexToRgb(SHORELINE_SWATCHES.darkMoss);
-            else if (h % 5 === 0) expected = hexToRgb(SHORELINE_SWATCHES.lightMoss);
-            else expected = [GRASS_FIXTURE.data[idx], GRASS_FIXTURE.data[idx + 1], GRASS_FIXTURE.data[idx + 2]];
+            if (h % 4 === 0) expected = grassPx;
+            else if (h % 3 === 0) expected = hexToRgb(SHORELINE_SWATCHES.lightMoss);
+            else expected = hexToRgb(SHORELINE_SWATCHES.outerSandAlt);
+          }
+        } else { // moss
+          // v2: edge exact grass_a (unchanged); interior hash%5==0 -> #926B2A;
+          // else hash%3==0 -> #6C8B15; else hash%7==0 -> #427118; else grass_a.
+          if (edge) expected = grassPx;
+          else {
+            const h = hx();
+            if (h % 5 === 0) expected = hexToRgb(SHORELINE_SWATCHES.outerSandAlt);
+            else if (h % 3 === 0) expected = hexToRgb(SHORELINE_SWATCHES.lightMoss);
+            else if (h % 7 === 0) expected = hexToRgb(SHORELINE_SWATCHES.darkMoss);
+            else expected = grassPx;
           }
         }
         assert.deepEqual(got, expected, `${t.name} (${x},${y}) band=${band}`);
@@ -305,6 +319,60 @@ test('recomposing the merged dirt recipe leaves dirt pixels and packed sheet unc
   for (const f of fs.readdirSync(dirtDir)) {
     assert.equal(sha(fs.readFileSync(path.join(dirtDir, f))), beforeCanonicalShas[f], `dirt canonical source changed: ${f}`);
   }
+});
+
+// --- 14. exhaustive adjacency: all 100 legal directed pairs (ChatGPT PR #99) -
+
+test('exhaustive adjacency: all 14 usable codes, every compatible directed horizontal/vertical pair (50+50) match at all 16 shared positions', () => {
+  const usableCodes = [...TOPOLOGY.map((t) => t.corners), [0, 0, 0, 0]];
+  assert.equal(usableCodes.length, 14);
+  for (const s of SADDLE_CODES) assert.ok(!usableCodes.some((c) => cornerCode(c) === s.join('')), 'saddle code leaked into the usable set');
+  assert.ok(usableCodes.some((c) => cornerCode(c) === '0000'), 'usable set missing 0000');
+  assert.ok(usableCodes.some((c) => cornerCode(c) === '1111'), 'usable set missing 1111 (center)');
+
+  const bandTrace = (corners) => {
+    const north = []; const south = []; const west = []; const east = [];
+    for (let x = 0; x < CELL; x += 1) { north.push(shorelineBand(qValue(corners, x, 0))); south.push(shorelineBand(qValue(corners, x, CELL - 1))); }
+    for (let y = 0; y < CELL; y += 1) { west.push(shorelineBand(qValue(corners, 0, y))); east.push(shorelineBand(qValue(corners, CELL - 1, y))); }
+    return { north, south, west, east };
+  };
+  const traceByCode = new Map(usableCodes.map((c) => [cornerCode(c), bandTrace(c)]));
+
+  let horizontalPairs = 0;
+  let verticalPairs = 0;
+  let mismatches = 0;
+  for (const l of usableCodes) {
+    for (const r of usableCodes) {
+      if (l[1] === r[0] && l[2] === r[3]) { // left.east(ne,se) == right.west(nw,sw)
+        horizontalPairs += 1;
+        const lt = traceByCode.get(cornerCode(l)).east;
+        const rt = traceByCode.get(cornerCode(r)).west;
+        for (let i = 0; i < CELL; i += 1) if (lt[i] !== rt[i]) mismatches += 1;
+      }
+    }
+  }
+  for (const t of usableCodes) {
+    for (const b of usableCodes) {
+      if (t[3] === b[0] && t[2] === b[1]) { // top.south(sw,se) == bottom.north(nw,ne)
+        verticalPairs += 1;
+        const tt = traceByCode.get(cornerCode(t)).south;
+        const bt = traceByCode.get(cornerCode(b)).north;
+        for (let i = 0; i < CELL; i += 1) if (tt[i] !== bt[i]) mismatches += 1;
+      }
+    }
+  }
+  assert.equal(horizontalPairs, 50, 'expected exactly 50 directed horizontal compatible pairs among the 14 usable codes');
+  assert.equal(verticalPairs, 50, 'expected exactly 50 directed vertical compatible pairs among the 14 usable codes');
+  assert.equal(mismatches, 0);
+});
+
+// --- 15. hard-throw guard is real, not just a reported field ---------------
+
+test('assertNoSharedEdgeMismatches throws on nonzero band or sand-edge mismatches', () => {
+  assert.doesNotThrow(() => assertNoSharedEdgeMismatches(0, 0));
+  assert.throws(() => assertNoSharedEdgeMismatches(1, 0), /band-class mismatch/);
+  assert.throws(() => assertNoSharedEdgeMismatches(0, 1), /sand-to-sand.*RGB mismatch/);
+  assert.throws(() => assertNoSharedEdgeMismatches(2, 3), /band-class mismatch/);
 });
 
 console.log(`\nShoreline terrain-blend tests passed (${passed} groups).`);

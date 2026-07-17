@@ -270,14 +270,32 @@ export function composeShorelineCell(water, grass, corners, shoreline) {
         out = [grass.data[idx], grass.data[idx + 1], grass.data[idx + 2]];
         key = 'grassInput';
       } else if (b === 'inner_sand') {
-        if (!edge && hashPixel(x, y, seed) % 4 === 0) { out = rgb.innerSandAlt; key = 'innerSandAlt'; } else { out = rgb.innerSandBase; key = 'innerSandBase'; }
+        // v2 (ChatGPT PR #99 correction): base #B98535 (muted); interior-only
+        // accent hash%11==0 -> #D5A342. Mutes the water-adjacent line that
+        // read as a bright continuous outline in v1.
+        if (!edge && hashPixel(x, y, seed) % 11 === 0) { out = rgb.innerSandBase; key = 'innerSandBase'; } // #D5A342
+        else { out = rgb.innerSandAlt; key = 'innerSandAlt'; } // #B98535
       } else if (b === 'outer_sand') {
-        if (!edge && hashPixel(x, y, seed) % 6 === 0) { out = rgb.outerSandAlt; key = 'outerSandAlt'; } else { out = rgb.outerSandBase; key = 'outerSandBase'; }
-      } else { // moss
+        // v2: edge/base #926B2A; interior evaluated in priority order:
+        // hash%4==0 -> exact grass_a pixel (feathers into land); else
+        // hash%3==0 -> #6C8B15 (light moss bleed); else #926B2A.
         if (!edge) {
           const h = hashPixel(x, y, seed);
-          if (h % 11 === 0) { out = rgb.darkMoss; key = 'darkMoss'; }
-          else if (h % 5 === 0) { out = rgb.lightMoss; key = 'lightMoss'; }
+          if (h % 4 === 0) { out = [grass.data[idx], grass.data[idx + 1], grass.data[idx + 2]]; key = 'grassInput'; }
+          else if (h % 3 === 0) { out = rgb.lightMoss; key = 'lightMoss'; } // #6C8B15
+          else { out = rgb.outerSandAlt; key = 'outerSandAlt'; } // #926B2A
+        } else {
+          out = rgb.outerSandAlt; key = 'outerSandAlt'; // #926B2A
+        }
+      } else { // moss
+        // v2: edge stays exact grass_a (unchanged); interior evaluated in
+        // priority order: hash%5==0 -> #926B2A (sand/moss interlock); else
+        // hash%3==0 -> #6C8B15; else hash%7==0 -> #427118; else exact grass_a.
+        if (!edge) {
+          const h = hashPixel(x, y, seed);
+          if (h % 5 === 0) { out = rgb.outerSandAlt; key = 'outerSandAlt'; } // #926B2A
+          else if (h % 3 === 0) { out = rgb.lightMoss; key = 'lightMoss'; } // #6C8B15
+          else if (h % 7 === 0) { out = rgb.darkMoss; key = 'darkMoss'; } // #427118
           else { out = [grass.data[idx], grass.data[idx + 1], grass.data[idx + 2]]; key = 'grassInput'; }
         } else {
           out = [grass.data[idx], grass.data[idx + 1], grass.data[idx + 2]];
@@ -739,6 +757,14 @@ export function computeWrapMetrics(image) {
   };
 }
 
+// Hard gate: shared-edge band-class and sand-to-sand RGB mismatches are
+// required to be exactly 0. Extracted as a pure function so the throw path
+// itself is directly unit-testable, independent of a real algorithm regression.
+export function assertNoSharedEdgeMismatches(bandMismatches, sandRgbMismatches) {
+  if (bandMismatches !== 0) throw new Error(`shoreline shared-edge band-class mismatch: ${bandMismatches} (must be 0)`);
+  if (sandRgbMismatches !== 0) throw new Error(`shoreline sand-to-sand shared-edge RGB mismatch: ${sandRgbMismatches} (must be 0)`);
+}
+
 export function composeShorelineFamily(recipePath, options = {}) {
   const recipeAbs = path.resolve(recipePath);
   const recipeDir = path.dirname(recipeAbs);
@@ -788,8 +814,11 @@ export function composeShorelineFamily(recipePath, options = {}) {
         else if (matchesGrass) grassOriginCount += 1;
         else if (!allowedTriples.has(`${r},${g},${b}`)) unexpected += 1;
         if (isOuterEdgePixel(x, y) && !matchesWater && !matchesGrass) {
+          // v2 edge bases: inner_sand edge = #B98535 (innerSandAlt), outer_sand
+          // edge = #926B2A (outerSandAlt); moss edge is always exact grass_a
+          // (already excluded above via matchesGrass).
           const key = `${r},${g},${b}`;
-          const isBaseOnly = key === SHORELINE_RGB.innerSandBase.join(',') || key === SHORELINE_RGB.outerSandBase.join(',');
+          const isBaseOnly = key === SHORELINE_RGB.innerSandAlt.join(',') || key === SHORELINE_RGB.outerSandAlt.join(',');
           if (!isBaseOnly) edgeVariationViolations += 1;
         }
       }
@@ -881,8 +910,12 @@ export function composeShorelineFamily(recipePath, options = {}) {
   const isLandBand = (b) => b === 'grass' || b === 'moss';
   const rgbDist = (a, b) => Math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2);
 
-  const { rows, cols, cells: latticeCells } = mixedLatticeCells();
-  const codeAt = (r, c) => cornerCode(latticeCells.find((k) => k.r === r && k.c === c).corners);
+  // Exhaustive adjacency gate: all 14 usable codes (13 topology + 0000,
+  // saddle codes excluded), every ordered horizontal and vertical compatible
+  // pair -- not a sample from one mixed-preview lattice. This is the hard
+  // gate; the mixed-tiling PNG below is a separate, purely illustrative
+  // rendering built from a smaller field.
+  const usableCodes = [...TOPOLOGY.map((t) => t.corners), [0, 0, 0, 0]];
   let sharedEdgePairs = 0;
   let bandMismatches = 0;
   let sandRgbMismatches = 0;
@@ -900,23 +933,30 @@ export function composeShorelineFamily(recipePath, options = {}) {
       }
     }
   };
-  for (let r = 0; r < rows; r += 1) {
-    for (let c = 0; c < cols; c += 1) {
-      const code = codeAt(r, c);
-      if (c + 1 < cols) {
-        const rcode = codeAt(r, c + 1);
-        sharedEdgePairs += 1;
-        checkShared(bandTraceByCode.get(code).east, bandTraceByCode.get(rcode).west, rgbEdgeByCode.get(code).east, rgbEdgeByCode.get(rcode).west);
-      }
-      if (r + 1 < rows) {
-        const bcode = codeAt(r + 1, c);
-        sharedEdgePairs += 1;
-        checkShared(bandTraceByCode.get(code).south, bandTraceByCode.get(bcode).north, rgbEdgeByCode.get(code).south, rgbEdgeByCode.get(bcode).north);
+  let horizontalPairs = 0;
+  let verticalPairs = 0;
+  for (const l of usableCodes) {
+    for (const r of usableCodes) {
+      if (l[1] === r[0] && l[2] === r[3]) { // left.east(ne,se) == right.west(nw,sw)
+        sharedEdgePairs += 1; horizontalPairs += 1;
+        checkShared(bandTraceByCode.get(cornerCode(l)).east, bandTraceByCode.get(cornerCode(r)).west, rgbEdgeByCode.get(cornerCode(l)).east, rgbEdgeByCode.get(cornerCode(r)).west);
       }
     }
   }
+  for (const t of usableCodes) {
+    for (const b of usableCodes) {
+      if (t[3] === b[0] && t[2] === b[1]) { // top.south(sw,se) == bottom.north(nw,ne)
+        sharedEdgePairs += 1; verticalPairs += 1;
+        checkShared(bandTraceByCode.get(cornerCode(t)).south, bandTraceByCode.get(cornerCode(b)).north, rgbEdgeByCode.get(cornerCode(t)).south, rgbEdgeByCode.get(cornerCode(b)).north);
+      }
+    }
+  }
+  assertNoSharedEdgeMismatches(bandMismatches, sandRgbMismatches);
+
   const mean = (arr) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0);
   const max = (arr) => (arr.length ? Math.max(...arr) : 0);
+
+  const { rows, cols, cells: latticeCells } = mixedLatticeCells();
 
   const presentCodes = new Set(latticeCells.map((k) => cornerCode(k.corners)));
   const required = ['center', 'edge_north', 'edge_south', 'edge_west', 'edge_east',
@@ -1013,13 +1053,15 @@ export function composeShorelineFamily(recipePath, options = {}) {
     topology: TOPOLOGY.map((t) => ({ name: t.name, corners: t.corners })),
     variants: variantReports,
     centerByteIdenticalToWaterA: centerMismatches === 0,
-    // bandMismatches and sandRgbMismatches are hard gates and must both be 0:
-    // band-class equality holds for every band (proven by q being exactly
-    // shared between matching corner bits), and sand-band RGB equality holds
-    // because sand base swatches are fixed constants, never image-sampled and
-    // never hash-varied at an edge. Water/grass-band RGB divergence across a
-    // shared edge is expected (see seamBaselines) and is not an error.
-    sharedEdge: { pairs: sharedEdgePairs, bandMismatches, sandRgbMismatches },
+    // bandMismatches and sandRgbMismatches are hard gates -- composeShorelineFamily
+    // throws above if either is nonzero, so a returned report always has both
+    // at 0. Coverage is exhaustive: all 14 usable codes (13 topology + 0000,
+    // saddles excluded), every ordered horizontal/vertical compatible pair
+    // (not a sample from one mixed-preview lattice). Sand-band RGB equality
+    // holds because sand base swatches are fixed constants, never image-sampled
+    // and never hash-varied at an edge. Water/grass-band RGB divergence across
+    // a shared edge is expected (see seamBaselines) and is not an error.
+    sharedEdge: { pairs: sharedEdgePairs, horizontalPairs, verticalPairs, bandMismatches, sandRgbMismatches },
     mixedPreview: { rows, cols, incompatibleSharedEdges: bandMismatches, codes: [...presentCodes].sort() },
     seamBaselines: {
       note: 'Sand-band shared edges are colour-identical by construction (sandRgbMismatches = 0 above): sand swatches are fixed constants, not image samples. Water- and grass-band shared-edge pixels are sampled from the approved water_a/grass_a source at each tile’s own local coordinate, so (per spec) they are not required to be byte-identical across a boundary -- only band-class-identical (also proven, bandMismatches = 0). shorelineWaterToWaterSeamStep/shorelineGrassToGrassSeamStep are the actual measured mean RGB deltas across those shared edges in this family’s mixed lattice; waterASelfWrap/grassASelfWrap are the same sources’ own internal wrap-vs-internal-step baseline, reported for direct comparison. A shoreline step materially larger than the source’s own internal step would indicate a seam penalty worth flagging; a comparable or smaller step indicates the shoreline boundary reads no rougher than the source texture already does.',
