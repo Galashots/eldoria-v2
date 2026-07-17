@@ -1,0 +1,70 @@
+{
+  "version": 1,
+  "id": "tile_farm_grass_base_grass_b",
+  "method": "deterministic_interior_pair_swaps_from_approved_grass_a_runtime_pixels",
+  "seed": 4973,
+  "base": {
+    "id": "tile_farm_grass_base_grass_a",
+    "runtimePath": "docs/art-pipeline/review/tile_farm_grass_base_grass_a/grass_a.review-normalized.png",
+    "runtimePngSha256": "40655a11051d5afaf61f5972b471c82419fda0f7e31793b3a2976498e6b5fddb"
+  },
+  "constraints": {
+    "canvasPx": [16, 16],
+    "alpha": "fully_opaque",
+    "pairSwapCount": 24,
+    "changedPixelCount": 48,
+    "borderPixelsChanged": 0,
+    "histogramPreservedExactly": true,
+    "paletteFamily": "forest",
+    "noNewColors": true
+  },
+  "swapPairs": [
+    [[5, 3], [5, 12]],
+    [[3, 4], [11, 13]],
+    [[7, 3], [12, 12]],
+    [[4, 2], [4, 11]],
+    [[2, 11], [5, 4]],
+    [[14, 11], [13, 6]],
+    [[9, 3], [9, 8]],
+    [[14, 9], [3, 6]],
+    [[13, 1], [2, 9]],
+    [[11, 14], [6, 13]],
+    [[14, 3], [11, 12]],
+    [[3, 8], [1, 14]],
+    [[13, 12], [7, 2]],
+    [[12, 4], [1, 1]],
+    [[13, 10], [7, 6]],
+    [[3, 7], [7, 9]],
+    [[6, 9], [12, 6]],
+    [[14, 1], [4, 12]],
+    [[1, 4], [8, 3]],
+    [[3, 13], [10, 3]],
+    [[5, 13], [9, 10]],
+    [[8, 2], [3, 2]],
+    [[6, 5], [1, 5]],
+    [[13, 3], [4, 4]]
+  ],
+  "coordinateOrder": "[x, y] from top-left, zero-based",
+  "metrics": {
+    "horizontalWrapStep": 19.412242,
+    "horizontalInternalStep": 28.342614,
+    "horizontalWrapRatio": 0.684914,
+    "verticalWrapStep": 21.208274,
+    "verticalInternalStep": 26.688571,
+    "verticalWrapRatio": 0.794658,
+    "rowLuminanceCorrelation": 0.000196,
+    "columnLuminanceCorrelation": 0.004026,
+    "forestPaletteDistance": {
+      "min": 2.828427,
+      "median": 10.677078,
+      "max": 26.627054,
+      "withinTolerance40": 256,
+      "opaquePixelCount": 256
+    }
+  },
+  "outputs": {
+    "grass_b.approved-runtime-master.png": "cac925dc5316d64424c558a78f0b4b2e33f7d1a792caa1514a128c3911a24d8f",
+    "grass_b.png": "e31d3fc343d15b2bd16941e343b92ce86f18e73f4f98fb9317a9a87af7c2eab5",
+    "grass_b.review-normalized.png": "cac925dc5316d64424c558a78f0b4b2e33f7d1a792caa1514a128c3911a24d8f"
+  }
+}
