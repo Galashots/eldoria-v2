@@ -4,6 +4,15 @@ This file keeps recent, high-value change summaries. Full historical entries thr
 
 Entries should remain concise: date/author, branch or PR, scope, compatibility impact, verification, and remaining risk. Detailed implementation narratives belong in the PR description and commits.
 
+## 2026-07-17 — Batch B water_b runtime master
+
+- Author/branch: ChatGPT (visual-QA lead) + Claude Code (repo agent), `chatgpt/batch-b-water-b` (draft PR, stacked on `chatgpt/batch-b-grass-c`). Produced during the overnight ChatGPT + Claude closed-loop session.
+- Scope: accepted `tile_farm_water_base / water_b` as an **APPROVED RUNTIME MASTER** derived deterministically from the approved `water_a` runtime pixels by 18 adjacent interior pair swaps (seed 33199). Because `water_a` is near-uniform at the swatch-family level (255/256 pixels one swatch), ChatGPT confirmed a justified adaptation of the delta rule to **delta ≤ 1** (mostly delta-0 within-swatch shimmer + one delta-1 relocation of the single light accent pixel; never delta > 1).
+- Principal files: `assets/source/generated/tile_farm_water_base/water_b.png`, `docs/art-pipeline/review/tile_farm_water_base_water_b/`, `docs/CURRENT_STATE.md`, and this changelog.
+- Verification facts: exact `16×16` RGBA master; 36/256 changed pixels; 0/60 border and 0 inner-buffer pixels changed; no new colours; exact histogram/alpha preservation; palette identical to approved `water_a` (253/256 within `arcane,forest` tolerance 40); quadrant distribution `[4,4,5,5]`; 0 specks; max changed-run 3; max cluster 4; no filled 2×2; seam ratios h `1.125` / v `0.976` (equal-or-better than approved `water_a`'s h `1.153` / v `1.004`); canonical `1024×1024` source by exact 64× replication; runtime round-trip mismatches 0/256.
+- Compatibility: source/review/status only. No production `tile_farm_water_base` manifest, packed sheet, shimmer-clip assembly, Phaser loading, map, collision, save, gameplay, quest, curriculum, mastery, profile, reward, dependency, or migration change.
+- Remaining risk: deterministic water siblinging has limited headroom (near-uniform base); further water variety may later need a different base, richer source, or a runtime shimmer/overlay. Runtime/map integration remains blocked behind the complete environment-kit gate.
+
 ## 2026-07-17 — Batch B grass_c runtime master (completes grass family)
 
 - Author/branch: ChatGPT (visual-QA lead) + Claude Code (repo agent), `chatgpt/batch-b-grass-c` (draft PR). Produced during the overnight ChatGPT + Claude closed-loop session.
