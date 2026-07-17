@@ -2,6 +2,10 @@
 
 This starter package includes original placeholder pixel assets generated for the Eldoria v2 scaffold.
 
+## License scope
+
+The repository's source code is MIT-licensed under [`LICENSE`](LICENSE). Original Eldoria creative content is governed separately by [`ASSET_LICENSE.md`](ASSET_LICENSE.md) and is not covered by the MIT grant unless explicitly stated. Any third-party material listed below remains governed by its own license.
+
 Replace placeholders before release with either:
 - original commissioned/generated assets you are allowed to use,
 - public-domain assets,
