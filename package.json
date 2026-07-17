@@ -16,7 +16,7 @@
     "normalize:asset": "node scripts/normalize-asset-sheet.mjs",
     "validate:asset": "node scripts/validate-asset-sheet.mjs",
     "compose:terrain-blend": "node scripts/compose-terrain-blend-family.mjs",
-    "test:terrain-blend": "node scripts/test-terrain-blend-compositor.mjs",
+    "test:terrain-blend": "node scripts/test-terrain-blend-compositor.mjs && node scripts/test-shoreline-terrain-blend.mjs",
     "test:asset-pipeline": "node scripts/test-asset-pipeline.mjs",
     "review:asset": "node scripts/review-asset.mjs",
     "test:asset-review": "node scripts/test-asset-review.mjs",

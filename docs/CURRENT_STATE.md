@@ -56,6 +56,10 @@ Last refreshed on 2026-07-17 after accepting the Batch B `grass_b` runtime maste
 
 The seven Batch A anchors are approved, and Batch B terrain-family completion has begun. A source-only production manifest and packed sheet now exist for the `tile_farm_path_dirt` blend family (`assets/manifests/tile_farm_path_dirt.manifest.json`, `assets/tilesets/tile_farm_path_dirt.png`), approved by ChatGPT's formal visual verdict. No Phaser loading path, Wangset/Tiled wiring, or map integration is complete for any farm-environment target.
 
+### Candidate Phase 2 source assets — pending ChatGPT visual verdict
+
+- `tile_farm_water_shore` **blend family (13 cells)** — deterministically composited by a new `shoreline_bands` mode added to `scripts/compose-terrain-blend-family.mjs` (the merged `binary_material_interlock`/dirt mode is unchanged, regression-tested). Composites approved `water_a` (foreground/water) over approved `grass_a` (background/land) using the same four-corner mask reinterpreted as five q-bands (water / inner sand / outer sand / moss / grass), with a locked, edge-excluded hashed swatch variation (seed `0x0000570A`) from the locked `wood_leather`/`forest` palette only. `center` is byte-identical to approved `water_a`. All per-tile/band/adjacency/family gates pass (0 unexpected colours, exact band occupancy, 0 band-class and 0 sand-to-sand RGB mismatches across 84 shared-edge pairs, packed `208×16` sheet with zero drift); measured water-to-water and grass-to-grass seam steps sit within the sources' own internal-step range. Source + review evidence + packed sheet only. **Not yet approved** — ChatGPT's formal visual verdict is pending; not runtime/map/Wangset integrated.
+
 ### Pending production replacement
 
 - Dedicated Ranger Explorer sprite sheets.

@@ -1,0 +1,815 @@
+{
+  "schema": "terrain-blend-shoreline-family-report/v1",
+  "id": "tile_farm_water_shore",
+  "compositor": {
+    "version": 1,
+    "mode": "shoreline_bands",
+    "upscale": 64,
+    "shoreline": {
+      "seed": 22282
+    }
+  },
+  "inputs": {
+    "waterForeground": {
+      "path": "docs/art-pipeline/review/tile_farm_water_base_water_a/water_a.review-normalized.png",
+      "sha256": "c719103c1d585bdd07cf350c8529a0edd0d25a8f67b3d845f9bf0daed2878048"
+    },
+    "grassBackground": {
+      "path": "docs/art-pipeline/review/tile_farm_grass_base_grass_a/grass_a.review-normalized.png",
+      "sha256": "40655a11051d5afaf61f5972b471c82419fda0f7e31793b3a2976498e6b5fddb"
+    },
+    "approvedWaterACanonical": {
+      "path": "assets/source/generated/tile_farm_water_base/water_a.png",
+      "sha256": "5772b427ae140ef826d77a9bab4246ce2d23e14f15dda3b8fc3a5c18ae053f6d"
+    }
+  },
+  "topology": [
+    {
+      "name": "center",
+      "corners": [
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "name": "edge_north",
+      "corners": [
+        1,
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "edge_south",
+      "corners": [
+        0,
+        0,
+        1,
+        1
+      ]
+    },
+    {
+      "name": "edge_west",
+      "corners": [
+        1,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "name": "edge_east",
+      "corners": [
+        0,
+        1,
+        1,
+        0
+      ]
+    },
+    {
+      "name": "corner_ne",
+      "corners": [
+        0,
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "corner_nw",
+      "corners": [
+        1,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "corner_se",
+      "corners": [
+        0,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "name": "corner_sw",
+      "corners": [
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "name": "inner_corner_ne",
+      "corners": [
+        1,
+        0,
+        1,
+        1
+      ]
+    },
+    {
+      "name": "inner_corner_nw",
+      "corners": [
+        0,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "name": "inner_corner_se",
+      "corners": [
+        1,
+        1,
+        0,
+        1
+      ]
+    },
+    {
+      "name": "inner_corner_sw",
+      "corners": [
+        1,
+        1,
+        1,
+        0
+      ]
+    }
+  ],
+  "variants": [
+    {
+      "name": "center",
+      "corners": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "cornerCode": "1111",
+      "band": {
+        "water": 256,
+        "inner_sand": 0,
+        "outer_sand": 0,
+        "moss": 0,
+        "grass": 0
+      },
+      "swatch": {
+        "waterInput": 256,
+        "grassInput": 0,
+        "innerSandBase": 0,
+        "innerSandAlt": 0,
+        "outerSandBase": 0,
+        "outerSandAlt": 0,
+        "lightMoss": 0,
+        "darkMoss": 0
+      },
+      "colourOrigin": {
+        "waterInput": 256,
+        "grassInput": 0,
+        "unexpected": 0
+      },
+      "alpha": {
+        "opaque": 256,
+        "partial": 0,
+        "transparent": 0
+      },
+      "runtimeMasterSha256": "950c3bdcb6ed23356dcc4d1005eeba885a8406d3d7c0ba535541152255a4c7d2",
+      "canonicalSourceSha256": "5772b427ae140ef826d77a9bab4246ce2d23e14f15dda3b8fc3a5c18ae053f6d",
+      "centerReusesApprovedWaterA": true
+    },
+    {
+      "name": "edge_north",
+      "corners": [
+        1,
+        1,
+        0,
+        0
+      ],
+      "cornerCode": "1100",
+      "band": {
+        "water": 128,
+        "inner_sand": 16,
+        "outer_sand": 16,
+        "moss": 16,
+        "grass": 80
+      },
+      "swatch": {
+        "waterInput": 128,
+        "grassInput": 91,
+        "innerSandBase": 11,
+        "innerSandAlt": 5,
+        "outerSandBase": 14,
+        "outerSandAlt": 2,
+        "lightMoss": 3,
+        "darkMoss": 2
+      },
+      "colourOrigin": {
+        "waterInput": 128,
+        "grassInput": 91,
+        "unexpected": 0
+      },
+      "alpha": {
+        "opaque": 256,
+        "partial": 0,
+        "transparent": 0
+      },
+      "runtimeMasterSha256": "1c53b913dc82980b80d8716f532fe1c259d1b7bb702127536436a6fa3497db56",
+      "canonicalSourceSha256": "00f9e102a414164bfe632b08a85bf0e140981b2318afbb5b224b1de1bfefab3e",
+      "centerReusesApprovedWaterA": false
+    },
+    {
+      "name": "edge_south",
+      "corners": [
+        0,
+        0,
+        1,
+        1
+      ],
+      "cornerCode": "0011",
+      "band": {
+        "water": 128,
+        "inner_sand": 16,
+        "outer_sand": 16,
+        "moss": 16,
+        "grass": 80
+      },
+      "swatch": {
+        "waterInput": 128,
+        "grassInput": 90,
+        "innerSandBase": 14,
+        "innerSandAlt": 2,
+        "outerSandBase": 14,
+        "outerSandAlt": 2,
+        "lightMoss": 3,
+        "darkMoss": 3
+      },
+      "colourOrigin": {
+        "waterInput": 128,
+        "grassInput": 90,
+        "unexpected": 0
+      },
+      "alpha": {
+        "opaque": 256,
+        "partial": 0,
+        "transparent": 0
+      },
+      "runtimeMasterSha256": "97b3d334bcbf62b2c71699fa88a610d68e7cac59caf007b0032a203c56fdaa95",
+      "canonicalSourceSha256": "3f4d8155e412ad60d248186d80f0ef9818bec7c0786a08f9e9c359cd2bb25386",
+      "centerReusesApprovedWaterA": false
+    },
+    {
+      "name": "edge_west",
+      "corners": [
+        1,
+        0,
+        0,
+        1
+      ],
+      "cornerCode": "1001",
+      "band": {
+        "water": 128,
+        "inner_sand": 16,
+        "outer_sand": 16,
+        "moss": 16,
+        "grass": 80
+      },
+      "swatch": {
+        "waterInput": 128,
+        "grassInput": 91,
+        "innerSandBase": 11,
+        "innerSandAlt": 5,
+        "outerSandBase": 14,
+        "outerSandAlt": 2,
+        "lightMoss": 4,
+        "darkMoss": 1
+      },
+      "colourOrigin": {
+        "waterInput": 128,
+        "grassInput": 91,
+        "unexpected": 0
+      },
+      "alpha": {
+        "opaque": 256,
+        "partial": 0,
+        "transparent": 0
+      },
+      "runtimeMasterSha256": "acc20fa839bdbf98e34a86de89ce7c1e9192bd2be6f91df9bd867bd82a4ea98b",
+      "canonicalSourceSha256": "36e2398a77ad1b6b741fcf086aabd8f20422ef3177827c3071820a1cf32c529c",
+      "centerReusesApprovedWaterA": false
+    },
+    {
+      "name": "edge_east",
+      "corners": [
+        0,
+        1,
+        1,
+        0
+      ],
+      "cornerCode": "0110",
+      "band": {
+        "water": 128,
+        "inner_sand": 16,
+        "outer_sand": 16,
+        "moss": 16,
+        "grass": 80
+      },
+      "swatch": {
+        "waterInput": 128,
+        "grassInput": 93,
+        "innerSandBase": 14,
+        "innerSandAlt": 2,
+        "outerSandBase": 13,
+        "outerSandAlt": 3,
+        "lightMoss": 1,
+        "darkMoss": 2
+      },
+      "colourOrigin": {
+        "waterInput": 128,
+        "grassInput": 93,
+        "unexpected": 0
+      },
+      "alpha": {
+        "opaque": 256,
+        "partial": 0,
+        "transparent": 0
+      },
+      "runtimeMasterSha256": "ac1bed8d64fc5ea1f94c36185fb8285469f8701b6424fb3f1f4d960b41855e76",
+      "canonicalSourceSha256": "248fa8072f54e6c394bd7c19ca976e7a2f5e2b7dfd255ee2dd602a979707b328",
+      "centerReusesApprovedWaterA": false
+    },
+    {
+      "name": "corner_ne",
+      "corners": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "cornerCode": "0100",
+      "band": {
+        "water": 41,
+        "inner_sand": 15,
+        "outer_sand": 14,
+        "moss": 17,
+        "grass": 169
+      },
+      "swatch": {
+        "waterInput": 41,
+        "grassInput": 181,
+        "innerSandBase": 13,
+        "innerSandAlt": 2,
+        "outerSandBase": 14,
+        "outerSandAlt": 0,
+        "lightMoss": 3,
+        "darkMoss": 2
+      },
+      "colourOrigin": {
+        "waterInput": 41,
+        "grassInput": 181,
+        "unexpected": 0
+      },
+      "alpha": {
+        "opaque": 256,
+        "partial": 0,
+        "transparent": 0
+      },
+      "runtimeMasterSha256": "7611e7fc3bf268f56f151d4b521751100a8fb1bc027235acdb24960276b4173c",
+      "canonicalSourceSha256": "d236ece7729b65e6df14e7f36da901f7c72dc12d751d52341f7ad97b9fa8d8fe",
+      "centerReusesApprovedWaterA": false
+    },
+    {
+      "name": "corner_nw",
+      "corners": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "cornerCode": "1000",
+      "band": {
+        "water": 41,
+        "inner_sand": 15,
+        "outer_sand": 14,
+        "moss": 17,
+        "grass": 169
+      },
+      "swatch": {
+        "waterInput": 41,
+        "grassInput": 178,
+        "innerSandBase": 13,
+        "innerSandAlt": 2,
+        "outerSandBase": 10,
+        "outerSandAlt": 4,
+        "lightMoss": 6,
+        "darkMoss": 2
+      },
+      "colourOrigin": {
+        "waterInput": 41,
+        "grassInput": 178,
+        "unexpected": 0
+      },
+      "alpha": {
+        "opaque": 256,
+        "partial": 0,
+        "transparent": 0
+      },
+      "runtimeMasterSha256": "fb7eadfa35532ea15ad8b64c694a2f5a2c70d132c09fdca392fcf8a20b99ba7e",
+      "canonicalSourceSha256": "099f50a90afaa3595d7dea6e8803038bb18ca09b7ea3390b04ed4fca6f06ba6f",
+      "centerReusesApprovedWaterA": false
+    },
+    {
+      "name": "corner_se",
+      "corners": [
+        0,
+        0,
+        1,
+        0
+      ],
+      "cornerCode": "0010",
+      "band": {
+        "water": 41,
+        "inner_sand": 15,
+        "outer_sand": 14,
+        "moss": 17,
+        "grass": 169
+      },
+      "swatch": {
+        "waterInput": 41,
+        "grassInput": 183,
+        "innerSandBase": 8,
+        "innerSandAlt": 7,
+        "outerSandBase": 12,
+        "outerSandAlt": 2,
+        "lightMoss": 0,
+        "darkMoss": 3
+      },
+      "colourOrigin": {
+        "waterInput": 41,
+        "grassInput": 183,
+        "unexpected": 0
+      },
+      "alpha": {
+        "opaque": 256,
+        "partial": 0,
+        "transparent": 0
+      },
+      "runtimeMasterSha256": "b35fd2f2fe2e55e1cbfaf2623b6803c818f18b710bca2c02dacd6b149ada9217",
+      "canonicalSourceSha256": "d26a3e92c09254df937b337b022675c3f901578568b9da307df04473a4956cca",
+      "centerReusesApprovedWaterA": false
+    },
+    {
+      "name": "corner_sw",
+      "corners": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "cornerCode": "0001",
+      "band": {
+        "water": 41,
+        "inner_sand": 15,
+        "outer_sand": 14,
+        "moss": 17,
+        "grass": 169
+      },
+      "swatch": {
+        "waterInput": 41,
+        "grassInput": 182,
+        "innerSandBase": 11,
+        "innerSandAlt": 4,
+        "outerSandBase": 12,
+        "outerSandAlt": 2,
+        "lightMoss": 3,
+        "darkMoss": 1
+      },
+      "colourOrigin": {
+        "waterInput": 41,
+        "grassInput": 182,
+        "unexpected": 0
+      },
+      "alpha": {
+        "opaque": 256,
+        "partial": 0,
+        "transparent": 0
+      },
+      "runtimeMasterSha256": "041a8e4417b0dc62c69b09d4ce973609c42799f49b17553b25e1333fea79a439",
+      "canonicalSourceSha256": "746a867d8f841aebac497933b9db76e158d0a28619d7c4018a084235763e55e1",
+      "centerReusesApprovedWaterA": false
+    },
+    {
+      "name": "inner_corner_ne",
+      "corners": [
+        1,
+        0,
+        1,
+        1
+      ],
+      "cornerCode": "1011",
+      "band": {
+        "water": 215,
+        "inner_sand": 9,
+        "outer_sand": 8,
+        "moss": 9,
+        "grass": 15
+      },
+      "swatch": {
+        "waterInput": 215,
+        "grassInput": 23,
+        "innerSandBase": 5,
+        "innerSandAlt": 4,
+        "outerSandBase": 8,
+        "outerSandAlt": 0,
+        "lightMoss": 0,
+        "darkMoss": 1
+      },
+      "colourOrigin": {
+        "waterInput": 215,
+        "grassInput": 23,
+        "unexpected": 0
+      },
+      "alpha": {
+        "opaque": 256,
+        "partial": 0,
+        "transparent": 0
+      },
+      "runtimeMasterSha256": "d32d84f00e3ef400394a1279fc1eea88fdf0039290eac215400c0eac96ad3a36",
+      "canonicalSourceSha256": "6c57613887a3364a925f71f08d6f228940d462e2f42a614e9f67fa7b88aaab9c",
+      "centerReusesApprovedWaterA": false
+    },
+    {
+      "name": "inner_corner_nw",
+      "corners": [
+        0,
+        1,
+        1,
+        1
+      ],
+      "cornerCode": "0111",
+      "band": {
+        "water": 215,
+        "inner_sand": 9,
+        "outer_sand": 8,
+        "moss": 9,
+        "grass": 15
+      },
+      "swatch": {
+        "waterInput": 215,
+        "grassInput": 22,
+        "innerSandBase": 8,
+        "innerSandAlt": 1,
+        "outerSandBase": 6,
+        "outerSandAlt": 2,
+        "lightMoss": 2,
+        "darkMoss": 0
+      },
+      "colourOrigin": {
+        "waterInput": 215,
+        "grassInput": 22,
+        "unexpected": 0
+      },
+      "alpha": {
+        "opaque": 256,
+        "partial": 0,
+        "transparent": 0
+      },
+      "runtimeMasterSha256": "e55c47c819bb6950f81f4e27e60b46566607a8d0ec378fb66416d5db963f6022",
+      "canonicalSourceSha256": "d3a447d10f708fa6334d9a8af2095549441e449608020d2d3817e6c30acf8cc3",
+      "centerReusesApprovedWaterA": false
+    },
+    {
+      "name": "inner_corner_se",
+      "corners": [
+        1,
+        1,
+        0,
+        1
+      ],
+      "cornerCode": "1101",
+      "band": {
+        "water": 215,
+        "inner_sand": 9,
+        "outer_sand": 8,
+        "moss": 9,
+        "grass": 15
+      },
+      "swatch": {
+        "waterInput": 215,
+        "grassInput": 23,
+        "innerSandBase": 6,
+        "innerSandAlt": 3,
+        "outerSandBase": 8,
+        "outerSandAlt": 0,
+        "lightMoss": 0,
+        "darkMoss": 1
+      },
+      "colourOrigin": {
+        "waterInput": 215,
+        "grassInput": 23,
+        "unexpected": 0
+      },
+      "alpha": {
+        "opaque": 256,
+        "partial": 0,
+        "transparent": 0
+      },
+      "runtimeMasterSha256": "d687a7240291d998c92cfb15936ce264cbe9eee2cc71f9767b05aee25734135d",
+      "canonicalSourceSha256": "1720e677ded2f0937a339eeec8756f3343c63866633c516402136caf500ed969",
+      "centerReusesApprovedWaterA": false
+    },
+    {
+      "name": "inner_corner_sw",
+      "corners": [
+        1,
+        1,
+        1,
+        0
+      ],
+      "cornerCode": "1110",
+      "band": {
+        "water": 215,
+        "inner_sand": 9,
+        "outer_sand": 8,
+        "moss": 9,
+        "grass": 15
+      },
+      "swatch": {
+        "waterInput": 215,
+        "grassInput": 21,
+        "innerSandBase": 8,
+        "innerSandAlt": 1,
+        "outerSandBase": 7,
+        "outerSandAlt": 1,
+        "lightMoss": 3,
+        "darkMoss": 0
+      },
+      "colourOrigin": {
+        "waterInput": 215,
+        "grassInput": 21,
+        "unexpected": 0
+      },
+      "alpha": {
+        "opaque": 256,
+        "partial": 0,
+        "transparent": 0
+      },
+      "runtimeMasterSha256": "0da722542e350a78dc5968c4d5534f6f887b66b5b78e1d5739e99c6959d83775",
+      "canonicalSourceSha256": "cee90a565e7cce1c5b05ec3e15774f856d7d85a203d32e6ad6f83a82844ef67c",
+      "centerReusesApprovedWaterA": false
+    }
+  ],
+  "centerByteIdenticalToWaterA": true,
+  "sharedEdge": {
+    "pairs": 84,
+    "bandMismatches": 0,
+    "sandRgbMismatches": 0
+  },
+  "mixedPreview": {
+    "rows": 7,
+    "cols": 7,
+    "incompatibleSharedEdges": 0,
+    "codes": [
+      "0000",
+      "0001",
+      "0010",
+      "0011",
+      "0100",
+      "0110",
+      "0111",
+      "1000",
+      "1001",
+      "1011",
+      "1100",
+      "1101",
+      "1110",
+      "1111"
+    ]
+  },
+  "seamBaselines": {
+    "note": "Sand-band shared edges are colour-identical by construction (sandRgbMismatches = 0 above): sand swatches are fixed constants, not image samples. Water- and grass-band shared-edge pixels are sampled from the approved water_a/grass_a source at each tile’s own local coordinate, so (per spec) they are not required to be byte-identical across a boundary -- only band-class-identical (also proven, bandMismatches = 0). shorelineWaterToWaterSeamStep/shorelineGrassToGrassSeamStep are the actual measured mean RGB deltas across those shared edges in this family’s mixed lattice; waterASelfWrap/grassASelfWrap are the same sources’ own internal wrap-vs-internal-step baseline, reported for direct comparison. A shoreline step materially larger than the source’s own internal step would indicate a seam penalty worth flagging; a comparable or smaller step indicates the shoreline boundary reads no rougher than the source texture already does.",
+    "waterASelfWrap": {
+      "horizontalWrapStep": 10.478054,
+      "averageInternalHorizontalStep": 9.086955,
+      "horizontalWrapRatio": 1.153088,
+      "verticalWrapStep": 10.876692,
+      "averageInternalVerticalStep": 10.829584,
+      "verticalWrapRatio": 1.00435
+    },
+    "grassASelfWrap": {
+      "horizontalWrapStep": 19.412242,
+      "averageInternalHorizontalStep": 28.411619,
+      "horizontalWrapRatio": 0.68325,
+      "verticalWrapStep": 21.208274,
+      "averageInternalVerticalStep": 26.806734,
+      "verticalWrapRatio": 0.791155
+    },
+    "shorelineWaterToWaterSeamStep": {
+      "mean": 10.677373,
+      "max": 26.645825,
+      "samples": 768
+    },
+    "shorelineGrassToGrassSeamStep": {
+      "mean": 20.304131,
+      "max": 50.299105,
+      "samples": 528
+    }
+  },
+  "packed": {
+    "manifest": "assets/manifests/tile_farm_water_shore.manifest.json",
+    "sheet": "assets/tilesets/tile_farm_water_shore.png",
+    "width": 208,
+    "height": 16,
+    "sheetSha256": "a334a5986b820730db8d41222a2db37dd6f3b42404694bb2c8df54cad9eb6e09",
+    "cells": [
+      {
+        "name": "center",
+        "index": 0,
+        "packedCellSha256": "950c3bdcb6ed23356dcc4d1005eeba885a8406d3d7c0ba535541152255a4c7d2",
+        "zeroDriftMismatches": 0
+      },
+      {
+        "name": "edge_north",
+        "index": 1,
+        "packedCellSha256": "1c53b913dc82980b80d8716f532fe1c259d1b7bb702127536436a6fa3497db56",
+        "zeroDriftMismatches": 0
+      },
+      {
+        "name": "edge_south",
+        "index": 2,
+        "packedCellSha256": "97b3d334bcbf62b2c71699fa88a610d68e7cac59caf007b0032a203c56fdaa95",
+        "zeroDriftMismatches": 0
+      },
+      {
+        "name": "edge_west",
+        "index": 3,
+        "packedCellSha256": "acc20fa839bdbf98e34a86de89ce7c1e9192bd2be6f91df9bd867bd82a4ea98b",
+        "zeroDriftMismatches": 0
+      },
+      {
+        "name": "edge_east",
+        "index": 4,
+        "packedCellSha256": "ac1bed8d64fc5ea1f94c36185fb8285469f8701b6424fb3f1f4d960b41855e76",
+        "zeroDriftMismatches": 0
+      },
+      {
+        "name": "corner_ne",
+        "index": 5,
+        "packedCellSha256": "7611e7fc3bf268f56f151d4b521751100a8fb1bc027235acdb24960276b4173c",
+        "zeroDriftMismatches": 0
+      },
+      {
+        "name": "corner_nw",
+        "index": 6,
+        "packedCellSha256": "fb7eadfa35532ea15ad8b64c694a2f5a2c70d132c09fdca392fcf8a20b99ba7e",
+        "zeroDriftMismatches": 0
+      },
+      {
+        "name": "corner_se",
+        "index": 7,
+        "packedCellSha256": "b35fd2f2fe2e55e1cbfaf2623b6803c818f18b710bca2c02dacd6b149ada9217",
+        "zeroDriftMismatches": 0
+      },
+      {
+        "name": "corner_sw",
+        "index": 8,
+        "packedCellSha256": "041a8e4417b0dc62c69b09d4ce973609c42799f49b17553b25e1333fea79a439",
+        "zeroDriftMismatches": 0
+      },
+      {
+        "name": "inner_corner_ne",
+        "index": 9,
+        "packedCellSha256": "d32d84f00e3ef400394a1279fc1eea88fdf0039290eac215400c0eac96ad3a36",
+        "zeroDriftMismatches": 0
+      },
+      {
+        "name": "inner_corner_nw",
+        "index": 10,
+        "packedCellSha256": "e55c47c819bb6950f81f4e27e60b46566607a8d0ec378fb66416d5db963f6022",
+        "zeroDriftMismatches": 0
+      },
+      {
+        "name": "inner_corner_se",
+        "index": 11,
+        "packedCellSha256": "d687a7240291d998c92cfb15936ce264cbe9eee2cc71f9767b05aee25734135d",
+        "zeroDriftMismatches": 0
+      },
+      {
+        "name": "inner_corner_sw",
+        "index": 12,
+        "packedCellSha256": "0da722542e350a78dc5968c4d5534f6f887b66b5b78e1d5739e99c6959d83775",
+        "zeroDriftMismatches": 0
+      }
+    ],
+    "totalZeroDriftMismatches": 0
+  },
+  "runtimeIntegrated": false,
+  "mapIntegrated": false,
+  "physicalIpadValidated": false,
+  "childValidated": false
+}

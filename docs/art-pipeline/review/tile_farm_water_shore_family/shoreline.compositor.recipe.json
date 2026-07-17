@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "id": "tile_farm_water_shore",
+  "mode": "shoreline_bands",
+  "cellPx": [16, 16],
+  "foregroundPath": "../tile_farm_water_base_water_a/water_a.review-normalized.png",
+  "backgroundPath": "../tile_farm_grass_base_grass_a/grass_a.review-normalized.png",
+  "canonicalSourceDir": "../../../../assets/source/generated/tile_farm_water_shore",
+  "runtimeMasterDir": "../../../../.tmp/terrain-blend/shoreline/runtime",
+  "evidenceDir": ".",
+  "centerCanonicalSourcePath": "../../../../assets/source/generated/tile_farm_water_base/water_a.png",
+  "productionManifest": "../../../../assets/manifests/tile_farm_water_shore.manifest.json",
+  "upscale": 64,
+  "_seedNote": "shoreline.seed 22282 == 0x0000570A (spec §10, shoreline family).",
+  "_swatchNote": "Locked shoreline swatches only; no new colours (inner sand #D5A342, outer sand #B98535, dark sand accent #926B2A [unused base, only as outer-sand alt], light moss #6C8B15, dark moss #427118).",
+  "shoreline": {
+    "seed": 22282
+  },
+  "variants": [
+    { "name": "center", "corners": [1, 1, 1, 1] },
+    { "name": "edge_north", "corners": [1, 1, 0, 0] },
+    { "name": "edge_south", "corners": [0, 0, 1, 1] },
+    { "name": "edge_west", "corners": [1, 0, 0, 1] },
+    { "name": "edge_east", "corners": [0, 1, 1, 0] },
+    { "name": "corner_ne", "corners": [0, 1, 0, 0] },
+    { "name": "corner_nw", "corners": [1, 0, 0, 0] },
+    { "name": "corner_se", "corners": [0, 0, 1, 0] },
+    { "name": "corner_sw", "corners": [0, 0, 0, 1] },
+    { "name": "inner_corner_ne", "corners": [1, 0, 1, 1] },
+    { "name": "inner_corner_nw", "corners": [0, 1, 1, 1] },
+    { "name": "inner_corner_se", "corners": [1, 1, 0, 1] },
+    { "name": "inner_corner_sw", "corners": [1, 1, 1, 0] }
+  ]
+}
