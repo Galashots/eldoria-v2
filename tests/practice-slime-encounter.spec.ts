@@ -89,7 +89,7 @@ async function strike(page: Page): Promise<void> {
   await clickGame(page, 852, 536);
 }
 
-test('Mage completes three deliberate Practice Slime hits before the optional prompt', async ({ page }) => {
+test('Mage buffers one rapid Practice Slime tap without auto-completing the encounter', async ({ page }) => {
   await startAtSlime(page, 'grade2-mage');
   const before = await worldState(page);
 
@@ -102,7 +102,9 @@ test('Mage completes three deliberate Practice Slime hits before the optional pr
   });
   await page.screenshot({ path: 'test-results/slime-mage-before.png', fullPage: true });
 
-  // Two near-simultaneous taps still count as one deliberate hit.
+  // The first tap starts a hit, the second is buffered, and a third tap during
+  // the same lock is rejected. This prevents both dropped input and hold-to-win.
+  await strike(page);
   await strike(page);
   await strike(page);
   await expect.poll(async () => (await snapshot(page)).hitCount).toBe(1);
@@ -111,13 +113,14 @@ test('Mage completes three deliberate Practice Slime hits before the optional pr
   await page.waitForTimeout(190);
   await page.screenshot({ path: 'test-results/slime-mage-first-hit.png', fullPage: true });
 
-  await page.waitForTimeout(260);
-  await strike(page);
+  // The single buffered tap executes automatically after the first hit lock.
   await expect.poll(async () => (await snapshot(page)).hitCount).toBe(2);
   expect(await hasCanvasText(page, 'optional learning bonus')).toBe(false);
   expect(await worldState(page)).toEqual(before);
+  await expect.poll(async () => (await snapshot(page)).inputLocked).toBe(false);
+  await page.screenshot({ path: 'test-results/slime-mage-buffered-second-hit.png', fullPage: true });
 
-  await page.waitForTimeout(440);
+  // Completion still requires one final deliberate tap.
   await strike(page);
   await expect.poll(async () => snapshot(page)).toMatchObject({
     completed: true,
@@ -155,7 +158,7 @@ test('Ranger tracking shots remain reader-mode and preserve state before prompt 
       await page.waitForTimeout(170);
       await page.screenshot({ path: 'test-results/slime-ranger-first-hit.png', fullPage: true });
     }
-    if (hit < 3) await page.waitForTimeout(440);
+    if (hit < 3) await expect.poll(async () => (await snapshot(page)).inputLocked).toBe(false);
   }
 
   expect(await worldState(page)).toEqual(before);
