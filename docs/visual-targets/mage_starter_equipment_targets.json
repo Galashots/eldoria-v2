@@ -1,12 +1,71 @@
 {
   "version": 1,
   "sourceContract": "docs/VISUAL_ASSET_CONTRACT.md",
+  "architectureContract": "docs/ARMOR_AND_BATTLE_ANIMATION_CONTRACT.md",
   "baseTarget": "char_mage_boy_base",
   "overlaySet": {
     "id": "equipment_mage_starter_set",
     "displayName": "Grade 2 Mage Starter Equipment Set",
     "profileId": "grade2-mage",
-    "status": "target_only"
+    "status": "target_only",
+    "authoringModel": "separate_source_components",
+    "runtimeModel": "atomic_precomposed_outfit_package",
+    "runtimeCompositeId": "armor_mage_starter_outfit",
+    "runtimeSwapGranularity": "complete_outfit_set",
+    "weaponRuntimeModel": "separate_synchronized_overlay",
+    "mechanicsPolicy": "cosmetic_only_until_equipment_system_is_separately_scoped"
+  },
+  "runtimeComposition": {
+    "id": "armor_mage_starter_outfit",
+    "status": "target_only",
+    "composesTargets": [
+      "armor_mage_starter_robe",
+      "armor_mage_starter_hat",
+      "armor_mage_starter_cape"
+    ],
+    "runtimeSlices": [
+      {
+        "id": "armor_mage_starter_outfit_back",
+        "role": "behind_body_compiled_overlay",
+        "renderLayer": "actors_body",
+        "localDepthPolicy": "below_base_actor"
+      },
+      {
+        "id": "armor_mage_starter_outfit_front",
+        "role": "front_compiled_overlay",
+        "renderLayer": "armor_overlays",
+        "localDepthPolicy": "above_base_actor"
+      }
+    ],
+    "canvasPx": [32, 48],
+    "footprintPx": [16, 16],
+    "pivotPx": [16, 47],
+    "ppu": 16,
+    "directions": ["front", "back", "left", "right"],
+    "syncClips": ["idle", "walk", "cast", "hurt"],
+    "syncRequirement": "must_match_base_canvas_pivot_directions_frame_count_frame_timing_and_event_frames",
+    "runtimeExport": "png",
+    "atlasFamily": "characters",
+    "collision": { "hurtbox": null, "hitboxes": [], "interaction": null },
+    "gameplayEffect": "none"
+  },
+  "battleAnimationGate": {
+    "baseActorOwnsTiming": true,
+    "requiredMageClips": ["idle", "walk", "cast", "hurt"],
+    "semanticEvents": [
+      "anticipation_start",
+      "projectile_spawn_or_contact",
+      "recovery_start",
+      "clip_complete"
+    ],
+    "deferredClips": [
+      "light_attack",
+      "heavy_attack",
+      "death",
+      "special"
+    ],
+    "freezeBaseTimingBeforeArmorGeneration": true,
+    "artMayInventHitboxes": false
   },
   "targets": [
     {
@@ -18,6 +77,8 @@
       "inheritsTarget": "char_mage_boy_base",
       "slot": "body",
       "part": "torso",
+      "productionRole": "source_component_for_runtime_composite",
+      "firstRuntimeIntegration": "compile_into_armor_mage_starter_outfit_front",
       "canvasPx": [32, 48],
       "footprintPx": [16, 16],
       "pivotPx": [16, 47],
@@ -33,10 +94,11 @@
       "preferredSource": "aseprite",
       "atlasFamily": "characters",
       "collision": { "hurtbox": null, "hitboxes": [], "interaction": null },
-      "visualRule": "Robe must sit over torso and legs without hiding face, hands, or interaction readability.",
+      "visualRule": "Robe must sit over torso and legs without hiding face, hands, feet, or interaction readability.",
       "notes": [
         "Specification only; no art is included.",
-        "Cosmetic target only; no gameplay effect."
+        "Cosmetic target only; no gameplay effect.",
+        "Not independently loaded in the first runtime implementation."
       ]
     },
     {
@@ -48,6 +110,8 @@
       "inheritsTarget": "char_mage_boy_base",
       "slot": "head",
       "part": "helm",
+      "productionRole": "source_component_for_runtime_composite",
+      "firstRuntimeIntegration": "compile_into_armor_mage_starter_outfit_front",
       "canvasPx": [32, 48],
       "footprintPx": [16, 16],
       "pivotPx": [16, 47],
@@ -66,7 +130,8 @@
       "visualRule": "Hat must preserve face readability in front view and not drift on walk or cast frames.",
       "notes": [
         "Specification only; no art is included.",
-        "Cosmetic target only; no gameplay effect."
+        "Cosmetic target only; no gameplay effect.",
+        "Not independently loaded in the first runtime implementation."
       ]
     },
     {
@@ -78,6 +143,8 @@
       "inheritsTarget": "char_mage_boy_base",
       "slot": "cape",
       "part": "cape",
+      "productionRole": "source_component_split_across_runtime_composite_slices",
+      "firstRuntimeIntegration": "compile_behind_pixels_into_outfit_back_and_visible_front_edges_into_outfit_front",
       "canvasPx": [32, 48],
       "footprintPx": [16, 16],
       "pivotPx": [16, 47],
@@ -93,10 +160,11 @@
       "preferredSource": "aseprite",
       "atlasFamily": "characters",
       "collision": { "hurtbox": null, "hitboxes": [], "interaction": null },
-      "visualRule": "Cape must remain behind the body except where a view needs side silhouette; no independent timing drift.",
+      "visualRule": "Cape must remain behind the body except where a view needs a visible side or front edge; no independent timing drift.",
       "notes": [
         "Specification only; no art is included.",
-        "Cosmetic target only; no gameplay effect."
+        "Cosmetic target only; no gameplay effect.",
+        "Not independently loaded in the first runtime implementation."
       ]
     },
     {
@@ -108,13 +176,14 @@
       "inheritsTarget": "char_mage_boy_base",
       "slot": "weapon",
       "part": "staff",
+      "productionRole": "separate_synchronized_runtime_overlay",
       "canvasPx": [32, 48],
       "footprintPx": [16, 16],
       "pivotPx": [16, 47],
       "ppu": 16,
       "directions": ["front", "back", "left", "right"],
       "syncClips": ["idle", "walk", "cast", "hurt"],
-      "syncRequirement": "must_match_base_canvas_pivot_directions_and_frame_timing",
+      "syncRequirement": "must_match_base_canvas_pivot_directions_frame_timing_and_event_frames",
       "paletteFamilies": ["arcane", "wood_leather"],
       "lightDirection": "upper_left",
       "renderLayer": "weapons_front",
@@ -126,7 +195,8 @@
       "visualRule": "Staff must align to the base hand socket and match idle, walk, cast, and hurt timing; no hitboxes yet.",
       "notes": [
         "Specification only; no art is included.",
-        "Cosmetic target only; no gameplay effect."
+        "Cosmetic target only; no gameplay effect.",
+        "Foreground and behind-body slices may be compiled when direction requires them."
       ]
     }
   ]
