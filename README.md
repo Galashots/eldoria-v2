@@ -75,6 +75,12 @@ npm run smoke
 
 `npm run check` includes visual-target validation, type checking, and the production build. The production site is written to `dist/`.
 
+## Licensing
+
+The source code, build scripts, tests, and code-focused technical documentation are available under the [MIT License](LICENSE).
+
+Eldoria's original art, audio, narrative, characters, setting, curriculum wording, screenshots, and other creative game content are not included in that MIT grant unless a file explicitly says otherwise. See [`ASSET_LICENSE.md`](ASSET_LICENSE.md) for the creative-content terms and [`ATTRIBUTION.md`](ATTRIBUTION.md) for third-party or placeholder-asset records.
+
 ## Documentation
 
 Start with [`docs/README.md`](docs/README.md).
