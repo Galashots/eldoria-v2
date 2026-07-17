@@ -1,6 +1,6 @@
 # Eldoria-V2 Current State
 
-Last refreshed on 2026-07-16 after completion of all seven Batch A foundational asset approvals. This file owns volatile project status; durable rules live in `AGENTS.md`, and the documentation map lives in `docs/README.md`.
+Last refreshed on 2026-07-17 after locking the first armor runtime model and battle-animation production contract. This file owns volatile project status; durable rules live in `AGENTS.md`, and the documentation map lives in `docs/README.md`.
 
 ## Product invariant
 
@@ -28,6 +28,15 @@ Last refreshed on 2026-07-16 after completion of all seven Batch A foundational 
 - Grade 2 Mage directional idle, walk, and cast animation sheets.
 - Practice Slime v001 idle and encounter presentation.
 - Code-drawn or layered bridge presentation for Ranger Explorer, Mira, Wildbloom landmarks, quest markers, crop/sprout markers, shadows, projectiles, and feedback effects.
+
+### Production contracts locked but not runtime-integrated
+
+- Armor uses separate editable source components compiled into one atomic runtime outfit package with synchronized back and front overlay slices; weapons remain separate synchronized overlays.
+- The first armor implementation is cosmetic and switches complete outfits rather than independently swapping live robe, hat, cape, and bracer sprites.
+- Base actor clips own frame count, timing, pivots, and semantic action events. Armor and weapons may not run independent animation clocks.
+- Mage armor production is limited to the existing `idle`, `walk`, `cast`, and `hurt` baseline. Dedicated Ranger production requires `idle`, `walk`, `shoot`, and `hurt` before Ranger armor begins.
+- Light attack, heavy attack, death, specials, generalized combat hitboxes, player health, and broader combat architecture remain deferred until real gameplay requires them.
+- Durable authority: `docs/ARMOR_AND_BATTLE_ANIMATION_CONTRACT.md` and `docs/visual-targets/mage_starter_equipment_targets.json`.
 
 ### Approved Phase 2 source assets — not yet runtime-integrated
 
@@ -101,6 +110,7 @@ Batch A progress is **7 of 7 foundational assets approved**:
 2. Continue with `grass_c`, dirt transitions, `water_b`, and the complete shoreline set only after each preceding reference cell passes.
 3. Keep every Batch B terrain variant on its one-cell seam/repetition gate before any packed family sheet.
 4. Do not recompose `public/maps/farm.json` until the complete production kit passes the later environment-kit contact-sheet acceptance gate.
+5. In parallel only where it does not displace Batch B, produce the dedicated Ranger Explorer base and freeze both heroes' required clip timing before any armor source generation.
 
 ## Decisions for the generation handoff
 
@@ -114,7 +124,8 @@ Batch A progress is **7 of 7 foundational assets approved**:
 
 - Physical iPad Safari smoke test after the production farm recomposition, followed by formal Phase 7 certification.
 - Dedicated Ranger Explorer and Mira production art.
-- Merchant/customization gold sink.
+- Mage starter outfit source generation, compiled overlay production, and cosmetic runtime integration after base timing freezes.
+- Merchant/customization gold sink and separately scoped equipment mechanics.
 - UI skin, lighting, atmosphere, and final performance tuning.
 - Quest #4, a second zone, or broader combat architecture only after the visual milestone is reassessed.
 
@@ -126,3 +137,4 @@ Batch A progress is **7 of 7 foundational assets approved**:
 - A high-resolution source can remain unsuitable even when its normalized runtime cell is good. In that case, freeze the approved runtime pixels and use the documented Approved Runtime Master workflow instead of repeatedly regenerating.
 - Terrain centres and transition tiles can easily become non-seamless or reveal periodic motifs; one-cell `3×3` and large-field repeats remain mandatory gates.
 - Ranger, Mira, and several interactive objects remain bridge art and may look inconsistent once production terrain arrives.
+- The compiled two-slice outfit model is specification-only and remains unproven in-engine; the first cosmetic outfit integration must validate occlusion, synchronization, memory cost, and iPad frame pacing before expanding runtime slot granularity.
