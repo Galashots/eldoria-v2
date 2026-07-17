@@ -47,6 +47,7 @@ export class PracticeSlimeEncounterController {
   private hitCount = 0;
   private inputLocked = false;
   private completed = false;
+  private bufferedStrike = false;
   private pips: Phaser.GameObjects.Arc[] = [];
   private delayedCalls: Phaser.Time.TimerEvent[] = [];
 
@@ -88,14 +89,16 @@ export class PracticeSlimeEncounterController {
   }
 
   tryStrike(): boolean {
-    if (this.inputLocked || this.completed || !this.slime.active) return false;
+    if (this.completed || !this.slime.active || this.hitCount >= TOTAL_HITS) return false;
 
-    this.setLocked(true);
-    this.hitCount += 1;
-    this.heroPresentation.playAction(false);
-    this.fireProjectile();
+    if (this.inputLocked) {
+      if (this.bufferedStrike) return false;
+      this.bufferedStrike = true;
+      this.acknowledgeBufferedStrike();
+      return true;
+    }
 
-    this.delay(IMPACT_DELAY_MS, () => this.impact());
+    this.startStrike();
     return true;
   }
 
@@ -103,6 +106,7 @@ export class PracticeSlimeEncounterController {
     this.clearDelayedCalls();
     this.hitCount = 0;
     this.completed = false;
+    this.bufferedStrike = false;
     this.setLocked(false);
     this.slime.setVisible(true).setAlpha(1).setScale(GAME_SCALE).setAngle(0);
     this.slime.play('practice-slime-idle', true);
@@ -129,7 +133,49 @@ export class PracticeSlimeEncounterController {
       pip.destroy();
     });
     this.pips = [];
+    this.bufferedStrike = false;
     this.inputLocked = false;
+  }
+
+  private startStrike(): void {
+    this.setLocked(true);
+    this.hitCount += 1;
+    this.heroPresentation.playAction(false);
+    this.fireProjectile();
+    this.delay(IMPACT_DELAY_MS, () => this.impact());
+  }
+
+  private acknowledgeBufferedStrike(): void {
+    const nextPip = this.pips[this.hitCount];
+    if (!nextPip?.active) return;
+
+    this.scene.tweens.killTweensOf(nextPip);
+    this.scene.tweens.add({
+      targets: nextPip,
+      scale: 1.35,
+      alpha: 0.65,
+      duration: 90,
+      yoyo: true,
+      ease: 'Sine.easeOut',
+      onComplete: () => {
+        if (nextPip.active && !this.completed) nextPip.setScale(1).setAlpha(1);
+      }
+    });
+  }
+
+  private releaseOrRunBufferedStrike(): void {
+    const shouldRunBufferedStrike = this.bufferedStrike
+      && !this.completed
+      && this.hitCount < TOTAL_HITS
+      && this.slime.active;
+
+    this.bufferedStrike = false;
+    if (shouldRunBufferedStrike) {
+      this.startStrike();
+      return;
+    }
+
+    this.setLocked(false);
   }
 
   private fireProjectile(): void {
@@ -225,11 +271,12 @@ export class PracticeSlimeEncounterController {
     this.playSlimeReaction(isFinalHit);
 
     if (!isFinalHit) {
-      this.delay(HIT_LOCK_MS - IMPACT_DELAY_MS, () => this.setLocked(false));
+      this.delay(HIT_LOCK_MS - IMPACT_DELAY_MS, () => this.releaseOrRunBufferedStrike());
       return;
     }
 
     this.completed = true;
+    this.bufferedStrike = false;
     this.playCompletion(accent);
     this.delay(FINISH_DURATION_MS - IMPACT_DELAY_MS, () => {
       this.setLocked(false);
