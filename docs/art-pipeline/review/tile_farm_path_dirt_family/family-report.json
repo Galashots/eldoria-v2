@@ -1,0 +1,1695 @@
+{
+  "schema": "terrain-blend-family-report/v1",
+  "id": "tile_farm_path_dirt",
+  "compositor": {
+    "version": 1,
+    "mode": "binary_material_interlock",
+    "upscale": 64,
+    "fringe": {
+      "threshold": 30,
+      "modulus": 3,
+      "selectedRemainder": 0,
+      "seed": 53626
+    }
+  },
+  "inputs": {
+    "foreground": {
+      "path": "docs/art-pipeline/review/tile_farm_path_dirt_center/center.review-normalized.png",
+      "sha256": "5a505606ace7871562ac5e009dfc4f445838f9a348bc0d3730cfd260963fb003",
+      "colors": 205
+    },
+    "background": {
+      "path": "docs/art-pipeline/review/tile_farm_grass_base_grass_a/grass_a.review-normalized.png",
+      "sha256": "40655a11051d5afaf61f5972b471c82419fda0f7e31793b3a2976498e6b5fddb",
+      "colors": 252
+    }
+  },
+  "topology": [
+    {
+      "name": "center",
+      "corners": [
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "name": "edge_north",
+      "corners": [
+        1,
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "edge_south",
+      "corners": [
+        0,
+        0,
+        1,
+        1
+      ]
+    },
+    {
+      "name": "edge_west",
+      "corners": [
+        1,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "name": "edge_east",
+      "corners": [
+        0,
+        1,
+        1,
+        0
+      ]
+    },
+    {
+      "name": "corner_ne",
+      "corners": [
+        0,
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "corner_nw",
+      "corners": [
+        1,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "corner_se",
+      "corners": [
+        0,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "name": "corner_sw",
+      "corners": [
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "name": "inner_corner_ne",
+      "corners": [
+        1,
+        0,
+        1,
+        1
+      ]
+    },
+    {
+      "name": "inner_corner_nw",
+      "corners": [
+        0,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "name": "inner_corner_se",
+      "corners": [
+        1,
+        1,
+        0,
+        1
+      ]
+    },
+    {
+      "name": "inner_corner_sw",
+      "corners": [
+        1,
+        1,
+        1,
+        0
+      ]
+    }
+  ],
+  "variants": [
+    {
+      "name": "center",
+      "corners": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "cornerCode": "1111",
+      "coreForegroundCount": 256,
+      "fringeEligibleCount": 0,
+      "fringeChangedCount": 0,
+      "foregroundPixels": 256,
+      "backgroundPixels": 0,
+      "colourOrigin": {
+        "foregroundInput": 256,
+        "backgroundInput": 0,
+        "unexpected": 0
+      },
+      "alpha": {
+        "opaque": 256,
+        "partial": 0,
+        "transparent": 0
+      },
+      "palette": {
+        "tolerance": 40,
+        "withinTolerance": 256,
+        "total": 256,
+        "minDistance": 11.358,
+        "medianDistance": 25.199,
+        "maxDistance": 32.542
+      },
+      "edgeTraces": {
+        "north": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "south": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "west": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "east": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "runtimeMasterSha256": "15357e1fb7b0e41611c99e64c69da5540a33c0456799dca955ed6a0931295bc4",
+      "canonicalSourceSha256": "15a0ef609cebbf5f60de12e07dbfae4236014b051aebcd151c45df19a958af55",
+      "centerUnchanged": true
+    },
+    {
+      "name": "edge_north",
+      "corners": [
+        1,
+        1,
+        0,
+        0
+      ],
+      "cornerCode": "1100",
+      "coreForegroundCount": 128,
+      "fringeEligibleCount": 28,
+      "fringeChangedCount": 7,
+      "foregroundPixels": 131,
+      "backgroundPixels": 125,
+      "colourOrigin": {
+        "foregroundInput": 131,
+        "backgroundInput": 125,
+        "unexpected": 0
+      },
+      "alpha": {
+        "opaque": 256,
+        "partial": 0,
+        "transparent": 0
+      },
+      "palette": {
+        "tolerance": 40,
+        "withinTolerance": 256,
+        "total": 256,
+        "minDistance": 2.828,
+        "medianDistance": 20.833,
+        "maxDistance": 31.843
+      },
+      "edgeTraces": {
+        "north": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "south": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "west": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "east": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "runtimeMasterSha256": "fc5c98b519711c828639a020631435025444a2e48194228ae65aad3bffbc89ab",
+      "canonicalSourceSha256": "8c7cdde70621c7c8000772f33e37609e035f94eedbd90a4fbf452ca6b1c17a49",
+      "centerUnchanged": false
+    },
+    {
+      "name": "edge_south",
+      "corners": [
+        0,
+        0,
+        1,
+        1
+      ],
+      "cornerCode": "0011",
+      "coreForegroundCount": 128,
+      "fringeEligibleCount": 28,
+      "fringeChangedCount": 7,
+      "foregroundPixels": 125,
+      "backgroundPixels": 131,
+      "colourOrigin": {
+        "foregroundInput": 125,
+        "backgroundInput": 131,
+        "unexpected": 0
+      },
+      "alpha": {
+        "opaque": 256,
+        "partial": 0,
+        "transparent": 0
+      },
+      "palette": {
+        "tolerance": 40,
+        "withinTolerance": 256,
+        "total": 256,
+        "minDistance": 2.828,
+        "medianDistance": 19.209,
+        "maxDistance": 32.542
+      },
+      "edgeTraces": {
+        "north": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "south": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "west": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "east": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "runtimeMasterSha256": "0457252628e9bbf23339e81f9847cb1aef5dc935aa3846efa7d288e86653fbfa",
+      "canonicalSourceSha256": "6c8d390ccada02b5dbb10cd295be534b29dbb07d577f16ebd72fff65359835fc",
+      "centerUnchanged": false
+    },
+    {
+      "name": "edge_west",
+      "corners": [
+        1,
+        0,
+        0,
+        1
+      ],
+      "cornerCode": "1001",
+      "coreForegroundCount": 128,
+      "fringeEligibleCount": 28,
+      "fringeChangedCount": 6,
+      "foregroundPixels": 126,
+      "backgroundPixels": 130,
+      "colourOrigin": {
+        "foregroundInput": 126,
+        "backgroundInput": 130,
+        "unexpected": 0
+      },
+      "alpha": {
+        "opaque": 256,
+        "partial": 0,
+        "transparent": 0
+      },
+      "palette": {
+        "tolerance": 40,
+        "withinTolerance": 256,
+        "total": 256,
+        "minDistance": 2.828,
+        "medianDistance": 19.235,
+        "maxDistance": 32.542
+      },
+      "edgeTraces": {
+        "north": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "south": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "west": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "east": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "runtimeMasterSha256": "c7856a7f0437a65837d108b34da7ad6c5f476d5dad55c426c74b872fb48478e5",
+      "canonicalSourceSha256": "5db31dc04c294c40860d9a9bca56f6295a11bca09f64405b0c70248369e79402",
+      "centerUnchanged": false
+    },
+    {
+      "name": "edge_east",
+      "corners": [
+        0,
+        1,
+        1,
+        0
+      ],
+      "cornerCode": "0110",
+      "coreForegroundCount": 128,
+      "fringeEligibleCount": 28,
+      "fringeChangedCount": 6,
+      "foregroundPixels": 130,
+      "backgroundPixels": 126,
+      "colourOrigin": {
+        "foregroundInput": 130,
+        "backgroundInput": 126,
+        "unexpected": 0
+      },
+      "alpha": {
+        "opaque": 256,
+        "partial": 0,
+        "transparent": 0
+      },
+      "palette": {
+        "tolerance": 40,
+        "withinTolerance": 256,
+        "total": 256,
+        "minDistance": 3,
+        "medianDistance": 20.05,
+        "maxDistance": 31.969
+      },
+      "edgeTraces": {
+        "north": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "south": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "west": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "east": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "runtimeMasterSha256": "2c06116bacf884c07a1f438d0f2e39a376678f2b118e7065d3d01a1182278e2b",
+      "canonicalSourceSha256": "4fee447736d0f40481a2e793b8f692a82a618c361fc0aab0185cc97291318f82",
+      "centerUnchanged": false
+    },
+    {
+      "name": "corner_ne",
+      "corners": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "cornerCode": "0100",
+      "coreForegroundCount": 41,
+      "fringeEligibleCount": 20,
+      "fringeChangedCount": 8,
+      "foregroundPixels": 43,
+      "backgroundPixels": 213,
+      "colourOrigin": {
+        "foregroundInput": 43,
+        "backgroundInput": 213,
+        "unexpected": 0
+      },
+      "alpha": {
+        "opaque": 256,
+        "partial": 0,
+        "transparent": 0
+      },
+      "palette": {
+        "tolerance": 40,
+        "withinTolerance": 256,
+        "total": 256,
+        "minDistance": 2.828,
+        "medianDistance": 11.916,
+        "maxDistance": 31.843
+      },
+      "edgeTraces": {
+        "north": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "south": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "west": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "east": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "runtimeMasterSha256": "8622619fa670cf1b08d0cdebc896d1c9a54a9952ab2f416a1e565c83b6dde4bb",
+      "canonicalSourceSha256": "f9ea5aff7f5752899bfe7deabca222f4567d0e8290e483180d618a7a8f96777c",
+      "centerUnchanged": false
+    },
+    {
+      "name": "corner_nw",
+      "corners": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "cornerCode": "1000",
+      "coreForegroundCount": 41,
+      "fringeEligibleCount": 20,
+      "fringeChangedCount": 8,
+      "foregroundPixels": 43,
+      "backgroundPixels": 213,
+      "colourOrigin": {
+        "foregroundInput": 43,
+        "backgroundInput": 213,
+        "unexpected": 0
+      },
+      "alpha": {
+        "opaque": 256,
+        "partial": 0,
+        "transparent": 0
+      },
+      "palette": {
+        "tolerance": 40,
+        "withinTolerance": 256,
+        "total": 256,
+        "minDistance": 2.828,
+        "medianDistance": 12.083,
+        "maxDistance": 31.448
+      },
+      "edgeTraces": {
+        "north": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "south": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "west": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "east": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "runtimeMasterSha256": "196125f5ad632ff1d3badb4c069ab80b5dc1697cd2d52cf3a99f2bb8592eedd5",
+      "canonicalSourceSha256": "d6f6d4218cf48f0cd836bd01133d513a0a9856e5ab7702678085925914383d67",
+      "centerUnchanged": false
+    },
+    {
+      "name": "corner_se",
+      "corners": [
+        0,
+        0,
+        1,
+        0
+      ],
+      "cornerCode": "0010",
+      "coreForegroundCount": 41,
+      "fringeEligibleCount": 20,
+      "fringeChangedCount": 10,
+      "foregroundPixels": 43,
+      "backgroundPixels": 213,
+      "colourOrigin": {
+        "foregroundInput": 43,
+        "backgroundInput": 213,
+        "unexpected": 0
+      },
+      "alpha": {
+        "opaque": 256,
+        "partial": 0,
+        "transparent": 0
+      },
+      "palette": {
+        "tolerance": 40,
+        "withinTolerance": 256,
+        "total": 256,
+        "minDistance": 2.828,
+        "medianDistance": 11.916,
+        "maxDistance": 30.854
+      },
+      "edgeTraces": {
+        "north": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "south": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "west": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "east": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "runtimeMasterSha256": "510d319818d7e9213c2688e55d515e1fb16fdbea5d19920c5c4c012e296da8de",
+      "canonicalSourceSha256": "5bbfd87fe6ddbafca3f96783a23f38c822922fd6f8ff602e8daab66a33e8df34",
+      "centerUnchanged": false
+    },
+    {
+      "name": "corner_sw",
+      "corners": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "cornerCode": "0001",
+      "coreForegroundCount": 41,
+      "fringeEligibleCount": 20,
+      "fringeChangedCount": 2,
+      "foregroundPixels": 39,
+      "backgroundPixels": 217,
+      "colourOrigin": {
+        "foregroundInput": 39,
+        "backgroundInput": 217,
+        "unexpected": 0
+      },
+      "alpha": {
+        "opaque": 256,
+        "partial": 0,
+        "transparent": 0
+      },
+      "palette": {
+        "tolerance": 40,
+        "withinTolerance": 256,
+        "total": 256,
+        "minDistance": 2.828,
+        "medianDistance": 11.916,
+        "maxDistance": 32.542
+      },
+      "edgeTraces": {
+        "north": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "south": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "west": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "east": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "runtimeMasterSha256": "2a1dfb009236855a4b1014a720a5548e2ccd7f141d19cc7881ba0e669683451c",
+      "canonicalSourceSha256": "76e69cd190e1cb5ba5cef6ebc7db122bc1cf90b3af157c559183f82fd1fa5192",
+      "centerUnchanged": false
+    },
+    {
+      "name": "inner_corner_ne",
+      "corners": [
+        1,
+        0,
+        1,
+        1
+      ],
+      "cornerCode": "1011",
+      "coreForegroundCount": 215,
+      "fringeEligibleCount": 20,
+      "fringeChangedCount": 8,
+      "foregroundPixels": 213,
+      "backgroundPixels": 43,
+      "colourOrigin": {
+        "foregroundInput": 213,
+        "backgroundInput": 43,
+        "unexpected": 0
+      },
+      "alpha": {
+        "opaque": 256,
+        "partial": 0,
+        "transparent": 0
+      },
+      "palette": {
+        "tolerance": 40,
+        "withinTolerance": 256,
+        "total": 256,
+        "minDistance": 3.317,
+        "medianDistance": 23.937,
+        "maxDistance": 32.542
+      },
+      "edgeTraces": {
+        "north": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "south": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "west": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "east": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "runtimeMasterSha256": "80195b16ad31c7e25ec64e71a45efb82a1d486d4f2f83b49b1835483e6b8fa02",
+      "canonicalSourceSha256": "abfcddbaf57a57390c1e5714794bb5e4dddfc8fe7f6a6f99ea3f7f76430c5cf4",
+      "centerUnchanged": false
+    },
+    {
+      "name": "inner_corner_nw",
+      "corners": [
+        0,
+        1,
+        1,
+        1
+      ],
+      "cornerCode": "0111",
+      "coreForegroundCount": 215,
+      "fringeEligibleCount": 20,
+      "fringeChangedCount": 8,
+      "foregroundPixels": 213,
+      "backgroundPixels": 43,
+      "colourOrigin": {
+        "foregroundInput": 213,
+        "backgroundInput": 43,
+        "unexpected": 0
+      },
+      "alpha": {
+        "opaque": 256,
+        "partial": 0,
+        "transparent": 0
+      },
+      "palette": {
+        "tolerance": 40,
+        "withinTolerance": 256,
+        "total": 256,
+        "minDistance": 3,
+        "medianDistance": 23.937,
+        "maxDistance": 32.542
+      },
+      "edgeTraces": {
+        "north": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "south": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "west": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "east": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "runtimeMasterSha256": "01490ec664d8dc28f677f8eaa6bcd863fd438c77901151823c0a2cd83fc99c80",
+      "canonicalSourceSha256": "241af476ef67819a97df20681879be0678c4cad80ed4ff89db3a9ed48857c65e",
+      "centerUnchanged": false
+    },
+    {
+      "name": "inner_corner_se",
+      "corners": [
+        1,
+        1,
+        0,
+        1
+      ],
+      "cornerCode": "1101",
+      "coreForegroundCount": 215,
+      "fringeEligibleCount": 20,
+      "fringeChangedCount": 10,
+      "foregroundPixels": 213,
+      "backgroundPixels": 43,
+      "colourOrigin": {
+        "foregroundInput": 213,
+        "backgroundInput": 43,
+        "unexpected": 0
+      },
+      "alpha": {
+        "opaque": 256,
+        "partial": 0,
+        "transparent": 0
+      },
+      "palette": {
+        "tolerance": 40,
+        "withinTolerance": 256,
+        "total": 256,
+        "minDistance": 2.828,
+        "medianDistance": 23.937,
+        "maxDistance": 32.542
+      },
+      "edgeTraces": {
+        "north": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "south": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "west": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "east": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "runtimeMasterSha256": "4eede8dccf3245e218dc992e8bbe69db643b2dafc7a365ffed4a4a6129458421",
+      "canonicalSourceSha256": "cbdf9d0bef4c2c9f99e5c590ff09bb7e709055da76941aa2acb879902f5764d0",
+      "centerUnchanged": false
+    },
+    {
+      "name": "inner_corner_sw",
+      "corners": [
+        1,
+        1,
+        1,
+        0
+      ],
+      "cornerCode": "1110",
+      "coreForegroundCount": 215,
+      "fringeEligibleCount": 20,
+      "fringeChangedCount": 2,
+      "foregroundPixels": 217,
+      "backgroundPixels": 39,
+      "colourOrigin": {
+        "foregroundInput": 217,
+        "backgroundInput": 39,
+        "unexpected": 0
+      },
+      "alpha": {
+        "opaque": 256,
+        "partial": 0,
+        "transparent": 0
+      },
+      "palette": {
+        "tolerance": 40,
+        "withinTolerance": 256,
+        "total": 256,
+        "minDistance": 4.359,
+        "medianDistance": 23.937,
+        "maxDistance": 31.969
+      },
+      "edgeTraces": {
+        "north": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "south": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "west": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "east": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "runtimeMasterSha256": "50658696d3f5dfcdfa1d52a9dc5399854c1e7a5e779233e944a6847bb78766f8",
+      "canonicalSourceSha256": "933cf8510193e93d7fe7c8d941091edc3b3c7ca16c74416ac820c041a0bcc11c",
+      "centerUnchanged": false
+    }
+  ],
+  "sharedEdge": {
+    "pairs": 84,
+    "mismatches": 0
+  },
+  "mixedPreview": {
+    "rows": 7,
+    "cols": 7,
+    "incompatibleSharedEdges": 0,
+    "codes": [
+      "0000",
+      "0001",
+      "0010",
+      "0011",
+      "0100",
+      "0110",
+      "0111",
+      "1000",
+      "1001",
+      "1011",
+      "1100",
+      "1101",
+      "1110",
+      "1111"
+    ]
+  },
+  "packed": {
+    "manifest": "assets/manifests/tile_farm_path_dirt.manifest.json",
+    "sheet": "assets/tilesets/tile_farm_path_dirt.png",
+    "width": 208,
+    "height": 16,
+    "sheetSha256": "b9da641b1c223c436359c9880cea02a97e75ba8ccc7b98ab8c4210cd79dddf7a",
+    "cells": [
+      {
+        "name": "center",
+        "index": 0,
+        "packedCellSha256": "15357e1fb7b0e41611c99e64c69da5540a33c0456799dca955ed6a0931295bc4",
+        "zeroDriftMismatches": 0
+      },
+      {
+        "name": "edge_north",
+        "index": 1,
+        "packedCellSha256": "fc5c98b519711c828639a020631435025444a2e48194228ae65aad3bffbc89ab",
+        "zeroDriftMismatches": 0
+      },
+      {
+        "name": "edge_south",
+        "index": 2,
+        "packedCellSha256": "0457252628e9bbf23339e81f9847cb1aef5dc935aa3846efa7d288e86653fbfa",
+        "zeroDriftMismatches": 0
+      },
+      {
+        "name": "edge_west",
+        "index": 3,
+        "packedCellSha256": "c7856a7f0437a65837d108b34da7ad6c5f476d5dad55c426c74b872fb48478e5",
+        "zeroDriftMismatches": 0
+      },
+      {
+        "name": "edge_east",
+        "index": 4,
+        "packedCellSha256": "2c06116bacf884c07a1f438d0f2e39a376678f2b118e7065d3d01a1182278e2b",
+        "zeroDriftMismatches": 0
+      },
+      {
+        "name": "corner_ne",
+        "index": 5,
+        "packedCellSha256": "8622619fa670cf1b08d0cdebc896d1c9a54a9952ab2f416a1e565c83b6dde4bb",
+        "zeroDriftMismatches": 0
+      },
+      {
+        "name": "corner_nw",
+        "index": 6,
+        "packedCellSha256": "196125f5ad632ff1d3badb4c069ab80b5dc1697cd2d52cf3a99f2bb8592eedd5",
+        "zeroDriftMismatches": 0
+      },
+      {
+        "name": "corner_se",
+        "index": 7,
+        "packedCellSha256": "510d319818d7e9213c2688e55d515e1fb16fdbea5d19920c5c4c012e296da8de",
+        "zeroDriftMismatches": 0
+      },
+      {
+        "name": "corner_sw",
+        "index": 8,
+        "packedCellSha256": "2a1dfb009236855a4b1014a720a5548e2ccd7f141d19cc7881ba0e669683451c",
+        "zeroDriftMismatches": 0
+      },
+      {
+        "name": "inner_corner_ne",
+        "index": 9,
+        "packedCellSha256": "80195b16ad31c7e25ec64e71a45efb82a1d486d4f2f83b49b1835483e6b8fa02",
+        "zeroDriftMismatches": 0
+      },
+      {
+        "name": "inner_corner_nw",
+        "index": 10,
+        "packedCellSha256": "01490ec664d8dc28f677f8eaa6bcd863fd438c77901151823c0a2cd83fc99c80",
+        "zeroDriftMismatches": 0
+      },
+      {
+        "name": "inner_corner_se",
+        "index": 11,
+        "packedCellSha256": "4eede8dccf3245e218dc992e8bbe69db643b2dafc7a365ffed4a4a6129458421",
+        "zeroDriftMismatches": 0
+      },
+      {
+        "name": "inner_corner_sw",
+        "index": 12,
+        "packedCellSha256": "50658696d3f5dfcdfa1d52a9dc5399854c1e7a5e779233e944a6847bb78766f8",
+        "zeroDriftMismatches": 0
+      }
+    ],
+    "totalZeroDriftMismatches": 0
+  },
+  "runtimeIntegrated": false,
+  "mapIntegrated": false,
+  "physicalIpadValidated": false,
+  "childValidated": false
+}

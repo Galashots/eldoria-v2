@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "id": "tile_farm_path_dirt",
+  "mode": "binary_material_interlock",
+  "cellPx": [16, 16],
+  "foregroundPath": "../tile_farm_path_dirt_center/center.review-normalized.png",
+  "backgroundPath": "../tile_farm_grass_base_grass_a/grass_a.review-normalized.png",
+  "canonicalSourceDir": "../../../../assets/source/generated/tile_farm_path_dirt",
+  "runtimeMasterDir": "../../../../.tmp/terrain-blend/dirt/runtime",
+  "evidenceDir": ".",
+  "productionManifest": "../../../../assets/manifests/tile_farm_path_dirt.manifest.json",
+  "upscale": 64,
+  "preserveCenterCanonical": true,
+  "paletteTolerance": 40,
+  "_seedNote": "fringe.seed 53626 == 0x0000D17A (spec §5.2, dirt family).",
+  "paletteSwatches": [
+    "#0A3521", "#174F1D", "#325E19", "#427118", "#6C8B15", "#91A513",
+    "#412E15", "#674B1F", "#926B2A", "#B98535", "#D5A342"
+  ],
+  "fringe": {
+    "threshold": 30,
+    "modulus": 3,
+    "selectedRemainder": 0,
+    "seed": 53626
+  },
+  "variants": [
+    { "name": "center", "corners": [1, 1, 1, 1] },
+    { "name": "edge_north", "corners": [1, 1, 0, 0] },
+    { "name": "edge_south", "corners": [0, 0, 1, 1] },
+    { "name": "edge_west", "corners": [1, 0, 0, 1] },
+    { "name": "edge_east", "corners": [0, 1, 1, 0] },
+    { "name": "corner_ne", "corners": [0, 1, 0, 0] },
+    { "name": "corner_nw", "corners": [1, 0, 0, 0] },
+    { "name": "corner_se", "corners": [0, 0, 1, 0] },
+    { "name": "corner_sw", "corners": [0, 0, 0, 1] },
+    { "name": "inner_corner_ne", "corners": [1, 0, 1, 1] },
+    { "name": "inner_corner_nw", "corners": [0, 1, 1, 1] },
+    { "name": "inner_corner_se", "corners": [1, 1, 0, 1] },
+    { "name": "inner_corner_sw", "corners": [1, 1, 1, 0] }
+  ]
+}
