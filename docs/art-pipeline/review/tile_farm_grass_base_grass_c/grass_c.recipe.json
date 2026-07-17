@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "id": "tile_farm_grass_base_grass_c",
+  "method": "deterministic_interior_pair_swaps_from_approved_grass_a_runtime_pixels",
+  "seed": 91537,
+  "base": {
+    "id": "tile_farm_grass_base_grass_a",
+    "runtimePath": "docs/art-pipeline/review/tile_farm_grass_base_grass_a/grass_a.review-normalized.png",
+    "runtimePngSha256": "40655a11051d5afaf61f5972b471c82419fda0f7e31793b3a2976498e6b5fddb"
+  },
+  "constraints": {
+    "canvasPx": [16, 16],
+    "alpha": "fully_opaque",
+    "modifiableRegion": "x,y in [2,13] (border ring 0/15 and 1px inner buffer 1/14 preserved)",
+    "pairSwapCount": 22,
+    "changedPixelCount": 44,
+    "borderPixelsChanged": 0,
+    "bufferPixelsChanged": 0,
+    "histogramPreservedExactly": true,
+    "paletteFamily": "forest",
+    "noNewColors": true,
+    "maxManhattan": 1,
+    "minManhattan": 1,
+    "swatchIndexDelta": "+/-1 (adjacent forest family only)",
+    "quadrantDistribution": [5, 6, 5, 6],
+    "quadrantCap": 7,
+    "isolatedSpecks": 0,
+    "maxChangedClusterSize": 4,
+    "filled2x2Blocks": 0,
+    "reusedGrassBCoordinates": 0
+  },
+  "swapPairs": [
+    [[4,5],[4,6]], [[9,5],[9,6]], [[8,8],[8,9]], [[10,4],[10,5]], [[10,9],[10,10]],
+    [[7,12],[7,13]], [[12,9],[13,9]], [[10,2],[11,2]], [[12,5],[13,5]], [[12,2],[12,3]],
+    [[12,7],[13,7]], [[4,9],[5,9]], [[7,4],[8,4]], [[7,11],[8,11]], [[6,8],[7,8]],
+    [[10,8],[11,8]], [[9,13],[10,13]], [[2,2],[2,3]], [[3,10],[4,10]], [[2,5],[2,6]],
+    [[12,11],[13,11]], [[2,7],[2,8]]
+  ],
+  "coordinateOrder": "[x, y] from top-left, zero-based",
+  "metrics": {
+    "horizontalWrapRatio": 0.683,
+    "verticalWrapRatio": 0.769,
+    "forestPaletteDistance": {
+      "min": 2.828,
+      "median": 10.677,
+      "max": 26.627,
+      "withinTolerance40": 256,
+      "opaquePixelCount": 256
+    }
+  },
+  "outputs": {
+    "grass_c.approved-runtime-master.png": "c8e7b09fa2e128be5293d26033cdb74924a76a26f492047d37c418c702cdc4d8",
+    "grass_c.png": "da485290cdde3db2e4c4e57e82aa8d33d39da55c6af8802b94c815dcb43c177a",
+    "grass_c.review-normalized.png": "c8e7b09fa2e128be5293d26033cdb74924a76a26f492047d37c418c702cdc4d8"
+  },
+  "verdict": {
+    "status": "APPROVED RUNTIME MASTER",
+    "assignedBy": "ChatGPT (visual-QA lead) via direct 16x16 nearest-swatch grid pixel audit",
+    "date": "2026-07-17",
+    "collaboration": "ChatGPT led constraints + verdict; Claude Code performed deterministic derivation and ingestion"
+  }
+}
