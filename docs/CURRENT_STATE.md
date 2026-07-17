@@ -1,6 +1,6 @@
 # Eldoria-V2 Current State
 
-Last refreshed on 2026-07-17 after locking the first armor runtime model and battle-animation production contract. This file owns volatile project status; durable rules live in `AGENTS.md`, and the documentation map lives in `docs/README.md`.
+Last refreshed on 2026-07-17 after accepting the Batch B `grass_b` runtime master. This file owns volatile project status; durable rules live in `AGENTS.md`, and the documentation map lives in `docs/README.md`.
 
 ## Product invariant
 
@@ -41,6 +41,7 @@ Last refreshed on 2026-07-17 after locking the first armor runtime model and bat
 ### Approved Phase 2 source assets — not yet runtime-integrated
 
 - `tile_farm_grass_base / grass_a` — approved high-resolution source candidate with review-only normalization evidence.
+- `tile_farm_grass_base / grass_b` — approved exact `16×16` runtime master derived by a reproducible interior-only micro-detail recipe, with unchanged borders, exact forest-palette histogram preservation, deterministic `1024×1024` canonical source, and a zero-drift round trip.
 - `tile_farm_path_dirt / center` — approved exact `16×16` runtime master, deterministically upscaled to the canonical source with a zero-drift round trip.
 - `tile_farm_water_base / water_a` — approved exact `16×16` runtime master, deterministically upscaled to the canonical source with a zero-drift round trip.
 - `env_farm_tree / oak` — approved exact `32×48` runtime master, deterministically upscaled to a `1024×1536` canonical source with a zero-drift round trip.
@@ -50,7 +51,7 @@ Last refreshed on 2026-07-17 after locking the first armor runtime model and bat
 - The deterministic seven-anchor Batch A contact sheet passes the family-level scale, palette, lighting, grounding, and readability gate; its report explicitly preserves incomplete-family and no-integration claims.
 - `npm run review:asset` normalizes, validates, generates nearest-neighbour evidence, and reports deterministic seam, alpha, hash, and optional palette metrics for one-cell review manifests.
 
-These seven Batch A anchors are approved individually, but their target families remain incomplete. No production farm-environment manifest, packed terrain sheet, Phaser loading path, or map integration is complete.
+The seven Batch A anchors are approved, and Batch B terrain-family completion has begun. Target families remain incomplete. No production farm-environment manifest, packed terrain sheet, Phaser loading path, or map integration is complete.
 
 ### Pending production replacement
 
@@ -104,13 +105,19 @@ Batch A progress is **7 of 7 foundational assets approved**:
 6. `env_farm_rock_medium / rock_a` — complete.
 7. `env_wildbloom_landmark / root_star_revealed` — complete.
 
+Batch B progress:
+
+1. `tile_farm_grass_base / grass_b` — complete; exact borders remain compatible with `grass_a`, 48 interior pixels change through 24 recorded pair swaps, and the real-pipeline round trip has zero drift.
+2. `tile_farm_grass_base / grass_c` — next.
+
 ## Immediate next steps
 
-1. Begin Batch B in canonical order with `tile_farm_grass_base / grass_b`, explicitly matching the approved `grass_a` texture and palette while changing only quiet micro-detail.
-2. Continue with `grass_c`, dirt transitions, `water_b`, and the complete shoreline set only after each preceding reference cell passes.
-3. Keep every Batch B terrain variant on its one-cell seam/repetition gate before any packed family sheet.
-4. Do not recompose `public/maps/farm.json` until the complete production kit passes the later environment-kit contact-sheet acceptance gate.
-5. In parallel only where it does not displace Batch B, produce the dedicated Ranger Explorer base and freeze both heroes' required clip timing before any armor source generation.
+1. Produce `tile_farm_grass_base / grass_c`, matching the approved `grass_a`/`grass_b` family while changing only quiet micro-detail.
+2. After `grass_c` passes, pack and audit the complete deterministic three-cell grass family before beginning dirt transitions.
+3. Continue with dirt transitions, `water_b`, and the complete shoreline set only after each preceding reference cell passes.
+4. Keep every Batch B terrain variant on its one-cell seam/repetition gate before any packed family sheet.
+5. Do not recompose `public/maps/farm.json` until the complete production kit passes the later environment-kit contact-sheet acceptance gate.
+6. In parallel only where it does not displace Batch B, produce the dedicated Ranger Explorer base and freeze both heroes' required clip timing before any armor source generation.
 
 ## Decisions for the generation handoff
 
