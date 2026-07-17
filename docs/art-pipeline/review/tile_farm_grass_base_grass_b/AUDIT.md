@@ -30,13 +30,30 @@ The deterministic recipe is retained in `grass_b.recipe.json`.
 | Runtime PNG SHA-256 | `cac925dc5316d644d15b451b897650bec4184f3b029eff56fe19cb367ecc6610` |
 | Canonical source | `assets/source/generated/tile_farm_grass_base/grass_b.png` |
 | Canonical dimensions | `1024×1024` RGBA |
-| Canonical PNG SHA-256 | `e31d3fc343d15b2b60c0eb0667544bdc3ab53f9b2e9ff725821790568f9f694a` |
+| Canonical PNG SHA-256 | `c22c72f54bd578008c081db4176b89411ddda627c6312cd4ca8d1c49c8f7a610` (repaired 2026-07-17; see §8) |
 | Construction | exact `64×` nearest-neighbour block replication |
 | Source block mismatches | `0 / 1,048,576` |
 | Review round-trip PNG SHA-256 | `cac925dc5316d644d15b451b897650bec4184f3b029eff56fe19cb367ecc6610` |
 | Runtime-master / review decoded-RGBA mismatches | `0 / 256` |
 
 The canonical source contains no interpolation, smoothing, sharpening, recoloring, resampling, alpha modification, or invented pixels. Every runtime pixel is reproduced as one solid `64×64` source block.
+
+## 8. Canonical-source corruption repair (2026-07-17)
+
+The committed canonical source `grass_b.png` was found **corrupt** on `main`: it was 7,003 bytes,
+failed to decode with the repository's own `readPng` ("unexpected end of file"), and its on-disk
+SHA-256 (`98f92bc1b3cba0764c206f74ef5058a1cb9d0587ec13b9ada4d86209941e4b21`) did not match the
+originally recorded canonical SHA (`e31d3fc3…568f9f694a`). A repository-wide scan confirmed it was
+the only corrupt asset PNG. Root cause: the repo had `core.autocrlf=true` with no `.gitattributes`
+binary rule, so the binary PNG was mangled by an end-of-line filter.
+
+Repair: `grass_b.png` was **deterministically reconstructed** from the still-valid approved 16×16
+runtime master (`grass_b.approved-runtime-master.png`, SHA `cac925dc…`) by exact `64×`
+nearest-neighbour block replication — **0 / 1,048,576 block mismatches** vs the master, and the
+real-pipeline round trip is **0 / 1,024 decoded-RGBA mismatches** to the master (pixel-identical).
+The new canonical SHA is `c22c72f5…c8f7a610`; it differs from the original `e31d3fc3…` only in PNG
+encoding bytes, not pixels. A `.gitattributes` rule (`*.png binary`, etc.) was added to prevent
+recurrence. No runtime, map, or gameplay impact — this canonical source is not runtime-integrated.
 
 ## 3. Family derivation and variation proof
 

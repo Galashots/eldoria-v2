@@ -1,0 +1,18 @@
+# Treat binary assets as binary so Git never applies text/EOL (autocrlf) filters,
+# which previously corrupted a committed PNG on a Windows checkout.
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.webp  binary
+*.ico   binary
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
+*.otf   binary
+*.mp3   binary
+*.wav   binary
+*.ogg   binary
+*.m4a   binary
+*.pdf   binary
+*.zip   binary
