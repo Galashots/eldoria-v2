@@ -4,6 +4,15 @@ This file keeps recent, high-value change summaries. Full historical entries thr
 
 Entries should remain concise: date/author, branch or PR, scope, compatibility impact, verification, and remaining risk. Detailed implementation narratives belong in the PR description and commits.
 
+## 2026-07-17 — Batch B grass_c runtime master (completes grass family)
+
+- Author/branch: ChatGPT (visual-QA lead) + Claude Code (repo agent), `chatgpt/batch-b-grass-c` (draft PR). Produced during the overnight ChatGPT + Claude closed-loop session.
+- Scope: accepted `tile_farm_grass_base / grass_c` as an **APPROVED RUNTIME MASTER** derived deterministically from the approved `grass_a` runtime pixels by 22 adjacent interior pair swaps (seed 91537). ChatGPT set the constraints and assigned the formal verdict via a direct 16×16 nearest-swatch grid pixel audit; Claude Code performed the derivation and ingestion. Completes the three-cell grass family at the individual-cell gate.
+- Principal files: `assets/source/generated/tile_farm_grass_base/grass_c.png`, `docs/art-pipeline/review/tile_farm_grass_base_grass_c/`, `docs/CURRENT_STATE.md`, and this changelog.
+- Verification facts: exact `16×16` RGBA master; 44/256 changed pixels (22 `-1` and 22 `+1` swatch deltas); 0/60 border pixels changed; 0 inner-buffer (idx 1/14) pixels changed; no new colours; exact histogram and alpha preservation; all 256 pixels within locked `forest` tolerance 40; quadrant distribution `[5,6,5,6]`; 0 specks; max changed-cluster 4; horizontal/vertical wrap ratios 0.683/0.769 (<1); canonical `1024×1024` source by exact 64× replication; runtime round-trip mismatches 0/256.
+- Compatibility: source/review/status only. No production three-cell grass manifest or packed sheet, Phaser loading, map, collision, save, gameplay, quest, curriculum, mastery, profile, reward, dependency, or migration change.
+- Remaining risk: the grass family pack (first production `tile_farm_grass_base` manifest + packed sheet) is the next step; runtime/map integration remains blocked behind the complete environment-kit gate.
+
 ## 2026-07-16 — Batch A Root-Star runtime master and completion gate
 
 - Author/branch: ChatGPT/Codex with Luna independent audit, `codex/batch-a-root-star` (PR pending).

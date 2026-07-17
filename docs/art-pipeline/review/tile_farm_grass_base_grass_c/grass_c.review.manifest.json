@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "id": "review_tile_farm_grass_base_grass_c",
+  "_reviewOnly": "This manifest is a review/evidence artifact only. It is NOT the production manifest for tile_farm_grass_base and its output is NOT a runtime asset. Do not load target.outputPath in Phaser or reference it from a production manifest.",
+  "_sourceNote": "grass_c is a CANDIDATE runtime master derived deterministically from the approved grass_a runtime pixels by 22 adjacent interior pair swaps (seed 91537). Borders and the 1px buffer are byte-identical to grass_a; histogram and forest palette are preserved exactly. The exact 16x16 master is upscaled by 64x nearest-neighbour block replication to the canonical 1024x1024 source. This manifest proves the real pipeline returns the master with zero drift. Verdict pending ChatGPT audit.",
+  "target": {
+    "outputPath": "grass_c.review-normalized.png",
+    "cellPx": [16, 16],
+    "cols": 1,
+    "rows": 1
+  },
+  "sources": {
+    "grass_c_source": {
+      "path": "../../../../assets/source/generated/tile_farm_grass_base/grass_c.png",
+      "background": {
+        "mode": "alpha"
+      }
+    }
+  },
+  "frames": [
+    {
+      "sourceRef": "grass_c_source",
+      "destCell": [0, 0],
+      "trim": "none",
+      "fit": "fill",
+      "anchor": "top_left"
+    }
+  ]
+}

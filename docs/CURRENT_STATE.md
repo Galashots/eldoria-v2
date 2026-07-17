@@ -42,6 +42,7 @@ Last refreshed on 2026-07-17 after accepting the Batch B `grass_b` runtime maste
 
 - `tile_farm_grass_base / grass_a` — approved high-resolution source candidate with review-only normalization evidence.
 - `tile_farm_grass_base / grass_b` — approved exact `16×16` runtime master derived by a reproducible interior-only micro-detail recipe, with unchanged borders, exact forest-palette histogram preservation, deterministic `1024×1024` canonical source, and a zero-drift round trip.
+- `tile_farm_grass_base / grass_c` — approved exact `16×16` runtime master derived from `grass_a` by 22 adjacent interior pair swaps (seed 91537), with unchanged borders and 1px inner buffer, exact histogram/forest-palette preservation, deterministic `1024×1024` canonical source, and a zero-drift round trip. Verdict assigned by ChatGPT via direct pixel-grid audit.
 - `tile_farm_path_dirt / center` — approved exact `16×16` runtime master, deterministically upscaled to the canonical source with a zero-drift round trip.
 - `tile_farm_water_base / water_a` — approved exact `16×16` runtime master, deterministically upscaled to the canonical source with a zero-drift round trip.
 - `env_farm_tree / oak` — approved exact `32×48` runtime master, deterministically upscaled to a `1024×1536` canonical source with a zero-drift round trip.
@@ -108,12 +109,12 @@ Batch A progress is **7 of 7 foundational assets approved**:
 Batch B progress:
 
 1. `tile_farm_grass_base / grass_b` — complete; exact borders remain compatible with `grass_a`, 48 interior pixels change through 24 recorded pair swaps, and the real-pipeline round trip has zero drift.
-2. `tile_farm_grass_base / grass_c` — next.
+2. `tile_farm_grass_base / grass_c` — complete; 44 interior pixels change through 22 adjacent recorded pair swaps (seed 91537), borders and 1px inner buffer stay compatible with `grass_a`/`grass_b`, and the real-pipeline round trip has zero drift. The three-cell grass family is now complete at the individual-cell gate.
 
 ## Immediate next steps
 
-1. Produce `tile_farm_grass_base / grass_c`, matching the approved `grass_a`/`grass_b` family while changing only quiet micro-detail.
-2. After `grass_c` passes, pack and audit the complete deterministic three-cell grass family before beginning dirt transitions.
+1. Pack and audit the complete deterministic three-cell grass family (`grass_a`/`grass_b`/`grass_c`) into the first production `tile_farm_grass_base` manifest + packed sheet before beginning dirt transitions.
+2. After the grass family packs, continue with dirt transitions.
 3. Continue with dirt transitions, `water_b`, and the complete shoreline set only after each preceding reference cell passes.
 4. Keep every Batch B terrain variant on its one-cell seam/repetition gate before any packed family sheet.
 5. Do not recompose `public/maps/farm.json` until the complete production kit passes the later environment-kit contact-sheet acceptance gate.
