@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "Realm of Eldoria v2 - Phaser + Vite + Tiled educational RPG prototype.",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
