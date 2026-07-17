@@ -32,6 +32,7 @@ A planning document does not prove implementation. A browser-emulated iPad viewp
 ## Visual and asset production
 
 - [`VISUAL_ASSET_CONTRACT.md`](VISUAL_ASSET_CONTRACT.md) — durable style, perspective, palette, naming, metadata, layering, terrain-blending, and grounding rules.
+- [`ARMOR_AND_BATTLE_ANIMATION_CONTRACT.md`](ARMOR_AND_BATTLE_ANIMATION_CONTRACT.md) — locked hybrid armor runtime model, actor-timing authority, battle clip scope, production order, and acceptance gates.
 - [`art-pipeline/CLOSED_LOOP_ASSET_GENERATION_WORKFLOW.md`](art-pipeline/CLOSED_LOOP_ASSET_GENERATION_WORKFLOW.md) — AI-led ChatGPT generation, self-audit, routine art approval, runtime-master rescue, escalation, and repo handoff protocol.
 - [`art-pipeline/VISUAL_EVIDENCE_RETENTION_POLICY.md`](art-pipeline/VISUAL_EVIDENCE_RETENTION_POLICY.md) — required visual proof by change type, game-level audit cadence, and retention rules for temporary versus durable evidence.
 - [`art-pipeline/SPRITE_ASSET_PIPELINE.md`](art-pipeline/SPRITE_ASSET_PIPELINE.md) — manifest-driven source-to-runtime normalization and validation.
