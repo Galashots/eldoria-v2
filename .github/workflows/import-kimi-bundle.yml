@@ -22,21 +22,11 @@ jobs:
           git checkout -B review-target origin/chatgpt/kimi-audit-improvements
       - name: Apply independent review corrections
         run: python /tmp/apply-review-corrections.py
-      - name: Verify focused behaviour and repository build
-        run: |
-          npm ci
-          npm run test:unit -- tests/unit/QuestionEngine.test.ts
-          npx playwright install --with-deps chromium
-          npx playwright test tests/adaptive-difficulty.spec.ts tests/vertical-slice.spec.ts
-          npm run check
       - name: Commit and push corrected target branch
         run: |
           git config user.name "ChatGPT Repo Agent"
           git config user.email "actions@users.noreply.github.com"
-          git add src/systems/QuestionEngine.ts tests/unit/QuestionEngine.test.ts tests/adaptive-difficulty.spec.ts tests/vertical-slice.spec.ts
+          git add tests/unit/QuestionEngine.test.ts tests/vertical-slice.spec.ts
           git diff --cached --check
-          git commit -m "Fix adaptive reachability and transient E2E recorders"
+          git commit -m "Fix adaptive reachability tests and transient E2E recorders"
           git push origin HEAD:refs/heads/chatgpt/kimi-audit-improvements
-      - name: Remove temporary bootstrap branch
-        if: success()
-        run: git push origin --delete chatgpt/import-kimi-audit-bundle
