@@ -17,6 +17,7 @@
     "validate:asset": "node scripts/validate-asset-sheet.mjs",
     "compose:terrain-blend": "node scripts/compose-terrain-blend-family.mjs",
     "test:terrain-blend": "node scripts/test-terrain-blend-compositor.mjs",
+    "compose:terrain-proof": "node scripts/compose-terrain-proof-tileset.mjs",
     "test:asset-pipeline": "node scripts/test-asset-pipeline.mjs",
     "review:asset": "node scripts/review-asset.mjs",
     "test:asset-review": "node scripts/test-asset-review.mjs",
@@ -25,6 +26,7 @@
     "test:visual-targets": "node scripts/test-visual-targets.mjs",
     "generate:pwa-icons": "node scripts/generate-pwa-icons.mjs",
     "test:pwa": "node scripts/test-pwa-manifest.mjs",
+    "test:generated-surfaces": "npm run generate:pwa-icons && npm run compose:terrain-proof && git diff --exit-code -- public/icons public/assets/tilesets/farm-terrain-proof.png public/maps/farm.json",
     "test:unit": "vitest run"
   },
   "dependencies": {
