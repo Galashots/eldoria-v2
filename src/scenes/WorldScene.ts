@@ -828,7 +828,7 @@ export class WorldScene extends Phaser.Scene {
     this.player.setVelocity(0, 0);
 
     const isPreview = previewPrompt !== undefined;
-    const prompt = previewPrompt ?? this.learning.makePrompt(context);
+    const prompt = previewPrompt ?? this.learning.makePrompt(context, this.mastery);
     const isAudioFirst = PROFILES[this.profileId].readingMode === 'audio-first';
     // NOT scaled via container: Phaser's hit-test for a Graphics object's
     // custom Geom.Rectangle interactive area does not account for an

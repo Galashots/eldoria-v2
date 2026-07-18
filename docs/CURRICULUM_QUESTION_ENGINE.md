@@ -36,12 +36,35 @@ The question engine supports those rules by tagging each prompt with grade band,
 ## Engine architecture
 
 ```text
-Player profile + game context + difficulty
+Player profile + game context + per-skill difficulty (derived from mastery streaks)
 -> select matching question template
 -> generate prompt
 -> resolve answer
 -> award bonus or give hint
 ```
+
+### Adaptive difficulty (implemented 2026-07-18)
+
+`QuestionEngine.makeAdaptivePrompt(profile, context, mastery)` derives each
+candidate template's generation difficulty from *its own skill's* mastery
+record: `1 + floor(currentCorrectStreak / 3)`, clamped to the templates'
+1-5 scale (`QuestionEngine.difficultyForRecord`). A template becomes
+eligible once the derived difficulty reaches its `minDifficulty` and then
+generates at the derived difficulty capped by its own `maxDifficulty`, so
+long streaks unlock gated templates (e.g. `grade5-shop-decimal-estimate`)
+without ever outrunning what a template offers.
+
+Child-safety properties, by construction:
+
+- Difficulty only changes which numbers get generated; it never gates
+  content, rewards, or quest progress (the product invariant that wrong
+  answers never block the game is untouched).
+- A wrong answer resets the streak (existing `MasterySystem` behavior), so
+  difficulty eases back down after mistakes; a skip never moves it.
+- A missing record (skill never attempted) derives difficulty 1, and every
+  math template's difficulty-1 ranges are byte-identical to the pre-adaptive
+  ranges — new and returning players see no change until they build a
+  streak. Unit tests pin both the ladder and the baseline ranges.
 
 Core files:
 
@@ -88,7 +111,7 @@ procedurally generated from random numbers as before.
 
 ## Future OFIs
 
-1. Add mastery tracking per skill instead of using a fixed difficulty value.
+1. ~~Add mastery tracking per skill instead of using a fixed difficulty value.~~ Done (2026-07-18): mastery-streak-derived per-skill difficulty via `QuestionEngine.makeAdaptivePrompt` — see "Adaptive difficulty" above. Remaining headroom: Tiled-object difficulty overrides and richer difficulty-aware template content.
 2. Add Tiled object properties to request specific subject/skill/context prompts.
 3. Add quest arcs that gather stealth assessment from actions, not only answer buttons.
 4. Add parent-facing learning summaries from local save data.

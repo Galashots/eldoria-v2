@@ -52,9 +52,11 @@ export const QUESTION_TEMPLATES: QuestionTemplate[] = [
     contexts: ['farm'],
     minDifficulty: 1,
     maxDifficulty: 3,
-    makePrompt: ({ context }) => {
-      const picked = randomInt(6, 18);
-      const used = randomInt(1, Math.min(9, picked));
+    makePrompt: ({ context, difficulty }) => {
+      // Difficulty widens only the upper bounds; difficulty 1 reproduces the
+      // original 6-18 / 1-9 ranges exactly, so new players see no change.
+      const picked = randomInt(6, 14 + 4 * difficulty);
+      const used = randomInt(1, Math.min(5 + 4 * difficulty, picked));
       const answer = picked - used;
 
       return {
@@ -81,9 +83,10 @@ export const QUESTION_TEMPLATES: QuestionTemplate[] = [
     contexts: ['combat'],
     minDifficulty: 1,
     maxDifficulty: 3,
-    makePrompt: ({ context }) => {
-      const shield = randomInt(7, 20);
-      const spell = randomInt(2, Math.min(10, shield));
+    makePrompt: ({ context, difficulty }) => {
+      // Difficulty 1 reproduces the original 7-20 / 2-10 ranges exactly.
+      const shield = randomInt(7, 16 + 4 * difficulty);
+      const spell = randomInt(2, Math.min(6 + 4 * difficulty, shield));
       const answer = shield - spell;
 
       return {
@@ -110,8 +113,10 @@ export const QUESTION_TEMPLATES: QuestionTemplate[] = [
     contexts: ['farm'],
     minDifficulty: 1,
     maxDifficulty: 3,
-    makePrompt: ({ context }) => {
-      const tens = randomInt(2, 8);
+    makePrompt: ({ context, difficulty }) => {
+      // Difficulty 1 reproduces the original 2-8 tens range exactly; capped
+      // at 9 so the question stays a two-digit place-value exercise.
+      const tens = randomInt(2, Math.min(9, 6 + 2 * difficulty));
       const ones = randomInt(0, 9);
       const berries = tens * 10 + ones;
 
@@ -139,9 +144,10 @@ export const QUESTION_TEMPLATES: QuestionTemplate[] = [
     contexts: ['combat'],
     minDifficulty: 1,
     maxDifficulty: 3,
-    makePrompt: ({ context }) => {
-      const sparks = randomInt(4, 10);
-      const gained = randomInt(2, 9);
+    makePrompt: ({ context, difficulty }) => {
+      // Difficulty 1 reproduces the original 4-10 / 2-9 ranges exactly.
+      const sparks = randomInt(4, 8 + 2 * difficulty);
+      const gained = randomInt(2, 7 + 2 * difficulty);
       const answer = sparks + gained;
 
       return {
@@ -168,9 +174,10 @@ export const QUESTION_TEMPLATES: QuestionTemplate[] = [
     contexts: ['shop', 'quest'],
     minDifficulty: 1,
     maxDifficulty: 3,
-    makePrompt: ({ context }) => {
-      const apples = randomInt(3, 14);
-      const carrots = randomInt(2, 12);
+    makePrompt: ({ context, difficulty }) => {
+      // Difficulty 1 reproduces the original 3-14 / 2-12 ranges exactly.
+      const apples = randomInt(3, 10 + 4 * difficulty);
+      const carrots = randomInt(2, 8 + 4 * difficulty);
       const answer = apples + carrots;
 
       return {
@@ -326,9 +333,11 @@ export const QUESTION_TEMPLATES: QuestionTemplate[] = [
     contexts: ['farm'],
     minDifficulty: 1,
     maxDifficulty: 5,
-    makePrompt: ({ context }) => {
-      const length = randomInt(8, 24);
-      const width = randomInt(4, 12);
+    makePrompt: ({ context, difficulty }) => {
+      // Difficulty grows both sides slowly so the product stays a two-digit
+      // by two-digit multiplication; difficulty 1 reproduces 8-24 x 4-12.
+      const length = randomInt(8, 22 + 2 * difficulty);
+      const width = randomInt(4, 10 + 2 * difficulty);
       const answer = length * width;
 
       return {
@@ -354,9 +363,10 @@ export const QUESTION_TEMPLATES: QuestionTemplate[] = [
     contexts: ['shop'],
     minDifficulty: 2,
     maxDifficulty: 5,
-    makePrompt: ({ context }) => {
-      const price = randomInt(6, 18) + 0.75;
-      const quantity = randomInt(2, 4);
+    makePrompt: ({ context, difficulty }) => {
+      // Difficulty 1 reproduces the original 6-18 price and 2-4 quantity.
+      const price = randomInt(2 + 4 * difficulty, 14 + 4 * difficulty) + 0.75;
+      const quantity = randomInt(2, 3 + difficulty);
       const answer = Math.round(price) * quantity;
 
       return {
@@ -385,8 +395,11 @@ export const QUESTION_TEMPLATES: QuestionTemplate[] = [
     // Uses a denominator of 10 or 100 so the prompt targets Alberta's actual
     // Grade 5 outcome (fraction <-> decimal conversion with denominators of
     // 10 or 100), not just generic fraction simplification.
-    makePrompt: ({ context }) => {
-      const useHundredths = randomInt(0, 1) === 1;
+    makePrompt: ({ context, difficulty }) => {
+      // Hundredths get likelier with difficulty (tenths are the easier
+      // conversion); difficulty 1 keeps the original 50/50 split, and the
+      // 9/10 cap keeps tenths in the mix at every level.
+      const useHundredths = randomInt(1, 10) <= Math.min(9, 2 + 3 * difficulty);
       const denominator = useHundredths ? 100 : 10;
       const planted = useHundredths ? randomInt(1, 99) : randomInt(1, 9);
       const digits = useHundredths ? String(planted).padStart(2, '0') : String(planted);

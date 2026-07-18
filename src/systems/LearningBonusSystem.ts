@@ -1,5 +1,6 @@
-import { makeLearningPrompt, type AnswerValue, type BonusContext, type LearningPrompt } from '../data/curriculum';
+import type { AnswerValue, BonusContext, LearningPrompt } from '../data/curriculum';
 import { PROFILES, type ProfileId } from '../data/profiles';
+import type { LearningMastery } from './MasterySystem';
 import { QuestionEngine } from './QuestionEngine';
 
 export type BonusResult = {
@@ -19,8 +20,14 @@ export class LearningBonusSystem {
     this.profileId = profileId;
   }
 
-  makePrompt(context: BonusContext): LearningPrompt {
-    return makeLearningPrompt(PROFILES[this.profileId], context);
+  /**
+   * Builds the prompt for an optional learning bonus. Pass the player's
+   * current mastery so the engine can adapt per-skill difficulty to recent
+   * streaks (see QuestionEngine.makeAdaptivePrompt); omitting it generates
+   * everything at baseline difficulty 1, exactly as before.
+   */
+  makePrompt(context: BonusContext, mastery: LearningMastery = {}): LearningPrompt {
+    return QuestionEngine.makeAdaptivePrompt(PROFILES[this.profileId], context, mastery);
   }
 
   makePromptById(templateId: string): LearningPrompt {

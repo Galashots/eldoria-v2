@@ -18,8 +18,17 @@ export type LearningMasteryRecord = {
 export type LearningMastery = Record<string, LearningMasteryRecord>;
 
 export class MasterySystem {
+  /** Mastery-record key from its parts — usable by callers (e.g. QuestionEngine) that hold a template's tags rather than a generated prompt. */
+  static keyForParts(
+    band: LearningPrompt['band'],
+    subject: LearningPrompt['subject'],
+    skill: LearningPrompt['skill']
+  ): string {
+    return `${band}:${subject}:${skill}`;
+  }
+
   static keyFor(prompt: LearningPrompt): string {
-    return `${prompt.band}:${prompt.subject}:${prompt.skill}`;
+    return this.keyForParts(prompt.band, prompt.subject, prompt.skill);
   }
 
   static recordOutcome(
