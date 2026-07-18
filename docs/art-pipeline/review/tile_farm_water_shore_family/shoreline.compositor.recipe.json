@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "id": "tile_farm_water_shore",
+  "mode": "shoreline_bands",
+  "cellPx": [16, 16],
+  "foregroundPath": "../tile_farm_water_base_water_a/water_a.review-normalized.png",
+  "backgroundPath": "../tile_farm_grass_base_grass_a/grass_a.review-normalized.png",
+  "canonicalSourceDir": "../../../../assets/source/generated/tile_farm_water_shore",
+  "runtimeMasterDir": "../../../../.tmp/terrain-blend/shoreline/runtime",
+  "evidenceDir": ".",
+  "centerCanonicalSourcePath": "../../../../assets/source/generated/tile_farm_water_base/water_a.png",
+  "productionManifest": "../../../../assets/manifests/tile_farm_water_shore.manifest.json",
+  "upscale": 64,
+  "_seedNote": "shoreline.seed 22282 == 0x0000570A (spec §10, shoreline family).",
+  "_swatchNote": "Locked shoreline swatches only; no new colours (#D5A342, #B98535, #926B2A, #6C8B15, #427118). Per-band swatch-selection logic (which swatch is the band default vs. rare interior accent, and the sand/moss/grass interlock) is not recipe-driven -- it is hardcoded in composeShorelineCell() in scripts/compose-terrain-blend-family.mjs, per the v2 correction below.",
+  "_v2Note": "v2 (2026-07-17): ChatGPT's PR #99 visual review found v1 read as a bright continuous mustard/gold outline with an inner-corner bullseye and near-invisible moss. Corrected material-selection formulas (band membership/q-thresholds unchanged) per ChatGPT's exact prescribed recipe: inner sand base flips to #B98535 (was #D5A342, now a rare hash%11==0 interior accent); outer sand base flips to #926B2A with interior hash%4==0 feathering to exact grass_a and hash%3==0 to #6C8B15; moss band gains an hash%5==0 #926B2A interlock ahead of its existing light/dark-moss/grass fallback chain. See AUDIT.md §\"v2 correction\" for measured before/after evidence.",
+  "shoreline": {
+    "seed": 22282
+  },
+  "variants": [
+    { "name": "center", "corners": [1, 1, 1, 1] },
+    { "name": "edge_north", "corners": [1, 1, 0, 0] },
+    { "name": "edge_south", "corners": [0, 0, 1, 1] },
+    { "name": "edge_west", "corners": [1, 0, 0, 1] },
+    { "name": "edge_east", "corners": [0, 1, 1, 0] },
+    { "name": "corner_ne", "corners": [0, 1, 0, 0] },
+    { "name": "corner_nw", "corners": [1, 0, 0, 0] },
+    { "name": "corner_se", "corners": [0, 0, 1, 0] },
+    { "name": "corner_sw", "corners": [0, 0, 0, 1] },
+    { "name": "inner_corner_ne", "corners": [1, 0, 1, 1] },
+    { "name": "inner_corner_nw", "corners": [0, 1, 1, 1] },
+    { "name": "inner_corner_se", "corners": [1, 1, 0, 1] },
+    { "name": "inner_corner_sw", "corners": [1, 1, 1, 0] }
+  ]
+}
