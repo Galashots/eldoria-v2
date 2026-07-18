@@ -1,6 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { LearningBonusSystem } from '../../src/systems/LearningBonusSystem';
+import { QuestionEngine } from '../../src/systems/QuestionEngine';
 import type { LearningPrompt } from '../../src/data/curriculumMap';
+import type { LearningMastery } from '../../src/systems/MasterySystem';
 
 function makePrompt(overrides: Partial<LearningPrompt> = {}): LearningPrompt {
   return {
@@ -81,6 +83,31 @@ describe('LearningBonusSystem.makePromptById', () => {
     expect(prompt.band).toBe('grade2');
     expect(prompt.subject).toBe('math');
     expect(prompt.skill).toBe('subtraction');
+  });
+});
+
+describe('LearningBonusSystem.makePrompt', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('forwards the player mastery map to the adaptive question engine', () => {
+    const system = new LearningBonusSystem('grade2-mage');
+    const spy = vi.spyOn(QuestionEngine, 'makeAdaptivePrompt');
+    const mastery: LearningMastery = {};
+
+    system.makePrompt('farm', mastery);
+
+    expect(spy).toHaveBeenCalledWith(expect.objectContaining({ curriculumBand: 'grade2' }), 'farm', mastery);
+  });
+
+  it('defaults to baseline (empty mastery) when no mastery is provided', () => {
+    const system = new LearningBonusSystem('grade2-mage');
+    const spy = vi.spyOn(QuestionEngine, 'makeAdaptivePrompt');
+
+    system.makePrompt('farm');
+
+    expect(spy).toHaveBeenCalledWith(expect.anything(), 'farm', {});
   });
 });
 

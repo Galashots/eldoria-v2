@@ -1,6 +1,6 @@
 # Eldoria-V2 Current State
 
-Last refreshed on 2026-07-17 after accepting the Batch B `grass_b` runtime master. This file owns volatile project status; durable rules live in `AGENTS.md`, and the documentation map lives in `docs/README.md`.
+Last refreshed on 2026-07-18 after merging the approved shoreline family (PR #99) and additively restacking the independently reviewed Kimi-K3 adaptive-difficulty, PWA, terrain-proof, and E2E-hardening bundle on PR #102. This file owns volatile project status; durable rules live in `AGENTS.md`, and the documentation map lives in `docs/README.md`.
 
 ## Product invariant
 
@@ -18,6 +18,8 @@ Last refreshed on 2026-07-17 after accepting the Batch B `grass_b` runtime maste
 - Optional Wildbloom Sprig discovery loop with three persistent secrets, profile-specific reveal abilities, and no random or variable reward.
 - Persistent quest, inventory, gold, keepsake, player-position, and mastery data.
 - Save version 2 with a tested v1→v2 coordinate migration that scales valid legacy positions exactly once.
+- **Adaptive difficulty** on optional learning bonuses: each skill's derived difficulty is `1 + floor(streak/3)`, capped per template. Requested context remains authoritative, and every context template is reachable at its declared floor; this avoids impossible self-unlock loops for higher-floor skills such as Grade 5 decimals. Correct streaks raise later number ranges, wrong answers ease back toward the floor, and skips do not move difficulty. Rewards and adventure progress remain ungated. See `docs/CURRICULUM_QUESTION_ENGINE.md`.
+- **PWA / Add to Home Screen**: a relative-path web app manifest and deterministic generated icons support standalone home-screen launch with Realm of Eldoria branding. No service worker or offline caching yet; physical iPad installation remains unvalidated.
 - Background music, interaction/reward/UI effects, read-aloud support, and music ducking. Shipped audio remains placeholder material pending a later licensed-art pass.
 - GitHub Pages deployment from verified `main` builds.
 
@@ -28,6 +30,7 @@ Last refreshed on 2026-07-17 after accepting the Batch B `grass_b` runtime maste
 - Grade 2 Mage directional idle, walk, and cast animation sheets.
 - Practice Slime v001 idle and encounter presentation.
 - Code-drawn or layered bridge presentation for Ranger Explorer, Mira, Wildbloom landmarks, quest markers, crop/sprout markers, shadows, projectiles, and feedback effects.
+- **Bounded terrain integration proof:** the farm Ground layer uses approved `grass_b`/`grass_c`, `water_a`/`water_b`, and dirt-centre runtime pixels through a deterministic generated proof tileset. This is a reversible proof, not the final terrain/Wangset/map pass.
 
 ### Production contracts locked but not runtime-integrated
 
@@ -38,30 +41,36 @@ Last refreshed on 2026-07-17 after accepting the Batch B `grass_b` runtime maste
 - Light attack, heavy attack, death, specials, generalized combat hitboxes, player health, and broader combat architecture remain deferred until real gameplay requires them.
 - Durable authority: `docs/ARMOR_AND_BATTLE_ANIMATION_CONTRACT.md` and `docs/visual-targets/mage_starter_equipment_targets.json`.
 
-### Approved Phase 2 source assets — not yet runtime-integrated
+### Approved Phase 2 source assets
 
-- `tile_farm_grass_base / grass_a` — approved high-resolution source candidate with review-only normalization evidence.
+- `tile_farm_grass_base / grass_a` — approved high-resolution source candidate with review-only normalization evidence; a family-pack decision must retain its exact approved runtime interpretation rather than silently deriving a new one.
 - `tile_farm_grass_base / grass_b` — approved exact `16×16` runtime master derived by a reproducible interior-only micro-detail recipe, with unchanged borders, exact forest-palette histogram preservation, deterministic `1024×1024` canonical source, and a zero-drift round trip.
-- `tile_farm_grass_base / grass_c` — approved exact `16×16` runtime master derived from `grass_a` by 22 adjacent interior pair swaps (seed 91537), with unchanged borders and 1px inner buffer, exact histogram/forest-palette preservation, deterministic `1024×1024` canonical source, and a zero-drift round trip. Verdict assigned by ChatGPT via direct pixel-grid audit.
+- `tile_farm_grass_base / grass_c` — approved exact `16×16` runtime master derived from `grass_a` by 22 adjacent interior pair swaps (seed 91537), with unchanged borders and 1px inner buffer, exact histogram/forest-palette preservation, deterministic `1024×1024` canonical source, and a zero-drift round trip.
 - `tile_farm_path_dirt / center` — approved exact `16×16` runtime master, deterministically upscaled to the canonical source with a zero-drift round trip.
-- `tile_farm_path_dirt` **blend family (13 cells)** — deterministically composited by `scripts/compose-terrain-blend-family.mjs` from approved `path_dirt/center` over approved `grass_a` using a four-corner integer-bilinear mask plus a one-pixel material interlock (seed `0x0000D17A`). Every output pixel is copied verbatim from one of the two approved inputs; `center` stays byte-identical. All per-tile/complementary-edge/family gates pass (0 unexpected colours, 256/256 within palette tolerance 40, 84 shared-edge pairs with 0 mismatches, packed `208×16` sheet with zero drift). **Approved** by ChatGPT's formal visual + implementation review (all 12 generated cells accepted as APPROVED RUNTIME MASTERS; independent mixed-lattice rebuild and seam check confirmed no hard grid lines or discontinuities). Source + review evidence + packed sheet only; **not** runtime/map/Wangset integrated.
-- `tile_farm_water_shore` **blend family (13 cells)** — deterministically composited by a `shoreline_bands` mode on `scripts/compose-terrain-blend-family.mjs` (the dirt `binary_material_interlock` mode is unchanged, regression-tested) from approved `water_a` (foreground/water) over approved `grass_a` (background/land) using the same four-corner mask reinterpreted as five q-bands (water / inner sand / outer sand / moss / grass), with a locked, edge-excluded hashed swatch variation (seed `0x0000570A`) from the locked `wood_leather`/`forest` palette only. `center` retains its existing approved `water_a` identity (byte-identical, never regenerated). ChatGPT's first (v1) visual review found a continuous bright outline with an inner-corner bullseye and near-invisible moss; ChatGPT's exact prescribed v2 material correction (same band geometry/topology/seed/palette, muted/re-balanced swatch selection) measurably muted the sand band (14.0% luminance drop, 86.8% of sand pixels recoloured). Adjacency coverage is exhaustive (100 directed pairs: 50 horizontal + 50 vertical across all 14 usable codes) and the band-class/sand-RGB mismatch gates are hard compositor failures; `npm run test:terrain-blend` runs in CI. **Approved** by ChatGPT's second, independent visual + implementation review (all 12 generated transition cells accepted as APPROVED RUNTIME MASTERS; independently reconstructed all 13 cells from the committed formula and matched every packed-cell SHA-256; judged the residual continuous-ring silhouette at `8×` an intentional, readable earthy-bank read at native/1×–4× scale, not a defect — no v3 required). Source + review evidence + packed sheet only; **not** runtime/map/Wangset integrated.
+- `tile_farm_path_dirt` **blend family (13 cells)** — deterministically composited from approved `path_dirt/center` over approved `grass_a`; all 12 generated transition cells are APPROVED RUNTIME MASTERS. Source, review evidence, manifest, and packed sheet are on `main`. The proof map currently uses centre only; Wangset-aware transitions remain deferred.
+- `tile_farm_water_shore` **blend family (13 cells)** — deterministically composited from approved `water_a` over approved `grass_a` using the reviewed five-band shoreline mode. The v2 material correction passed exhaustive adjacency and visual review; all 12 generated transition cells are APPROVED RUNTIME MASTERS, and `center` retains the approved `water_a` identity. Source, review evidence, manifest, and packed sheet are on `main`; it is not runtime/map/Wangset integrated.
 - `tile_farm_water_base / water_a` — approved exact `16×16` runtime master, deterministically upscaled to the canonical source with a zero-drift round trip.
-- `tile_farm_water_base / water_b` — approved exact `16×16` runtime master derived from `water_a` by 18 adjacent interior pair swaps (seed 33199, delta ≤ 1 for the near-uniform water tile), with unchanged borders and 1px inner buffer, exact histogram/palette preservation, deterministic `1024×1024` canonical source, and a zero-drift round trip. Verdict assigned by ChatGPT via direct pixel audit.
-- `env_farm_tree / oak` — approved exact `32×48` runtime master, deterministically upscaled to a `1024×1536` canonical source with a zero-drift round trip.
-- `env_farm_fence / rail_horizontal` — approved exact `16×32` runtime master, deterministically upscaled to a `512×1024` canonical source with a zero-drift round trip and retained modular connection evidence.
-- `env_farm_rock_medium / rock_a` — approved exact `32×32` runtime master, deterministically upscaled to a `1024×1024` canonical source with a zero-drift round trip and retained footprint/pivot evidence.
-- `env_wildbloom_landmark / root_star_revealed` — approved exact `32×32` runtime master with exact Root-Star accent coverage, a reproducible colour-only correction recipe, deterministic `1024×1024` canonical source, and zero-drift round trip.
-- The deterministic seven-anchor Batch A contact sheet passes the family-level scale, palette, lighting, grounding, and readability gate; its report explicitly preserves incomplete-family and no-integration claims.
+- `tile_farm_water_base / water_b` — approved exact `16×16` runtime master derived from `water_a` by 18 adjacent interior pair swaps (seed 33199, delta ≤ 1), with unchanged borders and 1px inner buffer, exact histogram/palette preservation, deterministic `1024×1024` canonical source, and a zero-drift round trip.
+- `env_farm_tree / oak` — approved exact `32×48` runtime master with a deterministic canonical source and zero-drift round trip.
+- `env_farm_fence / rail_horizontal` — approved exact `16×32` runtime master with retained modular connection evidence.
+- `env_farm_rock_medium / rock_a` — approved exact `32×32` runtime master with retained footprint/pivot evidence.
+- `env_wildbloom_landmark / root_star_revealed` — approved exact `32×32` runtime master with exact Root-Star accent coverage and a reproducible colour-only correction recipe.
+- The deterministic seven-anchor Batch A contact sheet passes the family-level scale, palette, lighting, grounding, and readability gate.
 - `npm run review:asset` normalizes, validates, generates nearest-neighbour evidence, and reports deterministic seam, alpha, hash, and optional palette metrics for one-cell review manifests.
 
-The seven Batch A anchors are approved, and Batch B terrain-family completion has begun. Both required blend families are now approved at the source/review/packed-sheet gate: `tile_farm_path_dirt` (`assets/manifests/tile_farm_path_dirt.manifest.json`, `assets/tilesets/tile_farm_path_dirt.png`) and `tile_farm_water_shore` (`assets/manifests/tile_farm_water_shore.manifest.json`, `assets/tilesets/tile_farm_water_shore.png`), both approved by ChatGPT's formal visual verdicts. No Phaser loading path, Wangset/Tiled wiring, or map integration is complete for any farm-environment target.
+Both required reduced terrain-blend families are approved and on `main`: `tile_farm_path_dirt` and `tile_farm_water_shore`. The bounded proof map still uses only grass/water centres and dirt centre; shoreline and Wangset-aware transitions remain deferred to the final terrain-integration gate.
+
+### Terrain integration proof of concept
+
+The farm map's Ground layer now draws grass (`grass_b`/`grass_c`), water (`water_a`/`water_b`), and dirt path (`path_dirt/center`) from approved `16×16` runtime masters, upscaled exactly `2×` onto the unchanged `32px` map grid by `scripts/compose-terrain-proof-tileset.mjs` into `public/assets/tilesets/farm-terrain-proof.png`. The repaint is deterministic and idempotent, and repository checks regenerate both the terrain proof and PWA icons before requiring a clean diff.
+
+Only the five reviewed centre cells are used. Dirt transitions and shoreline are deliberately absent until the Wangset/final-map pass. Collision, Decor/structure tiles, object coordinates, saves, and gameplay semantics remain unchanged. This user-approved proof is intentionally ahead of the complete-environment-kit gate; it may remain as a bounded visual upgrade, but it does not authorize broader piecemeal map integration.
 
 ### Pending production replacement
 
 - Dedicated Ranger Explorer sprite sheets.
 - Dedicated Mira sprite sheets.
-- Remaining production farm terrain, shoreline, vegetation, fences, props, crop art, and Wildbloom landmark art.
+- Remaining production vegetation, fences, structures, props, crop art, shoreline decals, and Wildbloom landmark family art.
 - Production fantasy UI skin.
 - Final licensed audio replacement.
 
@@ -75,59 +84,41 @@ The repository includes:
 - manifest-driven asset normalization and validation;
 - automated one-cell asset-review evidence and metrics;
 - a closed-loop ChatGPT asset-generation workflow;
-- a visual-evidence retention policy requiring reviewable proof while keeping superseded galleries out of Git history;
-- Vitest coverage for learning, mastery, interactions, curriculum templates, and save migration;
-- Playwright coverage for both profiles, the Waking Gate, movement/input, focus-loss recovery, Mira quests, crop prompts, the Practice Slime encounter, Wildbloom discovery and persistence, Stats & Mastery, save/reload, and portrait guidance;
+- deterministic generation checks for PWA icons and the bounded terrain-proof map/sheet;
+- terrain-blend regression coverage for both dirt and shoreline families;
+- Vitest coverage for learning, mastery, adaptive floors/elevation, interactions, curriculum templates, and save migration;
+- Playwright coverage for both profiles, adaptive difficulty through the live WorldScene, the Waking Gate, movement/input, focus-loss recovery, Mira quests, crop prompts, the Practice Slime encounter, Wildbloom discovery and persistence, Stats & Mastery, save/reload, and portrait guidance;
+- browser-side transient-event recorders that are reset immediately before reward actions, avoiding lifetime-text false positives while remaining robust on slow software-rendered runners;
 - reviewable screenshot artifacts, including iPad-like landscape browser viewports.
 
 Browser viewport evidence is not physical-iPad validation. The build remains technically and visually browser-verified rather than child-validated or physically iPad-certified.
 
 ## Active milestone — Phase 2 environment-art production
 
-Phases 0 and 1 of `docs/beautification/ELDORIA_BEAUTIFICATION_EXECUTION_PLAN.md` are complete:
+Phases 0 and 1 of `docs/beautification/ELDORIA_BEAUTIFICATION_EXECUTION_PLAN.md` are complete. Phase 2A specification groundwork is complete, including the palette lock, target contracts, padded-`sourceRect` extraction contract, and ordered production handoff.
 
-- Phase 0: baseline visual audit and screenshot lock.
-- Phase 1: migration from `480×320` to `960×640` while preserving world coverage, touch behavior, saves, quests, curriculum, and profile paths.
+Batch A is **7 of 7 foundational assets approved**. Batch B status:
 
-Phase 2A specification groundwork is complete:
-
-- 36 machine-readable farm-environment targets;
-- approved, versioned farm palette lock;
-- complete 13-variant dirt-path and shoreline blend sets;
-- corrected tall-prop geometry and pivots;
-- ordered production-generation handoff in `docs/art-pipeline/FARM_ENVIRONMENT_GENERATION_HANDOFF_V1.md`;
-- scoped farm-palette validation/review tooling and a tested Category-C padded-`sourceRect` extraction contract;
-- approved external style direction classified as **STYLE REFERENCE ONLY**, not committed or normalized.
-
-Batch A progress is **7 of 7 foundational assets approved**:
-
-1. `tile_farm_grass_base / grass_a` — complete.
-2. `tile_farm_path_dirt / center` — complete.
-3. `tile_farm_water_base / water_a` — complete.
-4. `env_farm_tree / oak` — complete.
-5. `env_farm_fence / rail_horizontal` — complete; one central post with rails connecting across tile boundaries, not a complete two-post panel.
-6. `env_farm_rock_medium / rock_a` — complete.
-7. `env_wildbloom_landmark / root_star_revealed` — complete.
-
-Batch B progress:
-
-1. `tile_farm_grass_base / grass_b` — complete; exact borders remain compatible with `grass_a`, 48 interior pixels change through 24 recorded pair swaps, and the real-pipeline round trip has zero drift.
-2. `tile_farm_grass_base / grass_c` — complete; 44 interior pixels change through 22 adjacent recorded pair swaps (seed 91537), borders and 1px inner buffer stay compatible with `grass_a`/`grass_b`, and the real-pipeline round trip has zero drift. The three-cell grass family is now complete at the individual-cell gate.
+1. `tile_farm_grass_base / grass_b` — complete.
+2. `tile_farm_grass_base / grass_c` — complete; the three visual grass cells are ready for the family-pack decision.
+3. `tile_farm_path_dirt` reduced 13-cell family — complete, approved, and merged.
+4. `tile_farm_water_base / water_b` — complete; the two water cells are ready for family packing.
+5. `tile_farm_water_shore` reduced 13-cell family — complete, approved, and merged on PR #99.
 
 ## Immediate next steps
 
-1. Pack and audit the complete deterministic three-cell grass family (`grass_a`/`grass_b`/`grass_c`) into the first production `tile_farm_grass_base` manifest + packed sheet before beginning dirt transitions.
-2. After the grass family packs, continue with dirt transitions.
-3. Continue with dirt transitions, `water_b`, and the complete shoreline set only after each preceding reference cell passes.
-4. Keep every Batch B terrain variant on its one-cell seam/repetition gate before any packed family sheet.
-5. Do not recompose `public/maps/farm.json` until the complete production kit passes the later environment-kit contact-sheet acceptance gate.
-6. In parallel only where it does not displace Batch B, produce the dedicated Ranger Explorer base and freeze both heroes' required clip timing before any armor source generation.
+1. Close the grass-family packaging gap with an explicit `grass_a` runtime interpretation, then pack and audit `grass_a`/`grass_b`/`grass_c` in one deterministic manifest and sheet.
+2. Pack and audit the two-cell `water_a`/`water_b` family.
+3. After the terrain families are source/packed complete, proceed to Batch C vegetation. Do not expand the bounded terrain proof into piecemeal final-map integration before the environment-kit contact-sheet and Wangset gates.
+4. Keep the now-merged dirt and shoreline transition families out of the proof map until the final Wangset-aware composition can demonstrate coherent boundaries at target scale.
+5. In parallel only where it does not displace the environment milestone, produce the dedicated Ranger Explorer base and freeze both heroes' required clip timing before armor source generation.
+6. Track the existing Wildbloom canvas-text timeout as a separate repository-health item if it reappears after the recorder hardening; do not conflate that unrelated flake with asset-only changes.
 
 ## Decisions for the generation handoff
 
 - Generate grass scatter with vegetation in Batch C.
 - Generate tilled soil, sprouts, harvest crops, and crop-row overlays with the crop/prop family in Batch D.
-- Pack normalized variants into one deterministic PNG sheet per target ID, with a documented fixed layout in each manifest. Source generation may remain one image per variant where that improves consistency.
+- Pack normalized variants into one deterministic PNG sheet per target ID, with a documented fixed layout in each manifest.
 - Keep water shimmer frames in the asset kit; decide the runtime loop mechanism during Phase 3 integration.
 - Keep shoreline rocks as small `16×16` decals and the medium rock as a `32×32` landmark.
 
@@ -142,10 +133,11 @@ Batch B progress:
 
 ## Known risks
 
-- Physical touch comfort, safe-area behavior, audio balance, memory stability, and frame pacing remain unverified on an actual iPad.
+- Physical touch comfort, safe-area behavior, PWA installation/orientation behavior, audio balance, memory stability, and frame pacing remain unverified on an actual iPad.
+- The terrain proof intentionally has hard centre-tile boundaries at pond/path edges because transition families are not yet Wangset-integrated; it is visually stronger than placeholders but not the final terrain composition.
 - Dense generated environment art may lose readability at tiny runtime sizes; target-size changes must be made explicitly rather than hidden through blurry scaling.
 - High-resolution image generation tends to over-pattern quiet terrain and invent palette intermediates. Every candidate must be judged from its exact runtime pixels, not from the attractive high-resolution preview.
 - A high-resolution source can remain unsuitable even when its normalized runtime cell is good. In that case, freeze the approved runtime pixels and use the documented Approved Runtime Master workflow instead of repeatedly regenerating.
 - Terrain centres and transition tiles can easily become non-seamless or reveal periodic motifs; one-cell `3×3` and large-field repeats remain mandatory gates.
-- Ranger, Mira, and several interactive objects remain bridge art and may look inconsistent once production terrain arrives.
+- Ranger, Mira, structures, and several interactive objects remain bridge art and may look inconsistent against the production terrain proof.
 - The compiled two-slice outfit model is specification-only and remains unproven in-engine; the first cosmetic outfit integration must validate occlusion, synchronization, memory cost, and iPad frame pacing before expanding runtime slot granularity.

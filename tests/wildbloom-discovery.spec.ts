@@ -116,6 +116,10 @@ async function revealSpot(page: Page, spotId: SpotId): Promise<void> {
 }
 
 test('Mage magic reveals all three persistent Wildbloom secrets without changing quests or curriculum', async ({ page }) => {
+  // Walks all three Wildbloom spots with reveal animations between them:
+  // ~20s on CI runners, but crosses the global 30s under software rendering
+  // (no GPU), so give it explicit slow-environment headroom.
+  test.setTimeout(60000);
   await seedAndStart(page, 'grade2-mage');
 
   await expect.poll(async () => snapshot(page)).toEqual({
