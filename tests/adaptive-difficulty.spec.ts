@@ -4,11 +4,11 @@ import { CANVAS, clickGame } from './support/canvas';
 /**
  * Browser proof that adaptive difficulty is wired end-to-end: WorldScene
  * passes its live mastery map into LearningBonusSystem.makePrompt, so a
- * skill's correct streak unlocks/elevates that skill's next prompt. The
- * depth of the difficulty ladder itself is covered statistically by
- * tests/unit/QuestionEngine.test.ts; this spec pins the deterministic
- * contracts in a real browser: baseline lock, unlock at streak 3, and
- * elevated-but-valid content at a maxed streak.
+ * context template is reachable at its declared floor and the same skill's
+ * correct streak raises later prompts. The depth of the difficulty ladder is
+ * covered statistically by tests/unit/QuestionEngine.test.ts; this spec pins
+ * the deterministic contracts in a real browser: reachable baseline content,
+ * elevation after mastery, and elevated-but-valid answers.
  */
 
 type PromptSnapshot = {
@@ -46,7 +46,7 @@ async function seedMastery(page: Page, key: string, currentCorrectStreak: number
       currentCorrectStreak: streak,
       bestCorrectStreak: streak,
       lastPromptId: 'e2e-seed',
-      lastContext: 'farm',
+      lastContext: 'shop',
       lastOutcome: 'correct'
     };
   }, { masteryKey: key, streak: currentCorrectStreak });
@@ -65,21 +65,36 @@ async function bootGrade5(page: Page): Promise<void> {
   await page.waitForFunction(() => window.__ELDORIA_GAME__?.scene.isActive('WorldScene'));
 }
 
-test('adaptive difficulty keeps higher-min templates locked at baseline and unlocks them after a streak', async ({ page }) => {
+test('adaptive difficulty serves a context template at its floor and raises it after a streak', async ({ page }) => {
   await bootGrade5(page);
 
-  // Baseline (no mastery): decimal-estimate declares minDifficulty 2 and is
-  // the only grade5 'shop' template, so shop prompts must never be decimals
-  // until the decimals skill proves itself.
+  // Decimal estimate is the only grade5 shop template and declares
+  // minDifficulty 2. It must be reachable immediately at that floor; requiring
+  // decimals mastery before serving the only decimals prompt would create an
+  // impossible self-unlock loop.
   const baseline = await samplePrompts(page, 'shop', 100);
-  expect(baseline.every((prompt) => prompt.skill !== 'decimals')).toBe(true);
+  expect(baseline).toHaveLength(100);
+  for (const prompt of baseline) {
+    expect(prompt.skill).toBe('decimals');
+    expect(prompt.subject).toBe('math');
+    expect(prompt.choices.filter((choice) => choice === prompt.answer)).toHaveLength(1);
+    expect(Number(prompt.answer)).toBeLessThanOrEqual(115);
+  }
 
-  // Three correct decimals answers in a row -> difficulty 2 -> the shop
-  // template unlocks through the live scene wiring.
-  await seedMastery(page, 'grade5:math:decimals', 3);
-  const elevated = await samplePrompts(page, 'shop', 50);
-  expect(elevated.length).toBe(50);
-  expect(elevated.every((prompt) => prompt.skill === 'decimals')).toBe(true);
+  // A maxed decimals streak raises generation to difficulty 5. The prompt
+  // stays in the shop/decimals context and remains answerable, while at least
+  // one sample exceeds the difficulty-2 ceiling of 115.
+  await seedMastery(page, 'grade5:math:decimals', 12);
+  const elevated = await samplePrompts(page, 'shop', 200);
+  let sawElevatedAnswer = false;
+  for (const prompt of elevated) {
+    expect(prompt.skill).toBe('decimals');
+    expect(prompt.subject).toBe('math');
+    expect(prompt.choices.filter((choice) => choice === prompt.answer)).toHaveLength(1);
+    expect(Number(prompt.answer)).toBeLessThanOrEqual(280);
+    if (Number(prompt.answer) > 115) sawElevatedAnswer = true;
+  }
+  expect(sawElevatedAnswer).toBe(true);
 });
 
 test('adaptive difficulty elevates content at a maxed streak while keeping prompts answerable', async ({ page }) => {
