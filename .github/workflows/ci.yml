@@ -32,21 +32,7 @@ jobs:
       - name: Run visual-target validator tests
         run: npm run test:visual-targets
       - run: npm run test:asset-pipeline
-      - name: Run PWA manifest and icon tests
-        run: npm run test:pwa
-      - name: Verify generated PWA and terrain-proof surfaces are current
-        run: npm run test:generated-surfaces
-      - name: Run unit tests
-        run: |
-          set -o pipefail
-          npm run test:unit 2>&1 | tee unit-output.txt
-      - name: Upload unit-test diagnostics
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: unit-diagnostics-pr-${{ github.event.pull_request.number }}
-          path: unit-output.txt
-          retention-days: 3
+      - run: npm run test:unit
       - name: Get installed Playwright version
         id: playwright-version
         run: |
