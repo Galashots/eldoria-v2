@@ -1,4 +1,4 @@
-name: Apply reviewed Kimi corrections
+name: Diagnose reviewed Kimi branch
 
 on:
   pull_request:
@@ -6,27 +6,34 @@ on:
       - main
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  apply-review-corrections:
+  unit-diagnostic:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      - name: Preserve correction script and check out review target
+      - name: Check out review target
         run: |
-          cp .github/import/apply-review-corrections.py /tmp/apply-review-corrections.py
           git fetch origin chatgpt/kimi-audit-improvements
           git checkout -B review-target origin/chatgpt/kimi-audit-improvements
-      - name: Apply independent review corrections
-        run: python /tmp/apply-review-corrections.py
-      - name: Commit and push corrected target branch
+      - run: npm ci
+      - name: Capture unit-test output
         run: |
-          git config user.name "ChatGPT Repo Agent"
-          git config user.email "actions@users.noreply.github.com"
-          git add tests/unit/QuestionEngine.test.ts tests/vertical-slice.spec.ts
-          git diff --cached --check
-          git commit -m "Fix adaptive reachability tests and transient E2E recorders"
-          git push origin HEAD:refs/heads/chatgpt/kimi-audit-improvements
+          set +e
+          npm run test:unit > unit-output.txt 2>&1
+          echo $? > unit-status.txt
+          exit 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kimi-unit-diagnostic
+          path: |
+            unit-output.txt
+            unit-status.txt
+          retention-days: 3
+      - name: Enforce unit-test result
+        run: |
+          cat unit-output.txt
+          test "$(cat unit-status.txt)" = "0"
