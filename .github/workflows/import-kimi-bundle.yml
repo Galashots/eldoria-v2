@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - chatgpt/import-kimi-audit-bundle
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: write
