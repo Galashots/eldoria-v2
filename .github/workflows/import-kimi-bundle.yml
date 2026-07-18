@@ -1,4 +1,4 @@
-name: Import reviewed Kimi bundle
+name: Apply reviewed Kimi corrections
 
 on:
   pull_request:
@@ -9,24 +9,34 @@ permissions:
   contents: write
 
 jobs:
-  import-bundle:
+  apply-review-corrections:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      - name: Reassemble and verify bundle
+      - name: Preserve correction script and check out review target
         run: |
-          cat .github/import/chunk-* > /tmp/eldoria-audit-improvements.bundle.b64
-          base64 --decode /tmp/eldoria-audit-improvements.bundle.b64 > /tmp/eldoria-audit-improvements.bundle
-          git bundle verify /tmp/eldoria-audit-improvements.bundle
-      - name: Import reviewed branch without workflow-file mutation
+          cp .github/import/apply-review-corrections.py /tmp/apply-review-corrections.py
+          git fetch origin chatgpt/kimi-audit-improvements
+          git checkout -B review-target origin/chatgpt/kimi-audit-improvements
+      - name: Apply independent review corrections
+        run: python /tmp/apply-review-corrections.py
+      - name: Verify focused behaviour and repository build
         run: |
-          git fetch /tmp/eldoria-audit-improvements.bundle feature/audit-improvements
-          test "$(git rev-parse FETCH_HEAD)" = "d6e1db1be0dd6897cbc5f93e1f540c8e1d5814d9"
-          git checkout -B imported FETCH_HEAD
-          git checkout origin/main -- .github/workflows/ci.yml
+          npm ci
+          npm run test:unit -- tests/unit/QuestionEngine.test.ts
+          npx playwright install --with-deps chromium
+          npx playwright test tests/adaptive-difficulty.spec.ts tests/vertical-slice.spec.ts
+          npm run check
+      - name: Commit and push corrected target branch
+        run: |
           git config user.name "ChatGPT Repo Agent"
           git config user.email "actions@users.noreply.github.com"
-          git commit -m "Stage Kimi audit improvements; apply CI workflow via reviewed connector"
-          git push --force origin HEAD:refs/heads/chatgpt/kimi-audit-improvements
+          git add src/systems/QuestionEngine.ts tests/unit/QuestionEngine.test.ts tests/adaptive-difficulty.spec.ts tests/vertical-slice.spec.ts
+          git diff --cached --check
+          git commit -m "Fix adaptive reachability and transient E2E recorders"
+          git push origin HEAD:refs/heads/chatgpt/kimi-audit-improvements
+      - name: Remove temporary bootstrap branch
+        if: success()
+        run: git push origin --delete chatgpt/import-kimi-audit-bundle
