@@ -32,6 +32,8 @@ jobs:
       - name: Run visual-target validator tests
         run: npm run test:visual-targets
       - run: npm run test:asset-pipeline
+      - name: Run PWA manifest and icon tests
+        run: npm run test:pwa
       - run: npm run test:unit
       - name: Get installed Playwright version
         id: playwright-version
