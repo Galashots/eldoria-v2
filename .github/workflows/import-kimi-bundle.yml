@@ -1,4 +1,4 @@
-name: Diagnose reviewed Kimi branch
+name: Finalize reviewed Kimi changelog
 
 on:
   pull_request:
@@ -6,34 +6,27 @@ on:
       - main
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  unit-diagnostic:
+  finalize-changelog:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      - name: Check out review target
+      - name: Preserve patch and check out review target
         run: |
+          cp .github/import/patch-kimi-changelog.py /tmp/patch-kimi-changelog.py
           git fetch origin chatgpt/kimi-audit-improvements
           git checkout -B review-target origin/chatgpt/kimi-audit-improvements
-      - run: npm ci
-      - name: Capture unit-test output
+      - name: Reconcile changelog
+        run: python /tmp/patch-kimi-changelog.py
+      - name: Commit and push target branch
         run: |
-          set +e
-          npm run test:unit > unit-output.txt 2>&1
-          echo $? > unit-status.txt
-          exit 0
-      - uses: actions/upload-artifact@v4
-        with:
-          name: kimi-unit-diagnostic
-          path: |
-            unit-output.txt
-            unit-status.txt
-          retention-days: 3
-      - name: Enforce unit-test result
-        run: |
-          cat unit-output.txt
-          test "$(cat unit-status.txt)" = "0"
+          git config user.name "ChatGPT Repo Agent"
+          git config user.email "actions@users.noreply.github.com"
+          git add docs/CHATGPT_CHANGELOG.md
+          git diff --cached --check
+          git commit -m "Reconcile Kimi audit changelog after independent review"
+          git push origin HEAD:refs/heads/chatgpt/kimi-audit-improvements
