@@ -112,16 +112,23 @@ export class WorldScene extends Phaser.Scene {
 
     const map = this.make.tilemap({ key: 'farm' });
     const tileset = map.addTilesetImage('eldoria-placeholder', 'tiles');
+    const terrainTileset = map.addTilesetImage('farm-terrain-proof', 'terrain-tiles');
 
     if (!tileset) {
       throw new Error('Missing tileset: eldoria-placeholder');
+    }
+    if (!terrainTileset) {
+      throw new Error('Missing tileset: farm-terrain-proof');
     }
 
     // Tile layers render at GAME_SCALE (their underlying Tiled grid/GIDs are
     // untouched) rather than doubling public/maps/farm.json's own tile
     // dimensions, so the map file stays a single source of truth for both
     // this scaled runtime and Tiled's editor view.
-    map.createLayer('Ground', tileset, 0, 0)?.setScale(GAME_SCALE);
+    // Ground mixes approved terrain gids (grass/water/dirt proof) with
+    // not-yet-replaced placeholder structure tiles, so it draws from both
+    // tilesets; Decor/Collision remain placeholder-only.
+    map.createLayer('Ground', [tileset, terrainTileset], 0, 0)?.setScale(GAME_SCALE);
     map.createLayer('Decor', tileset, 0, 0)?.setScale(GAME_SCALE);
 
     const collisionLayer = map.createLayer('Collision', tileset, 0, 0)?.setScale(GAME_SCALE);

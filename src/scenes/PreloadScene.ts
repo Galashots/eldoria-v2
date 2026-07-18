@@ -12,6 +12,9 @@ export class PreloadScene extends Phaser.Scene {
 
   preload(): void {
     this.load.image('tiles', 'assets/tilesets/eldoria-placeholder.png');
+    // Approved terrain proof tileset (grass/water/dirt masters, 2x upscaled
+    // onto the map's 32px grid). See scripts/compose-terrain-proof-tileset.mjs.
+    this.load.image('terrain-tiles', 'assets/tilesets/farm-terrain-proof.png');
     this.load.spritesheet('adventurer', 'assets/sprites/adventurer-placeholder.png', {
       frameWidth: 32,
       frameHeight: 32
