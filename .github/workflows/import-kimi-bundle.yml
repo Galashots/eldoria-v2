@@ -1,9 +1,6 @@
 name: Import reviewed Kimi bundle
 
 on:
-  push:
-    branches:
-      - chatgpt/import-kimi-audit-bundle
   pull_request:
     branches:
       - main
@@ -23,11 +20,13 @@ jobs:
           cat .github/import/chunk-* > /tmp/eldoria-audit-improvements.bundle.b64
           base64 --decode /tmp/eldoria-audit-improvements.bundle.b64 > /tmp/eldoria-audit-improvements.bundle
           git bundle verify /tmp/eldoria-audit-improvements.bundle
-      - name: Import reviewed branch
+      - name: Import reviewed branch without workflow-file mutation
         run: |
           git fetch /tmp/eldoria-audit-improvements.bundle feature/audit-improvements
           test "$(git rev-parse FETCH_HEAD)" = "d6e1db1be0dd6897cbc5f93e1f540c8e1d5814d9"
-          git push origin FETCH_HEAD:refs/heads/chatgpt/kimi-audit-improvements
-      - name: Remove bootstrap branch
-        if: success()
-        run: git push origin --delete chatgpt/import-kimi-audit-bundle
+          git checkout -B imported FETCH_HEAD
+          git checkout origin/main -- .github/workflows/ci.yml
+          git config user.name "ChatGPT Repo Agent"
+          git config user.email "actions@users.noreply.github.com"
+          git commit -m "Stage Kimi audit improvements; apply CI workflow via reviewed connector"
+          git push --force origin HEAD:refs/heads/chatgpt/kimi-audit-improvements
