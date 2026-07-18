@@ -1,6 +1,6 @@
 # Eldoria-V2 Current State
 
-Last refreshed on 2026-07-17 after accepting the Batch B `grass_b` runtime master. This file owns volatile project status; durable rules live in `AGENTS.md`, and the documentation map lives in `docs/README.md`.
+Last refreshed on 2026-07-18 after the adaptive-difficulty, PWA, and terrain-integration-proof drop. This file owns volatile project status; durable rules live in `AGENTS.md`, and the documentation map lives in `docs/README.md`.
 
 ## Product invariant
 
@@ -18,6 +18,8 @@ Last refreshed on 2026-07-17 after accepting the Batch B `grass_b` runtime maste
 - Optional Wildbloom Sprig discovery loop with three persistent secrets, profile-specific reveal abilities, and no random or variable reward.
 - Persistent quest, inventory, gold, keepsake, player-position, and mastery data.
 - Save version 2 with a tested v1→v2 coordinate migration that scales valid legacy positions exactly once.
+- **Adaptive difficulty** on optional learning bonuses: each skill's prompt difficulty derives from its own mastery streak (`1 + floor(streak/3)`, capped per template), so confident kids get stretched and mistakes ease back down. Never gates content or rewards; baseline (no streak) behavior is unchanged and pinned by tests. See `docs/CURRICULUM_QUESTION_ENGINE.md`.
+- **PWA / Add to Home Screen**: web app manifest + generated icons give fullscreen standalone launch on iPad/Android with the game rune as the icon. No service worker (no offline caching) yet; physical iPad install still unvalidated.
 - Background music, interaction/reward/UI effects, read-aloud support, and music ducking. Shipped audio remains placeholder material pending a later licensed-art pass.
 - GitHub Pages deployment from verified `main` builds.
 
@@ -54,7 +56,9 @@ Last refreshed on 2026-07-17 after accepting the Batch B `grass_b` runtime maste
 - The deterministic seven-anchor Batch A contact sheet passes the family-level scale, palette, lighting, grounding, and readability gate; its report explicitly preserves incomplete-family and no-integration claims.
 - `npm run review:asset` normalizes, validates, generates nearest-neighbour evidence, and reports deterministic seam, alpha, hash, and optional palette metrics for one-cell review manifests.
 
-The seven Batch A anchors are approved, and Batch B terrain-family completion has begun. A source-only production manifest and packed sheet now exist for the `tile_farm_path_dirt` blend family (`assets/manifests/tile_farm_path_dirt.manifest.json`, `assets/tilesets/tile_farm_path_dirt.png`), approved by ChatGPT's formal visual verdict. No Phaser loading path, Wangset/Tiled wiring, or map integration is complete for any farm-environment target.
+The seven Batch A anchors are approved, and Batch B terrain-family completion has begun. A source-only production manifest and packed sheet now exist for the `tile_farm_path_dirt` blend family (`assets/manifests/tile_farm_path_dirt.manifest.json`, `assets/tilesets/tile_farm_path_dirt.png`), approved by ChatGPT's formal visual verdict.
+
+**Terrain integration proof of concept (2026-07-18, runtime-integrated):** the farm map's Ground layer now draws grass (`grass_b`/`grass_c`), water (`water_a`/`water_b`), and dirt path (`path_dirt/center`) from formally approved `16×16` runtime masters, upscaled exactly `2×` onto the map's unchanged `32px` grid (`scripts/compose-terrain-proof-tileset.mjs` → `public/assets/tilesets/farm-terrain-proof.png`, deterministic and idempotent). Only masters with an approved `16×16` runtime artifact are used (`grass_a` excluded — its audit blesses the high-res source only); dirt contributes center only, since edge/corner placement needs the Wangset pass in `docs/TILED_WANGSET_WORKFLOW.md`. Collision, decor/structure tiles, object coordinates, saves, and all gameplay tests are untouched (Collision layer still placeholder gids). This intentionally steps ahead of the "complete environment-kit gate" for these five cells as a bounded proof; keep or revert at the next art review. Remaining farm-environment targets still have **no** runtime/map integration.
 
 ### Pending production replacement
 
