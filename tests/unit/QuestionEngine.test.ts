@@ -155,26 +155,34 @@ describe('QuestionEngine.makeAdaptivePrompt', () => {
     }
   });
 
-  it('reproduces baseline eligibility with an empty mastery map (locked templates stay locked)', () => {
-    // grade5-shop-decimal-estimate (minDifficulty 2) must not appear at
-    // baseline difficulty — the same contract makePrompt(d=1) enforces for
-    // the context-matching set.
+  it('serves a context-only higher-minimum template at its declared floor for an unseen skill', () => {
+    // Decimal estimate is the only grade5 shop template and declares
+    // minDifficulty 2. It must be reachable immediately at that floor;
+    // requiring decimals mastery first would create an impossible self-unlock.
     for (let i = 0; i < 100; i += 1) {
       const prompt = QuestionEngine.makeAdaptivePrompt(grade5Profile, 'shop', {});
-      expect(prompt.skill).not.toBe('decimals');
+      expect(prompt.skill).toBe('decimals');
+      expect(prompt.subject).toBe('math');
+      expect(Number(prompt.answer)).toBeLessThanOrEqual(115);
+      expect(prompt.choices.filter((choice) => choice === prompt.answer)).toHaveLength(1);
     }
   });
 
-  it('unlocks a higher-minDifficulty template once its own skill builds a streak', () => {
-    // A decimals streak of 3 derives difficulty 2, reaching decimal-estimate's
-    // minDifficulty. It is the only grade5 'shop' template, so every shop
-    // prompt must then come from it.
-    const mastery = masteryWithStreak('grade5', 'math', 'decimals', 3);
-    for (let i = 0; i < 50; i += 1) {
+  it('raises that reachable template after its own skill builds a streak', () => {
+    // A maxed decimals streak derives difficulty 5. The prompt remains in the
+    // shop/decimals context and stays answerable, while samples can exceed the
+    // difficulty-2 ceiling of 115 without exceeding the difficulty-5 maximum.
+    const mastery = masteryWithStreak('grade5', 'math', 'decimals', 12);
+    let sawElevatedAnswer = false;
+    for (let i = 0; i < 200; i += 1) {
       const prompt = QuestionEngine.makeAdaptivePrompt(grade5Profile, 'shop', mastery);
       expect(prompt.skill).toBe('decimals');
       expect(prompt.subject).toBe('math');
+      expect(Number(prompt.answer)).toBeLessThanOrEqual(280);
+      expect(prompt.choices.filter((choice) => choice === prompt.answer)).toHaveLength(1);
+      if (Number(prompt.answer) > 115) sawElevatedAnswer = true;
     }
+    expect(sawElevatedAnswer).toBe(true);
   });
 
   it('generates elevated content for a strong streak and caps at the template max', () => {

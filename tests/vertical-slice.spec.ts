@@ -303,10 +303,14 @@ async function armHeroAnimationRecorder(page: Page): Promise<void> {
         };
       };
     };
-    (window as unknown as { __heroAnimRecorder: string[] }).__heroAnimRecorder = [];
-    scene.heroPresentation?.sprite?.on('animationstart', (anim) => {
-      (window as unknown as { __heroAnimRecorder: string[] }).__heroAnimRecorder.push(anim.key);
-    });
+    const recorderWindow = window as unknown as {
+      __heroAnimRecorder: string[];
+      __heroAnimRecorderCallback?: (anim: { key: string }) => void;
+    };
+    recorderWindow.__heroAnimRecorder = [];
+    const callback = (anim: { key: string }) => recorderWindow.__heroAnimRecorder.push(anim.key);
+    recorderWindow.__heroAnimRecorderCallback = callback;
+    scene.heroPresentation?.sprite?.on('animationstart', callback);
   });
 }
 
@@ -317,9 +321,16 @@ async function recordedHeroAnimations(page: Page): Promise<string[]> {
 async function disarmHeroAnimationRecorder(page: Page): Promise<void> {
   await page.evaluate(() => {
     const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
-      heroPresentation?: { sprite?: { off: (event: string) => void } };
+      heroPresentation?: {
+        sprite?: { off: (event: string, cb: (anim: { key: string }) => void) => void };
+      };
     };
-    scene.heroPresentation?.sprite?.off('animationstart');
+    const recorderWindow = window as unknown as {
+      __heroAnimRecorderCallback?: (anim: { key: string }) => void;
+    };
+    const callback = recorderWindow.__heroAnimRecorderCallback;
+    if (callback) scene.heroPresentation?.sprite?.off('animationstart', callback);
+    delete recorderWindow.__heroAnimRecorderCallback;
   });
 }
 
@@ -559,6 +570,12 @@ async function canvasTextSeen(page: Page, text: string): Promise<boolean> {
   }, text);
 }
 
+async function resetCanvasTextRecorder(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    (window as unknown as { __canvasTextsSeen?: Set<string> }).__canvasTextsSeen?.clear();
+  });
+}
+
 async function hasCanvasText(page: Page, text: string): Promise<boolean> {
   return page.evaluate((expectedText) => {
     const hasText = (item: { active?: boolean; visible?: boolean; text?: unknown; list?: unknown[] }): boolean => {
@@ -707,10 +724,14 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
         off: (event: string) => void;
       };
     };
-    (window as unknown as { __slimeAnimRecorder: string[] }).__slimeAnimRecorder = [];
-    scene.practiceSlimeSprite?.on('animationstart', (anim) => {
-      (window as unknown as { __slimeAnimRecorder: string[] }).__slimeAnimRecorder.push(anim.key);
-    });
+    const recorderWindow = window as unknown as {
+      __slimeAnimRecorder: string[];
+      __slimeAnimRecorderCallback?: (anim: { key: string }) => void;
+    };
+    recorderWindow.__slimeAnimRecorder = [];
+    const callback = (anim: { key: string }) => recorderWindow.__slimeAnimRecorder.push(anim.key);
+    recorderWindow.__slimeAnimRecorderCallback = callback;
+    scene.practiceSlimeSprite?.on('animationstart', callback);
   });
   expect(await interactAt(page, 1408, 640)).toContain('Practice Slime');
   await expect.poll(async () => page.evaluate(
@@ -718,9 +739,16 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   )).toContain('practice-slime-hop');
   await page.evaluate(() => {
     const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
-      practiceSlimeSprite?: { off: (event: string) => void };
+      practiceSlimeSprite?: {
+        off: (event: string, cb: (anim: { key: string }) => void) => void;
+      };
     };
-    scene.practiceSlimeSprite?.off('animationstart');
+    const recorderWindow = window as unknown as {
+      __slimeAnimRecorderCallback?: (anim: { key: string }) => void;
+    };
+    const callback = recorderWindow.__slimeAnimRecorderCallback;
+    if (callback) scene.practiceSlimeSprite?.off('animationstart', callback);
+    delete recorderWindow.__slimeAnimRecorderCallback;
   });
   await expect.poll(async () => hasCanvasText(page, 'READ ALOUD')).toBe(true);
   await skipOpenPrompt(page);
@@ -730,6 +758,7 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   await expect.poll(async () => masteryTotal(page, 'skipped')).toBe(2);
 
   expect((await setPlayer(page, 832, 512)).hint).toContain('Mira');
+  await resetCanvasTextRecorder(page);
   await sceneInteract(page);
   await expect.poll(async () => (await state(page)).questStep).toBe('complete');
   await expect.poll(async () => (await state(page)).gold).toBe(10);
@@ -755,6 +784,7 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   await expect.poll(async () => (await state(page)).inventory.sunberryCharm).toBe(1);
 
   await armCropFeedbackWatcher(page);
+  await resetCanvasTextRecorder(page);
   expect(await interactAt(page, 480, 832)).toContain('Check Scarecrow');
   await expect.poll(async () => cropFeedbackSeen(page)).toBe(true);
   await expect.poll(async () => cropFeedbackVisible(page)).toBe(false);
@@ -772,6 +802,7 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   await expect.poll(async () => (await state(page)).objective).toContain('Bring the Moonseed Charm back to Mira');
 
   await setPlayer(page, 832, 512);
+  await resetCanvasTextRecorder(page);
   await sceneInteract(page);
   await expect.poll(async () => (await state(page)).gold).toBe(14);
   await expect.poll(async () => (await state(page)).inventory.sunberryCharm).toBe(1);
@@ -812,6 +843,7 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   await expect.poll(async () => masteryTotal(page, 'skipped')).toBe(6);
 
   expect((await setPlayer(page, 832, 512)).hint).toContain('Mira');
+  await resetCanvasTextRecorder(page);
   await sceneInteract(page);
   await expect.poll(async () => (await state(page)).gold).toBe(20);
   await expect.poll(async () => (await state(page)).inventory.wildbloomSprig).toBe(1);
@@ -866,6 +898,7 @@ test('Grade 5 prompts keep reader profile without the Grade 2 read-aloud control
 
   await expect.poll(async () => hasCanvasText(page, 'optional learning bonus')).toBe(true);
   await expect.poll(async () => hasCanvasText(page, 'READ ALOUD')).toBe(false);
+  await resetCanvasTextRecorder(page);
   await clickGame(page, 260, 388);
 
   await expect.poll(async () => (await state(page)).gold).toBe(3);
