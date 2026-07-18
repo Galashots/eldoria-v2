@@ -23,6 +23,8 @@
     "review:contact-sheet": "node scripts/build-review-contact-sheet.mjs",
     "test:contact-sheet": "node scripts/test-review-contact-sheet.mjs",
     "test:visual-targets": "node scripts/test-visual-targets.mjs",
+    "generate:pwa-icons": "node scripts/generate-pwa-icons.mjs",
+    "test:pwa": "node scripts/test-pwa-manifest.mjs",
     "test:unit": "vitest run"
   },
   "dependencies": {
