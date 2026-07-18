@@ -299,7 +299,7 @@ async function armHeroAnimationRecorder(page: Page): Promise<void> {
       heroPresentation?: {
         sprite?: {
           on: (event: string, cb: (anim: { key: string }) => void) => void;
-          off: (event: string) => void;
+          off: (event: string, cb: (anim: { key: string }) => void) => void;
         };
       };
     };
@@ -558,7 +558,7 @@ async function chooseOpenPrompt(page: Page, choice: PreviewPrompt['answer']): Pr
   await page.waitForTimeout(200);
 }
 
-/** True once any canvas text containing `text` has been seen since boot (see the recorder in boot()). For transient floating toasts. */
+/** True once canvas text containing `text` has been seen since the recorder was last reset. For transient floating toasts. */
 async function canvasTextSeen(page: Page, text: string): Promise<boolean> {
   return page.evaluate((expected) => {
     const seen = (window as unknown as { __canvasTextsSeen?: Set<string> }).__canvasTextsSeen;
