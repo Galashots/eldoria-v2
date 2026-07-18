@@ -1,0 +1,30 @@
+name: Import reviewed Kimi bundle
+
+on:
+  push:
+    branches:
+      - chatgpt/import-kimi-audit-bundle
+
+permissions:
+  contents: write
+
+jobs:
+  import-bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Reassemble and verify bundle
+        run: |
+          cat .github/import/chunk-* > /tmp/eldoria-audit-improvements.bundle.b64
+          base64 --decode /tmp/eldoria-audit-improvements.bundle.b64 > /tmp/eldoria-audit-improvements.bundle
+          git bundle verify /tmp/eldoria-audit-improvements.bundle
+      - name: Import reviewed branch
+        run: |
+          git fetch /tmp/eldoria-audit-improvements.bundle feature/audit-improvements
+          test "$(git rev-parse FETCH_HEAD)" = "d6e1db1be0dd6897cbc5f93e1f540c8e1d5814d9"
+          git push origin FETCH_HEAD:refs/heads/chatgpt/kimi-audit-improvements
+      - name: Remove bootstrap branch
+        if: success()
+        run: git push origin --delete chatgpt/import-kimi-audit-bundle
