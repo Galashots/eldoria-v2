@@ -1,4 +1,4 @@
-name: Finalize reviewed Kimi changelog
+name: Polish reviewed Kimi branch
 
 on:
   pull_request:
@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  finalize-changelog:
+  polish-review:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -17,16 +17,16 @@ jobs:
           fetch-depth: 0
       - name: Preserve patch and check out review target
         run: |
-          cp .github/import/patch-kimi-changelog.py /tmp/patch-kimi-changelog.py
+          cp .github/import/polish-kimi-review.py /tmp/polish-kimi-review.py
           git fetch origin chatgpt/kimi-audit-improvements
           git checkout -B review-target origin/chatgpt/kimi-audit-improvements
-      - name: Reconcile changelog
-        run: python /tmp/patch-kimi-changelog.py
+      - name: Apply final review polish
+        run: python /tmp/polish-kimi-review.py
       - name: Commit and push target branch
         run: |
           git config user.name "ChatGPT Repo Agent"
           git config user.email "actions@users.noreply.github.com"
-          git add docs/CHATGPT_CHANGELOG.md
+          git add docs/CHATGPT_CHANGELOG.md tests/vertical-slice.spec.ts
           git diff --cached --check
-          git commit -m "Reconcile Kimi audit changelog after independent review"
+          git commit -m "Polish Kimi audit documentation and recorder types"
           git push origin HEAD:refs/heads/chatgpt/kimi-audit-improvements
