@@ -29,8 +29,8 @@ export class QuestionEngine {
    * A missing record (skill never seen) yields 1, and since MasterySystem
    * resets currentCorrectStreak on 'wrong' (and only on 'wrong'), the rule
    * can ease back down after mistakes but never punishes a skip. Difficulty
-   * only changes which numbers get generated — it never gates content,
-   * rewards, or progress (the product invariant).
+   * only changes which numbers get generated — it never gates rewards or
+   * progress (the product invariant).
    */
   static difficultyForRecord(record?: LearningMasteryRecord): Difficulty {
     const streak = record?.currentCorrectStreak ?? 0;
@@ -39,16 +39,17 @@ export class QuestionEngine {
   }
 
   /**
-   * Mastery-aware prompt selection. Each candidate template's generation
-   * difficulty is derived from *its own skill's* mastery record: a template
-   * becomes eligible once the derived difficulty reaches its minDifficulty,
-   * and then generates at the derived difficulty capped by its maxDifficulty
-   * (so long streaks can't outrun what a template actually offers).
+   * Mastery-aware prompt selection. Context remains authoritative: when the
+   * requested context has templates for the profile band, the engine always
+   * chooses among those templates rather than silently serving an unrelated
+   * scenario. A template whose declared floor is above the skill's derived
+   * mastery difficulty remains reachable at that floor; otherwise a
+   * higher-minimum template could never create the mastery record needed to
+   * improve its own difficulty.
    *
-   * With an empty/partial mastery map every unseen skill derives difficulty
-   * 1, which reproduces makePrompt(profile, context, 1) eligibility for
-   * already-unlocked templates — new and returning players see no change
-   * until they build a streak.
+   * Mastery raises generation difficulty above the template floor, capped by
+   * maxDifficulty. If the context has no templates, the engine falls back to
+   * the profile band using the same floor-and-cap rule.
    */
   static makeAdaptivePrompt(
     profile: PlayerProfile,
@@ -71,29 +72,22 @@ export class QuestionEngine {
       throw new Error(`No question templates available for ${profile.curriculumBand}`);
     }
 
-    const eligibleAtDerivedDifficulty = (
+    const withAdaptiveDifficulty = (
       templates: QuestionTemplate[]
-    ): { template: QuestionTemplate; difficulty: Difficulty }[] => templates.flatMap((template) => {
+    ): { template: QuestionTemplate; difficulty: Difficulty }[] => templates.map((template) => {
       const record = mastery[MasterySystem.keyForParts(template.band, template.subject, template.skill)];
       const derived = this.difficultyForRecord(record);
-      if (derived < template.minDifficulty) return [];
-      return [{ template, difficulty: Math.min(derived, template.maxDifficulty) as Difficulty }];
+      const difficulty = Math.min(
+        template.maxDifficulty,
+        Math.max(template.minDifficulty, derived)
+      ) as Difficulty;
+      return { template, difficulty };
     });
 
     const contextMatches = bandTemplates.filter((template) => template.contexts.includes(context));
-    const eligibleContext = eligibleAtDerivedDifficulty(contextMatches);
-    if (eligibleContext.length > 0) return eligibleContext;
+    if (contextMatches.length > 0) return withAdaptiveDifficulty(contextMatches);
 
-    const eligibleBand = eligibleAtDerivedDifficulty(bandTemplates);
-    if (eligibleBand.length > 0) return eligibleBand;
-
-    // Reachable only if every template in the band declares minDifficulty >= 2
-    // and no skill has a streak yet — mirror templatesFor's full-band fallback
-    // (generate at difficulty 1) rather than ever returning empty-handed.
-    return bandTemplates.map((template) => ({
-      template,
-      difficulty: Math.min(1, template.maxDifficulty) as Difficulty
-    }));
+    return withAdaptiveDifficulty(bandTemplates);
   }
 
   static makePromptById(profile: PlayerProfile, templateId: string): LearningPrompt {
