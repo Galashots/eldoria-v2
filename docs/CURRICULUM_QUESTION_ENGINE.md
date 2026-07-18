@@ -36,12 +36,44 @@ The question engine supports those rules by tagging each prompt with grade band,
 ## Engine architecture
 
 ```text
-Player profile + game context + difficulty
+Player profile + game context + per-skill difficulty (derived from mastery streaks)
 -> select matching question template
 -> generate prompt
 -> resolve answer
 -> award bonus or give hint
 ```
+
+### Adaptive difficulty (implemented 2026-07-18)
+
+`QuestionEngine.makeAdaptivePrompt(profile, context, mastery)` derives each
+candidate template's generation difficulty from *its own skill's* mastery
+record: `1 + floor(currentCorrectStreak / 3)`, clamped to the shared 1-5
+scale (`QuestionEngine.difficultyForRecord`). Context remains authoritative:
+when templates exist for the requested context, the engine chooses among those
+rather than silently substituting an unrelated scenario.
+
+Every context template is reachable at its declared `minDifficulty`. Its actual
+generation difficulty is `max(derivedDifficulty, minDifficulty)`, capped by its
+own `maxDifficulty`. This floor is necessary for templates such as
+`grade5-shop-decimal-estimate`: if an unseen decimals skill had to reach
+difficulty 2 before the only decimals prompt could appear, the template would
+require mastery that the game had no way to create. Once the skill has a
+streak, later prompts rise above the floor normally.
+
+Child-safety properties, by construction:
+
+- Difficulty only changes which numbers get generated; it never gates
+  rewards, quest progress, retries, or adventure (the product invariant that
+  wrong answers never block the game is untouched).
+- A wrong answer resets the streak (existing `MasterySystem` behavior), so
+  difficulty eases back toward the template floor after mistakes; a skip never
+  moves it.
+- A missing record derives difficulty 1. Templates whose floor is 1 retain
+  their pre-adaptive baseline ranges. Higher-floor templates begin at their
+  declared floor so they remain reachable and context-correct.
+- Every generated prompt must still contain exactly one correct answer among
+  unique choices; unit and browser tests exercise both floor and elevated
+  difficulties.
 
 Core files:
 
@@ -88,10 +120,10 @@ procedurally generated from random numbers as before.
 
 ## Future OFIs
 
-1. Add mastery tracking per skill instead of using a fixed difficulty value.
+1. ~~Add mastery tracking per skill instead of using a fixed difficulty value.~~ Done (2026-07-18): mastery-streak-derived per-skill difficulty via `QuestionEngine.makeAdaptivePrompt` — see "Adaptive difficulty" above. Remaining headroom: Tiled-object difficulty overrides and richer difficulty-aware template content.
 2. Add Tiled object properties to request specific subject/skill/context prompts.
 3. Add quest arcs that gather stealth assessment from actions, not only answer buttons.
 4. Add parent-facing learning summaries from local save data.
 5. Add prompt UI support for longer answer choices and explanations.
 6. Add read-aloud text generation for all Grade 2 prompt types.
-7. Add content validation tests so templates always produce answer choices with exactly one correct answer.
+7. Expand content validation to pedagogical range audits and age-appropriate language checks as the template library grows.

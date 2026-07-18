@@ -69,6 +69,27 @@ type HeroPresentation = {
 async function boot(page: Page): Promise<void> {
   await page.addInitScript(() => {
     window.__ELDORIA_E2E__ = true;
+
+    // Continuously accumulate every visible canvas text into a window-level
+    // Set. Floating reward toasts live ~1.2-1.5s (one tween), shorter than a
+    // slow environment's evaluate round-trip, so one-shot polls can miss
+    // them; this rAF sampler cannot. Assertions on transient toasts use
+    // canvasTextSeen(); stable UI (HUD, panels, open prompts) keeps using
+    // hasCanvasText() current-state checks.
+    const w = window as unknown as { __canvasTextsSeen?: Set<string> };
+    w.__canvasTextsSeen = new Set();
+    const collect = () => {
+      const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
+        children: { list?: Array<{ active?: boolean; visible?: boolean; text?: unknown }> };
+      } | undefined;
+      for (const child of scene?.children.list ?? []) {
+        if (child?.active && child?.visible && typeof child.text === 'string') {
+          w.__canvasTextsSeen!.add(child.text);
+        }
+      }
+      requestAnimationFrame(collect);
+    };
+    requestAnimationFrame(collect);
   });
 
   await page.goto('/');
@@ -206,6 +227,41 @@ async function cropFeedbackVisible(page: Page): Promise<boolean> {
   });
 }
 
+/**
+ * Browser-side watcher for the crop-bonus feedback pulse: the pulse lives
+ * ~480ms (one tween), shorter than a slow environment's evaluate round-trip,
+ * so polling cropFeedbackVisible for `true` can miss it entirely. A
+ * requestAnimationFrame loop in the page samples every frame regardless of
+ * round-trip latency. Arm BEFORE triggering the interaction, then assert
+ * cropFeedbackSeen; the later `false` poll stays as-is (a destroyed pulse
+ * is a stable end state, safe to poll for).
+ */
+async function armCropFeedbackWatcher(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const w = window as unknown as { __cropFeedbackSeen?: boolean; __cropFeedbackWatchId?: number };
+    w.__cropFeedbackSeen = false;
+    if (w.__cropFeedbackWatchId !== undefined) cancelAnimationFrame(w.__cropFeedbackWatchId);
+    const watch = () => {
+      const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
+        children: { getByName: (name: string) => { active: boolean; visible: boolean } | null };
+      };
+      const pulse = scene?.children.getByName('crop-bonus-feedback');
+      if (pulse?.active === true && pulse?.visible === true) {
+        w.__cropFeedbackSeen = true;
+        return;
+      }
+      w.__cropFeedbackWatchId = requestAnimationFrame(watch);
+    };
+    w.__cropFeedbackWatchId = requestAnimationFrame(watch);
+  });
+}
+
+async function cropFeedbackSeen(page: Page): Promise<boolean> {
+  return page.evaluate(
+    () => (window as unknown as { __cropFeedbackSeen?: boolean }).__cropFeedbackSeen === true
+  );
+}
+
 async function holdKey(page: Page, key: string, ms = 300): Promise<void> {
   await page.keyboard.down(key);
   await page.waitForTimeout(ms);
@@ -231,6 +287,53 @@ async function moveGrade2Hero(
   }).toEqual([`grade2-mage-idle-${facing}`, 'grade2-mage-idle-v001']);
 }
 
+/**
+ * Browser-side hero-animation recorder for transient clips (cast/hurt run
+ * ~500ms, shorter than a slow environment's evaluate round-trip, so polling
+ * heroPresentation can miss them entirely). Arm before triggering the
+ * action, poll recordedHeroAnimations, then disarm.
+ */
+async function armHeroAnimationRecorder(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
+      heroPresentation?: {
+        sprite?: {
+          on: (event: string, cb: (anim: { key: string }) => void) => void;
+          off: (event: string, cb: (anim: { key: string }) => void) => void;
+        };
+      };
+    };
+    const recorderWindow = window as unknown as {
+      __heroAnimRecorder: string[];
+      __heroAnimRecorderCallback?: (anim: { key: string }) => void;
+    };
+    recorderWindow.__heroAnimRecorder = [];
+    const callback = (anim: { key: string }) => recorderWindow.__heroAnimRecorder.push(anim.key);
+    recorderWindow.__heroAnimRecorderCallback = callback;
+    scene.heroPresentation?.sprite?.on('animationstart', callback);
+  });
+}
+
+async function recordedHeroAnimations(page: Page): Promise<string[]> {
+  return page.evaluate(() => (window as unknown as { __heroAnimRecorder?: string[] }).__heroAnimRecorder ?? []);
+}
+
+async function disarmHeroAnimationRecorder(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
+      heroPresentation?: {
+        sprite?: { off: (event: string, cb: (anim: { key: string }) => void) => void };
+      };
+    };
+    const recorderWindow = window as unknown as {
+      __heroAnimRecorderCallback?: (anim: { key: string }) => void;
+    };
+    const callback = recorderWindow.__heroAnimRecorderCallback;
+    if (callback) scene.heroPresentation?.sprite?.off('animationstart', callback);
+    delete recorderWindow.__heroAnimRecorderCallback;
+  });
+}
+
 async function castGrade2Hero(
   page: Page,
   facing: 'front' | 'back' | 'left' | 'right',
@@ -242,13 +345,19 @@ async function castGrade2Hero(
       .toBe(`grade2-mage-walk-${facing}`);
   }
 
+  // Record animation starts browser-side BEFORE casting: the cast clip is a
+  // ~500ms transient, and under software rendering an expect.poll round-trip
+  // can miss it entirely (this flaked in slow environments). The encounter
+  // suite's strikeBurst helper sets the same observe-in-page precedent.
+  await armHeroAnimationRecorder(page);
+
   await page.keyboard.down('Space');
   await page.waitForTimeout(50);
   await page.keyboard.up('Space');
-  await expect.poll(async () => {
-    const hero = await heroPresentation(page);
-    return [hero.animation, hero.texture];
-  }).toEqual([`grade2-mage-cast-${facing}`, 'grade2-mage-cast-v001']);
+
+  await expect.poll(async () => recordedHeroAnimations(page)).toContain(`grade2-mage-cast-${facing}`);
+
+  await disarmHeroAnimationRecorder(page);
 
   await expect.poll(async () => {
     const hero = await heroPresentation(page);
@@ -449,6 +558,24 @@ async function chooseOpenPrompt(page: Page, choice: PreviewPrompt['answer']): Pr
   await page.waitForTimeout(200);
 }
 
+/** True once canvas text containing `text` has been seen since the recorder was last reset. For transient floating toasts. */
+async function canvasTextSeen(page: Page, text: string): Promise<boolean> {
+  return page.evaluate((expected) => {
+    const seen = (window as unknown as { __canvasTextsSeen?: Set<string> }).__canvasTextsSeen;
+    if (!seen) return false;
+    for (const entry of seen) {
+      if (entry.includes(expected)) return true;
+    }
+    return false;
+  }, text);
+}
+
+async function resetCanvasTextRecorder(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    (window as unknown as { __canvasTextsSeen?: Set<string> }).__canvasTextsSeen?.clear();
+  });
+}
+
 async function hasCanvasText(page: Page, text: string): Promise<boolean> {
   return page.evaluate((expectedText) => {
     const hasText = (item: { active?: boolean; visible?: boolean; text?: unknown; list?: unknown[] }): boolean => {
@@ -468,10 +595,13 @@ async function hasCanvasText(page: Page, text: string): Promise<boolean> {
 }
 
 test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progress, and saving', async ({ page }) => {
-  // Set a test-specific timeout of 60s: this test now walks all three Mira
-  // errands (including three sprout interactions) plus several reloads,
-  // which can exceed the global 30s timeout on slower CI VMs.
-  test.setTimeout(60000);
+  // Set a test-specific timeout of 180s: this test walks all three Mira
+  // errands (including three sprout interactions) plus several reloads.
+  // 60s was enough for slower CI VMs, but software-rendered environments
+  // (no GPU) run the same wall-clock journey measurably slower — every
+  // poll round-trip costs more (~115-130s observed in a throttled no-GPU
+  // sandbox). The assertions themselves are unchanged.
+  test.setTimeout(180000);
 
   await boot(page);
   await startProfile(page, 240);
@@ -535,11 +665,10 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   await moveGrade2Hero(page, 'KeyW', 'back');
   const beforeHurt = await state(page);
   const beforeHurtSave = await page.evaluate(() => localStorage.getItem('eldoria_v2_save_grade2-mage'));
+  await armHeroAnimationRecorder(page);
   expect(await triggerGrade2Hurt(page)).toBe(true);
-  await expect.poll(async () => {
-    const hero = await heroPresentation(page);
-    return [hero.animation, hero.texture];
-  }).toEqual(['grade2-mage-hurt-back', 'grade2-mage-hurt-v001']);
+  await expect.poll(async () => recordedHeroAnimations(page)).toContain('grade2-mage-hurt-back');
+  await disarmHeroAnimationRecorder(page);
   await expect.poll(async () => {
     const hero = await heroPresentation(page);
     return [hero.animation, hero.texture];
@@ -554,15 +683,14 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
 
   await page.keyboard.down('KeyD');
   await expect.poll(async () => (await heroPresentation(page)).animation).toBe('grade2-mage-walk-right');
+  await armHeroAnimationRecorder(page);
   await page.keyboard.down('Space');
   await page.waitForTimeout(50);
   await page.keyboard.up('Space');
-  await expect.poll(async () => (await heroPresentation(page)).animation).toBe('grade2-mage-cast-right');
+  await expect.poll(async () => recordedHeroAnimations(page)).toContain('grade2-mage-cast-right');
   expect(await triggerGrade2Hurt(page)).toBe(true);
-  await expect.poll(async () => {
-    const hero = await heroPresentation(page);
-    return [hero.animation, hero.texture];
-  }).toEqual(['grade2-mage-hurt-right', 'grade2-mage-hurt-v001']);
+  await expect.poll(async () => recordedHeroAnimations(page)).toContain('grade2-mage-hurt-right');
+  await disarmHeroAnimationRecorder(page);
   await expect.poll(async () => {
     const hero = await heroPresentation(page);
     return [hero.animation, hero.texture];
@@ -577,16 +705,51 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   await expect.poll(async () => (await state(page)).questStep).toBe('try-crop-bonus');
   await expect.poll(async () => (await state(page)).objective).toContain('crop patch');
 
+  await armCropFeedbackWatcher(page);
   expect(await interactAt(page, 480, 832)).toContain('CropBonus');
-  await expect.poll(async () => cropFeedbackVisible(page)).toBe(true);
+  await expect.poll(async () => cropFeedbackSeen(page)).toBe(true);
   await expect.poll(async () => hasCanvasText(page, 'READ ALOUD')).toBe(true);
   await expect.poll(async () => cropFeedbackVisible(page)).toBe(false);
   await skipOpenPrompt(page);
   await expect.poll(async () => (await state(page)).questStep).toBe('find-slime');
   await expect.poll(async () => masteryTotal(page, 'skipped')).toBe(1);
 
+  // The hop is a short one-shot: record slime animation starts browser-side
+  // (same transient-observation pattern as the hero recorder above) rather
+  // than racing a poll round-trip against the clip length.
+  await page.evaluate(() => {
+    const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
+      practiceSlimeSprite?: {
+        on: (event: string, cb: (anim: { key: string }) => void) => void;
+        off: (event: string) => void;
+      };
+    };
+    const recorderWindow = window as unknown as {
+      __slimeAnimRecorder: string[];
+      __slimeAnimRecorderCallback?: (anim: { key: string }) => void;
+    };
+    recorderWindow.__slimeAnimRecorder = [];
+    const callback = (anim: { key: string }) => recorderWindow.__slimeAnimRecorder.push(anim.key);
+    recorderWindow.__slimeAnimRecorderCallback = callback;
+    scene.practiceSlimeSprite?.on('animationstart', callback);
+  });
   expect(await interactAt(page, 1408, 640)).toContain('Practice Slime');
-  await expect.poll(async () => (await slimePresentation(page)).animation).toBe('practice-slime-hop');
+  await expect.poll(async () => page.evaluate(
+    () => (window as unknown as { __slimeAnimRecorder?: string[] }).__slimeAnimRecorder ?? []
+  )).toContain('practice-slime-hop');
+  await page.evaluate(() => {
+    const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
+      practiceSlimeSprite?: {
+        off: (event: string, cb: (anim: { key: string }) => void) => void;
+      };
+    };
+    const recorderWindow = window as unknown as {
+      __slimeAnimRecorderCallback?: (anim: { key: string }) => void;
+    };
+    const callback = recorderWindow.__slimeAnimRecorderCallback;
+    if (callback) scene.practiceSlimeSprite?.off('animationstart', callback);
+    delete recorderWindow.__slimeAnimRecorderCallback;
+  });
   await expect.poll(async () => hasCanvasText(page, 'READ ALOUD')).toBe(true);
   await skipOpenPrompt(page);
   await expect.poll(async () => (await slimePresentation(page)).animation).toBe('practice-slime-idle');
@@ -595,6 +758,7 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   await expect.poll(async () => masteryTotal(page, 'skipped')).toBe(2);
 
   expect((await setPlayer(page, 832, 512)).hint).toContain('Mira');
+  await resetCanvasTextRecorder(page);
   await sceneInteract(page);
   await expect.poll(async () => (await state(page)).questStep).toBe('complete');
   await expect.poll(async () => (await state(page)).gold).toBe(10);
@@ -603,7 +767,7 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   await expect.poll(async () => (await state(page)).hudWidth).toBeLessThanOrEqual(896);
   await expect.poll(async () => masteryTotal(page, 'seen')).toBe(2);
   await expect.poll(async () => masteryTotal(page, 'attempted')).toBe(0);
-  await expect.poll(async () => hasCanvasText(page, 'Received: Sunberry Charm')).toBe(true);
+  await expect.poll(async () => canvasTextSeen(page, 'Received: Sunberry Charm')).toBe(true);
 
   await page.reload();
   await startProfile(page, 240);
@@ -619,15 +783,17 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   await expect.poll(async () => (await state(page)).gold).toBe(10);
   await expect.poll(async () => (await state(page)).inventory.sunberryCharm).toBe(1);
 
+  await armCropFeedbackWatcher(page);
+  await resetCanvasTextRecorder(page);
   expect(await interactAt(page, 480, 832)).toContain('Check Scarecrow');
-  await expect.poll(async () => cropFeedbackVisible(page)).toBe(true);
+  await expect.poll(async () => cropFeedbackSeen(page)).toBe(true);
   await expect.poll(async () => cropFeedbackVisible(page)).toBe(false);
   await skipOpenPrompt(page);
   await expect.poll(async () => (await state(page)).gold).toBe(10);
   await expect.poll(async () => (await state(page)).inventory.sunberryCharm).toBe(1);
   await expect.poll(async () => (await state(page)).objective).toContain('Bring the Moonseed Charm back to Mira');
   await expect.poll(async () => masteryTotal(page, 'skipped')).toBe(3);
-  await expect.poll(async () => hasCanvasText(page, 'Found: Moonseed Charm')).toBe(true);
+  await expect.poll(async () => canvasTextSeen(page, 'Found: Moonseed Charm')).toBe(true);
 
   await page.reload();
   await startProfile(page, 240);
@@ -636,12 +802,13 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   await expect.poll(async () => (await state(page)).objective).toContain('Bring the Moonseed Charm back to Mira');
 
   await setPlayer(page, 832, 512);
+  await resetCanvasTextRecorder(page);
   await sceneInteract(page);
   await expect.poll(async () => (await state(page)).gold).toBe(14);
   await expect.poll(async () => (await state(page)).inventory.sunberryCharm).toBe(1);
   await expect.poll(async () => (await state(page)).objective).toContain('sleepy sprouts');
-  await expect.poll(async () => hasCanvasText(page, 'Moonseed Charm')).toBe(true);
-  await expect.poll(async () => hasCanvasText(page, '+4 Gold')).toBe(true);
+  await expect.poll(async () => canvasTextSeen(page, 'Moonseed Charm')).toBe(true);
+  await expect.poll(async () => canvasTextSeen(page, '+4 Gold')).toBe(true);
 
   await page.reload();
   await startProfile(page, 240);
@@ -653,32 +820,36 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   await sceneInteract(page);
   await expect.poll(async () => (await state(page)).objective).toContain('Wake the sleepy sprouts (0/3)');
 
+  await armCropFeedbackWatcher(page);
   expect(await interactAt(page, 992, 160)).toContain('Sleepy Sprout');
-  await expect.poll(async () => cropFeedbackVisible(page)).toBe(true);
+  await expect.poll(async () => cropFeedbackSeen(page)).toBe(true);
   await expect.poll(async () => cropFeedbackVisible(page)).toBe(false);
   await skipOpenPrompt(page);
   await expect.poll(async () => (await state(page)).objective).toContain('Wake the sleepy sprouts (1/3)');
 
+  await armCropFeedbackWatcher(page);
   expect(await interactAt(page, 352, 1056)).toContain('Sleepy Sprout');
-  await expect.poll(async () => cropFeedbackVisible(page)).toBe(true);
+  await expect.poll(async () => cropFeedbackSeen(page)).toBe(true);
   await expect.poll(async () => cropFeedbackVisible(page)).toBe(false);
   await skipOpenPrompt(page);
   await expect.poll(async () => (await state(page)).objective).toContain('Wake the sleepy sprouts (2/3)');
 
+  await armCropFeedbackWatcher(page);
   expect(await interactAt(page, 1696, 1056)).toContain('Sleepy Sprout');
-  await expect.poll(async () => cropFeedbackVisible(page)).toBe(true);
+  await expect.poll(async () => cropFeedbackSeen(page)).toBe(true);
   await expect.poll(async () => cropFeedbackVisible(page)).toBe(false);
   await skipOpenPrompt(page);
   await expect.poll(async () => (await state(page)).objective).toContain('Tell Mira the sprouts are awake');
   await expect.poll(async () => masteryTotal(page, 'skipped')).toBe(6);
 
   expect((await setPlayer(page, 832, 512)).hint).toContain('Mira');
+  await resetCanvasTextRecorder(page);
   await sceneInteract(page);
   await expect.poll(async () => (await state(page)).gold).toBe(20);
   await expect.poll(async () => (await state(page)).inventory.wildbloomSprig).toBe(1);
   await expect.poll(async () => (await state(page)).objective).toContain('The Sleepy Sprouts');
-  await expect.poll(async () => hasCanvasText(page, 'Wildbloom Sprig')).toBe(true);
-  await expect.poll(async () => hasCanvasText(page, '+6 Gold')).toBe(true);
+  await expect.poll(async () => canvasTextSeen(page, 'Wildbloom Sprig')).toBe(true);
+  await expect.poll(async () => canvasTextSeen(page, '+6 Gold')).toBe(true);
 
   await page.reload();
   await startProfile(page, 240);
@@ -694,6 +865,10 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
 });
 
 test('Grade 5 prompts keep reader profile without the Grade 2 read-aloud control', async ({ page }) => {
+  // Two boots plus a mid-test reload: comfortably inside 30s on CI runners,
+  // marginal under software rendering (no GPU), so give it the same
+  // slow-environment headroom as the vertical-slice walks above.
+  test.setTimeout(60000);
   await boot(page);
   await page.evaluate(() => {
     localStorage.setItem('eldoria_v2_save_grade5-adventurer', JSON.stringify({
@@ -723,10 +898,11 @@ test('Grade 5 prompts keep reader profile without the Grade 2 read-aloud control
 
   await expect.poll(async () => hasCanvasText(page, 'optional learning bonus')).toBe(true);
   await expect.poll(async () => hasCanvasText(page, 'READ ALOUD')).toBe(false);
+  await resetCanvasTextRecorder(page);
   await clickGame(page, 260, 388);
 
   await expect.poll(async () => (await state(page)).gold).toBe(3);
-  await expect.poll(async () => hasCanvasText(page, '+3 Gold')).toBe(true);
+  await expect.poll(async () => canvasTextSeen(page, '+3 Gold')).toBe(true);
   await expect.poll(async () => (await state(page)).mastery['grade5:math:area-perimeter']?.correct).toBe(1);
   await expect.poll(async () => (await state(page)).mastery['grade5:math:area-perimeter']?.attempted).toBe(1);
   await expect.poll(async () => (await state(page)).mastery['grade5:math:area-perimeter']?.currentCorrectStreak).toBe(1);

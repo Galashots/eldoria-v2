@@ -1,5 +1,6 @@
-import { makeLearningPrompt, type AnswerValue, type BonusContext, type LearningPrompt } from '../data/curriculum';
+import type { AnswerValue, BonusContext, LearningPrompt } from '../data/curriculum';
 import { PROFILES, type ProfileId } from '../data/profiles';
+import type { LearningMastery } from './MasterySystem';
 import { QuestionEngine } from './QuestionEngine';
 
 export type BonusResult = {
@@ -19,8 +20,16 @@ export class LearningBonusSystem {
     this.profileId = profileId;
   }
 
-  makePrompt(context: BonusContext): LearningPrompt {
-    return makeLearningPrompt(PROFILES[this.profileId], context);
+  /**
+   * Builds the prompt for an optional learning bonus. Pass the player's
+   * current mastery so the engine can adapt per-skill difficulty to recent
+   * streaks (see QuestionEngine.makeAdaptivePrompt). With no mastery, each
+   * context template starts at its declared floor; templates with a floor of
+   * 1 retain the original baseline ranges, while higher-floor templates stay
+   * reachable instead of requiring mastery they could never create.
+   */
+  makePrompt(context: BonusContext, mastery: LearningMastery = {}): LearningPrompt {
+    return QuestionEngine.makeAdaptivePrompt(PROFILES[this.profileId], context, mastery);
   }
 
   makePromptById(templateId: string): LearningPrompt {
