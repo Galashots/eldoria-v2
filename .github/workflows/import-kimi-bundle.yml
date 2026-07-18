@@ -1,4 +1,4 @@
-name: Publish clean reviewed Kimi branch
+name: Restack reviewed Kimi branch
 
 on:
   pull_request:
@@ -9,21 +9,99 @@ permissions:
   contents: write
 
 jobs:
-  publish-reviewed-branch:
+  restack-reviewed-branch:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      - name: Build one reviewed commit on current main
+      - name: Merge post-shoreline main into reviewed branch
         run: |
-          git fetch origin main chatgpt/kimi-audit-improvements
-          git checkout -B reviewed origin/chatgpt/kimi-audit-improvements
-          test "$(git rev-parse HEAD)" = "a2a280fc2b8050bff035b13f066bda734c3a9b0f"
-          git reset --soft origin/main
+          git fetch origin main chatgpt/kimi-audit-improvements-reviewed
+          git checkout -B reviewed origin/chatgpt/kimi-audit-improvements-reviewed
+          test "$(git rev-parse HEAD)" = "2c3eb89cb77bca599aaf20a20a216926dd0a3c68"
           git config user.name "ChatGPT Repo Agent"
           git config user.email "actions@users.noreply.github.com"
+          git merge --no-ff --no-commit -X ours origin/main
+          python - <<'PY'
+          import json
+          import subprocess
+          from pathlib import Path
+
+          def show(ref_path: str) -> str:
+              return subprocess.check_output(['git', 'show', ref_path], text=True)
+
+          # Preserve both package-script families. The reviewed branch owns
+          # PWA/generated-surface checks; post-#99 main owns the expanded
+          # shoreline terrain-blend test command.
+          ours = json.loads(show('HEAD:package.json'))
+          main = json.loads(show('origin/main:package.json'))
+          merged = dict(main)
+          merged['scripts'] = {**main['scripts'], **ours['scripts']}
+          merged['scripts']['test:terrain-blend'] = main['scripts']['test:terrain-blend']
+          Path('package.json').write_text(json.dumps(merged, indent=2) + '\n', encoding='utf-8')
+
+          current_path = Path('docs/CURRENT_STATE.md')
+          current = current_path.read_text(encoding='utf-8')
+          main_current = show('origin/main:docs/CURRENT_STATE.md')
+          shoreline_line = next(
+              line for line in main_current.splitlines()
+              if line.startswith('- `tile_farm_water_shore` **blend family')
+          )
+          if shoreline_line not in current:
+              dirt_line = next(
+                  line for line in current.splitlines()
+                  if line.startswith('- `tile_farm_path_dirt` **blend family')
+              )
+              current = current.replace(dirt_line + '\n', dirt_line + '\n' + shoreline_line + '\n', 1)
+
+          current = current.replace(
+              'Last refreshed on 2026-07-18 after independently reviewing and correcting the Kimi-K3 adaptive-difficulty, PWA, terrain-proof, and E2E-hardening bundle on draft PR #101.',
+              'Last refreshed on 2026-07-18 after merging the approved shoreline family (PR #99) and additively restacking the independently reviewed Kimi-K3 adaptive-difficulty, PWA, terrain-proof, and E2E-hardening bundle on PR #102.'
+          )
+          current = current.replace(
+              "The seven Batch A anchors are approved. The dirt blend family is approved and on `main`. The shoreline blend family is separately approved on draft PR #99 but is not part of this branch's base yet; PR #101 must be restacked after #99 lands so both authoritative histories are preserved.",
+              "The seven Batch A anchors are approved. Both required reduced terrain-blend families are approved and on `main`: `tile_farm_path_dirt` and `tile_farm_water_shore`. The bounded proof map still uses only grass/water centres and dirt centre; shoreline and Wangset-aware transitions remain deferred to the final terrain-integration gate."
+          )
+          current = current.replace(
+              '5. `tile_farm_water_shore` reduced 13-cell family — approved on PR #99, pending merge/restack into this branch.',
+              '5. `tile_farm_water_shore` reduced 13-cell family — complete, approved, and merged on PR #99.'
+          )
+          start = current.index('## Immediate next steps')
+          end = current.index('## Decisions for the generation handoff')
+          next_steps = '''## Immediate next steps
+
+1. Close the grass-family packaging gap with an explicit `grass_a` runtime interpretation, then pack and audit `grass_a`/`grass_b`/`grass_c` in one deterministic manifest and sheet.
+2. Pack and audit the two-cell `water_a`/`water_b` family.
+3. After the terrain families are source/packed complete, proceed to Batch C vegetation. Do not expand the bounded terrain proof into piecemeal final-map integration before the environment-kit contact-sheet and Wangset gates.
+4. Keep the now-merged dirt and shoreline transition families out of the proof map until the final Wangset-aware composition can demonstrate coherent boundaries at target scale.
+5. In parallel only where it does not displace the environment milestone, produce the dedicated Ranger Explorer base and freeze both heroes' required clip timing before armor source generation.
+6. Track the existing Wildbloom canvas-text timeout as a separate repository-health item if it reappears after the recorder hardening; do not conflate that unrelated flake with asset-only changes.
+
+'''
+          current = current[:start] + next_steps + current[end:]
+          current_path.write_text(current, encoding='utf-8')
+
+          # Preserve the complete approved shoreline history between the new
+          # Kimi entry and the older dirt entry.
+          changelog_path = Path('docs/CHATGPT_CHANGELOG.md')
+          changelog = changelog_path.read_text(encoding='utf-8')
+          main_log = show('origin/main:docs/CHATGPT_CHANGELOG.md')
+          shore_start = main_log.index('## 2026-07-17 — Shoreline terrain-blend family (13 cells) — APPROVED, no v3 required')
+          shore_end = main_log.index('## 2026-07-17 — Deterministic terrain-blend compositor + dirt family')
+          shoreline_history = main_log[shore_start:shore_end]
+          if '## 2026-07-17 — Shoreline terrain-blend family (13 cells) — APPROVED, no v3 required' not in changelog:
+              insert_at = changelog.index('## 2026-07-17 — Deterministic terrain-blend compositor + dirt family')
+              changelog = changelog[:insert_at] + shoreline_history + changelog[insert_at:]
+          changelog = changelog.replace('draft PR #101', 'PR #102')
+          changelog = changelog.replace(
+              'PR #101 is based before the approved shoreline PR #99 and must be restacked after #99 lands, preserving both CI and authoritative documentation histories additively.',
+              'PR #102 is additively restacked onto post-#99 `main`, preserving the approved shoreline family, expanded terrain-blend CI coverage, and both authoritative documentation histories.'
+          )
+          changelog_path.write_text(changelog, encoding='utf-8')
+          PY
+          test -z "$(git diff --name-only --diff-filter=U)"
+          git add package.json docs/CURRENT_STATE.md docs/CHATGPT_CHANGELOG.md .github/workflows/ci.yml
           git diff --cached --check
-          git diff --quiet origin/main -- .github/workflows/ci.yml
-          git commit -m "Integrate reviewed Kimi-K3 audit improvements"
-          git push --force origin HEAD:refs/heads/chatgpt/kimi-audit-improvements-reviewed
+          git commit -m "Restack reviewed Kimi improvements after shoreline merge"
+          git push origin HEAD:refs/heads/chatgpt/kimi-audit-improvements-reviewed
