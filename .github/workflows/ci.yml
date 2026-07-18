@@ -55,7 +55,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-browsers-${{ runner.os }}-${{ steps.playwright-version.outputs.playwright-version }}
+          key: playwright-browsers-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
       - run: npx playwright install --with-deps chromium
       - name: Run browser smoke suite
         run: |
