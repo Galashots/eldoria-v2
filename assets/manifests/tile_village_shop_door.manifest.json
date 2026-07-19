@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "id": "tile_village_shop_door",
+  "_note": "Approved source/review packed family for readable shop entrance states; not runtime/map integrated. Fixed 3x1 row-major order: closed, highlighted, open_optional.",
+  "target": {
+    "outputPath": "../tilesets/tile_village_shop_door.png",
+    "cellPx": [
+      16,
+      16
+    ],
+    "cols": 3,
+    "rows": 1
+  },
+  "sources": {
+    "closed": {
+      "path": "../source/generated/tile_village_shop_door/closed.png",
+      "background": {
+        "mode": "alpha"
+      }
+    },
+    "highlighted": {
+      "path": "../source/generated/tile_village_shop_door/highlighted.png",
+      "background": {
+        "mode": "alpha"
+      }
+    },
+    "open_optional": {
+      "path": "../source/generated/tile_village_shop_door/open_optional.png",
+      "background": {
+        "mode": "alpha"
+      }
+    }
+  },
+  "frames": [
+    {
+      "sourceRef": "closed",
+      "destCell": [
+        0,
+        0
+      ],
+      "trim": "none",
+      "fit": "fill",
+      "anchor": "top_left"
+    },
+    {
+      "sourceRef": "highlighted",
+      "destCell": [
+        1,
+        0
+      ],
+      "trim": "none",
+      "fit": "fill",
+      "anchor": "top_left"
+    },
+    {
+      "sourceRef": "open_optional",
+      "destCell": [
+        2,
+        0
+      ],
+      "trim": "none",
+      "fit": "fill",
+      "anchor": "top_left"
+    }
+  ]
+}

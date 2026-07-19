@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "id": "review_tile_village_shop_door_highlighted",
+  "_reviewOnly": "Review/evidence only. Not runtime-integrated and not map-integrated.",
+  "_sourceNote": "The exact 16x16 approved runtime master is deterministically authored from the locked village/farm palette and replicated 64x into the canonical source. Normalization must round-trip with zero pixel drift.",
+  "target": {
+    "outputPath": "highlighted.review-normalized.png",
+    "cellPx": [
+      16,
+      16
+    ],
+    "cols": 1,
+    "rows": 1
+  },
+  "sources": {
+    "source": {
+      "path": "../../../../assets/source/generated/tile_village_shop_door/highlighted.png",
+      "background": {
+        "mode": "alpha"
+      }
+    }
+  },
+  "frames": [
+    {
+      "sourceRef": "source",
+      "destCell": [
+        0,
+        0
+      ],
+      "trim": "none",
+      "fit": "fill",
+      "anchor": "top_left"
+    }
+  ]
+}

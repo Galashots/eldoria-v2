@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "id": "tile_village_shop_wall",
+  "_note": "Approved source/review packed family for modular stone-and-timber shop facade; not runtime/map integrated. Fixed 3x1 row-major order: stone_base, wood_trim, window_lit.",
+  "target": {
+    "outputPath": "../tilesets/tile_village_shop_wall.png",
+    "cellPx": [
+      16,
+      16
+    ],
+    "cols": 3,
+    "rows": 1
+  },
+  "sources": {
+    "stone_base": {
+      "path": "../source/generated/tile_village_shop_wall/stone_base.png",
+      "background": {
+        "mode": "alpha"
+      }
+    },
+    "wood_trim": {
+      "path": "../source/generated/tile_village_shop_wall/wood_trim.png",
+      "background": {
+        "mode": "alpha"
+      }
+    },
+    "window_lit": {
+      "path": "../source/generated/tile_village_shop_wall/window_lit.png",
+      "background": {
+        "mode": "alpha"
+      }
+    }
+  },
+  "frames": [
+    {
+      "sourceRef": "stone_base",
+      "destCell": [
+        0,
+        0
+      ],
+      "trim": "none",
+      "fit": "fill",
+      "anchor": "top_left"
+    },
+    {
+      "sourceRef": "wood_trim",
+      "destCell": [
+        1,
+        0
+      ],
+      "trim": "none",
+      "fit": "fill",
+      "anchor": "top_left"
+    },
+    {
+      "sourceRef": "window_lit",
+      "destCell": [
+        2,
+        0
+      ],
+      "trim": "none",
+      "fit": "fill",
+      "anchor": "top_left"
+    }
+  ]
+}
