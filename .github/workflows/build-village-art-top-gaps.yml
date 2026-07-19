@@ -36,6 +36,16 @@ jobs:
           npm run test:village-art
           npm run validate:visual-targets
           git diff --check
+      - name: Upload exact-runtime village art evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: village-art-top-gaps-pr-${{ github.event.pull_request.number }}
+          path: |
+            docs/art-pipeline/review/village_top_gaps/village-top-gaps-contact-sheet.png
+            assets/tilesets/tile_village_shop_wall.png
+            assets/tilesets/tile_village_shop_door.png
+            assets/tilesets/tile_village_shop_roof.png
+          retention-days: 14
       - name: Commit generated review package
         run: |
           git config user.name "ChatGPT Repo Agent"
