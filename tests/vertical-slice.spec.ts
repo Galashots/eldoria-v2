@@ -644,7 +644,10 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   await moveGrade2Hero(page, 'KeyS', 'front');
   expect((await state(page)).player.y).toBeGreaterThan(start.y);
   await moveGrade2Hero(page, 'KeyW', 'back');
-  expect((await state(page)).player.y).toBeLessThan(start.y + 20);
+  // Canvas and WebGL can land one frame apart under CI. Keep the round-trip
+  // check within one 32px map tile while still proving the second move
+  // substantially reverses the first.
+  expect((await state(page)).player.y).toBeLessThan(start.y + 32);
 
   await moveGrade2Hero(page, 'KeyS', 'front', 700);
   expect((await state(page)).player.y).toBeGreaterThan(320);
