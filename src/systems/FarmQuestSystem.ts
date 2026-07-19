@@ -111,6 +111,42 @@ export class FarmQuestSystem {
       : MIRA_THIRD_ERRAND.objectives.inProgress(sproutsAwakened);
   }
 
+  /**
+   * Maps the current quest step to its world interaction target, for the
+   * bouncing objective marker and off-screen edge arrow (pre-reader
+   * direction). Returns null once every errand is complete (no marker).
+   * Pure state read — exported behavior is unit-tested per step.
+   */
+  currentObjectiveTarget(): InteractionId | null {
+    switch (this.state.firstQuestStep) {
+      case MIRA_FIRST_ERRAND.steps.talkToMira:
+      case MIRA_FIRST_ERRAND.steps.returnToMira:
+        return 'mira';
+      case MIRA_FIRST_ERRAND.steps.tryCropBonus:
+        return 'crop-bonus';
+      case MIRA_FIRST_ERRAND.steps.findSlime:
+        return 'practice-slime';
+      case MIRA_FIRST_ERRAND.steps.complete:
+        break;
+    }
+
+    if (!this.state.secondErrandComplete) {
+      // Discover step points at the scarecrow (crop patch); accept and
+      // report-back steps point at Mira.
+      if (this.canDiscoverSecondErrandCharm()) return 'crop-bonus';
+      return 'mira';
+    }
+
+    if (this.state.thirdErrandComplete) return null;
+    if (!this.state.thirdErrandAccepted) return 'mira';
+
+    // Third errand in progress: the next un-awakened sprout, then Mira.
+    if (!this.state.sprout1Awakened) return 'sprout-1';
+    if (!this.state.sprout2Awakened) return 'sprout-2';
+    if (!this.state.sprout3Awakened) return 'sprout-3';
+    return 'mira';
+  }
+
   hintLabel(targetLabel: string): string {
     return targetLabel === MIRA_FIRST_ERRAND.targets.cropBonus && this.canDiscoverSecondErrandCharm()
       ? 'Check Scarecrow'

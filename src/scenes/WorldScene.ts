@@ -84,6 +84,14 @@ export class WorldScene extends Phaser.Scene {
   private objectiveText!: Phaser.GameObjects.Text;
   private hintText!: Phaser.GameObjects.Text;
   private practiceSlimeSprite?: Phaser.GameObjects.Sprite;
+  // Objective direction (pre-reader friendly): a bouncing gold chevron above
+  // the current quest target plus an edge-of-screen arrow when it's off
+  // camera. Both are plain Graphics direct scene children — see the
+  // container-convention comment in drawTargetMarkers().
+  private objectiveMarker?: Phaser.GameObjects.Graphics;
+  private objectiveMarkerTween?: Phaser.Tweens.Tween;
+  private objectiveEdgeArrow?: Phaser.GameObjects.Graphics;
+  private objectiveTargetPosition?: { x: number; y: number };
   private heroPresentation!: HeroPresentationController;
   private music?: Phaser.Sound.BaseSound;
   private muteIcon!: Phaser.GameObjects.Graphics;
@@ -225,6 +233,13 @@ export class WorldScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.stopPromptReadAloud();
       this.resetJoystick();
+      // Scene instances are reused across restarts; drop the stale display
+      // objects so the next create() rebuilds them fresh.
+      this.objectiveMarkerTween = undefined;
+      this.objectiveMarker = undefined;
+      this.objectiveEdgeArrow = undefined;
+      this.objectiveTargetPosition = undefined;
+      this.pendingPracticeOffer = undefined;
       this.heroPresentation.dispose();
       // destroy(), not just stop(): `this.sound` is a Game-level plugin
       // shared across scene restarts, so a merely-stopped Sound instance
@@ -242,6 +257,10 @@ export class WorldScene extends Phaser.Scene {
 
   update(): void {
     this.heroPresentation.syncPosition();
+    // Runs before the busy gates below: the arrow tracks the camera, and the
+    // camera can still be settling (follow lerp) for a frame or two after a
+    // prompt opens.
+    this.updateObjectiveEdgeArrow();
 
     if (this.busy && !this.statsPanelOpen) {
       this.player.setVelocity(0, 0);
@@ -561,6 +580,111 @@ export class WorldScene extends Phaser.Scene {
 
   private refreshObjective(): void {
     this.objectiveText.setText(`Objective: ${this.farmQuest.currentObjective()}`);
+    this.updateObjectiveMarker();
+  }
+
+  /**
+   * Positions the bouncing gold chevron above the current objective target
+   * (or hides it when every errand is complete / the target is absent).
+   * Called from refreshObjective() so every quest-state change retargets it.
+   */
+  private updateObjectiveMarker(): void {
+    const targetId = this.farmQuest.currentObjectiveTarget();
+    const target = targetId ? this.targets.find((candidate) => candidate.id === targetId) : undefined;
+
+    if (!target) {
+      this.objectiveTargetPosition = undefined;
+      this.objectiveMarkerTween?.remove();
+      this.objectiveMarkerTween = undefined;
+      this.objectiveMarker?.setVisible(false);
+      this.objectiveEdgeArrow?.setVisible(false);
+      return;
+    }
+
+    this.objectiveTargetPosition = { x: target.x, y: target.y };
+
+    const marker = this.ensureObjectiveMarker();
+    // Above the target's floating label (label sits at y - 60 world px);
+    // clear of Mira's own pulse ring too.
+    const baseY = target.y - sy(52);
+    this.objectiveMarkerTween?.remove();
+    marker.setVisible(true).setPosition(target.x, baseY);
+    this.objectiveMarkerTween = this.tweens.add({
+      targets: marker,
+      y: baseY - sy(6),
+      duration: 460,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+  }
+
+  private ensureObjectiveMarker(): Phaser.GameObjects.Graphics {
+    if (this.objectiveMarker) return this.objectiveMarker;
+
+    // A plain Graphics direct scene child (never a Container — see the
+    // container-convention comment in drawTargetMarkers). Local design-space
+    // geometry scaled once by GAME_SCALE, like the Mira guidance marker.
+    const marker = this.add.graphics()
+      .setName('objective-marker')
+      .setScale(GAME_SCALE)
+      .setDepth(6);
+    marker.fillStyle(0xffd666, 1);
+    marker.fillTriangle(-7, -6, 7, -6, 0, 4);
+    marker.fillTriangle(-5, -14, 5, -14, 0, -7);
+    marker.lineStyle(1.5, 0x1a1208, 0.9);
+    marker.strokeTriangle(-7, -6, 7, -6, 0, 4);
+
+    this.objectiveMarker = marker;
+    return marker;
+  }
+
+  /**
+   * Shows a screen-edge arrow pointing at the objective target while it is
+   * outside the camera view; hidden when on-screen or with no objective.
+   * Runs every frame from update() — pure position math, no allocations.
+   */
+  private updateObjectiveEdgeArrow(): void {
+    const target = this.objectiveTargetPosition;
+    if (!target) {
+      this.objectiveEdgeArrow?.setVisible(false);
+      return;
+    }
+
+    const view = this.cameras.main.worldView;
+    if (view.contains(target.x, target.y)) {
+      this.objectiveEdgeArrow?.setVisible(false);
+      return;
+    }
+
+    const arrow = this.ensureObjectiveEdgeArrow();
+    const screenX = target.x - view.x;
+    const screenY = target.y - view.y;
+    // Clamp inside the play area: below the HUD/objective banners on top,
+    // clear of the hint bar on the bottom.
+    const clampedX = Phaser.Math.Clamp(screenX, sx(24), GAME_WIDTH - sx(24));
+    const clampedY = Phaser.Math.Clamp(screenY, sy(74), GAME_HEIGHT - sy(34));
+    const angle = Math.atan2(screenY - clampedY, screenX - clampedX);
+    arrow.setVisible(true).setPosition(clampedX, clampedY).setRotation(angle);
+  }
+
+  private ensureObjectiveEdgeArrow(): Phaser.GameObjects.Graphics {
+    if (this.objectiveEdgeArrow) return this.objectiveEdgeArrow;
+
+    // Drawn pointing right at rotation 0 so setRotation() aims it directly.
+    const arrow = this.add.graphics()
+      .setName('objective-edge-arrow')
+      .setScrollFactor(0)
+      .setScale(GAME_SCALE)
+      .setDepth(22)
+      .setVisible(false);
+    arrow.fillStyle(0xffd666, 0.95);
+    arrow.fillTriangle(10, 0, -6, -7, -6, 7);
+    arrow.lineStyle(1.5, 0x1a1208, 0.9);
+    arrow.strokeTriangle(10, 0, -6, -7, -6, 7);
+
+    this.objectiveEdgeArrow = arrow;
+    return arrow;
   }
 
   private updateHint(): void {
@@ -854,6 +978,10 @@ export class WorldScene extends Phaser.Scene {
     this.practiceSlimeSprite?.setVisible(false);
     this.save();
     this.updateHint();
+    // If the objective marker was floating over the slime (find-slime step),
+    // hide it now rather than leaving it bouncing over an empty clearing
+    // until the prompt-close quest advance re-runs refreshObjective().
+    this.updateObjectiveMarker();
   }
 
   private handleSproutInteraction(target: InteractionTarget): void {

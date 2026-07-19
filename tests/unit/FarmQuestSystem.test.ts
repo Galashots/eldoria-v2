@@ -102,6 +102,71 @@ describe('practice slime defeat soft-lock guards', () => {
   });
 });
 
+describe('currentObjectiveTarget mapping', () => {
+  it('maps every first-errand step to its world target', () => {
+    const targetFor = (step: SaveState['firstQuestStep']) =>
+      FarmQuestSystem.fromSave(baseSave({ firstQuestStep: step })).currentObjectiveTarget();
+
+    expect(targetFor(MIRA_FIRST_ERRAND.steps.talkToMira)).toBe('mira');
+    expect(targetFor(MIRA_FIRST_ERRAND.steps.tryCropBonus)).toBe('crop-bonus');
+    expect(targetFor(MIRA_FIRST_ERRAND.steps.findSlime)).toBe('practice-slime');
+    expect(targetFor(MIRA_FIRST_ERRAND.steps.returnToMira)).toBe('mira');
+  });
+
+  it('walks the second errand: accept at Mira, discover at the crop patch, report to Mira', () => {
+    const quest = FarmQuestSystem.fromSave(baseSave({
+      firstQuestStep: MIRA_FIRST_ERRAND.steps.complete
+    }));
+    // Second errand available but not accepted yet -> Mira.
+    expect(quest.currentObjectiveTarget()).toBe('mira');
+
+    quest.interactWithMira(); // accept
+    expect(quest.currentObjectiveTarget()).toBe('crop-bonus');
+
+    quest.completeCropInteraction(); // discover the charm
+    expect(quest.currentObjectiveTarget()).toBe('mira');
+  });
+
+  it('walks the third errand: next un-awakened sprout in order, then Mira, then null', () => {
+    const quest = FarmQuestSystem.fromSave(baseSave({
+      firstQuestStep: MIRA_FIRST_ERRAND.steps.complete,
+      questFlags: { miraSecondErrandComplete: true }
+    }));
+    // Third errand available but not accepted yet -> Mira.
+    expect(quest.currentObjectiveTarget()).toBe('mira');
+
+    quest.interactWithMira(); // accept
+    expect(quest.currentObjectiveTarget()).toBe('sprout-1');
+
+    quest.completeSproutInteraction('sprout-1');
+    expect(quest.currentObjectiveTarget()).toBe('sprout-2');
+
+    quest.completeSproutInteraction('sprout-2');
+    expect(quest.currentObjectiveTarget()).toBe('sprout-3');
+
+    quest.completeSproutInteraction('sprout-3');
+    expect(quest.currentObjectiveTarget()).toBe('mira');
+
+    quest.interactWithMira(); // turn in
+    expect(quest.currentObjectiveTarget()).toBeNull();
+  });
+
+  it('skips ahead when a middle sprout is already awake', () => {
+    const quest = FarmQuestSystem.fromSave(baseSave({
+      firstQuestStep: MIRA_FIRST_ERRAND.steps.complete,
+      questFlags: {
+        miraSecondErrandComplete: true,
+        miraThirdErrandAccepted: true,
+        miraThirdErrandSprout2Awakened: true
+      }
+    }));
+
+    expect(quest.currentObjectiveTarget()).toBe('sprout-1');
+    quest.completeSproutInteraction('sprout-1');
+    expect(quest.currentObjectiveTarget()).toBe('sprout-3');
+  });
+});
+
 describe('post-purpose interaction predicates', () => {
   it('crop purpose is not fulfilled before or during the crop step', () => {
     expect(FarmQuestSystem.fromSave(baseSave({

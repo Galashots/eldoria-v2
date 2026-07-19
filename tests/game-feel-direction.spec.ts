@@ -249,6 +249,93 @@ test('post-purpose interactions show flavor instead of prompts; a second ACTION 
   expect(await hasCanvasText(page, 'ACTION again to practice!')).toBe(false);
 });
 
+type MarkerState = {
+  markerExists: boolean;
+  markerVisible: boolean;
+  markerX: number | null;
+  markerY: number | null;
+  arrowVisible: boolean;
+};
+
+async function markerState(page: Page): Promise<MarkerState> {
+  return page.evaluate(() => {
+    const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
+      children: { getByName: (name: string) => { visible: boolean; x: number; y: number } | null };
+    };
+    const marker = scene.children.getByName('objective-marker');
+    const arrow = scene.children.getByName('objective-edge-arrow');
+    return {
+      markerExists: marker !== null,
+      markerVisible: marker?.visible === true,
+      markerX: marker?.x ?? null,
+      markerY: marker?.y ?? null,
+      arrowVisible: arrow?.visible === true
+    };
+  });
+}
+
+test('objective marker tracks the current quest target and disappears at completion', async ({ page }) => {
+  test.setTimeout(180000);
+
+  await boot(page, 'grade5-adventurer');
+
+  // Step 1 (talk-to-mira): chevron above Mira (832, 512).
+  await expect.poll(async () => markerState(page)).toMatchObject({
+    markerExists: true,
+    markerVisible: true,
+    markerX: 832
+  });
+  // The bounce tween moves y between base (target.y - 104) and base - 12.
+  const atMira = await markerState(page);
+  expect(atMira.markerY).toBeGreaterThanOrEqual(512 - 104 - 12 - 1);
+  expect(atMira.markerY).toBeLessThanOrEqual(512 - 104 + 1);
+
+  // Step 2 (try-crop-bonus): chevron retargets to the crop patch (480, 832).
+  await setQuestStepAt(page, 'try-crop-bonus', 832, 512);
+  await expect.poll(async () => markerState(page)).toMatchObject({
+    markerVisible: true,
+    markerX: 480
+  });
+
+  // Step 3 (find-slime): chevron retargets to the Practice Slime (1408, 640).
+  await setQuestStepAt(page, 'find-slime', 832, 512);
+  await expect.poll(async () => markerState(page)).toMatchObject({
+    markerVisible: true,
+    markerX: 1408
+  });
+  await page.screenshot({ path: 'test-results/objective-marker-slime.png', fullPage: true });
+
+  // All errands complete: no marker, no arrow.
+  await completeAllErrands(page);
+  await page.evaluate(() => {
+    const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
+      refreshObjective: () => void;
+    };
+    scene.refreshObjective();
+  });
+  await expect.poll(async () => markerState(page)).toMatchObject({
+    markerVisible: false,
+    arrowVisible: false
+  });
+});
+
+test('edge arrow appears only while the objective target is off-screen', async ({ page }) => {
+  test.setTimeout(120000);
+
+  await boot(page, 'grade5-adventurer');
+
+  // find-slime objective with the player (and camera) far west of the slime:
+  // the slime (1408, 640) is outside the 960-wide view centred near x=200.
+  await setQuestStepAt(page, 'find-slime', 200, 640);
+  await expect.poll(async () => markerState(page)).toMatchObject({ arrowVisible: true });
+  await page.screenshot({ path: 'test-results/objective-edge-arrow.png', fullPage: true });
+
+  // Walk into view of the slime: the arrow hides again.
+  await setQuestStepAt(page, 'find-slime', 1340, 640);
+  await expect.poll(async () => markerState(page)).toMatchObject({ arrowVisible: false });
+  await page.screenshot({ path: 'test-results/objective-marker-onscreen.png', fullPage: true });
+});
+
 test('quest-relevant interactions still open prompts as before', async ({ page }) => {
   test.setTimeout(120000);
 
