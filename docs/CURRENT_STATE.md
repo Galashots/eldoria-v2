@@ -1,6 +1,6 @@
 # Eldoria-V2 Current State
 
-Last refreshed on 2026-07-19 after the game-feel + purposeful-interactions milestone (movement/camera feel tuning, permanent Practice Slime defeat, post-purpose flavor pacing with opt-in practice, and the pre-reader objective direction marker), driven by real play feedback from the repo owner and a child playtester — following the browser-test-only Phaser Canvas renderer path (production stays on `Phaser.AUTO`), the approved shoreline family (PR #99), and the independently reviewed Kimi-K3 adaptive-difficulty, PWA, terrain-proof, and E2E-hardening bundle (PR #102). This file owns volatile project status; durable rules live in `AGENTS.md`, and the documentation map lives in `docs/README.md`.
+Last refreshed on 2026-07-20 after the **multi-map world foundation** milestone (M2: map registry, walk-into exits and transitions, save-your-map, and the second real map Wildbloom Woods) — following the game-feel + purposeful-interactions milestone (movement/camera feel tuning, permanent Practice Slime defeat, post-purpose flavor pacing with opt-in practice, and the pre-reader objective direction marker), the browser-test-only Phaser Canvas renderer path (production stays on `Phaser.AUTO`), the approved shoreline family (PR #99), and the independently reviewed Kimi-K3 adaptive-difficulty, PWA, terrain-proof, and E2E-hardening bundle (PR #102). This file owns volatile project status; durable rules live in `AGENTS.md`, and the documentation map lives in `docs/README.md`.
 
 ## Product invariant
 
@@ -8,7 +8,9 @@ Last refreshed on 2026-07-19 after the game-feel + purposeful-interactions miles
 
 ## Playable vertical slice
 
-- Phaser 4, Vite, TypeScript, and a Tiled farm map.
+- Phaser 4, Vite, TypeScript, and Tiled maps.
+- **Multi-map world**: two real maps — **The Farm** and **Wildbloom Woods** — connected by walk-into gate exits with a fade transition and a map-name entry banner. All map specifics (tilemap key, tilesets, collision GIDs, music, named spawns, display name) live in the registry at `src/data/maps.ts`; `WorldScene` has no map-specific hardcodes, so a third map is a registry entry plus a Tiled JSON. Authoring contract: `docs/MAP_AUTHORING.md`.
+- **Your map persists**: the current map rides the pre-existing `lastArea` save field with no schema version bump — old saves (`lastArea: 'farm'`) and unknown values resolve to the farm, and quitting in the woods returns you to the woods.
 - `960×640` internal canvas with `pixelArt`, `roundPixels`, `FIT`, and `CENTER_BOTH` preserved.
 - Grade 2 audio-first **Mage** and Grade 5 reader-mode **Ranger Explorer** profiles. Stable IDs remain `grade2-mage` and `grade5-adventurer`.
 - Fresh profiles enter a short, skippable **Waking Gate** action scene before the farm. Mage fires spell sparks; Ranger fires tracking shots. Returning saves enter the farm directly.
@@ -91,7 +93,7 @@ The repository includes:
 - deterministic generation checks for PWA icons and the bounded terrain-proof map/sheet;
 - terrain-blend regression coverage for both dirt and shoreline families;
 - Vitest coverage for learning, mastery, adaptive floors/elevation, interactions, curriculum templates, save migration, movement-tuning bounds, the `practiceSlimeDefeated` flag and its soft-lock guards, post-purpose predicates, and the objective-target mapping;
-- Playwright coverage for both profiles, adaptive difficulty through the live WorldScene, the Waking Gate, movement/input, focus-loss recovery, Mira quests, crop prompts, the Practice Slime encounter and its permanent-defeat reload persistence, post-purpose flavor/opt-in pacing, the objective marker/edge arrow, Wildbloom discovery and persistence, Stats & Mastery, save/reload, and portrait guidance;
+- Playwright coverage for both profiles, adaptive difficulty through the live WorldScene, the Waking Gate, movement/input, focus-loss recovery, Mira quests, crop prompts, the Practice Slime encounter and its permanent-defeat reload persistence, post-purpose flavor/opt-in pacing, the objective marker/edge arrow, the farm↔woods round trip (spawns, entry banners, quest/marker integrity, save-your-map, woods tree-border collision, interactables on both maps), Wildbloom discovery and persistence, Stats & Mastery, save/reload, and portrait guidance;
 - an intentional renderer split: Playwright sets `window.__ELDORIA_E2E__` before application code, forcing `Phaser.CANVAS`, while production continues to use unchanged `Phaser.AUTO`; the exact base/candidate full-suite benchmark improved from 224s to 194s (30s, 13.4%), with 56/56 candidate tests passing and no `WebGL Context lost` warnings;
 - renderer-agnostic movement round-trip assertions bounded to one `32px` map tile, covering one-frame Canvas/WebGL cadence variation without changing gameplay physics or production controls;
 - browser-side transient-event recorders that are reset immediately before reward actions, avoiding lifetime-text false positives while remaining robust on slow software-rendered runners;
