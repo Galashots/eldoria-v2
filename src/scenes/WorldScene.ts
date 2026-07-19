@@ -952,6 +952,14 @@ export class WorldScene extends Phaser.Scene {
     'sprout-1': (target) => this.handleSproutInteraction(target),
     'sprout-2': (target) => this.handleSproutInteraction(target),
     'sprout-3': (target) => this.handleSproutInteraction(target),
+    // Wildbloom Woods interactables are quest-free by design: the flower is
+    // pure rotating flavor, and the stone is the woods' explicit opt-in
+    // practice spot (same second-ACTION pattern as the post-purpose farm).
+    'whispering-flower': () => this.showToast(this.nextFlavorLine('whispering-flower')),
+    'mossy-stone': (target) => {
+      if (this.tryConsumePracticeOffer(target)) return;
+      this.showFlavorWithPracticeOffer(target, 'mossy-stone', 'exploration');
+    },
     'generic-bonus': (target) => this.openBonusPrompt(target.kind, target.label)
   };
 

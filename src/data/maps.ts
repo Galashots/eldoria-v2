@@ -13,8 +13,7 @@
  * against this registry.
  */
 
-// Extended per map added ('wildbloom-woods' arrives with the second-map phase).
-export type MapId = 'farm';
+export type MapId = 'farm' | 'wildbloom-woods';
 
 export type MapSpawn = {
   /** World px (map px * GAME_SCALE), matching player/interaction coordinates. */
@@ -58,13 +57,33 @@ export const MAP_REGISTRY: Record<MapId, MapDefinition> = {
     musicKey: 'bgm-farm',
     spawns: {
       // The original PlayerSpawn object (160, 256 map px) at GAME_SCALE 2.
-      default: { x: 320, y: 512 }
+      default: { x: 320, y: 512 },
+      // On the east road, two tiles west of the woods gate, so arriving
+      // from the woods never lands inside the exit zone (no bounce-back).
+      'from-woods': { x: 1760, y: 640 }
     },
     defaultSpawn: 'default',
     // Fence/water/rock stand-ins on the farm Collision layer (tileset
     // eldoria-placeholder). Moved here from WorldScene's old
     // FARM_COLLISION_TILE_GIDS constant.
     collisionGids: [3, 4, 6]
+  },
+  'wildbloom-woods': {
+    id: 'wildbloom-woods',
+    tiledKey: 'wildbloom-woods',
+    jsonPath: 'maps/wildbloom-woods.json',
+    displayName: 'Wildbloom Woods',
+    tilesets: STANDARD_TILESETS,
+    // Reusing the farm loop is an accepted placeholder for this milestone;
+    // a dedicated woods track must be a real reviewed asset first.
+    musicKey: 'bgm-farm',
+    spawns: {
+      // On the gate path, two tiles east of the west exit zone.
+      'from-farm': { x: 320, y: 448 }
+    },
+    defaultSpawn: 'from-farm',
+    // Trees block on the woods Collision layer (water reserved for later).
+    collisionGids: [3, 4]
   }
 };
 

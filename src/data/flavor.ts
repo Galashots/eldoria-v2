@@ -25,6 +25,18 @@ export const POST_PURPOSE_FLAVOR = {
     'Mira: What a lovely farm day!',
     'Mira: The old magic feels calm now.',
     'Mira: The crops look happy today.'
+  ],
+  // Wildbloom Woods (quest-free): pure flavor tied to the Wildbloom theme.
+  'whispering-flower': [
+    'The flower hums an old song.',
+    'Petals glow with sleepy light.',
+    'It whispers: the woods remember.'
+  ],
+  // The Mossy Stone is the woods' opt-in practice spot.
+  'mossy-stone': [
+    'The mossy stone feels warm.',
+    'Tiny runes glimmer in the moss.',
+    'The stone hums when you touch it.'
   ]
 } as const;
 
