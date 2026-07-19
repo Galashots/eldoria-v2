@@ -101,3 +101,56 @@ describe('practice slime defeat soft-lock guards', () => {
     expect(quest.firstQuestStep).toBe(MIRA_FIRST_ERRAND.steps.findSlime);
   });
 });
+
+describe('post-purpose interaction predicates', () => {
+  it('crop purpose is not fulfilled before or during the crop step', () => {
+    expect(FarmQuestSystem.fromSave(baseSave({
+      firstQuestStep: MIRA_FIRST_ERRAND.steps.talkToMira
+    })).cropPurposeFulfilled()).toBe(false);
+    expect(FarmQuestSystem.fromSave(baseSave({
+      firstQuestStep: MIRA_FIRST_ERRAND.steps.tryCropBonus
+    })).cropPurposeFulfilled()).toBe(false);
+  });
+
+  it('crop purpose is fulfilled once the crop step is behind us', () => {
+    expect(FarmQuestSystem.fromSave(baseSave({
+      firstQuestStep: MIRA_FIRST_ERRAND.steps.findSlime
+    })).cropPurposeFulfilled()).toBe(true);
+    expect(FarmQuestSystem.fromSave(baseSave({
+      firstQuestStep: MIRA_FIRST_ERRAND.steps.complete
+    })).cropPurposeFulfilled()).toBe(true);
+  });
+
+  it('a pending scarecrow charm discovery reclaims the crop patch for the quest', () => {
+    const quest = FarmQuestSystem.fromSave(baseSave({
+      firstQuestStep: MIRA_FIRST_ERRAND.steps.complete,
+      questFlags: { miraSecondErrandAccepted: true }
+    }));
+
+    expect(quest.cropPurposeFulfilled()).toBe(false);
+
+    // After the charm is found, the crop patch goes back to flavor.
+    quest.completeCropInteraction();
+    expect(quest.cropPurposeFulfilled()).toBe(true);
+  });
+
+  it('sprout purpose and all-errands both track third-errand completion', () => {
+    const before = FarmQuestSystem.fromSave(baseSave({
+      firstQuestStep: MIRA_FIRST_ERRAND.steps.complete,
+      questFlags: {
+        miraSecondErrandComplete: true,
+        miraThirdErrandAccepted: true,
+        miraThirdErrandSprout1Awakened: true,
+        miraThirdErrandSprout2Awakened: true,
+        miraThirdErrandSprout3Awakened: true
+      }
+    }));
+    expect(before.sproutPurposeFulfilled()).toBe(false);
+    expect(before.allErrandsComplete()).toBe(false);
+
+    // Turning in the errand at Mira completes it.
+    before.interactWithMira();
+    expect(before.sproutPurposeFulfilled()).toBe(true);
+    expect(before.allErrandsComplete()).toBe(true);
+  });
+});

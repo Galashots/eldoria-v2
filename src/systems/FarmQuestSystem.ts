@@ -222,6 +222,39 @@ export class FarmQuestSystem {
     return this.state.practiceSlimeDefeated;
   }
 
+  /**
+   * True once the crop patch has no pending quest purpose: the first
+   * errand's crop step is behind us AND the scarecrow charm discovery is
+   * not currently pending. Repeat interactions then show world flavor with
+   * an explicit practice opt-in instead of always opening a prompt.
+   * (Accepting the second errand later makes this false again while the
+   * charm discovery is pending, restoring today's quest behavior.)
+   */
+  cropPurposeFulfilled(): boolean {
+    const step = this.state.firstQuestStep;
+    const pastCropStep = step === MIRA_FIRST_ERRAND.steps.findSlime
+      || step === MIRA_FIRST_ERRAND.steps.returnToMira
+      || step === MIRA_FIRST_ERRAND.steps.complete;
+    return pastCropStep && !this.canDiscoverSecondErrandCharm();
+  }
+
+  /**
+   * True once all three sprouts are awake and the third errand is turned
+   * in — sprout interactions then become pure flavor toasts (no prompt).
+   */
+  sproutPurposeFulfilled(): boolean {
+    return this.state.thirdErrandComplete;
+  }
+
+  /**
+   * True once every Mira errand is complete (thirdErrandComplete implies
+   * the earlier ones). Mira then rotates flavor lines and offers opt-in
+   * practice instead of replaying her terminal errand dialogue.
+   */
+  allErrandsComplete(): boolean {
+    return this.state.thirdErrandComplete;
+  }
+
   toSaveFields(): Pick<SaveState, 'firstQuestStep' | 'questFlags'> {
     return {
       firstQuestStep: this.state.firstQuestStep,

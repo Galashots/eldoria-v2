@@ -5,6 +5,12 @@ import type { AnswerValue, BonusContext, LearningPrompt } from '../data/curricul
 import { REWARD_KIND_GOLD_VALUE } from '../data/curriculum';
 import { PROFILES, type ProfileId } from '../data/profiles';
 import { CHARM_REGISTRY, MIRA_FIRST_ERRAND } from '../data/quests';
+import {
+  MIRA_PRACTICE_CONTEXTS,
+  POST_PURPOSE_FLAVOR,
+  PRACTICE_OFFER_SUFFIX,
+  PRACTICE_OFFER_WINDOW_MS
+} from '../data/flavor';
 import { resolveInteractionId, getTiledProperty, type InteractionId } from '../data/interactions';
 import {
   facingFromVector,
@@ -82,6 +88,12 @@ export class WorldScene extends Phaser.Scene {
   private music?: Phaser.Sound.BaseSound;
   private muteIcon!: Phaser.GameObjects.Graphics;
   private lastFootstepAt = 0;
+  // Post-purpose interactions (see data/flavor.ts): a flavor toast can carry
+  // a short-lived practice offer — a second ACTION press on the same target
+  // within the window opens the optional prompt. Session-local by design.
+  private pendingPracticeOffer?: { id: InteractionId; context: BonusContext; label: string; expiresAt: number };
+  private flavorRotation: Partial<Record<keyof typeof POST_PURPOSE_FLAVOR, number>> = {};
+  private miraPracticeContextIndex = 0;
   private readonly lastSfxAt: Partial<Record<string, number>> = {};
   private readonly sfxCooldownMs = 90;
   // Lowered from the first pass's 0.32: the placeholder loop is only ~12.6s,
@@ -688,7 +700,7 @@ export class WorldScene extends Phaser.Scene {
   // of label comparisons. 'generic-bonus' is the fallback every unmapped
   // target already used before this registry existed.
   private readonly interactionHandlers: Record<InteractionId, (target: InteractionTarget) => void> = {
-    mira: () => this.handleMiraInteraction(),
+    mira: (target) => this.handleMiraInteraction(target),
     'crop-bonus': (target) => this.handleCropBonusInteraction(target),
     'practice-slime': (target) => this.handleSlimeInteraction(target),
     'sprout-1': (target) => this.handleSproutInteraction(target),
@@ -737,11 +749,71 @@ export class WorldScene extends Phaser.Scene {
     this.paintSpeakerIcon(this.muteIcon, nextMuted);
   }
 
-  private handleMiraInteraction(): void {
+  /**
+   * Returns the next flavor line for a post-purpose interactable, rotating
+   * through data/flavor.ts's lines so repeats aren't identical.
+   */
+  private nextFlavorLine(key: keyof typeof POST_PURPOSE_FLAVOR): string {
+    const lines = POST_PURPOSE_FLAVOR[key];
+    const index = this.flavorRotation[key] ?? 0;
+    this.flavorRotation[key] = (index + 1) % lines.length;
+    return lines[index] ?? lines[0];
+  }
+
+  /**
+   * If the target carries a live practice offer (a flavor toast ending in
+   * PRACTICE_OFFER_SUFFIX was just shown for it), consume it and open the
+   * optional prompt. The offer is the explicit player-chosen path to
+   * practice after an interactable's quest purpose is fulfilled.
+   */
+  private tryConsumePracticeOffer(target: InteractionTarget): boolean {
+    const offer = this.pendingPracticeOffer;
+    if (!offer || offer.id !== target.id || this.time.now > offer.expiresAt) return false;
+
+    this.pendingPracticeOffer = undefined;
+    this.openBonusPrompt(offer.context, offer.label);
+    return true;
+  }
+
+  /** Shows a post-purpose flavor toast and arms its practice offer window. */
+  private showFlavorWithPracticeOffer(
+    target: InteractionTarget,
+    flavorKey: keyof typeof POST_PURPOSE_FLAVOR,
+    context: BonusContext
+  ): void {
+    this.showToast(`${this.nextFlavorLine(flavorKey)} ${PRACTICE_OFFER_SUFFIX}`);
+    this.pendingPracticeOffer = {
+      id: target.id,
+      context,
+      label: target.label,
+      expiresAt: this.time.now + PRACTICE_OFFER_WINDOW_MS
+    };
+  }
+
+  private handleMiraInteraction(target: InteractionTarget): void {
+    if (this.farmQuest.allErrandsComplete()) {
+      if (this.tryConsumePracticeOffer(target)) {
+        // Advance the rotation only when an offer is actually taken, so the
+        // next opt-in reaches a different mastery context (combat first —
+        // it replaces the retired Practice Slime as the combat-practice tap).
+        this.miraPracticeContextIndex = (this.miraPracticeContextIndex + 1) % MIRA_PRACTICE_CONTEXTS.length;
+        return;
+      }
+      const context = MIRA_PRACTICE_CONTEXTS[this.miraPracticeContextIndex] ?? 'quest';
+      this.showFlavorWithPracticeOffer(target, 'mira', context);
+      return;
+    }
+
     this.applyQuestOutcome(this.farmQuest.interactWithMira(), true);
   }
 
   private handleCropBonusInteraction(target: InteractionTarget): void {
+    if (this.farmQuest.cropPurposeFulfilled()) {
+      if (this.tryConsumePracticeOffer(target)) return;
+      this.showFlavorWithPracticeOffer(target, 'crop', target.kind);
+      return;
+    }
+
     this.busy = true;
     this.resetJoystick();
     this.player.setVelocity(0, 0);
@@ -785,6 +857,13 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private handleSproutInteraction(target: InteractionTarget): void {
+    // Post-purpose sprouts are pure flavor — no prompt and no opt-in
+    // (Mira and the crop patch carry the practice offers).
+    if (this.farmQuest.sproutPurposeFulfilled()) {
+      this.showToast(this.nextFlavorLine('sprout'));
+      return;
+    }
+
     this.busy = true;
     this.resetJoystick();
     this.player.setVelocity(0, 0);

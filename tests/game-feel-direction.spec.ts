@@ -143,3 +143,128 @@ test('defeating the Practice Slime removes it permanently, surviving a page relo
   });
   await page.screenshot({ path: 'test-results/slime-defeat-after-reload.png', fullPage: true });
 });
+
+/** Marks every Mira errand complete directly on the live quest system (test-only state drive). */
+async function completeAllErrands(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
+      farmQuest: { state: Record<string, unknown> };
+      setFirstQuestStep: (step: string) => void;
+      updateHint: () => void;
+    };
+    scene.setFirstQuestStep('complete');
+    // TypeScript-private, JS-reachable: same seam style the suite already
+    // uses for learning.makePrompt overrides.
+    scene.farmQuest.state.secondErrandComplete = true;
+    scene.farmQuest.state.thirdErrandAccepted = true;
+    scene.farmQuest.state.sprout1Awakened = true;
+    scene.farmQuest.state.sprout2Awakened = true;
+    scene.farmQuest.state.sprout3Awakened = true;
+    scene.farmQuest.state.thirdErrandComplete = true;
+    scene.updateHint();
+  });
+}
+
+async function movePlayerTo(page: Page, x: number, y: number): Promise<void> {
+  await page.evaluate(([nextX, nextY]) => {
+    const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
+      player: { setPosition: (x: number, y: number) => void; setVelocity: (x: number, y: number) => void };
+      updateHint: () => void;
+    };
+    scene.player.setPosition(nextX, nextY);
+    scene.player.setVelocity(0, 0);
+    scene.updateHint();
+  }, [x, y]);
+  await page.waitForTimeout(120);
+}
+
+async function sceneInteract(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as { tryInteract: () => void };
+    scene.tryInteract();
+  });
+  await page.waitForTimeout(200);
+}
+
+/**
+ * Presses ACTION twice back-to-back via the scene seam: the first press
+ * shows the flavor toast and arms the practice offer; the second (issued
+ * ~milliseconds later, well inside the offer window regardless of how slow
+ * the environment renders) consumes the opt-in and opens the prompt.
+ */
+async function doubleInteract(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as { tryInteract: () => void };
+    scene.tryInteract();
+    scene.tryInteract();
+  });
+  await page.waitForTimeout(200);
+}
+
+test('post-purpose interactions show flavor instead of prompts; a second ACTION opt-in opens practice', async ({ page }) => {
+  test.setTimeout(180000);
+
+  await boot(page, 'grade5-adventurer');
+  await completeAllErrands(page);
+
+  // Crop patch: a single ACTION shows a flavor toast with the practice
+  // offer — and no prompt.
+  await movePlayerTo(page, 480, 832);
+  await sceneInteract(page);
+  await expect.poll(async () => hasCanvasText(page, 'ACTION again to practice!')).toBe(true);
+  expect(await hasCanvasText(page, 'optional learning bonus')).toBe(false);
+  await page.screenshot({ path: 'test-results/post-purpose-crop-flavor.png', fullPage: true });
+
+  // Wait out the first offer window, then take the opt-in path: two rapid
+  // ACTION presses (flavor + consume) open the optional prompt.
+  await page.waitForTimeout(2200);
+  await doubleInteract(page);
+  await expect.poll(async () => hasCanvasText(page, 'CropBonus: optional learning bonus')).toBe(true);
+  await page.screenshot({ path: 'test-results/post-purpose-crop-optin-prompt.png', fullPage: true });
+  await clickGame(page, 480, 484); // skip
+  await expect.poll(async () => hasCanvasText(page, 'optional learning bonus')).toBe(false);
+
+  // Mira: rotating flavor with practice offer, no forced dialogue/prompt.
+  await movePlayerTo(page, 832, 512);
+  await sceneInteract(page);
+  await expect.poll(async () => hasCanvasText(page, 'ACTION again to practice!')).toBe(true);
+  expect(await hasCanvasText(page, 'optional learning bonus')).toBe(false);
+
+  // Mira's opt-in opens a practice prompt too.
+  await page.waitForTimeout(2200);
+  await doubleInteract(page);
+  await expect.poll(async () => hasCanvasText(page, 'Mira: optional learning bonus')).toBe(true);
+  await page.screenshot({ path: 'test-results/post-purpose-mira-optin-prompt.png', fullPage: true });
+  await clickGame(page, 480, 484); // skip
+  await expect.poll(async () => hasCanvasText(page, 'optional learning bonus')).toBe(false);
+
+  // Sprouts: pure flavor, no prompt and no offer — even on rapid presses.
+  // First let the Mira double-press's own flavor toast finish fading, so the
+  // absence assertions below observe only the sprout interaction's output.
+  await movePlayerTo(page, 992, 160);
+  await expect.poll(async () => hasCanvasText(page, 'ACTION again to practice!')).toBe(false);
+  await doubleInteract(page);
+  await page.waitForTimeout(300);
+  expect(await hasCanvasText(page, 'optional learning bonus')).toBe(false);
+  expect(await hasCanvasText(page, 'ACTION again to practice!')).toBe(false);
+});
+
+test('quest-relevant interactions still open prompts as before', async ({ page }) => {
+  test.setTimeout(120000);
+
+  await boot(page, 'grade5-adventurer');
+
+  // At the try-crop-bonus step, the crop patch is quest-relevant: the prompt
+  // opens as part of the interaction, exactly as today.
+  await page.evaluate(() => {
+    const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
+      setFirstQuestStep: (step: string) => void;
+    };
+    scene.setFirstQuestStep('try-crop-bonus');
+  });
+  await movePlayerTo(page, 480, 832);
+  await sceneInteract(page);
+  await expect.poll(async () => hasCanvasText(page, 'CropBonus: optional learning bonus'), {
+    timeout: 10000
+  }).toBe(true);
+});
