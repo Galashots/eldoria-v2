@@ -56,6 +56,17 @@ type PromptCloseResult = {
   correct: boolean;
 };
 
+/**
+ * A walk-into map transition zone, parsed from a Tiled object of type
+ * "exit" (properties: targetMap, targetSpawn, optional documented-but-unused
+ * requiresQuestFlag). Rect is in world px.
+ */
+type ExitZone = {
+  rect: Phaser.Geom.Rectangle;
+  targetMap: MapId;
+  targetSpawn: string;
+};
+
 type PromptCloseHandler = (result: PromptCloseResult) => string | undefined;
 
 const PRACTICE_SLIME_TEXTURE_KEY = 'practice-slime-v001';
@@ -83,6 +94,8 @@ export class WorldScene extends Phaser.Scene {
   private mapDef!: MapDefinition;
   private initMapId?: MapId;
   private initSpawnId?: string;
+  private exits: ExitZone[] = [];
+  private transitioning = false;
   private learning!: LearningBonusSystem;
   private gold = 0;
   private inventory: Record<string, number> = {};
@@ -141,6 +154,13 @@ export class WorldScene extends Phaser.Scene {
     this.learning = new LearningBonusSystem(this.profileId);
     this.initMapId = data.mapId;
     this.initSpawnId = data.spawnId;
+    // Scene instances are reused across restarts (map transitions restart
+    // this scene with new init data), so cross-boot state must reset here —
+    // class-field initializers only ran at construction.
+    this.transitioning = false;
+    this.busy = false;
+    this.statsPanelOpen = false;
+    this.exits = [];
   }
 
   create(): void {
@@ -221,6 +241,7 @@ export class WorldScene extends Phaser.Scene {
     this.targets = this.makeTargets(objectLayer?.objects ?? []).filter(
       (target) => target.id !== 'practice-slime' || !this.farmQuest.isPracticeSlimeDefeated()
     );
+    this.exits = this.makeExits(objectLayer?.objects ?? []);
     this.createPracticeSlimeAnimations();
     this.drawTargetMarkers();
 
@@ -251,9 +272,11 @@ export class WorldScene extends Phaser.Scene {
     this.music.play();
 
     // Arriving on a map by explicit request (a transition or scripted boot)
-    // persists it immediately, so quitting on this map returns here.
+    // persists it immediately — quitting on this map returns here — and
+    // fades back in to complete the travel moment the exit's fade-out began.
     if (arrivedViaExplicitRequest) {
       this.save();
+      this.cameras.main.fadeIn(300, 12, 10, 18);
     }
 
     this.showMapEntryBanner();
@@ -361,6 +384,7 @@ export class WorldScene extends Phaser.Scene {
       this.handleActionInput();
     }
 
+    this.checkExitTrigger();
     this.updateHint();
   }
 
@@ -378,6 +402,72 @@ export class WorldScene extends Phaser.Scene {
           label
         } satisfies InteractionTarget;
       });
+  }
+
+  /**
+   * Parses walk-into exit zones from the map's Tiled Objects layer. An exit
+   * whose targetMap is not registered is dropped (the unit-test layer
+   * cross-validates every committed map's exits against the registry, so
+   * this guard only matters for hand-authored mistakes during development).
+   */
+  private makeExits(objects: Phaser.Types.Tilemaps.TiledObject[]): ExitZone[] {
+    const exits: ExitZone[] = [];
+    for (const obj of objects) {
+      if (obj.type !== 'exit') continue;
+      const targetMap = getTiledProperty(obj, 'targetMap');
+      const targetSpawn = getTiledProperty(obj, 'targetSpawn');
+      if (typeof targetMap !== 'string' || resolveMapId(targetMap) !== targetMap) continue;
+      if (typeof targetSpawn !== 'string') continue;
+
+      exits.push({
+        rect: new Phaser.Geom.Rectangle(
+          (obj.x ?? 0) * GAME_SCALE,
+          (obj.y ?? 0) * GAME_SCALE,
+          (obj.width ?? 0) * GAME_SCALE,
+          (obj.height ?? 0) * GAME_SCALE
+        ),
+        targetMap: targetMap as MapId,
+        targetSpawn
+      });
+    }
+    return exits;
+  }
+
+  /**
+   * Walk-into transition check, run each frame while the player has control.
+   * Triggering locks input, fades out, and restarts the scene on the target
+   * map/spawn; the transitioning flag guards against re-entry, and arrival
+   * spawns are registry-placed outside their neighbouring exit zones so
+   * walking back through a gate never bounces.
+   */
+  private checkExitTrigger(): void {
+    if (this.transitioning || this.busy) return;
+
+    for (const exit of this.exits) {
+      if (!exit.rect.contains(this.player.x, this.player.y)) continue;
+      this.beginMapTransition(exit);
+      return;
+    }
+  }
+
+  private beginMapTransition(exit: ExitZone): void {
+    this.transitioning = true;
+    this.busy = true;
+    this.resetJoystick();
+    this.player.setVelocity(0, 0);
+    this.heroPresentation.setBusy();
+    this.stopPromptReadAloud();
+
+    // Same dusk tint the polished gate arrival uses, so out-fade and in-fade
+    // read as one continuous travel moment.
+    this.cameras.main.fadeOut(300, 12, 10, 18);
+    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+      this.scene.restart({
+        profileId: this.profileId,
+        mapId: exit.targetMap,
+        spawnId: exit.targetSpawn
+      } satisfies SceneInitData);
+    });
   }
 
   private drawTargetMarkers(): void {
