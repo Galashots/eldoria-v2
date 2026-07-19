@@ -1,0 +1,87 @@
+name: E2E renderer benchmark
+
+on:
+  pull_request:
+    paths:
+      - 'src/main.ts'
+      - 'tests/e2e-renderer.spec.ts'
+      - '.github/workflows/e2e-renderer-benchmark.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  compare-renderers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out baseline
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: baseline
+      - name: Check out candidate
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: candidate
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Install baseline dependencies
+        working-directory: baseline
+        run: npm ci
+      - name: Install candidate dependencies and Chromium
+        working-directory: candidate
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Run comparable full-suite benchmarks
+        shell: bash
+        run: |
+          set -uo pipefail
+          : > benchmark.txt
+
+          run_suite() {
+            local label="$1"
+            local directory="$2"
+            local started ended status warning_count
+
+            started=$(date +%s)
+            set +e
+            (
+              cd "$directory"
+              CI=1 npx playwright test 2>&1
+            ) | tee "${label}.log"
+            status=${PIPESTATUS[0]}
+            set -e
+            ended=$(date +%s)
+            warning_count=$(grep -c "WebGL Context lost" "${label}.log" || true)
+
+            echo "${label}_seconds=$((ended - started))" | tee -a benchmark.txt
+            echo "${label}_status=${status}" | tee -a benchmark.txt
+            echo "${label}_webgl_context_lost_warnings=${warning_count}" | tee -a benchmark.txt
+
+            test "$status" -eq 0
+          }
+
+          run_suite baseline baseline
+          run_suite candidate candidate
+
+          baseline_seconds=$(awk -F= '/^baseline_seconds=/{print $2}' benchmark.txt)
+          candidate_seconds=$(awk -F= '/^candidate_seconds=/{print $2}' benchmark.txt)
+          improvement=$((baseline_seconds - candidate_seconds))
+          echo "wall_time_improvement_seconds=${improvement}" | tee -a benchmark.txt
+
+          candidate_warnings=$(awk -F= '/^candidate_webgl_context_lost_warnings=/{print $2}' benchmark.txt)
+          test "$candidate_warnings" -eq 0
+      - name: Upload benchmark evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-renderer-benchmark-pr-${{ github.event.pull_request.number }}
+          path: |
+            benchmark.txt
+            baseline.log
+            candidate.log
+          retention-days: 14
