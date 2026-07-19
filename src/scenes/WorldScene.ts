@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { fpx, GAME_HEIGHT, GAME_SCALE, GAME_WIDTH, LEGACY_GAME_WIDTH, sx, sy } from '../gameDimensions';
+import { MOVEMENT_TUNING } from '../movementTuning';
 import type { AnswerValue, BonusContext, LearningPrompt } from '../data/curriculum';
 import { REWARD_KIND_GOLD_VALUE } from '../data/curriculum';
 import { PROFILES, type ProfileId } from '../data/profiles';
@@ -164,7 +165,7 @@ export class WorldScene extends Phaser.Scene {
     this.createPracticeSlimeAnimations();
     this.drawTargetMarkers();
 
-    this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
+    this.cameras.main.startFollow(this.player, true, MOVEMENT_TUNING.cameraLerp, MOVEMENT_TUNING.cameraLerp);
     this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
 
     this.cursors = this.input.keyboard!.createCursorKeys();
@@ -242,9 +243,10 @@ export class WorldScene extends Phaser.Scene {
       return;
     }
 
-    // Doubled alongside the world so traversal timing (seconds to cross the
-    // farm) is unchanged even though every world coordinate is now 2x.
-    const speed = sx(125);
+    // Raised from the original 250 world px/sec after play feedback that the
+    // hero "feels slow" — see MOVEMENT_TUNING for the tuned values and their
+    // playtested bounds.
+    const { maxSpeed, velocitySmoothing, velocitySnapThreshold } = MOVEMENT_TUNING;
     const keyX = (this.cursors.right.isDown || this.keys.D.isDown ? 1 : 0)
       - (this.cursors.left.isDown || this.keys.A.isDown ? 1 : 0);
     const keyY = (this.cursors.down.isDown || this.keys.S.isDown ? 1 : 0)
@@ -256,15 +258,31 @@ export class WorldScene extends Phaser.Scene {
     const inputY = rawLength > 1 ? rawY / rawLength : rawY;
     const isMoving = Math.abs(inputX) > 0.01 || Math.abs(inputY) > 0.01;
 
-    this.player.setVelocity(inputX * speed, inputY * speed);
+    // Light acceleration/deceleration: lerp the current physics velocity
+    // toward input * maxSpeed each frame instead of setting it outright, so
+    // starts/stops ease briefly rather than snapping. Reading the current
+    // velocity from the body (not a shadow variable) keeps this correct
+    // across the busy paths above, which zero the body directly. The snap
+    // threshold turns the asymptotic tail of a stop into an exact 0 so
+    // "velocity is 0 when idle" remains a stable, testable state.
+    const body = this.player.body as Phaser.Physics.Arcade.Body;
+    const targetX = inputX * maxSpeed;
+    const targetY = inputY * maxSpeed;
+    let nextX = body.velocity.x + (targetX - body.velocity.x) * velocitySmoothing;
+    let nextY = body.velocity.y + (targetY - body.velocity.y) * velocitySmoothing;
+    if (!isMoving && Math.hypot(nextX, nextY) < velocitySnapThreshold) {
+      nextX = 0;
+      nextY = 0;
+    }
+    this.player.setVelocity(nextX, nextY);
 
     if (isMoving) {
       this.heroPresentation.setMovement(facingFromVector(inputX, inputY), true);
-      if (this.time.now - this.lastFootstepAt > 380) {
+      if (this.time.now - this.lastFootstepAt > MOVEMENT_TUNING.footstepIntervalMs) {
         this.lastFootstepAt = this.time.now;
         // Softer than other one-shot SFX on purpose: this one repeats every
-        // ~380ms during movement, so it's the SFX most likely to feel
-        // annoying on a first playthrough.
+        // footstep interval during movement, so it's the SFX most likely to
+        // feel annoying on a first playthrough.
         this.playSfx('sfx-footstep', 0.16);
       }
     } else {
