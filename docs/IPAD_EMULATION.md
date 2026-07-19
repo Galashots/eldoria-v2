@@ -85,12 +85,14 @@ Defined in `tests-emulation/support/emulation.ts` (`BUDGETS`). They must pass on
 GitHub-hosted runners with headroom; re-tune by running the full config 3× in CI
 and taking the worst value plus ~20–30%.
 
-| Budget | Value | Rationale |
-| --- | --- | --- |
-| p50 frame time | ≤ 40 ms | Primary, stable gate. Under 4× CPU throttle the game settles at Chromium's ~30 fps (33.3 ms) fallback cadence — the healthy throttled state, not a defect. p50 is rock-stable at 33.3 ms across every run, so this catches any *sustained* slowdown. |
-| p95 frame time | ≤ 60 ms | Lenient backstop for severe stutter. p95 is noise-sensitive (33.4 ms isolated, up to ~50 ms under cross-project/CI load), so it is set loose to avoid flakiness while still failing on a genuine ~2× regression. |
-| Heap growth | ≤ 25 MB | Leak signal from post-boot baseline to journey end. `performance.memory` is Chromium-only and coarse; observed growth is ~0 MB. |
-| Cold load to interactive | ≤ 6000 ms | Guards against a pathological load regression, not micro-optimization. Observed ~1.9 s throttled. |
+These are **regression backstops, not a smoothness certification** — under 4× CPU throttle the frame rate is dominated by the host CPU, and a shared GitHub-hosted VM is much slower than a dev box, so budgets are calibrated to CI:
+
+| Budget | Value | Observed | Rationale |
+| --- | --- | --- | --- |
+| p50 frame time | ≤ 65 ms | local 33.3 ms / CI 49.9 ms | Primary, stable gate. Under 4× throttle the game runs a steady cadence — ~30 fps (33.3 ms) on a dev box, ~20 fps (49.9 ms) on the GitHub 2-core VM (identical across a run and its retry). The median catches any *sustained* slowdown; 65 ms is ~30% over the CI baseline so VM variance doesn't flake. |
+| p95 frame time | ≤ 80 ms | local 33.4 ms / CI 50.1 ms | Lenient stutter backstop, ~60% over the CI baseline. Still fails a genuine ~1.5× regression. |
+| Heap growth | ≤ 25 MB | ~0 MB | Leak signal from post-boot baseline to journey end. `performance.memory` is Chromium-only and coarse. |
+| Cold load to interactive | ≤ 6000 ms | ~1.8–1.9 s | Guards against a pathological load regression, not micro-optimization. |
 
 Representative metrics are captured in
 `docs/evidence/pwa-ipad-emulation/ipad-journey-report.json`; each CI run
