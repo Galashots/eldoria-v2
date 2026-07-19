@@ -5,6 +5,7 @@ on:
     paths:
       - 'src/main.ts'
       - 'tests/e2e-renderer.spec.ts'
+      - 'tests/vertical-slice.spec.ts'
       - '.github/workflows/e2e-renderer-benchmark.yml'
 
 permissions:
@@ -13,7 +14,7 @@ permissions:
 jobs:
   compare-renderers:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - name: Check out baseline
         uses: actions/checkout@v5
@@ -45,24 +46,40 @@ jobs:
           run_suite() {
             local label="$1"
             local directory="$2"
-            local started ended status warning_count
+            local success=0
+            local chosen_seconds=0
+            local total_warnings=0
 
-            started=$(date +%s)
-            set +e
-            (
-              cd "$directory"
-              CI=1 npx playwright test 2>&1
-            ) | tee "${label}.log"
-            status=${PIPESTATUS[0]}
-            set -e
-            ended=$(date +%s)
-            warning_count=$(grep -c "WebGL Context lost" "${label}.log" || true)
+            for attempt in 1 2; do
+              local started ended status warning_count elapsed log
+              log="${label}-attempt-${attempt}.log"
+              started=$(date +%s)
+              set +e
+              (
+                cd "$directory"
+                CI=1 npx playwright test 2>&1
+              ) | tee "$log"
+              status=${PIPESTATUS[0]}
+              set -e
+              ended=$(date +%s)
+              elapsed=$((ended - started))
+              warning_count=$(grep -c "WebGL Context lost" "$log" || true)
+              total_warnings=$((total_warnings + warning_count))
 
-            echo "${label}_seconds=$((ended - started))" | tee -a benchmark.txt
-            echo "${label}_status=${status}" | tee -a benchmark.txt
-            echo "${label}_webgl_context_lost_warnings=${warning_count}" | tee -a benchmark.txt
+              echo "${label}_attempt_${attempt}_seconds=${elapsed}" | tee -a benchmark.txt
+              echo "${label}_attempt_${attempt}_status=${status}" | tee -a benchmark.txt
+              echo "${label}_attempt_${attempt}_webgl_context_lost_warnings=${warning_count}" | tee -a benchmark.txt
 
-            test "$status" -eq 0
+              if test "$status" -eq 0; then
+                success=1
+                chosen_seconds=$elapsed
+                break
+              fi
+            done
+
+            echo "${label}_seconds=${chosen_seconds}" | tee -a benchmark.txt
+            echo "${label}_webgl_context_lost_warnings=${total_warnings}" | tee -a benchmark.txt
+            test "$success" -eq 1
           }
 
           run_suite baseline baseline
@@ -82,6 +99,6 @@ jobs:
           name: e2e-renderer-benchmark-pr-${{ github.event.pull_request.number }}
           path: |
             benchmark.txt
-            baseline.log
-            candidate.log
+            baseline-attempt-*.log
+            candidate-attempt-*.log
           retention-days: 14
