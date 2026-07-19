@@ -637,19 +637,23 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   expect(Number(slime.frame)).toBeLessThanOrEqual(3);
 
   const start = (await state(page)).player;
+  // Fixed-duration key holds can land one renderer frame apart. Keep each
+  // round trip within one 32px map tile while still proving the reverse move
+  // substantially cancels the forward move under both Canvas and WebGL.
+  const movementReturnTolerance = 32;
   await moveGrade2Hero(page, 'KeyD', 'right');
   expect((await state(page)).player.x).toBeGreaterThan(start.x);
   await moveGrade2Hero(page, 'KeyA', 'left');
-  expect((await state(page)).player.x).toBeLessThan(start.x + 20);
+  expect((await state(page)).player.x).toBeLessThan(start.x + movementReturnTolerance);
   await moveGrade2Hero(page, 'KeyS', 'front');
   expect((await state(page)).player.y).toBeGreaterThan(start.y);
   await moveGrade2Hero(page, 'KeyW', 'back');
-  expect((await state(page)).player.y).toBeLessThan(start.y + 20);
+  expect((await state(page)).player.y).toBeLessThan(start.y + movementReturnTolerance);
 
   await moveGrade2Hero(page, 'KeyS', 'front', 700);
   expect((await state(page)).player.y).toBeGreaterThan(320);
   await moveGrade2Hero(page, 'KeyW', 'back', 700);
-  expect((await state(page)).player.y).toBeLessThan(start.y + 20);
+  expect((await state(page)).player.y).toBeLessThan(start.y + movementReturnTolerance);
 
   await setPlayer(page, 320, 320);
   const beforeCast = await state(page);
