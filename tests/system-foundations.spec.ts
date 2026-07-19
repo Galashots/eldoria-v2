@@ -321,7 +321,8 @@ test.describe('FarmQuestSystem transitions', () => {
         miraThirdErrandSprout1Awakened: false,
         miraThirdErrandSprout2Awakened: false,
         miraThirdErrandSprout3Awakened: false,
-        miraThirdErrandComplete: false
+        miraThirdErrandComplete: false,
+        practiceSlimeDefeated: false
       }
     });
 
@@ -362,7 +363,8 @@ test.describe('FarmQuestSystem transitions', () => {
       miraThirdErrandSprout1Awakened: false,
       miraThirdErrandSprout2Awakened: false,
       miraThirdErrandSprout3Awakened: false,
-      miraThirdErrandComplete: false
+      miraThirdErrandComplete: false,
+      practiceSlimeDefeated: false
     });
   });
 
@@ -404,7 +406,8 @@ test.describe('FarmQuestSystem transitions', () => {
       miraThirdErrandSprout1Awakened: true,
       miraThirdErrandSprout2Awakened: true,
       miraThirdErrandSprout3Awakened: true,
-      miraThirdErrandComplete: true
+      miraThirdErrandComplete: true,
+      practiceSlimeDefeated: false
     });
   });
 

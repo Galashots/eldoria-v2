@@ -49,6 +49,7 @@ type WorldScenePresentationInternals = {
     completeSlimeInteraction: () => FarmQuestOutcome;
   };
   applyQuestOutcome: (outcome: FarmQuestOutcome, persist: boolean) => void;
+  handlePracticeSlimeDefeat: () => void;
   resetJoystick: () => void;
   updateHint: () => void;
   hintLabel: (target: WorldSceneTarget) => string;
@@ -237,10 +238,16 @@ export class PolishedWorldScene extends WorldScene {
 
   private openPracticeSlimePrompt(target: WorldSceneTarget): void {
     const internals = this.presentationInternals;
+    // Defeat is permanent (2026-07 game-feel milestone): record + persist the
+    // quest flag and remove the slime from the world before the first-defeat
+    // combat prompt opens, so even an abandoned prompt leaves the defeat
+    // saved. The old prompt-close reset() made the encounter an infinite,
+    // purposeless loop; reset() is now a test-only hook.
+    internals.handlePracticeSlimeDefeat();
+    this.practiceSlimeEncounter?.retire();
     internals.openBonusPrompt(target.kind, target.label, () => {
       const outcome = internals.farmQuest.completeSlimeInteraction();
       internals.applyQuestOutcome(outcome, false);
-      this.practiceSlimeEncounter?.reset();
       internals.updateHint();
       return outcome.message;
     });

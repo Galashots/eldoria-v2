@@ -37,6 +37,7 @@ export type FarmQuestState = {
   sprout2Awakened: boolean;
   sprout3Awakened: boolean;
   thirdErrandComplete: boolean;
+  practiceSlimeDefeated: boolean;
 };
 
 const defaultState = (): FarmQuestState => ({
@@ -48,7 +49,8 @@ const defaultState = (): FarmQuestState => ({
   sprout1Awakened: false,
   sprout2Awakened: false,
   sprout3Awakened: false,
-  thirdErrandComplete: false
+  thirdErrandComplete: false,
+  practiceSlimeDefeated: false
 });
 
 export class FarmQuestSystem {
@@ -59,8 +61,18 @@ export class FarmQuestSystem {
   }
 
   static fromSave(saved: SaveState | null): FarmQuestSystem {
+    const savedStep = saved?.firstQuestStep ?? MIRA_FIRST_ERRAND.steps.talkToMira;
+    const practiceSlimeDefeated = saved?.questFlags?.practiceSlimeDefeated === true;
+
     return new FarmQuestSystem({
-      firstQuestStep: saved?.firstQuestStep ?? MIRA_FIRST_ERRAND.steps.talkToMira,
+      // Soft-lock guard: a save written at the find-slime step with the slime
+      // already permanently defeated (defeated mid-step, tab closed before the
+      // prompt resolved) would otherwise point the player at a slime that no
+      // longer exists. Normalize forward to return-to-mira — the defeat
+      // happened, so the step's purpose is fulfilled.
+      firstQuestStep: savedStep === MIRA_FIRST_ERRAND.steps.findSlime && practiceSlimeDefeated
+        ? MIRA_FIRST_ERRAND.steps.returnToMira
+        : savedStep,
       secondErrandAccepted: saved?.questFlags?.miraSecondErrandAccepted === true,
       secondErrandCharmFound: saved?.questFlags?.miraSecondErrandCharmFound === true,
       secondErrandComplete: saved?.questFlags?.miraSecondErrandComplete === true,
@@ -68,7 +80,9 @@ export class FarmQuestSystem {
       sprout1Awakened: saved?.questFlags?.miraThirdErrandSprout1Awakened === true,
       sprout2Awakened: saved?.questFlags?.miraThirdErrandSprout2Awakened === true,
       sprout3Awakened: saved?.questFlags?.miraThirdErrandSprout3Awakened === true,
-      thirdErrandComplete: saved?.questFlags?.miraThirdErrandComplete === true
+      thirdErrandComplete: saved?.questFlags?.miraThirdErrandComplete === true,
+      // Missing flag (every pre-existing save) => false: the slime is present.
+      practiceSlimeDefeated
     });
   }
 
@@ -128,11 +142,20 @@ export class FarmQuestSystem {
 
   completeCropInteraction(): FarmQuestOutcome {
     if (this.state.firstQuestStep === MIRA_FIRST_ERRAND.steps.tryCropBonus) {
-      this.state.firstQuestStep = MIRA_FIRST_ERRAND.steps.findSlime;
+      // Soft-lock guard: the Practice Slime encounter is strikeable at any
+      // quest step, so it can already be permanently defeated before the
+      // errand ever points at it. Route straight past find-slime in that
+      // case — there is no slime left to find.
+      const slimeAlreadyDone = this.state.practiceSlimeDefeated;
+      this.state.firstQuestStep = slimeAlreadyDone
+        ? MIRA_FIRST_ERRAND.steps.returnToMira
+        : MIRA_FIRST_ERRAND.steps.findSlime;
       return {
         stateChanged: true,
         objectiveChanged: true,
-        message: MIRA_FIRST_ERRAND.progress.cropComplete
+        message: slimeAlreadyDone
+          ? MIRA_FIRST_ERRAND.progress.cropCompleteSlimeAlreadyDefeated
+          : MIRA_FIRST_ERRAND.progress.cropComplete
       };
     }
 
@@ -184,6 +207,21 @@ export class FarmQuestSystem {
     this.state.firstQuestStep = step;
   }
 
+  /**
+   * Records the Practice Slime's permanent defeat (the three-hit encounter
+   * completed). Idempotent. Deliberately does not touch firstQuestStep:
+   * during the find-slime step the prompt-close path still advances via
+   * completeSlimeInteraction(), and outside it completeCropInteraction() /
+   * fromSave() route past find-slime when this flag is set.
+   */
+  markPracticeSlimeDefeated(): void {
+    this.state.practiceSlimeDefeated = true;
+  }
+
+  isPracticeSlimeDefeated(): boolean {
+    return this.state.practiceSlimeDefeated;
+  }
+
   toSaveFields(): Pick<SaveState, 'firstQuestStep' | 'questFlags'> {
     return {
       firstQuestStep: this.state.firstQuestStep,
@@ -195,7 +233,8 @@ export class FarmQuestSystem {
         miraThirdErrandSprout1Awakened: this.state.sprout1Awakened,
         miraThirdErrandSprout2Awakened: this.state.sprout2Awakened,
         miraThirdErrandSprout3Awakened: this.state.sprout3Awakened,
-        miraThirdErrandComplete: this.state.thirdErrandComplete
+        miraThirdErrandComplete: this.state.thirdErrandComplete,
+        practiceSlimeDefeated: this.state.practiceSlimeDefeated
       }
     };
   }

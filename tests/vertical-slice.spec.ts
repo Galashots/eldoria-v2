@@ -697,6 +697,11 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   }).toEqual(['grade2-mage-walk-right', 'grade2-mage-walk-v001']);
   await page.keyboard.up('KeyD');
   await expect.poll(async () => (await heroPresentation(page)).animation).toBe('grade2-mage-idle-right');
+  // Reposition to the known-clear spot first: at the faster tuned speed
+  // (MOVEMENT_TUNING.maxSpeed) the walk sequence above drifts far enough to
+  // enter a Sleepy Sprout's interaction radius, where ACTION would open its
+  // prompt instead of casting.
+  await setPlayer(page, 320, 320);
   await castGrade2Hero(page, 'right');
 
   await setPlayer(page, 832, 512);
@@ -752,7 +757,9 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   });
   await expect.poll(async () => hasCanvasText(page, 'READ ALOUD')).toBe(true);
   await skipOpenPrompt(page);
-  await expect.poll(async () => (await slimePresentation(page)).animation).toBe('practice-slime-idle');
+  // Defeat is permanent (game-feel milestone): after the first-defeat prompt
+  // closes the slime has left the world instead of resetting to idle.
+  await expect.poll(async () => (await slimePresentation(page)).visible).toBe(false);
   await expect.poll(async () => (await state(page)).questStep).toBe('return-to-mira');
   await expect.poll(async () => (await state(page)).gold).toBe(0);
   await expect.poll(async () => masteryTotal(page, 'skipped')).toBe(2);

@@ -161,7 +161,22 @@ export class WorldScene extends Phaser.Scene {
       this.physics.add.collider(this.player, collisionLayer);
     }
 
-    this.targets = this.makeTargets(objectLayer?.objects ?? []);
+    // Loaded before targets are built (it used to happen after): a save with
+    // the Practice Slime permanently defeated must keep the slime's sprite,
+    // pips, and interaction target from ever being created on this boot.
+    const saved = SaveSystem.load(this.profileId);
+    if (saved) {
+      this.gold = saved.gold;
+      this.inventory = { ...(saved.inventory ?? {}) };
+      this.mastery = { ...(saved.mastery ?? {}) };
+      this.player.setPosition(saved.player.x, saved.player.y);
+    }
+
+    this.farmQuest = FarmQuestSystem.fromSave(saved);
+
+    this.targets = this.makeTargets(objectLayer?.objects ?? []).filter(
+      (target) => target.id !== 'practice-slime' || !this.farmQuest.isPracticeSlimeDefeated()
+    );
     this.createPracticeSlimeAnimations();
     this.drawTargetMarkers();
 
@@ -174,16 +189,6 @@ export class WorldScene extends Phaser.Scene {
       Phaser.Input.Keyboard.Key
     >;
     this.input.keyboard!.addCapture(Phaser.Input.Keyboard.KeyCodes.TAB);
-
-    const saved = SaveSystem.load(this.profileId);
-    if (saved) {
-      this.gold = saved.gold;
-      this.inventory = { ...(saved.inventory ?? {}) };
-      this.mastery = { ...(saved.mastery ?? {}) };
-      this.player.setPosition(saved.player.x, saved.player.y);
-    }
-
-    this.farmQuest = FarmQuestSystem.fromSave(saved);
 
     this.heroPresentation = new HeroPresentationController(this, this.player, this.profileId);
     this.heroPresentation.create();
@@ -760,6 +765,23 @@ export class WorldScene extends Phaser.Scene {
         return outcome.message;
       });
     });
+  }
+
+  /**
+   * Gameplay authority for the Practice Slime's permanent defeat: records the
+   * quest flag, persists it immediately (so a mid-prompt tab close still
+   * sticks), removes the interaction target, and hides the base slime sprite.
+   * Pip/encounter presentation cleanup stays with the encounter controller
+   * (PolishedWorldScene calls its retire()).
+   */
+  private handlePracticeSlimeDefeat(): void {
+    if (this.farmQuest.isPracticeSlimeDefeated()) return;
+
+    this.farmQuest.markPracticeSlimeDefeated();
+    this.targets = this.targets.filter((target) => target.id !== 'practice-slime');
+    this.practiceSlimeSprite?.setVisible(false);
+    this.save();
+    this.updateHint();
   }
 
   private handleSproutInteraction(target: InteractionTarget): void {

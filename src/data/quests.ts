@@ -23,6 +23,7 @@ type MiraFirstErrandDefinition = {
   };
   progress: {
     cropComplete: string;
+    cropCompleteSlimeAlreadyDefeated: string;
     slimeComplete: string;
   };
   completionToast: string;
@@ -93,6 +94,9 @@ export const MIRA_FIRST_ERRAND = {
   },
   progress: {
     cropComplete: 'Objective updated: find the Practice Slime.',
+    // Soft-lock guard path: the slime was already permanently defeated
+    // before this errand step could point at it.
+    cropCompleteSlimeAlreadyDefeated: 'Practice already done. Return to Mira.',
     slimeComplete: 'Practice complete. Return to Mira.'
   },
   completionToast: 'Quest Complete: Mira\'s First Errand\nReceived: Sunberry Charm',
