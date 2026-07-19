@@ -194,13 +194,20 @@ test('woods tree border is collidable: the player cannot push through it', async
   await travelVia(page, FARM_EXIT_POINT.x, FARM_EXIT_POINT.y, 'wildbloom-woods');
 
   // Open lane at tile row 12; the east tree border column starts at world
-  // x 1216. Push east far longer than the unobstructed travel time needed to
-  // cross it: at MOVEMENT_TUNING.maxSpeed (350 world px/sec) 1200ms carries
-  // ~420px, so an uncollided player would end up past 1400 — beyond both the
-  // tree column and the 1280px map edge.
+  // x 1216. Push east until the collider engages. Poll rather than waiting a
+  // fixed delay: on slow software-rendered runners the per-frame
+  // acceleration ramp makes a fixed wait land mid-travel, and body.blocked
+  // is a transient per-step flag, so a one-shot sample after a fixed delay
+  // flakes on runner speed (the repo's flaky-test doctrine: deterministic
+  // state reads, not fixed-delay polling).
   await movePlayerTo(page, 1000, 800);
   await page.keyboard.down('KeyD');
-  await page.waitForTimeout(1200);
+  await expect.poll(async () => page.evaluate(() => {
+    const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
+      player: { x: number; body: { blocked: { right: boolean } } };
+    };
+    return scene.player.body.blocked.right;
+  }), { timeout: 20000 }).toBe(true);
 
   // Sampled while the key is still held: Phaser clears body.blocked as soon
   // as the body stops pressing into the tile, so releasing first would race
