@@ -288,6 +288,34 @@ async function moveGrade2Hero(
 }
 
 /**
+ * Displacement-driven variant of moveGrade2Hero: holds the key until the
+ * hero's real position satisfies stopWhen (walk/idle animation assertions
+ * unchanged). Fixed wall-clock holds cover a frame-rate-dependent distance
+ * on throttled runners, which flaked the movement round-trip assertions on
+ * loaded CI; polling the position makes them deterministic.
+ */
+async function moveGrade2HeroUntil(
+  page: Page,
+  key: string,
+  facing: 'front' | 'back' | 'left' | 'right',
+  stopWhen: (player: { x: number; y: number }) => boolean
+): Promise<void> {
+  await page.keyboard.down(key);
+  await expect.poll(async () => {
+    const hero = await heroPresentation(page);
+    return [hero.animation, hero.texture];
+  }).toEqual([`grade2-mage-walk-${facing}`, 'grade2-mage-walk-v001']);
+  await expect.poll(async () => stopWhen((await state(page)).player), {
+    timeout: 20000
+  }).toBe(true);
+  await page.keyboard.up(key);
+  await expect.poll(async () => {
+    const hero = await heroPresentation(page);
+    return [hero.animation, hero.texture];
+  }).toEqual([`grade2-mage-idle-${facing}`, 'grade2-mage-idle-v001']);
+}
+
+/**
  * Browser-side hero-animation recorder for transient clips (cast/hurt run
  * ~500ms, shorter than a slow environment's evaluate round-trip, so polling
  * heroPresentation can miss them entirely). Arm before triggering the
@@ -637,22 +665,27 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   expect(Number(slime.frame)).toBeLessThanOrEqual(3);
 
   const start = (await state(page)).player;
-  // Fixed-duration key holds can land one renderer frame apart. Keep each
-  // round trip within one 32px map tile while still proving the reverse move
-  // substantially cancels the forward move under both Canvas and WebGL.
+  // Each leg holds its key until a position poll confirms the displacement —
+  // never a fixed wall-clock hold: on throttled runners a fixed hold covers
+  // a frame-rate-dependent distance, and the round-trip tolerance flaked red
+  // on loaded CI (received 569 vs tolerance <544). With displacement-driven
+  // holds, the assertions below are true by construction on any runner.
+  // Return legs stop inside the tolerance window (with margin) so overshoot
+  // from poll latency cannot break the round trip.
   const movementReturnTolerance = 32;
-  await moveGrade2Hero(page, 'KeyD', 'right');
+  const movementLegPx = 32;
+  await moveGrade2HeroUntil(page, 'KeyD', 'right', (p) => p.x >= start.x + movementLegPx);
   expect((await state(page)).player.x).toBeGreaterThan(start.x);
-  await moveGrade2Hero(page, 'KeyA', 'left');
+  await moveGrade2HeroUntil(page, 'KeyA', 'left', (p) => p.x <= start.x + movementReturnTolerance - 8);
   expect((await state(page)).player.x).toBeLessThan(start.x + movementReturnTolerance);
-  await moveGrade2Hero(page, 'KeyS', 'front');
+  await moveGrade2HeroUntil(page, 'KeyS', 'front', (p) => p.y >= start.y + movementLegPx);
   expect((await state(page)).player.y).toBeGreaterThan(start.y);
-  await moveGrade2Hero(page, 'KeyW', 'back');
+  await moveGrade2HeroUntil(page, 'KeyW', 'back', (p) => p.y <= start.y + movementReturnTolerance - 8);
   expect((await state(page)).player.y).toBeLessThan(start.y + movementReturnTolerance);
 
-  await moveGrade2Hero(page, 'KeyS', 'front', 700);
+  await moveGrade2HeroUntil(page, 'KeyS', 'front', (p) => p.y >= start.y + movementLegPx);
   expect((await state(page)).player.y).toBeGreaterThan(320);
-  await moveGrade2Hero(page, 'KeyW', 'back', 700);
+  await moveGrade2HeroUntil(page, 'KeyW', 'back', (p) => p.y <= start.y + movementReturnTolerance - 8);
   expect((await state(page)).player.y).toBeLessThan(start.y + movementReturnTolerance);
 
   await setPlayer(page, 320, 320);
