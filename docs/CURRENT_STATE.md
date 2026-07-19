@@ -1,6 +1,6 @@
 # Eldoria-V2 Current State
 
-Last refreshed on 2026-07-18 after merging the approved shoreline family (PR #99) and additively restacking the independently reviewed Kimi-K3 adaptive-difficulty, PWA, terrain-proof, and E2E-hardening bundle on PR #102. This file owns volatile project status; durable rules live in `AGENTS.md`, and the documentation map lives in `docs/README.md`.
+Last refreshed on 2026-07-19 after adding a browser-test-only Phaser Canvas renderer path to remove reload-heavy WebGL instability while leaving production on `Phaser.AUTO`. This follows the approved shoreline family (PR #99) and the independently reviewed Kimi-K3 adaptive-difficulty, PWA, terrain-proof, and E2E-hardening bundle (PR #102). This file owns volatile project status; durable rules live in `AGENTS.md`, and the documentation map lives in `docs/README.md`.
 
 ## Product invariant
 
@@ -88,6 +88,8 @@ The repository includes:
 - terrain-blend regression coverage for both dirt and shoreline families;
 - Vitest coverage for learning, mastery, adaptive floors/elevation, interactions, curriculum templates, and save migration;
 - Playwright coverage for both profiles, adaptive difficulty through the live WorldScene, the Waking Gate, movement/input, focus-loss recovery, Mira quests, crop prompts, the Practice Slime encounter, Wildbloom discovery and persistence, Stats & Mastery, save/reload, and portrait guidance;
+- an intentional renderer split: Playwright sets `window.__ELDORIA_E2E__` before application code, forcing `Phaser.CANVAS`, while production continues to use unchanged `Phaser.AUTO`; the exact base/candidate full-suite benchmark improved from 224s to 194s (30s, 13.4%), with 56/56 candidate tests passing and no `WebGL Context lost` warnings;
+- renderer-agnostic movement round-trip assertions bounded to one `32px` map tile, covering one-frame Canvas/WebGL cadence variation without changing gameplay physics or production controls;
 - browser-side transient-event recorders that are reset immediately before reward actions, avoiding lifetime-text false positives while remaining robust on slow software-rendered runners;
 - reviewable screenshot artifacts, including iPad-like landscape browser viewports.
 
