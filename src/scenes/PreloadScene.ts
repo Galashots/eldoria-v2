@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { MAP_REGISTRY } from '../data/maps';
 import grade2MageCastSheetUrl from '../../assets/sprites/char_mage_boy_base_cast_v001.png?url';
 import grade2MageHurtSheetUrl from '../../assets/sprites/char_mage_boy_base_hurt_v001.png?url';
 import grade2MageIdleSheetUrl from '../../assets/sprites/char_mage_boy_base_idle_v001.png?url';
@@ -39,7 +40,14 @@ export class PreloadScene extends Phaser.Scene {
       frameWidth: 32,
       frameHeight: 32
     });
-    this.load.tilemapTiledJSON('farm', 'maps/farm.json');
+    // Every registered map's tilemap JSON loads through the registry (see
+    // data/maps.ts) rather than per-map hardcodes; tileset images above keep
+    // their stable cache keys ('tiles', 'terrain-tiles') that the registry
+    // entries reference. Adding a map should not require touching this file
+    // unless it introduces a brand-new tileset image or music track.
+    for (const mapDef of Object.values(MAP_REGISTRY)) {
+      this.load.tilemapTiledJSON(mapDef.tiledKey, mapDef.jsonPath);
+    }
 
     this.load.audio('bgm-farm', 'assets/audio/music/farm-theme-loop.wav');
     this.load.audio('sfx-footstep', 'assets/audio/sfx/footstep.wav');

@@ -4,6 +4,14 @@ This file keeps recent, high-value change summaries. Full historical entries thr
 
 Entries should remain concise: date/author, branch or PR, scope, compatibility impact, verification, and remaining risk. Detailed implementation narratives belong in the PR description and commits.
 
+## 2026-07-20 — Multi-map world foundation (M2)
+
+- Author/branch: Claude Code (repo agent), `world/multi-map-foundation`, executing Build Prompt 02 on top of the merged game-feel milestone (PR #104). This is the **M2** prerequisite named by the approved Mossheart Ruins (Zone #4) design spec.
+- Scope: (1) `src/data/maps.ts` map registry (tilemap key, JSON path, display name, tilesets, music, named world-px spawns, collision GIDs) with `validateMapRegistry()` cross-checked against the real committed map JSONs; `WorldScene` now takes `{ mapId?, spawnId? }` and holds **zero map-specific hardcodes**; `PreloadScene` loads maps in a registry loop; map-name entry banner on scene start. (2) Walk-into exits as Tiled `type: "exit"` objects (`targetMap`/`targetSpawn`, documented-unused `requiresQuestFlag`), with input lock → 300ms fade → scene restart at the named spawn → fade in, guarded against re-trigger. (3) **Wildbloom Woods**, a real 20×14 second map built only from already-approved/committed art, with a tree border, clearing, gate path, and two quest-free interactables (`whispering-flower` flavor; `mossy-stone` opt-in practice), plus a matching farm east gate. (4) `docs/MAP_AUTHORING.md` so a future agent can author map 3 without reading scene code.
+- Verification: `npm run check` exit 0; `npm run test:unit` 116/116; full `npx playwright test` green including new `tests/multi-map.spec.ts` (round trip + spawns + banners, save-on-woods reload, woods collision, quest/marker integrity after the trip, prompts on both maps). Evidence in `docs/playtests/2026-07-20-multi-map/`.
+- Compatibility: **no save-schema bump** — the current map rides the existing `lastArea` field; old saves and unknown values resolve to the farm; a saved position applies only on its own map. No new dependencies, no curriculum/mastery/reward/profile-ID changes. Learning still never gates adventure.
+- Remaining risk: woods uses placeholder-era structural tiles pending the environment-kit art pass; new woods flavor copy awaits ChatGPT wording review; the Zone #4 Woods→Ruins exit is intentionally not built here.
+
 ## 2026-07-19 — Game feel + purposeful interactions (play-feedback milestone)
 
 - Author/branch: Claude Code (repo agent), `feel/game-feel-purposeful-interactions`, executing a scoped build prompt derived from real play feedback (repo owner + child playtester): slow-feeling hero, laggy-feeling camera, too many school questions with no direction, and the endlessly repeatable Practice Slime.

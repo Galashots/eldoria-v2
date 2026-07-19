@@ -17,6 +17,9 @@ export type InteractionId =
   | 'sprout-1'
   | 'sprout-2'
   | 'sprout-3'
+  // Wildbloom Woods (quest-free flavor interactables; see data/maps.ts).
+  | 'whispering-flower'
+  | 'mossy-stone'
   | 'generic-bonus';
 
 const DEFAULT_INTERACTION_ID: InteractionId = 'generic-bonus';

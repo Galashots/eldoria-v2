@@ -107,7 +107,10 @@ test('defeating the Practice Slime removes it permanently, surviving a page relo
           getPracticeSlimeEncounterSnapshot: () => { inputLocked: boolean };
         };
         return scene.getPracticeSlimeEncounterSnapshot().inputLocked;
-      })).toBe(false);
+        // Generous timeout: the unlock waits for the encounter presentation
+        // tween to finish, which outlasts the 5s default on slow
+        // software-rendered runners (same species as the prompt wait below).
+      }), { timeout: 15000 }).toBe(false);
     }
   }
 
