@@ -1,6 +1,6 @@
 # Eldoria-V2 Current State
 
-Last refreshed on 2026-07-19 after the game-feel + purposeful-interactions milestone (movement/camera feel tuning, permanent Practice Slime defeat, post-purpose flavor pacing with opt-in practice, and the pre-reader objective direction marker), driven by real play feedback from the repo owner and a child playtester. This file owns volatile project status; durable rules live in `AGENTS.md`, and the documentation map lives in `docs/README.md`.
+Last refreshed on 2026-07-19 after adding a browser-test-only Phaser Canvas renderer path to remove reload-heavy WebGL instability while leaving production on `Phaser.AUTO`. This follows the approved shoreline family (PR #99) and the independently reviewed Kimi-K3 adaptive-difficulty, PWA, terrain-proof, and E2E-hardening bundle (PR #102). This file owns volatile project status; durable rules live in `AGENTS.md`, and the documentation map lives in `docs/README.md`.
 
 ## Product invariant
 
@@ -13,12 +13,8 @@ Last refreshed on 2026-07-19 after the game-feel + purposeful-interactions miles
 - Grade 2 audio-first **Mage** and Grade 5 reader-mode **Ranger Explorer** profiles. Stable IDs remain `grade2-mage` and `grade5-adventurer`.
 - Fresh profiles enter a short, skippable **Waking Gate** action scene before the farm. Mage fires spell sparks; Ranger fires tracking shots. Returning saves enter the farm directly.
 - Keyboard movement, dynamic lower-left joystick, lower-right **ACTION**, portrait-orientation guidance, and the **STATS** panel.
-- **Tuned movement/camera feel** (2026-07 play feedback): 350 world px/sec max speed with light per-frame acceleration smoothing and a 0.3 camera-follow lerp, centralized in `src/movementTuning.ts` with unit-tested bounds.
-- **Objective direction for pre-readers**: a bouncing gold chevron above the current quest target (`FarmQuestSystem.currentObjectiveTarget()`) plus a screen-edge arrow while the target is off-camera; both disappear once every errand is complete. The objective text banner and Mira pulse remain.
 - Mira's First Errand, The Whispering Scarecrow, and The Sleepy Sprouts.
 - Optional crop and three-hit Practice Slime learning bonuses. The prompt opens only after the encounter presentation completes; wrong answers and skips preserve adventure progress.
-- **The Practice Slime's defeat is permanent** (persisted `practiceSlimeDefeated` quest flag; old saves default to present): after the three-hit encounter and its first-defeat prompt, the slime, pips, and interaction target leave the world and stay gone across reloads. Quest soft-locks are guarded (crop completion and save load route past `find-slime` when the slime is already defeated).
-- **Post-purpose interactions give flavor, not quizzes**: once an interactable's quest purpose is fulfilled, repeats show short rotating flavor toasts (`src/data/flavor.ts`); the crop patch and Mira carry an explicit "ACTION again to practice!" opt-in (Mira rotates combat/farm/quest practice contexts, replacing the retired slime as the combat-practice tap), and post-errand sprouts are pure flavor. First-time and quest-relevant interactions are unchanged; learning never gates adventure.
 - Optional Wildbloom Sprig discovery loop with three persistent secrets, profile-specific reveal abilities, and no random or variable reward.
 - Persistent quest, inventory, gold, keepsake, player-position, and mastery data.
 - Save version 2 with a tested v1→v2 coordinate migration that scales valid legacy positions exactly once.
@@ -90,8 +86,10 @@ The repository includes:
 - a closed-loop ChatGPT asset-generation workflow;
 - deterministic generation checks for PWA icons and the bounded terrain-proof map/sheet;
 - terrain-blend regression coverage for both dirt and shoreline families;
-- Vitest coverage for learning, mastery, adaptive floors/elevation, interactions, curriculum templates, save migration, movement-tuning bounds, the `practiceSlimeDefeated` flag and its soft-lock guards, post-purpose predicates, and the objective-target mapping;
-- Playwright coverage for both profiles, adaptive difficulty through the live WorldScene, the Waking Gate, movement/input, focus-loss recovery, Mira quests, crop prompts, the Practice Slime encounter and its permanent-defeat reload persistence, post-purpose flavor/opt-in pacing, the objective marker/edge arrow, Wildbloom discovery and persistence, Stats & Mastery, save/reload, and portrait guidance;
+- Vitest coverage for learning, mastery, adaptive floors/elevation, interactions, curriculum templates, and save migration;
+- Playwright coverage for both profiles, adaptive difficulty through the live WorldScene, the Waking Gate, movement/input, focus-loss recovery, Mira quests, crop prompts, the Practice Slime encounter, Wildbloom discovery and persistence, Stats & Mastery, save/reload, and portrait guidance;
+- an intentional renderer split: Playwright sets `window.__ELDORIA_E2E__` before application code, forcing `Phaser.CANVAS`, while production continues to use unchanged `Phaser.AUTO`; the exact base/candidate full-suite benchmark improved from 224s to 194s (30s, 13.4%), with 56/56 candidate tests passing and no `WebGL Context lost` warnings;
+- renderer-agnostic movement round-trip assertions bounded to one `32px` map tile, covering one-frame Canvas/WebGL cadence variation without changing gameplay physics or production controls;
 - browser-side transient-event recorders that are reset immediately before reward actions, avoiding lifetime-text false positives while remaining robust on slow software-rendered runners;
 - reviewable screenshot artifacts, including iPad-like landscape browser viewports.
 
