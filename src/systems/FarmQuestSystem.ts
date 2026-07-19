@@ -37,6 +37,7 @@ export type FarmQuestState = {
   sprout2Awakened: boolean;
   sprout3Awakened: boolean;
   thirdErrandComplete: boolean;
+  practiceSlimeDefeated: boolean;
 };
 
 const defaultState = (): FarmQuestState => ({
@@ -48,7 +49,8 @@ const defaultState = (): FarmQuestState => ({
   sprout1Awakened: false,
   sprout2Awakened: false,
   sprout3Awakened: false,
-  thirdErrandComplete: false
+  thirdErrandComplete: false,
+  practiceSlimeDefeated: false
 });
 
 export class FarmQuestSystem {
@@ -59,8 +61,18 @@ export class FarmQuestSystem {
   }
 
   static fromSave(saved: SaveState | null): FarmQuestSystem {
+    const savedStep = saved?.firstQuestStep ?? MIRA_FIRST_ERRAND.steps.talkToMira;
+    const practiceSlimeDefeated = saved?.questFlags?.practiceSlimeDefeated === true;
+
     return new FarmQuestSystem({
-      firstQuestStep: saved?.firstQuestStep ?? MIRA_FIRST_ERRAND.steps.talkToMira,
+      // Soft-lock guard: a save written at the find-slime step with the slime
+      // already permanently defeated (defeated mid-step, tab closed before the
+      // prompt resolved) would otherwise point the player at a slime that no
+      // longer exists. Normalize forward to return-to-mira — the defeat
+      // happened, so the step's purpose is fulfilled.
+      firstQuestStep: savedStep === MIRA_FIRST_ERRAND.steps.findSlime && practiceSlimeDefeated
+        ? MIRA_FIRST_ERRAND.steps.returnToMira
+        : savedStep,
       secondErrandAccepted: saved?.questFlags?.miraSecondErrandAccepted === true,
       secondErrandCharmFound: saved?.questFlags?.miraSecondErrandCharmFound === true,
       secondErrandComplete: saved?.questFlags?.miraSecondErrandComplete === true,
@@ -68,7 +80,9 @@ export class FarmQuestSystem {
       sprout1Awakened: saved?.questFlags?.miraThirdErrandSprout1Awakened === true,
       sprout2Awakened: saved?.questFlags?.miraThirdErrandSprout2Awakened === true,
       sprout3Awakened: saved?.questFlags?.miraThirdErrandSprout3Awakened === true,
-      thirdErrandComplete: saved?.questFlags?.miraThirdErrandComplete === true
+      thirdErrandComplete: saved?.questFlags?.miraThirdErrandComplete === true,
+      // Missing flag (every pre-existing save) => false: the slime is present.
+      practiceSlimeDefeated
     });
   }
 
@@ -95,6 +109,42 @@ export class FarmQuestSystem {
     return sproutsAwakened === MIRA_THIRD_ERRAND.totalSprouts
       ? MIRA_THIRD_ERRAND.objectives.returnToMira
       : MIRA_THIRD_ERRAND.objectives.inProgress(sproutsAwakened);
+  }
+
+  /**
+   * Maps the current quest step to its world interaction target, for the
+   * bouncing objective marker and off-screen edge arrow (pre-reader
+   * direction). Returns null once every errand is complete (no marker).
+   * Pure state read — exported behavior is unit-tested per step.
+   */
+  currentObjectiveTarget(): InteractionId | null {
+    switch (this.state.firstQuestStep) {
+      case MIRA_FIRST_ERRAND.steps.talkToMira:
+      case MIRA_FIRST_ERRAND.steps.returnToMira:
+        return 'mira';
+      case MIRA_FIRST_ERRAND.steps.tryCropBonus:
+        return 'crop-bonus';
+      case MIRA_FIRST_ERRAND.steps.findSlime:
+        return 'practice-slime';
+      case MIRA_FIRST_ERRAND.steps.complete:
+        break;
+    }
+
+    if (!this.state.secondErrandComplete) {
+      // Discover step points at the scarecrow (crop patch); accept and
+      // report-back steps point at Mira.
+      if (this.canDiscoverSecondErrandCharm()) return 'crop-bonus';
+      return 'mira';
+    }
+
+    if (this.state.thirdErrandComplete) return null;
+    if (!this.state.thirdErrandAccepted) return 'mira';
+
+    // Third errand in progress: the next un-awakened sprout, then Mira.
+    if (!this.state.sprout1Awakened) return 'sprout-1';
+    if (!this.state.sprout2Awakened) return 'sprout-2';
+    if (!this.state.sprout3Awakened) return 'sprout-3';
+    return 'mira';
   }
 
   hintLabel(targetLabel: string): string {
@@ -128,11 +178,20 @@ export class FarmQuestSystem {
 
   completeCropInteraction(): FarmQuestOutcome {
     if (this.state.firstQuestStep === MIRA_FIRST_ERRAND.steps.tryCropBonus) {
-      this.state.firstQuestStep = MIRA_FIRST_ERRAND.steps.findSlime;
+      // Soft-lock guard: the Practice Slime encounter is strikeable at any
+      // quest step, so it can already be permanently defeated before the
+      // errand ever points at it. Route straight past find-slime in that
+      // case — there is no slime left to find.
+      const slimeAlreadyDone = this.state.practiceSlimeDefeated;
+      this.state.firstQuestStep = slimeAlreadyDone
+        ? MIRA_FIRST_ERRAND.steps.returnToMira
+        : MIRA_FIRST_ERRAND.steps.findSlime;
       return {
         stateChanged: true,
         objectiveChanged: true,
-        message: MIRA_FIRST_ERRAND.progress.cropComplete
+        message: slimeAlreadyDone
+          ? MIRA_FIRST_ERRAND.progress.cropCompleteSlimeAlreadyDefeated
+          : MIRA_FIRST_ERRAND.progress.cropComplete
       };
     }
 
@@ -184,6 +243,54 @@ export class FarmQuestSystem {
     this.state.firstQuestStep = step;
   }
 
+  /**
+   * Records the Practice Slime's permanent defeat (the three-hit encounter
+   * completed). Idempotent. Deliberately does not touch firstQuestStep:
+   * during the find-slime step the prompt-close path still advances via
+   * completeSlimeInteraction(), and outside it completeCropInteraction() /
+   * fromSave() route past find-slime when this flag is set.
+   */
+  markPracticeSlimeDefeated(): void {
+    this.state.practiceSlimeDefeated = true;
+  }
+
+  isPracticeSlimeDefeated(): boolean {
+    return this.state.practiceSlimeDefeated;
+  }
+
+  /**
+   * True once the crop patch has no pending quest purpose: the first
+   * errand's crop step is behind us AND the scarecrow charm discovery is
+   * not currently pending. Repeat interactions then show world flavor with
+   * an explicit practice opt-in instead of always opening a prompt.
+   * (Accepting the second errand later makes this false again while the
+   * charm discovery is pending, restoring today's quest behavior.)
+   */
+  cropPurposeFulfilled(): boolean {
+    const step = this.state.firstQuestStep;
+    const pastCropStep = step === MIRA_FIRST_ERRAND.steps.findSlime
+      || step === MIRA_FIRST_ERRAND.steps.returnToMira
+      || step === MIRA_FIRST_ERRAND.steps.complete;
+    return pastCropStep && !this.canDiscoverSecondErrandCharm();
+  }
+
+  /**
+   * True once all three sprouts are awake and the third errand is turned
+   * in — sprout interactions then become pure flavor toasts (no prompt).
+   */
+  sproutPurposeFulfilled(): boolean {
+    return this.state.thirdErrandComplete;
+  }
+
+  /**
+   * True once every Mira errand is complete (thirdErrandComplete implies
+   * the earlier ones). Mira then rotates flavor lines and offers opt-in
+   * practice instead of replaying her terminal errand dialogue.
+   */
+  allErrandsComplete(): boolean {
+    return this.state.thirdErrandComplete;
+  }
+
   toSaveFields(): Pick<SaveState, 'firstQuestStep' | 'questFlags'> {
     return {
       firstQuestStep: this.state.firstQuestStep,
@@ -195,7 +302,8 @@ export class FarmQuestSystem {
         miraThirdErrandSprout1Awakened: this.state.sprout1Awakened,
         miraThirdErrandSprout2Awakened: this.state.sprout2Awakened,
         miraThirdErrandSprout3Awakened: this.state.sprout3Awakened,
-        miraThirdErrandComplete: this.state.thirdErrandComplete
+        miraThirdErrandComplete: this.state.thirdErrandComplete,
+        practiceSlimeDefeated: this.state.practiceSlimeDefeated
       }
     };
   }

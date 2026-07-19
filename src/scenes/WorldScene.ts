@@ -1,9 +1,16 @@
 import Phaser from 'phaser';
 import { fpx, GAME_HEIGHT, GAME_SCALE, GAME_WIDTH, LEGACY_GAME_WIDTH, sx, sy } from '../gameDimensions';
+import { MOVEMENT_TUNING } from '../movementTuning';
 import type { AnswerValue, BonusContext, LearningPrompt } from '../data/curriculum';
 import { REWARD_KIND_GOLD_VALUE } from '../data/curriculum';
 import { PROFILES, type ProfileId } from '../data/profiles';
 import { CHARM_REGISTRY, MIRA_FIRST_ERRAND } from '../data/quests';
+import {
+  MIRA_PRACTICE_CONTEXTS,
+  POST_PURPOSE_FLAVOR,
+  PRACTICE_OFFER_SUFFIX,
+  PRACTICE_OFFER_WINDOW_MS
+} from '../data/flavor';
 import { resolveInteractionId, getTiledProperty, type InteractionId } from '../data/interactions';
 import {
   facingFromVector,
@@ -77,10 +84,24 @@ export class WorldScene extends Phaser.Scene {
   private objectiveText!: Phaser.GameObjects.Text;
   private hintText!: Phaser.GameObjects.Text;
   private practiceSlimeSprite?: Phaser.GameObjects.Sprite;
+  // Objective direction (pre-reader friendly): a bouncing gold chevron above
+  // the current quest target plus an edge-of-screen arrow when it's off
+  // camera. Both are plain Graphics direct scene children — see the
+  // container-convention comment in drawTargetMarkers().
+  private objectiveMarker?: Phaser.GameObjects.Graphics;
+  private objectiveMarkerTween?: Phaser.Tweens.Tween;
+  private objectiveEdgeArrow?: Phaser.GameObjects.Graphics;
+  private objectiveTargetPosition?: { x: number; y: number };
   private heroPresentation!: HeroPresentationController;
   private music?: Phaser.Sound.BaseSound;
   private muteIcon!: Phaser.GameObjects.Graphics;
   private lastFootstepAt = 0;
+  // Post-purpose interactions (see data/flavor.ts): a flavor toast can carry
+  // a short-lived practice offer — a second ACTION press on the same target
+  // within the window opens the optional prompt. Session-local by design.
+  private pendingPracticeOffer?: { id: InteractionId; context: BonusContext; label: string; expiresAt: number };
+  private flavorRotation: Partial<Record<keyof typeof POST_PURPOSE_FLAVOR, number>> = {};
+  private miraPracticeContextIndex = 0;
   private readonly lastSfxAt: Partial<Record<string, number>> = {};
   private readonly sfxCooldownMs = 90;
   // Lowered from the first pass's 0.32: the placeholder loop is only ~12.6s,
@@ -160,20 +181,9 @@ export class WorldScene extends Phaser.Scene {
       this.physics.add.collider(this.player, collisionLayer);
     }
 
-    this.targets = this.makeTargets(objectLayer?.objects ?? []);
-    this.createPracticeSlimeAnimations();
-    this.drawTargetMarkers();
-
-    this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
-    this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
-
-    this.cursors = this.input.keyboard!.createCursorKeys();
-    this.keys = this.input.keyboard!.addKeys('W,A,S,D,SPACE,E,I,TAB') as Record<
-      'W' | 'A' | 'S' | 'D' | 'SPACE' | 'E' | 'I' | 'TAB',
-      Phaser.Input.Keyboard.Key
-    >;
-    this.input.keyboard!.addCapture(Phaser.Input.Keyboard.KeyCodes.TAB);
-
+    // Loaded before targets are built (it used to happen after): a save with
+    // the Practice Slime permanently defeated must keep the slime's sprite,
+    // pips, and interaction target from ever being created on this boot.
     const saved = SaveSystem.load(this.profileId);
     if (saved) {
       this.gold = saved.gold;
@@ -183,6 +193,22 @@ export class WorldScene extends Phaser.Scene {
     }
 
     this.farmQuest = FarmQuestSystem.fromSave(saved);
+
+    this.targets = this.makeTargets(objectLayer?.objects ?? []).filter(
+      (target) => target.id !== 'practice-slime' || !this.farmQuest.isPracticeSlimeDefeated()
+    );
+    this.createPracticeSlimeAnimations();
+    this.drawTargetMarkers();
+
+    this.cameras.main.startFollow(this.player, true, MOVEMENT_TUNING.cameraLerp, MOVEMENT_TUNING.cameraLerp);
+    this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
+
+    this.cursors = this.input.keyboard!.createCursorKeys();
+    this.keys = this.input.keyboard!.addKeys('W,A,S,D,SPACE,E,I,TAB') as Record<
+      'W' | 'A' | 'S' | 'D' | 'SPACE' | 'E' | 'I' | 'TAB',
+      Phaser.Input.Keyboard.Key
+    >;
+    this.input.keyboard!.addCapture(Phaser.Input.Keyboard.KeyCodes.TAB);
 
     this.heroPresentation = new HeroPresentationController(this, this.player, this.profileId);
     this.heroPresentation.create();
@@ -207,6 +233,13 @@ export class WorldScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.stopPromptReadAloud();
       this.resetJoystick();
+      // Scene instances are reused across restarts; drop the stale display
+      // objects so the next create() rebuilds them fresh.
+      this.objectiveMarkerTween = undefined;
+      this.objectiveMarker = undefined;
+      this.objectiveEdgeArrow = undefined;
+      this.objectiveTargetPosition = undefined;
+      this.pendingPracticeOffer = undefined;
       this.heroPresentation.dispose();
       // destroy(), not just stop(): `this.sound` is a Game-level plugin
       // shared across scene restarts, so a merely-stopped Sound instance
@@ -224,6 +257,10 @@ export class WorldScene extends Phaser.Scene {
 
   update(): void {
     this.heroPresentation.syncPosition();
+    // Runs before the busy gates below: the arrow tracks the camera, and the
+    // camera can still be settling (follow lerp) for a frame or two after a
+    // prompt opens.
+    this.updateObjectiveEdgeArrow();
 
     if (this.busy && !this.statsPanelOpen) {
       this.player.setVelocity(0, 0);
@@ -242,9 +279,10 @@ export class WorldScene extends Phaser.Scene {
       return;
     }
 
-    // Doubled alongside the world so traversal timing (seconds to cross the
-    // farm) is unchanged even though every world coordinate is now 2x.
-    const speed = sx(125);
+    // Raised from the original 250 world px/sec after play feedback that the
+    // hero "feels slow" — see MOVEMENT_TUNING for the tuned values and their
+    // playtested bounds.
+    const { maxSpeed, velocitySmoothing, velocitySnapThreshold } = MOVEMENT_TUNING;
     const keyX = (this.cursors.right.isDown || this.keys.D.isDown ? 1 : 0)
       - (this.cursors.left.isDown || this.keys.A.isDown ? 1 : 0);
     const keyY = (this.cursors.down.isDown || this.keys.S.isDown ? 1 : 0)
@@ -256,15 +294,31 @@ export class WorldScene extends Phaser.Scene {
     const inputY = rawLength > 1 ? rawY / rawLength : rawY;
     const isMoving = Math.abs(inputX) > 0.01 || Math.abs(inputY) > 0.01;
 
-    this.player.setVelocity(inputX * speed, inputY * speed);
+    // Light acceleration/deceleration: lerp the current physics velocity
+    // toward input * maxSpeed each frame instead of setting it outright, so
+    // starts/stops ease briefly rather than snapping. Reading the current
+    // velocity from the body (not a shadow variable) keeps this correct
+    // across the busy paths above, which zero the body directly. The snap
+    // threshold turns the asymptotic tail of a stop into an exact 0 so
+    // "velocity is 0 when idle" remains a stable, testable state.
+    const body = this.player.body as Phaser.Physics.Arcade.Body;
+    const targetX = inputX * maxSpeed;
+    const targetY = inputY * maxSpeed;
+    let nextX = body.velocity.x + (targetX - body.velocity.x) * velocitySmoothing;
+    let nextY = body.velocity.y + (targetY - body.velocity.y) * velocitySmoothing;
+    if (!isMoving && Math.hypot(nextX, nextY) < velocitySnapThreshold) {
+      nextX = 0;
+      nextY = 0;
+    }
+    this.player.setVelocity(nextX, nextY);
 
     if (isMoving) {
       this.heroPresentation.setMovement(facingFromVector(inputX, inputY), true);
-      if (this.time.now - this.lastFootstepAt > 380) {
+      if (this.time.now - this.lastFootstepAt > MOVEMENT_TUNING.footstepIntervalMs) {
         this.lastFootstepAt = this.time.now;
         // Softer than other one-shot SFX on purpose: this one repeats every
-        // ~380ms during movement, so it's the SFX most likely to feel
-        // annoying on a first playthrough.
+        // footstep interval during movement, so it's the SFX most likely to
+        // feel annoying on a first playthrough.
         this.playSfx('sfx-footstep', 0.16);
       }
     } else {
@@ -526,6 +580,111 @@ export class WorldScene extends Phaser.Scene {
 
   private refreshObjective(): void {
     this.objectiveText.setText(`Objective: ${this.farmQuest.currentObjective()}`);
+    this.updateObjectiveMarker();
+  }
+
+  /**
+   * Positions the bouncing gold chevron above the current objective target
+   * (or hides it when every errand is complete / the target is absent).
+   * Called from refreshObjective() so every quest-state change retargets it.
+   */
+  private updateObjectiveMarker(): void {
+    const targetId = this.farmQuest.currentObjectiveTarget();
+    const target = targetId ? this.targets.find((candidate) => candidate.id === targetId) : undefined;
+
+    if (!target) {
+      this.objectiveTargetPosition = undefined;
+      this.objectiveMarkerTween?.remove();
+      this.objectiveMarkerTween = undefined;
+      this.objectiveMarker?.setVisible(false);
+      this.objectiveEdgeArrow?.setVisible(false);
+      return;
+    }
+
+    this.objectiveTargetPosition = { x: target.x, y: target.y };
+
+    const marker = this.ensureObjectiveMarker();
+    // Above the target's floating label (label sits at y - 60 world px);
+    // clear of Mira's own pulse ring too.
+    const baseY = target.y - sy(52);
+    this.objectiveMarkerTween?.remove();
+    marker.setVisible(true).setPosition(target.x, baseY);
+    this.objectiveMarkerTween = this.tweens.add({
+      targets: marker,
+      y: baseY - sy(6),
+      duration: 460,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+  }
+
+  private ensureObjectiveMarker(): Phaser.GameObjects.Graphics {
+    if (this.objectiveMarker) return this.objectiveMarker;
+
+    // A plain Graphics direct scene child (never a Container — see the
+    // container-convention comment in drawTargetMarkers). Local design-space
+    // geometry scaled once by GAME_SCALE, like the Mira guidance marker.
+    const marker = this.add.graphics()
+      .setName('objective-marker')
+      .setScale(GAME_SCALE)
+      .setDepth(6);
+    marker.fillStyle(0xffd666, 1);
+    marker.fillTriangle(-7, -6, 7, -6, 0, 4);
+    marker.fillTriangle(-5, -14, 5, -14, 0, -7);
+    marker.lineStyle(1.5, 0x1a1208, 0.9);
+    marker.strokeTriangle(-7, -6, 7, -6, 0, 4);
+
+    this.objectiveMarker = marker;
+    return marker;
+  }
+
+  /**
+   * Shows a screen-edge arrow pointing at the objective target while it is
+   * outside the camera view; hidden when on-screen or with no objective.
+   * Runs every frame from update() — pure position math, no allocations.
+   */
+  private updateObjectiveEdgeArrow(): void {
+    const target = this.objectiveTargetPosition;
+    if (!target) {
+      this.objectiveEdgeArrow?.setVisible(false);
+      return;
+    }
+
+    const view = this.cameras.main.worldView;
+    if (view.contains(target.x, target.y)) {
+      this.objectiveEdgeArrow?.setVisible(false);
+      return;
+    }
+
+    const arrow = this.ensureObjectiveEdgeArrow();
+    const screenX = target.x - view.x;
+    const screenY = target.y - view.y;
+    // Clamp inside the play area: below the HUD/objective banners on top,
+    // clear of the hint bar on the bottom.
+    const clampedX = Phaser.Math.Clamp(screenX, sx(24), GAME_WIDTH - sx(24));
+    const clampedY = Phaser.Math.Clamp(screenY, sy(74), GAME_HEIGHT - sy(34));
+    const angle = Math.atan2(screenY - clampedY, screenX - clampedX);
+    arrow.setVisible(true).setPosition(clampedX, clampedY).setRotation(angle);
+  }
+
+  private ensureObjectiveEdgeArrow(): Phaser.GameObjects.Graphics {
+    if (this.objectiveEdgeArrow) return this.objectiveEdgeArrow;
+
+    // Drawn pointing right at rotation 0 so setRotation() aims it directly.
+    const arrow = this.add.graphics()
+      .setName('objective-edge-arrow')
+      .setScrollFactor(0)
+      .setScale(GAME_SCALE)
+      .setDepth(22)
+      .setVisible(false);
+    arrow.fillStyle(0xffd666, 0.95);
+    arrow.fillTriangle(10, 0, -6, -7, -6, 7);
+    arrow.lineStyle(1.5, 0x1a1208, 0.9);
+    arrow.strokeTriangle(10, 0, -6, -7, -6, 7);
+
+    this.objectiveEdgeArrow = arrow;
+    return arrow;
   }
 
   private updateHint(): void {
@@ -665,7 +824,7 @@ export class WorldScene extends Phaser.Scene {
   // of label comparisons. 'generic-bonus' is the fallback every unmapped
   // target already used before this registry existed.
   private readonly interactionHandlers: Record<InteractionId, (target: InteractionTarget) => void> = {
-    mira: () => this.handleMiraInteraction(),
+    mira: (target) => this.handleMiraInteraction(target),
     'crop-bonus': (target) => this.handleCropBonusInteraction(target),
     'practice-slime': (target) => this.handleSlimeInteraction(target),
     'sprout-1': (target) => this.handleSproutInteraction(target),
@@ -714,11 +873,71 @@ export class WorldScene extends Phaser.Scene {
     this.paintSpeakerIcon(this.muteIcon, nextMuted);
   }
 
-  private handleMiraInteraction(): void {
+  /**
+   * Returns the next flavor line for a post-purpose interactable, rotating
+   * through data/flavor.ts's lines so repeats aren't identical.
+   */
+  private nextFlavorLine(key: keyof typeof POST_PURPOSE_FLAVOR): string {
+    const lines = POST_PURPOSE_FLAVOR[key];
+    const index = this.flavorRotation[key] ?? 0;
+    this.flavorRotation[key] = (index + 1) % lines.length;
+    return lines[index] ?? lines[0];
+  }
+
+  /**
+   * If the target carries a live practice offer (a flavor toast ending in
+   * PRACTICE_OFFER_SUFFIX was just shown for it), consume it and open the
+   * optional prompt. The offer is the explicit player-chosen path to
+   * practice after an interactable's quest purpose is fulfilled.
+   */
+  private tryConsumePracticeOffer(target: InteractionTarget): boolean {
+    const offer = this.pendingPracticeOffer;
+    if (!offer || offer.id !== target.id || this.time.now > offer.expiresAt) return false;
+
+    this.pendingPracticeOffer = undefined;
+    this.openBonusPrompt(offer.context, offer.label);
+    return true;
+  }
+
+  /** Shows a post-purpose flavor toast and arms its practice offer window. */
+  private showFlavorWithPracticeOffer(
+    target: InteractionTarget,
+    flavorKey: keyof typeof POST_PURPOSE_FLAVOR,
+    context: BonusContext
+  ): void {
+    this.showToast(`${this.nextFlavorLine(flavorKey)} ${PRACTICE_OFFER_SUFFIX}`);
+    this.pendingPracticeOffer = {
+      id: target.id,
+      context,
+      label: target.label,
+      expiresAt: this.time.now + PRACTICE_OFFER_WINDOW_MS
+    };
+  }
+
+  private handleMiraInteraction(target: InteractionTarget): void {
+    if (this.farmQuest.allErrandsComplete()) {
+      if (this.tryConsumePracticeOffer(target)) {
+        // Advance the rotation only when an offer is actually taken, so the
+        // next opt-in reaches a different mastery context (combat first —
+        // it replaces the retired Practice Slime as the combat-practice tap).
+        this.miraPracticeContextIndex = (this.miraPracticeContextIndex + 1) % MIRA_PRACTICE_CONTEXTS.length;
+        return;
+      }
+      const context = MIRA_PRACTICE_CONTEXTS[this.miraPracticeContextIndex] ?? 'quest';
+      this.showFlavorWithPracticeOffer(target, 'mira', context);
+      return;
+    }
+
     this.applyQuestOutcome(this.farmQuest.interactWithMira(), true);
   }
 
   private handleCropBonusInteraction(target: InteractionTarget): void {
+    if (this.farmQuest.cropPurposeFulfilled()) {
+      if (this.tryConsumePracticeOffer(target)) return;
+      this.showFlavorWithPracticeOffer(target, 'crop', target.kind);
+      return;
+    }
+
     this.busy = true;
     this.resetJoystick();
     this.player.setVelocity(0, 0);
@@ -744,7 +963,35 @@ export class WorldScene extends Phaser.Scene {
     });
   }
 
+  /**
+   * Gameplay authority for the Practice Slime's permanent defeat: records the
+   * quest flag, persists it immediately (so a mid-prompt tab close still
+   * sticks), removes the interaction target, and hides the base slime sprite.
+   * Pip/encounter presentation cleanup stays with the encounter controller
+   * (PolishedWorldScene calls its retire()).
+   */
+  private handlePracticeSlimeDefeat(): void {
+    if (this.farmQuest.isPracticeSlimeDefeated()) return;
+
+    this.farmQuest.markPracticeSlimeDefeated();
+    this.targets = this.targets.filter((target) => target.id !== 'practice-slime');
+    this.practiceSlimeSprite?.setVisible(false);
+    this.save();
+    this.updateHint();
+    // If the objective marker was floating over the slime (find-slime step),
+    // hide it now rather than leaving it bouncing over an empty clearing
+    // until the prompt-close quest advance re-runs refreshObjective().
+    this.updateObjectiveMarker();
+  }
+
   private handleSproutInteraction(target: InteractionTarget): void {
+    // Post-purpose sprouts are pure flavor — no prompt and no opt-in
+    // (Mira and the crop patch carry the practice offers).
+    if (this.farmQuest.sproutPurposeFulfilled()) {
+      this.showToast(this.nextFlavorLine('sprout'));
+      return;
+    }
+
     this.busy = true;
     this.resetJoystick();
     this.player.setVelocity(0, 0);

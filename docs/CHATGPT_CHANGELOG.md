@@ -4,6 +4,14 @@ This file keeps recent, high-value change summaries. Full historical entries thr
 
 Entries should remain concise: date/author, branch or PR, scope, compatibility impact, verification, and remaining risk. Detailed implementation narratives belong in the PR description and commits.
 
+## 2026-07-19 — Game feel + purposeful interactions (play-feedback milestone)
+
+- Author/branch: Claude Code (repo agent), `feel/game-feel-purposeful-interactions`, executing a scoped build prompt derived from real play feedback (repo owner + child playtester): slow-feeling hero, laggy-feeling camera, too many school questions with no direction, and the endlessly repeatable Practice Slime.
+- Scope: (1) movement speed `250→350` world px/sec with light accel/decel smoothing and camera lerp `0.12→0.3`, all centralized in `src/movementTuning.ts`; (2) permanent Practice Slime defeat via a persisted `practiceSlimeDefeated` quest flag (old saves default to slime-present; crop-completion and load-time soft-lock guards covered by unit tests; prompt-close `reset()` demoted to a documented test-only hook); (3) post-purpose interactions now show short rotating flavor toasts (`src/data/flavor.ts`) with an explicit "ACTION again to practice!" opt-in at the crop patch and Mira (rotating combat/farm/quest contexts) — first-time/quest-relevant interactions unchanged, learning still never gates adventure; (4) pre-reader objective direction: `FarmQuestSystem.currentObjectiveTarget()` + a bouncing gold chevron above the current target and a screen-edge arrow when it is off-camera, hidden once all errands are complete.
+- Verification: `npm run check`, `npm run test:unit` (108, incl. new tuning-bounds/flag-migration/soft-lock/purpose/objective-mapping suites), and the full local Playwright suite green; three existing specs updated where they asserted the old speed/reset behavior; browser evidence in `docs/playtests/2026-07-19-game-feel-milestone/`. Detail: `docs/changelog/2026-07-19-game-feel-purposeful-interactions.md`.
+- Compatibility: saves fully backward compatible (open `questFlags` record, no schema bump). No dependency, curriculum, mastery, reward, profile-ID, or map changes.
+- Remaining risk: feel tuning is browser-verified, not physical-iPad or child-validated; new flavor-line copy awaits ChatGPT wording review; 2s opt-in window may need kid-testing adjustment.
+
 ## 2026-07-17 — Shoreline terrain-blend family (13 cells) — APPROVED, no v3 required
 
 - Author/branch: ChatGPT (visual-QA lead, formal verdict) + Claude Code (repo agent, documentation-only finalization), `chatgpt/shoreline-terrain-family` (draft PR #99). Second, independent visual + implementation review of exact head `1991093f291d726b31f24b2870fcf3f5cf0a52f8` (the v2 material correction).
