@@ -1,6 +1,6 @@
 # Eldoria-V2 Current State
 
-Last refreshed on 2026-07-18 after merging the approved shoreline family (PR #99) and additively restacking the independently reviewed Kimi-K3 adaptive-difficulty, PWA, terrain-proof, and E2E-hardening bundle on PR #102. This file owns volatile project status; durable rules live in `AGENTS.md`, and the documentation map lives in `docs/README.md`.
+Last refreshed on 2026-07-18 after merging the approved shoreline family (PR #99) and the independently reviewed Kimi-K3 bundle (PR #102), then adding an offline service worker and an iPad-fidelity emulation harness on the offline-PWA milestone branch (draft PR). This file owns volatile project status; durable rules live in `AGENTS.md`, and the documentation map lives in `docs/README.md`.
 
 ## Product invariant
 
@@ -19,7 +19,7 @@ Last refreshed on 2026-07-18 after merging the approved shoreline family (PR #99
 - Persistent quest, inventory, gold, keepsake, player-position, and mastery data.
 - Save version 2 with a tested v1→v2 coordinate migration that scales valid legacy positions exactly once.
 - **Adaptive difficulty** on optional learning bonuses: each skill's derived difficulty is `1 + floor(streak/3)`, capped per template. Requested context remains authoritative, and every context template is reachable at its declared floor; this avoids impossible self-unlock loops for higher-floor skills such as Grade 5 decimals. Correct streaks raise later number ranges, wrong answers ease back toward the floor, and skips do not move difficulty. Rewards and adventure progress remain ungated. See `docs/CURRICULUM_QUESTION_ENGINE.md`.
-- **PWA / Add to Home Screen**: a relative-path web app manifest and deterministic generated icons support standalone home-screen launch with Realm of Eldoria branding. No service worker or offline caching yet; physical iPad installation remains unvalidated.
+- **PWA / Add to Home Screen**: a relative-path web app manifest and deterministic generated icons support standalone home-screen launch with Realm of Eldoria branding. A dependency-free, production-only service worker (`dist/sw.js`, emitted at build time) now precaches the app shell and boots the game fully offline with a per-build versioned cache; dev and the default suite are unaffected because it registers only under `import.meta.env.PROD`. Physical iPad installation and standalone chrome/safe-area behavior remain unvalidated. See `docs/IPAD_EMULATION.md`.
 - Background music, interaction/reward/UI effects, read-aloud support, and music ducking. Shipped audio remains placeholder material pending a later licensed-art pass.
 - GitHub Pages deployment from verified `main` builds.
 
@@ -89,9 +89,11 @@ The repository includes:
 - Vitest coverage for learning, mastery, adaptive floors/elevation, interactions, curriculum templates, and save migration;
 - Playwright coverage for both profiles, adaptive difficulty through the live WorldScene, the Waking Gate, movement/input, focus-loss recovery, Mira quests, crop prompts, the Practice Slime encounter, Wildbloom discovery and persistence, Stats & Mastery, save/reload, and portrait guidance;
 - browser-side transient-event recorders that are reset immediately before reward actions, avoiding lifetime-text false positives while remaining robust on slow software-rendered runners;
-- reviewable screenshot artifacts, including iPad-like landscape browser viewports.
+- an **offline-PWA suite** (`npm run test:emulation`, separate `playwright.emulation.config.ts` against the `vite preview` production build): service-worker registration/precache, a fully offline second-load boot with zero console errors, an offline save round-trip, and per-build cache cleanup on version bump;
+- an **iPad-fidelity emulation harness** (Chromium at iPad Pro 11" scale, 4× CPU throttle): a ~60 s journey probe recording rAF frame pacing (p50/p95, long-frame count) and JS-heap growth with a strict zero console-error watchdog, a throttled cold-load-to-interactive budget, a ≥ 44×44 CSS-px touch-comfort audit of every interactive canvas control, and manifest-level standalone/orientation checks — all with documented, re-tunable budgets (`docs/IPAD_EMULATION.md`). It runs as a separate CI job so it never slows the default smoke suite;
+- reviewable screenshot artifacts, including iPad-like landscape browser viewports and the emulation harness's offline-boot / journey / portrait-lock captures.
 
-Browser viewport evidence is not physical-iPad validation. The build remains technically and visually browser-verified rather than child-validated or physically iPad-certified.
+Browser viewport and Chromium emulation evidence is not physical-iPad validation. The build remains technically and visually browser-verified — now including emulated iPad-scale performance and touch-comfort — rather than child-validated or physically iPad-certified.
 
 ## Active milestone — Phase 2 environment-art production
 
@@ -133,7 +135,7 @@ Batch A is **7 of 7 foundational assets approved**. Batch B status:
 
 ## Known risks
 
-- Physical touch comfort, safe-area behavior, PWA installation/orientation behavior, audio balance, memory stability, and frame pacing remain unverified on an actual iPad.
+- Physical touch comfort, safe-area behavior, PWA installation/standalone chrome, audio balance, memory stability, and frame pacing remain unverified on an actual iPad. The new emulation harness gives *emulated* Chromium coverage of frame pacing, heap stability, and ≥ 44 px touch targets at iPad scale, but the engine is Blink (not WebKit), throttling is synthetic, and installed `display-mode: standalone` is checked at the manifest level only — none of this replaces physical iPad Safari validation.
 - The terrain proof intentionally has hard centre-tile boundaries at pond/path edges because transition families are not yet Wangset-integrated; it is visually stronger than placeholders but not the final terrain composition.
 - Dense generated environment art may lose readability at tiny runtime sizes; target-size changes must be made explicitly rather than hidden through blurry scaling.
 - High-resolution image generation tends to over-pattern quiet terrain and invent palette intermediates. Every candidate must be judged from its exact runtime pixels, not from the attractive high-resolution preview.

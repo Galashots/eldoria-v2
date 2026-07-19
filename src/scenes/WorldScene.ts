@@ -469,7 +469,9 @@ export class WorldScene extends Phaser.Scene {
       color: '#ffd666'
     }).setScrollFactor(0);
 
-    const statsBtn = drawRoundedButton(this, GAME_WIDTH - sx(50), sy(14), sx(56), sy(16), 0x5f3d12, 0xffd666, 10);
+    // Height sy(18) (not sy(16)) so the button clears the 44 CSS-px touch-target
+    // minimum at the emulated iPad scale — see the tests-emulation touch audit.
+    const statsBtn = drawRoundedButton(this, GAME_WIDTH - sx(50), sy(14), sx(56), sy(18), 0x5f3d12, 0xffd666, 10);
 
     this.add.text(GAME_WIDTH - sx(50), sy(14), 'STATS', {
       fontFamily: 'system-ui',
@@ -480,7 +482,9 @@ export class WorldScene extends Phaser.Scene {
 
     statsBtn.on('pointerdown', () => this.toggleStatsPanel());
 
-    const muteBtn = drawRoundedButton(this, GAME_WIDTH - sx(96), sy(14), sx(24), sy(16), 0x5f3d12, 0xffd666, 10);
+    // Height sy(18) to clear the 44 CSS-px touch-target minimum at iPad scale
+    // (matches the STATS button above); the mute icon inside is unchanged.
+    const muteBtn = drawRoundedButton(this, GAME_WIDTH - sx(96), sy(14), sx(24), sy(18), 0x5f3d12, 0xffd666, 10);
 
     this.muteIcon = this.add.graphics()
       .setScrollFactor(0)
