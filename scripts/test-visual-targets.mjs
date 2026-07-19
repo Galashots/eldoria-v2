@@ -48,8 +48,8 @@ function baseTarget(overrides = {}) {
   assert.ok(result.paletteCount >= 1, 'expected at least one palette to be validated');
   assert.deepEqual(
     [...new Set(result.deferredPaletteFamilyReferences.map((reference) => reference.family))].sort(),
-    ['ruins', 'ui_neutral'],
-    'scoped farm families without swatches must be reported as deferred rather than falsely resolved'
+    ['ui_neutral'],
+    'remaining scoped farm families without swatches must be reported as deferred rather than falsely resolved'
   );
 }
 

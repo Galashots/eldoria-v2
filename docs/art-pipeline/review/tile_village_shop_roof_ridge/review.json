@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "id": "review_tile_village_shop_roof_ridge",
+  "manifest": "docs/art-pipeline/review/tile_village_shop_roof_ridge/ridge.review.manifest.json",
+  "output": "docs/art-pipeline/review/tile_village_shop_roof_ridge/ridge.review-normalized.png",
+  "dimensions": [
+    16,
+    16
+  ],
+  "frames": 1,
+  "sha256": "4553e51493ccebf9511bcaa28b088622b0271590dcc1c3f024546d5a084c4272",
+  "alpha": {
+    "transparent": 0,
+    "partial": 0,
+    "opaque": 256
+  },
+  "seams": {
+    "horizontal": {
+      "wrapStep": 11.32,
+      "internalStep": 25.01,
+      "ratio": 0.453
+    },
+    "vertical": {
+      "wrapStep": 83.678,
+      "internalStep": 68.353,
+      "ratio": 1.224
+    }
+  },
+  "palette": {
+    "families": [
+      "wood_leather",
+      "forest"
+    ],
+    "atlasFamily": "environment_farm",
+    "tolerance": 0,
+    "pixels": 256,
+    "withinTolerance": 256,
+    "min": 0,
+    "median": 0,
+    "max": 0
+  },
+  "evidence": [
+    "preview-20x.png",
+    "tile-3x3-8x.png",
+    "field-12x8-3x.png",
+    "comparison-panel.png"
+  ]
+}

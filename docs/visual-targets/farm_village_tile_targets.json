@@ -5,7 +5,10 @@
     "id": "tiles_farm_village_starter",
     "displayName": "Farm and Village Starter Tile Targets",
     "status": "target_only",
-    "tileSizePx": [16, 16],
+    "tileSizePx": [
+      16,
+      16
+    ],
     "atlasFamily": "environment_farm"
   },
   "targets": [
@@ -14,204 +17,473 @@
       "displayName": "Farm Grass Base",
       "status": "target_only",
       "category": "tile",
-      "canvasPx": [16, 16],
-      "footprintPx": [16, 16],
-      "pivotPx": [8, 15],
+      "canvasPx": [
+        16,
+        16
+      ],
+      "footprintPx": [
+        16,
+        16
+      ],
+      "pivotPx": [
+        8,
+        15
+      ],
       "ppu": 16,
       "view": "top_down",
       "directions": [],
-      "paletteFamilies": ["forest"],
+      "paletteFamilies": [
+        "forest"
+      ],
       "lightDirection": "upper_left",
       "renderLayer": "terrain",
-      "variants": ["grass_a", "grass_b", "grass_c"],
-      "collision": { "solid": false, "body": null, "hurtbox": null, "hitboxes": [], "interaction": null },
+      "variants": [
+        "grass_a",
+        "grass_b",
+        "grass_c"
+      ],
+      "collision": {
+        "solid": false,
+        "body": null,
+        "hurtbox": null,
+        "hitboxes": [],
+        "interaction": null
+      },
       "runtimeExport": "png",
       "preferredSource": "aseprite",
       "atlasFamily": "environment_farm",
       "visualRule": "Readable low-noise grass base; supports tiling without obvious seams; must not compete with actors or crop overlays.",
-      "notes": ["Specification only; no art is included.", "No runtime behavior is added.", "Boundary against tile_farm_path_dirt must use that target's center/edge/corner blend variants per contract Section 13, not a hard grid edge."]
+      "notes": [
+        "Specification only; no art is included.",
+        "No runtime behavior is added.",
+        "Boundary against tile_farm_path_dirt must use that target's center/edge/corner blend variants per contract Section 13, not a hard grid edge."
+      ]
     },
     {
       "id": "tile_farm_grass_scatter",
       "displayName": "Farm Grass Scatter Decoration",
       "status": "target_only",
       "category": "tile",
-      "canvasPx": [16, 16],
-      "footprintPx": [16, 16],
-      "pivotPx": [8, 15],
+      "canvasPx": [
+        16,
+        16
+      ],
+      "footprintPx": [
+        16,
+        16
+      ],
+      "pivotPx": [
+        8,
+        15
+      ],
       "ppu": 16,
       "view": "top_down",
       "directions": [],
-      "paletteFamilies": ["forest"],
+      "paletteFamilies": [
+        "forest"
+      ],
       "lightDirection": "upper_left",
       "renderLayer": "decals_low",
-      "variants": ["tuft_a", "tuft_b", "pebble_a", "flower_a"],
-      "collision": { "solid": false, "body": null, "hurtbox": null, "hitboxes": [], "interaction": null },
+      "variants": [
+        "tuft_a",
+        "tuft_b",
+        "pebble_a",
+        "flower_a"
+      ],
+      "collision": {
+        "solid": false,
+        "body": null,
+        "hurtbox": null,
+        "hitboxes": [],
+        "interaction": null
+      },
       "runtimeExport": "png",
       "preferredSource": "aseprite",
       "atlasFamily": "environment_farm",
       "visualRule": "Sparse, non-repeating detail scattered over tile_farm_grass_base to break up grid monotony; must remain quieter than actors and crop overlays and must not obstruct walkability or interaction reads.",
-      "notes": ["Specification only; no art is included.", "No runtime behavior is added."]
+      "notes": [
+        "Specification only; no art is included.",
+        "No runtime behavior is added."
+      ]
     },
     {
       "id": "tile_farm_path_dirt",
       "displayName": "Farm Dirt Path",
       "status": "target_only",
       "category": "tile",
-      "canvasPx": [16, 16],
-      "footprintPx": [16, 16],
-      "pivotPx": [8, 15],
+      "canvasPx": [
+        16,
+        16
+      ],
+      "footprintPx": [
+        16,
+        16
+      ],
+      "pivotPx": [
+        8,
+        15
+      ],
       "ppu": 16,
       "view": "top_down",
       "directions": [],
-      "paletteFamilies": ["wood_leather", "forest"],
+      "paletteFamilies": [
+        "wood_leather",
+        "forest"
+      ],
       "lightDirection": "upper_left",
       "renderLayer": "terrain",
-      "variants": ["center", "edge_north", "edge_south", "edge_west", "edge_east", "corner_ne", "corner_nw", "corner_se", "corner_sw", "inner_corner_ne", "inner_corner_nw", "inner_corner_se", "inner_corner_sw"],
-      "collision": { "solid": false, "body": null, "hurtbox": null, "hitboxes": [], "interaction": null },
+      "variants": [
+        "center",
+        "edge_north",
+        "edge_south",
+        "edge_west",
+        "edge_east",
+        "corner_ne",
+        "corner_nw",
+        "corner_se",
+        "corner_sw",
+        "inner_corner_ne",
+        "inner_corner_nw",
+        "inner_corner_se",
+        "inner_corner_sw"
+      ],
+      "collision": {
+        "solid": false,
+        "body": null,
+        "hurtbox": null,
+        "hitboxes": [],
+        "interaction": null
+      },
       "runtimeExport": "png",
       "preferredSource": "aseprite",
       "atlasFamily": "environment_farm",
       "visualRule": "Clear walkable dirt path with readable edges; must connect cleanly to grass and village tiles. This is the project's reference terrain-blend set per contract Section 13: the full reduced 13-tile blend (1 center + 4 edges + 4 outer corners named corner_* + 4 inner corners named inner_corner_*), not the full 47-tile blob set, authored for Tiled's Terrain Brush. The inner corners cover concave joins so the path can follow an irregular, non-rectangular outline.",
-      "notes": ["Specification only; no art is included.", "No runtime behavior is added."]
+      "notes": [
+        "Specification only; no art is included.",
+        "No runtime behavior is added."
+      ]
     },
     {
       "id": "tile_farm_tilled_soil",
       "displayName": "Tilled Soil",
       "status": "target_only",
       "category": "tile",
-      "canvasPx": [16, 16],
-      "footprintPx": [16, 16],
-      "pivotPx": [8, 15],
+      "canvasPx": [
+        16,
+        16
+      ],
+      "footprintPx": [
+        16,
+        16
+      ],
+      "pivotPx": [
+        8,
+        15
+      ],
       "ppu": 16,
       "view": "top_down",
       "directions": [],
-      "paletteFamilies": ["wood_leather", "forest"],
+      "paletteFamilies": [
+        "wood_leather",
+        "forest"
+      ],
       "lightDirection": "upper_left",
       "renderLayer": "terrain",
-      "variants": ["dry", "wet", "seeded"],
-      "collision": { "solid": false, "body": null, "hurtbox": null, "hitboxes": [], "interaction": [0, 0, 16, 16] },
+      "variants": [
+        "dry",
+        "wet",
+        "seeded"
+      ],
+      "collision": {
+        "solid": false,
+        "body": null,
+        "hurtbox": null,
+        "hitboxes": [],
+        "interaction": [
+          0,
+          0,
+          16,
+          16
+        ]
+      },
       "interactionKind": "farm_soil",
       "runtimeExport": "png",
       "preferredSource": "aseprite",
       "atlasFamily": "environment_farm",
       "visualRule": "Readable farm plot state; dry, wet, and seeded variants must be distinguishable at 1x.",
-      "notes": ["Specification only; no art is included.", "No runtime behavior is added."]
+      "notes": [
+        "Specification only; no art is included.",
+        "No runtime behavior is added."
+      ]
     },
     {
       "id": "tile_farm_crop_sprout",
       "displayName": "Crop Sprout Overlay",
       "status": "target_only",
       "category": "tile",
-      "canvasPx": [16, 16],
-      "footprintPx": [16, 16],
-      "pivotPx": [8, 15],
+      "canvasPx": [
+        16,
+        16
+      ],
+      "footprintPx": [
+        16,
+        16
+      ],
+      "pivotPx": [
+        8,
+        15
+      ],
       "ppu": 16,
       "view": "top_down",
       "directions": [],
-      "paletteFamilies": ["forest"],
+      "paletteFamilies": [
+        "forest"
+      ],
       "lightDirection": "upper_left",
       "renderLayer": "decals_low",
-      "variants": ["sprout_a", "sprout_b"],
-      "collision": { "solid": false, "body": null, "hurtbox": null, "hitboxes": [], "interaction": [2, 4, 12, 12] },
+      "variants": [
+        "sprout_a",
+        "sprout_b"
+      ],
+      "collision": {
+        "solid": false,
+        "body": null,
+        "hurtbox": null,
+        "hitboxes": [],
+        "interaction": [
+          2,
+          4,
+          12,
+          12
+        ]
+      },
       "interactionKind": "crop_growing",
       "runtimeExport": "png",
       "preferredSource": "aseprite",
       "atlasFamily": "environment_farm",
       "visualRule": "Small readable sprout overlay anchored to soil; must not hide soil state or look harvest-ready.",
-      "notes": ["Specification only; no art is included.", "No runtime behavior is added."]
+      "notes": [
+        "Specification only; no art is included.",
+        "No runtime behavior is added."
+      ]
     },
     {
       "id": "tile_farm_crop_harvest",
       "displayName": "Harvest-Ready Crop Overlay",
       "status": "target_only",
       "category": "tile",
-      "canvasPx": [16, 16],
-      "footprintPx": [16, 16],
-      "pivotPx": [8, 15],
+      "canvasPx": [
+        16,
+        16
+      ],
+      "footprintPx": [
+        16,
+        16
+      ],
+      "pivotPx": [
+        8,
+        15
+      ],
       "ppu": 16,
       "view": "top_down",
       "directions": [],
-      "paletteFamilies": ["forest", "arcane"],
+      "paletteFamilies": [
+        "forest",
+        "arcane"
+      ],
       "lightDirection": "upper_left",
       "renderLayer": "decals_low",
-      "variants": ["ready_a", "ready_b", "sparkle_optional"],
-      "collision": { "solid": false, "body": null, "hurtbox": null, "hitboxes": [], "interaction": [1, 2, 14, 14] },
+      "variants": [
+        "ready_a",
+        "ready_b",
+        "sparkle_optional"
+      ],
+      "collision": {
+        "solid": false,
+        "body": null,
+        "hurtbox": null,
+        "hitboxes": [],
+        "interaction": [
+          1,
+          2,
+          14,
+          14
+        ]
+      },
       "interactionKind": "crop_harvest",
       "runtimeExport": "png",
       "preferredSource": "aseprite",
       "atlasFamily": "environment_farm",
       "visualRule": "Clearly harvest-ready at 1x; optional sparkle must remain subtle and not imply a mandatory learning gate.",
-      "notes": ["Specification only; no art is included.", "No runtime behavior is added."]
+      "notes": [
+        "Specification only; no art is included.",
+        "No runtime behavior is added."
+      ]
     },
     {
       "id": "tile_village_shop_wall",
       "displayName": "Village Shop Wall",
       "status": "target_only",
       "category": "tile",
-      "canvasPx": [16, 16],
-      "footprintPx": [16, 16],
-      "pivotPx": [8, 15],
+      "canvasPx": [
+        16,
+        16
+      ],
+      "footprintPx": [
+        16,
+        16
+      ],
+      "pivotPx": [
+        8,
+        15
+      ],
       "ppu": 16,
       "view": "top_down",
       "directions": [],
-      "paletteFamilies": ["ruins", "wood_leather"],
+      "paletteFamilies": [
+        "metal",
+        "wood_leather"
+      ],
       "lightDirection": "upper_left",
       "renderLayer": "terrain",
-      "variants": ["stone_base", "wood_trim", "window_lit"],
-      "collision": { "solid": true, "body": [0, 0, 16, 16], "hurtbox": null, "hitboxes": [], "interaction": null },
+      "variants": [
+        "stone_base",
+        "wood_trim",
+        "window_lit"
+      ],
+      "collision": {
+        "solid": true,
+        "body": [
+          0,
+          0,
+          16,
+          16
+        ],
+        "hurtbox": null,
+        "hitboxes": [],
+        "interaction": null
+      },
       "interactionKind": null,
       "runtimeExport": "png",
       "preferredSource": "aseprite",
       "atlasFamily": "environment_farm",
       "visualRule": "Readable shop facade tile; same projection and upper-left light as other building pieces; solid by target spec.",
-      "notes": ["Specification only; no art is included.", "No runtime behavior is added."]
+      "notes": [
+        "Specification only; no art is included.",
+        "No runtime behavior is added.",
+        "Production palette resolved to the locked farm environment metal/wood swatches before source approval; this does not add runtime behavior."
+      ]
     },
     {
       "id": "tile_village_shop_door",
       "displayName": "Village Shop Door",
       "status": "target_only",
       "category": "tile",
-      "canvasPx": [16, 16],
-      "footprintPx": [16, 16],
-      "pivotPx": [8, 15],
+      "canvasPx": [
+        16,
+        16
+      ],
+      "footprintPx": [
+        16,
+        16
+      ],
+      "pivotPx": [
+        8,
+        15
+      ],
       "ppu": 16,
       "view": "top_down",
       "directions": [],
-      "paletteFamilies": ["wood_leather", "ui_neutral"],
+      "paletteFamilies": [
+        "wood_leather",
+        "metal"
+      ],
       "lightDirection": "upper_left",
       "renderLayer": "terrain",
-      "variants": ["closed", "highlighted", "open_optional"],
-      "collision": { "solid": true, "body": [0, 0, 16, 16], "hurtbox": null, "hitboxes": [], "interaction": [2, 2, 12, 14] },
+      "variants": [
+        "closed",
+        "highlighted",
+        "open_optional"
+      ],
+      "collision": {
+        "solid": true,
+        "body": [
+          0,
+          0,
+          16,
+          16
+        ],
+        "hurtbox": null,
+        "hitboxes": [],
+        "interaction": [
+          2,
+          2,
+          12,
+          14
+        ]
+      },
       "interactionKind": "door",
       "runtimeExport": "png",
       "preferredSource": "aseprite",
       "atlasFamily": "environment_farm",
       "visualRule": "Door must read as an entrance immediately; highlighted variant may indicate interaction but adds no runtime behavior here.",
-      "notes": ["Specification only; no art is included.", "No runtime behavior is added."]
+      "notes": [
+        "Specification only; no art is included.",
+        "No runtime behavior is added.",
+        "Production palette resolved to the locked farm environment metal/wood swatches before source approval; this does not add runtime behavior."
+      ]
     },
     {
       "id": "tile_village_interaction_sign",
       "displayName": "Village Interaction Sign Marker",
       "status": "target_only",
       "category": "tile",
-      "canvasPx": [16, 16],
-      "footprintPx": [16, 16],
-      "pivotPx": [8, 15],
+      "canvasPx": [
+        16,
+        16
+      ],
+      "footprintPx": [
+        16,
+        16
+      ],
+      "pivotPx": [
+        8,
+        15
+      ],
       "ppu": 16,
       "view": "top_down",
       "directions": [],
-      "paletteFamilies": ["wood_leather", "ui_neutral"],
+      "paletteFamilies": [
+        "wood_leather",
+        "ui_neutral"
+      ],
       "lightDirection": "upper_left",
       "renderLayer": "world_ui",
-      "variants": ["idle", "attention"],
-      "collision": { "solid": false, "body": null, "hurtbox": null, "hitboxes": [], "interaction": [0, 0, 16, 16] },
+      "variants": [
+        "idle",
+        "attention"
+      ],
+      "collision": {
+        "solid": false,
+        "body": null,
+        "hurtbox": null,
+        "hitboxes": [],
+        "interaction": [
+          0,
+          0,
+          16,
+          16
+        ]
+      },
       "interactionKind": "sign",
       "runtimeExport": "png",
       "preferredSource": "aseprite",
       "atlasFamily": "environment_farm",
       "visualRule": "Readable non-verbal interaction marker for young players; must support Grade 2 audio-first play without adding UI code.",
-      "notes": ["Specification only; no art is included.", "No runtime behavior is added."]
+      "notes": [
+        "Specification only; no art is included.",
+        "No runtime behavior is added."
+      ]
     }
   ]
 }

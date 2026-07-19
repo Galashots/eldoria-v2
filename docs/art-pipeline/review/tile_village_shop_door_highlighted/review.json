@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "id": "review_tile_village_shop_door_highlighted",
+  "manifest": "docs/art-pipeline/review/tile_village_shop_door_highlighted/highlighted.review.manifest.json",
+  "output": "docs/art-pipeline/review/tile_village_shop_door_highlighted/highlighted.review-normalized.png",
+  "dimensions": [
+    16,
+    16
+  ],
+  "frames": 1,
+  "sha256": "044b8548bd2dd284a39727c9f1effb4f9f50ec28cb6b97a30b7fec553c151595",
+  "alpha": {
+    "transparent": 0,
+    "partial": 0,
+    "opaque": 256
+  },
+  "seams": {
+    "horizontal": {
+      "wrapStep": 15.612,
+      "internalStep": 54.38,
+      "ratio": 0.287
+    },
+    "vertical": {
+      "wrapStep": 27.14,
+      "internalStep": 43.755,
+      "ratio": 0.62
+    }
+  },
+  "palette": {
+    "families": [
+      "metal",
+      "wood_leather",
+      "forest"
+    ],
+    "atlasFamily": "environment_farm",
+    "tolerance": 0,
+    "pixels": 256,
+    "withinTolerance": 256,
+    "min": 0,
+    "median": 0,
+    "max": 0,
+    "familyResolution": [
+      {
+        "requested": "metal",
+        "resolved": "metal_stone"
+      },
+      {
+        "requested": "wood_leather",
+        "resolved": "wood_leather"
+      },
+      {
+        "requested": "forest",
+        "resolved": "forest"
+      }
+    ]
+  },
+  "evidence": [
+    "preview-20x.png",
+    "tile-3x3-8x.png",
+    "field-12x8-3x.png",
+    "comparison-panel.png"
+  ]
+}
