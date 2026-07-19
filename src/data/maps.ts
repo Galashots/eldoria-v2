@@ -1,0 +1,182 @@
+/**
+ * Multi-map world registry (2026-07 world-building foundation).
+ *
+ * Every map the game can load is declared here; WorldScene, PreloadScene,
+ * and SaveSystem consumers read this registry instead of hardcoding any
+ * map-specific key, path, tileset, collision GID, spawn, or music. Adding a
+ * map = one registry entry + a Tiled JSON (see docs/MAP_AUTHORING.md).
+ *
+ * Exits are NOT declared here: they live as `type: "exit"` objects on each
+ * map's Tiled Objects layer (properties `targetMap`/`targetSpawn`), so the
+ * map file remains the single source of truth for its own geometry. The
+ * unit-test layer cross-validates that every exit in every map JSON resolves
+ * against this registry.
+ */
+
+// Extended per map added ('wildbloom-woods' arrives with the second-map phase).
+export type MapId = 'farm';
+
+export type MapSpawn = {
+  /** World px (map px * GAME_SCALE), matching player/interaction coordinates. */
+  x: number;
+  y: number;
+};
+
+export type MapDefinition = {
+  id: MapId;
+  /** Phaser cache key for the tilemap JSON. */
+  tiledKey: string;
+  /** Load path relative to the public root. */
+  jsonPath: string;
+  /** Shown on the map entry banner. */
+  displayName: string;
+  /** Tiled tileset name -> preloaded image cache key. */
+  tilesets: { tiledName: string; imageKey: string }[];
+  musicKey: string;
+  /** Named arrival points in world px. */
+  spawns: Record<string, MapSpawn>;
+  defaultSpawn: string;
+  /** Impassable GIDs on this map's Collision layer. */
+  collisionGids: readonly number[];
+};
+
+// Shared by both current maps: the placeholder structural tileset plus the
+// approved terrain-proof masters (grass/water/dirt), and the single
+// placeholder music loop. New maps may diverge freely.
+const STANDARD_TILESETS: MapDefinition['tilesets'] = [
+  { tiledName: 'eldoria-placeholder', imageKey: 'tiles' },
+  { tiledName: 'farm-terrain-proof', imageKey: 'terrain-tiles' }
+];
+
+export const MAP_REGISTRY: Record<MapId, MapDefinition> = {
+  farm: {
+    id: 'farm',
+    tiledKey: 'farm',
+    jsonPath: 'maps/farm.json',
+    displayName: 'The Farm',
+    tilesets: STANDARD_TILESETS,
+    musicKey: 'bgm-farm',
+    spawns: {
+      // The original PlayerSpawn object (160, 256 map px) at GAME_SCALE 2.
+      default: { x: 320, y: 512 }
+    },
+    defaultSpawn: 'default',
+    // Fence/water/rock stand-ins on the farm Collision layer (tileset
+    // eldoria-placeholder). Moved here from WorldScene's old
+    // FARM_COLLISION_TILE_GIDS constant.
+    collisionGids: [3, 4, 6]
+  }
+};
+
+export const MAP_IDS = Object.keys(MAP_REGISTRY) as MapId[];
+
+export const DEFAULT_MAP_ID: MapId = 'farm';
+
+function isMapId(candidate: unknown): candidate is MapId {
+  return typeof candidate === 'string' && candidate in MAP_REGISTRY;
+}
+
+/**
+ * Resolves an untrusted map-id candidate (scene init data, the persisted
+ * `lastArea` save field) to a registered MapId, falling back to the farm.
+ * Old saves wrote `lastArea: 'farm'`, which resolves unchanged — and any
+ * unknown value (corrupt save, removed map) safely lands on the farm too.
+ */
+export function resolveMapId(candidate: unknown): MapId {
+  return isMapId(candidate) ? candidate : DEFAULT_MAP_ID;
+}
+
+export function getMapDefinition(mapId: MapId): MapDefinition {
+  return MAP_REGISTRY[mapId];
+}
+
+/** Resolves a spawn by name with a defaultSpawn fallback. */
+export function resolveSpawn(mapDef: MapDefinition, spawnId: string | undefined): MapSpawn {
+  const spawn = (spawnId !== undefined ? mapDef.spawns[spawnId] : undefined)
+    ?? mapDef.spawns[mapDef.defaultSpawn];
+  if (!spawn) {
+    throw new Error(`Map ${mapDef.id} has no resolvable spawn (requested: ${spawnId ?? '<default>'})`);
+  }
+  return spawn;
+}
+
+/**
+ * Minimal shape of a parsed Tiled JSON that the registry validator needs.
+ * The unit-test layer reads the real files from public/maps and passes them
+ * in; runtime code never calls this.
+ */
+export type TiledMapSummary = {
+  width: number;
+  height: number;
+  tilewidth: number;
+  tilesets: { name: string }[];
+  exits: { targetMap: unknown; targetSpawn: unknown }[];
+};
+
+/**
+ * Cross-validates the registry (and, when map JSON summaries are supplied,
+ * the maps themselves): unique ids/keys/paths, defaultSpawn resolves, every
+ * spawn lies inside its map's world bounds, tileset names match the JSON,
+ * and every exit's targetMap/targetSpawn resolve in the registry. Throws
+ * with a specific message on the first violation. GAME_SCALE relation:
+ * spawns are world px = map px * worldScale.
+ */
+export function validateMapRegistry(
+  registry: Record<string, MapDefinition> = MAP_REGISTRY,
+  mapSummaries?: Partial<Record<string, TiledMapSummary>>,
+  worldScale = 2
+): void {
+  const definitions = Object.values(registry);
+  const seenTiledKeys = new Set<string>();
+  const seenPaths = new Set<string>();
+
+  for (const [key, def] of Object.entries(registry)) {
+    if (key !== def.id) throw new Error(`Registry key ${key} does not match definition id ${def.id}`);
+    if (seenTiledKeys.has(def.tiledKey)) throw new Error(`Duplicate tiledKey: ${def.tiledKey}`);
+    seenTiledKeys.add(def.tiledKey);
+    if (seenPaths.has(def.jsonPath)) throw new Error(`Duplicate jsonPath: ${def.jsonPath}`);
+    seenPaths.add(def.jsonPath);
+
+    if (!def.displayName.trim()) throw new Error(`Map ${def.id} has an empty displayName`);
+    if (!def.musicKey.trim()) throw new Error(`Map ${def.id} has an empty musicKey`);
+    if (def.tilesets.length === 0) throw new Error(`Map ${def.id} declares no tilesets`);
+    if (!(def.defaultSpawn in def.spawns)) {
+      throw new Error(`Map ${def.id} defaultSpawn ${def.defaultSpawn} is not a declared spawn`);
+    }
+    if (def.collisionGids.length === 0) {
+      throw new Error(`Map ${def.id} declares no collision GIDs`);
+    }
+
+    const summary = mapSummaries?.[def.id];
+    if (!summary) continue;
+
+    const worldWidth = summary.width * summary.tilewidth * worldScale;
+    const worldHeight = summary.height * summary.tilewidth * worldScale;
+    for (const [spawnName, spawn] of Object.entries(def.spawns)) {
+      if (spawn.x <= 0 || spawn.y <= 0 || spawn.x >= worldWidth || spawn.y >= worldHeight) {
+        throw new Error(
+          `Map ${def.id} spawn ${spawnName} (${spawn.x}, ${spawn.y}) lies outside world bounds ${worldWidth}x${worldHeight}`
+        );
+      }
+    }
+
+    const jsonTilesetNames = new Set(summary.tilesets.map((tileset) => tileset.name));
+    for (const tileset of def.tilesets) {
+      if (!jsonTilesetNames.has(tileset.tiledName)) {
+        throw new Error(`Map ${def.id} declares tileset ${tileset.tiledName} missing from its JSON`);
+      }
+    }
+
+    for (const exit of summary.exits) {
+      const targetDef = typeof exit.targetMap === 'string' ? registry[exit.targetMap] : undefined;
+      if (!targetDef) {
+        throw new Error(`Map ${def.id} has an exit to unregistered map ${String(exit.targetMap)}`);
+      }
+      if (typeof exit.targetSpawn !== 'string' || !(exit.targetSpawn in targetDef.spawns)) {
+        throw new Error(
+          `Map ${def.id} exit to ${targetDef.id} targets unknown spawn ${String(exit.targetSpawn)}`
+        );
+      }
+    }
+  }
+}

@@ -13,6 +13,13 @@ import {
 } from '../data/flavor';
 import { resolveInteractionId, getTiledProperty, type InteractionId } from '../data/interactions';
 import {
+  getMapDefinition,
+  resolveMapId,
+  resolveSpawn,
+  type MapDefinition,
+  type MapId
+} from '../data/maps';
+import {
   facingFromVector,
   HeroPresentationController
 } from '../presentation/HeroPresentationController';
@@ -25,6 +32,10 @@ import { loadAudioMuted, saveAudioMuted } from '../systems/AudioPreference';
 
 type SceneInitData = {
   profileId?: ProfileId;
+  /** Registered map to load; omitted => saved map (lastArea) or the farm. */
+  mapId?: MapId;
+  /** Named arrival spawn on that map; omitted => saved/default placement. */
+  spawnId?: string;
 };
 
 type TouchMoveVector = {
@@ -52,12 +63,7 @@ const PRACTICE_SLIME_IDLE_ANIMATION = 'practice-slime-idle';
 const PRACTICE_SLIME_HOP_ANIMATION = 'practice-slime-hop';
 const CROP_BONUS_FEEDBACK_NAME = 'crop-bonus-feedback';
 const STATS_CLOSE_BUTTON_NAME = 'stats-close-button';
-
-// Tile GIDs on the `farm` map's "Collision" layer (maps/farm.json, tileset
-// eldoria-placeholder) that are impassable — fence/water/rock stand-ins in
-// the current placeholder art. Update this list if the Collision layer's
-// tile palette changes in Tiled.
-const FARM_COLLISION_TILE_GIDS = [3, 4, 6];
+const MAP_ENTRY_BANNER_NAME = 'map-entry-banner';
 export class WorldScene extends Phaser.Scene {
   private player!: Phaser.Physics.Arcade.Sprite;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
@@ -70,6 +76,13 @@ export class WorldScene extends Phaser.Scene {
   private readonly joystickRadius = sx(42);
   private targets: InteractionTarget[] = [];
   private profileId: ProfileId = 'grade5-adventurer';
+  // Multi-map state (see data/maps.ts). mapId is authoritative for the
+  // currently loaded map; initSpawnId is set only when this scene start came
+  // from an explicit transition/boot request rather than a saved position.
+  protected mapId: MapId = 'farm';
+  private mapDef!: MapDefinition;
+  private initMapId?: MapId;
+  private initSpawnId?: string;
   private learning!: LearningBonusSystem;
   private gold = 0;
   private inventory: Record<string, number> = {};
@@ -126,50 +139,66 @@ export class WorldScene extends Phaser.Scene {
   init(data: SceneInitData): void {
     this.profileId = data.profileId ?? 'grade5-adventurer';
     this.learning = new LearningBonusSystem(this.profileId);
+    this.initMapId = data.mapId;
+    this.initSpawnId = data.spawnId;
   }
 
   create(): void {
     this.cameras.main.setRoundPixels(true);
 
-    const map = this.make.tilemap({ key: 'farm' });
-    const tileset = map.addTilesetImage('eldoria-placeholder', 'tiles');
-    const terrainTileset = map.addTilesetImage('farm-terrain-proof', 'terrain-tiles');
+    // Save is loaded before anything else: it decides which map to build
+    // (persisted in the pre-existing lastArea field — old saves wrote
+    // 'farm', unknown values resolve to the farm) and whether the Practice
+    // Slime should exist at all.
+    const saved = SaveSystem.load(this.profileId);
+    const arrivedViaExplicitRequest = this.initMapId !== undefined;
+    this.mapId = this.initMapId ?? resolveMapId(saved?.lastArea);
+    this.mapDef = getMapDefinition(this.mapId);
 
-    if (!tileset) {
-      throw new Error('Missing tileset: eldoria-placeholder');
-    }
-    if (!terrainTileset) {
-      throw new Error('Missing tileset: farm-terrain-proof');
-    }
+    const map = this.make.tilemap({ key: this.mapDef.tiledKey });
+    const tilesets = this.mapDef.tilesets.map(({ tiledName, imageKey }) => {
+      const tileset = map.addTilesetImage(tiledName, imageKey);
+      if (!tileset) throw new Error(`Missing tileset: ${tiledName}`);
+      return tileset;
+    });
 
     // Tile layers render at GAME_SCALE (their underlying Tiled grid/GIDs are
-    // untouched) rather than doubling public/maps/farm.json's own tile
-    // dimensions, so the map file stays a single source of truth for both
-    // this scaled runtime and Tiled's editor view.
-    // Ground mixes approved terrain gids (grass/water/dirt proof) with
-    // not-yet-replaced placeholder structure tiles, so it draws from both
-    // tilesets; Decor/Collision remain placeholder-only.
-    map.createLayer('Ground', [tileset, terrainTileset], 0, 0)?.setScale(GAME_SCALE);
-    map.createLayer('Decor', tileset, 0, 0)?.setScale(GAME_SCALE);
+    // untouched) rather than doubling the map JSON's own tile dimensions, so
+    // the map file stays a single source of truth for both this scaled
+    // runtime and Tiled's editor view. Every layer draws from the map's full
+    // registered tileset list; unused tilesets on a layer are harmless.
+    map.createLayer('Ground', tilesets, 0, 0)?.setScale(GAME_SCALE);
+    map.createLayer('Decor', tilesets, 0, 0)?.setScale(GAME_SCALE);
 
-    const collisionLayer = map.createLayer('Collision', tileset, 0, 0)?.setScale(GAME_SCALE);
+    const collisionLayer = map.createLayer('Collision', tilesets, 0, 0)?.setScale(GAME_SCALE);
     if (collisionLayer) {
-      collisionLayer.setCollision(FARM_COLLISION_TILE_GIDS);
+      collisionLayer.setCollision([...this.mapDef.collisionGids]);
       collisionLayer.setVisible(false);
     }
 
     const objectLayer = map.getObjectLayer('Objects');
-    const spawn = objectLayer?.objects.find((obj) => obj.name === 'PlayerSpawn');
+    const tiledSpawn = objectLayer?.objects.find((obj) => obj.name === 'PlayerSpawn');
     const worldWidth = map.widthInPixels * GAME_SCALE;
     const worldHeight = map.heightInPixels * GAME_SCALE;
 
+    // Placement priority: an explicit spawn request (map transition or
+    // scripted boot) wins; otherwise a same-map saved position restores
+    // exactly as before; otherwise the map's own PlayerSpawn object, then
+    // the registry default spawn.
+    const requestedSpawn = arrivedViaExplicitRequest
+      ? resolveSpawn(this.mapDef, this.initSpawnId)
+      : undefined;
+    const fallbackSpawn = tiledSpawn
+      ? { x: (tiledSpawn.x ?? 0) * GAME_SCALE, y: (tiledSpawn.y ?? 0) * GAME_SCALE }
+      : resolveSpawn(this.mapDef, undefined);
+    const savedPositionApplies = !arrivedViaExplicitRequest
+      && saved !== null
+      && resolveMapId(saved.lastArea) === this.mapId;
+    const startPosition = requestedSpawn
+      ?? (savedPositionApplies ? saved.player : fallbackSpawn);
+
     this.physics.world.setBounds(0, 0, worldWidth, worldHeight);
-    this.player = this.physics.add.sprite(
-      (spawn?.x ?? 160) * GAME_SCALE,
-      (spawn?.y ?? 160) * GAME_SCALE,
-      'adventurer',
-      0
-    );
+    this.player = this.physics.add.sprite(startPosition.x, startPosition.y, 'adventurer', 0);
     this.player.setCollideWorldBounds(true);
     this.player.setScale(GAME_SCALE);
     // Arcade Physics bodies don't auto-derive from display scale once
@@ -181,15 +210,10 @@ export class WorldScene extends Phaser.Scene {
       this.physics.add.collider(this.player, collisionLayer);
     }
 
-    // Loaded before targets are built (it used to happen after): a save with
-    // the Practice Slime permanently defeated must keep the slime's sprite,
-    // pips, and interaction target from ever being created on this boot.
-    const saved = SaveSystem.load(this.profileId);
     if (saved) {
       this.gold = saved.gold;
       this.inventory = { ...(saved.inventory ?? {}) };
       this.mastery = { ...(saved.mastery ?? {}) };
-      this.player.setPosition(saved.player.x, saved.player.y);
     }
 
     this.farmQuest = FarmQuestSystem.fromSave(saved);
@@ -223,8 +247,16 @@ export class WorldScene extends Phaser.Scene {
     this.createHud(initialAudioMuted);
     this.createTouchControls();
 
-    this.music = this.sound.add('bgm-farm', { loop: true, volume: this.musicVolume });
+    this.music = this.sound.add(this.mapDef.musicKey, { loop: true, volume: this.musicVolume });
     this.music.play();
+
+    // Arriving on a map by explicit request (a transition or scripted boot)
+    // persists it immediately, so quitting on this map returns here.
+    if (arrivedViaExplicitRequest) {
+      this.save();
+    }
+
+    this.showMapEntryBanner();
 
     this.events.on(Phaser.Scenes.Events.PAUSE, this.stopPromptReadAloud, this);
     this.events.on(Phaser.Scenes.Events.SLEEP, this.stopPromptReadAloud, this);
@@ -1606,6 +1638,45 @@ export class WorldScene extends Phaser.Scene {
     });
   }
 
+  /**
+   * Map entry banner: the map's display name fades in and out over ~1.5s on
+   * every scene start, making transitions read as travel. The text object is
+   * kept (hidden) after the fade so tests can locate it by name without
+   * racing the tween.
+   */
+  private showMapEntryBanner(): void {
+    const banner = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - sy(70), this.mapDef.displayName, {
+      fontFamily: 'system-ui',
+      fontSize: fpx(22),
+      color: '#ffd666',
+      fontStyle: 'bold',
+      stroke: '#1a1208',
+      strokeThickness: 8
+    })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(35)
+      .setName(MAP_ENTRY_BANNER_NAME)
+      .setAlpha(0);
+
+    this.tweens.add({
+      targets: banner,
+      alpha: 1,
+      duration: 300,
+      ease: 'Sine.easeOut',
+      onComplete: () => {
+        this.tweens.add({
+          targets: banner,
+          alpha: 0,
+          delay: 900,
+          duration: 300,
+          ease: 'Sine.easeIn',
+          onComplete: () => banner.setVisible(false)
+        });
+      }
+    });
+  }
+
   private save(): void {
     const questSave = this.farmQuest.toSaveFields();
     SaveSystem.save({
@@ -1614,7 +1685,11 @@ export class WorldScene extends Phaser.Scene {
       gold: this.gold,
       inventory: this.inventory,
       mastery: this.mastery,
-      lastArea: 'farm',
+      // lastArea doubles as the persisted current-map id (old saves wrote
+      // 'farm', which resolves unchanged; unknown values fall back to the
+      // farm at load). The saved player position is already map-local, so it
+      // doubles as the arrival placement on reload.
+      lastArea: this.mapId,
       ...questSave,
       player: {
         x: this.player.x,

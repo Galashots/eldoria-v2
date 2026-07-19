@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import type { BonusContext } from '../data/curriculum';
 import type { InteractionId } from '../data/interactions';
+import type { MapId } from '../data/maps';
 import type { ProfileId } from '../data/profiles';
 import { fpx, GAME_HEIGHT, GAME_SCALE, GAME_WIDTH, sscale, sx, sy } from '../gameDimensions';
 import type { HeroPresentationController } from '../presentation/HeroPresentationController';
@@ -18,6 +19,8 @@ import { WorldScene } from './WorldScene';
 type PolishedSceneInitData = {
   profileId?: ProfileId;
   fromOpening?: boolean;
+  mapId?: MapId;
+  spawnId?: string;
 };
 
 type WorldSceneTarget = {
@@ -92,7 +95,12 @@ export class PolishedWorldScene extends WorldScene {
     this.addPlayerShadow();
     this.addInteractiveObjectShadows();
     this.addMiraGuidance();
-    this.installWildbloomDiscovery();
+    // The Wildbloom secret spots are defined at fixed farm world positions,
+    // so the discovery layer only installs on the farm map. Other maps get
+    // no controller (its optional chaining below no-ops).
+    if (this.mapId === 'farm') {
+      this.installWildbloomDiscovery();
+    }
     this.createPolishedHudText();
 
     if (this.arrivedFromOpening) {
