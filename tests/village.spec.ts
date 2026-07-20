@@ -461,7 +461,7 @@ test('Berry gathering bypasses learning, persists progress, and preserves Mira f
       .toBe(true);
     expect(await hasCanvasText(page, 'optional learning bonus')).toBe(false);
   }
-  await expect.poll(() => hasCanvasText(page, 'Sunberry 2/3'), { timeout: 15000 }).toBe(true);
+  await expect.poll(() => recordedCanvasText(page, 'Sunberry 2/3'), { timeout: 15000 }).toBe(true);
   await page.screenshot({
     path: 'docs/playtests/2026-07-21-living-world/village-sunberry-2-of-3.png',
     fullPage: true
