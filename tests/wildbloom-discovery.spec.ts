@@ -25,6 +25,35 @@ async function seedAndStart(
   extraInventory: Record<string, number> = {},
   includeSprig = true
 ): Promise<void> {
+  await page.addInitScript(() => {
+    window.__ELDORIA_E2E__ = true;
+
+    const recorderWindow = window as unknown as { __wildbloomCanvasTextsSeen?: Set<string> };
+    recorderWindow.__wildbloomCanvasTextsSeen = new Set();
+
+    const recordVisibleText = (item: {
+      active?: boolean;
+      visible?: boolean;
+      text?: unknown;
+      list?: unknown[];
+    }): void => {
+      if (item.active === false || item.visible === false) return;
+      if (typeof item.text === 'string') recorderWindow.__wildbloomCanvasTextsSeen!.add(item.text);
+      if (Array.isArray(item.list)) {
+        item.list.forEach((child) => recordVisibleText(child as { text?: unknown; list?: unknown[] }));
+      }
+    };
+
+    const collect = () => {
+      const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
+        children?: { list?: Array<{ active?: boolean; visible?: boolean; text?: unknown; list?: unknown[] }> };
+      } | undefined;
+      scene?.children?.list?.forEach(recordVisibleText);
+      requestAnimationFrame(collect);
+    };
+    requestAnimationFrame(collect);
+  });
+
   await page.goto('/');
   await page.evaluate(({ profileId: id, inventory, withSprig }) => {
     localStorage.clear();
@@ -98,6 +127,19 @@ async function hasCanvasText(page: Page, text: string): Promise<boolean> {
   }, text);
 }
 
+async function canvasTextSeen(page: Page, text: string): Promise<boolean> {
+  return page.evaluate((expectedText) => {
+    const seen = (window as unknown as { __wildbloomCanvasTextsSeen?: Set<string> }).__wildbloomCanvasTextsSeen;
+    return [...(seen ?? [])].some((entry) => entry.includes(expectedText));
+  }, text);
+}
+
+async function resetCanvasTextRecorder(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    (window as unknown as { __wildbloomCanvasTextsSeen?: Set<string> }).__wildbloomCanvasTextsSeen?.clear();
+  });
+}
+
 async function savedInventory(page: Page, profileId: ProfileId): Promise<Record<string, number>> {
   return page.evaluate((id) => {
     const raw = localStorage.getItem(`eldoria_v2_save_${id}`);
@@ -108,6 +150,7 @@ async function savedInventory(page: Page, profileId: ProfileId): Promise<Record<
 async function revealSpot(page: Page, spotId: SpotId): Promise<void> {
   await moveToSpot(page, spotId);
   await expect.poll(async () => (await snapshot(page)).activeSpotId).toBe(spotId);
+  await resetCanvasTextRecorder(page);
   await clickGame(page, 852, 536);
   await expect.poll(async () => (await snapshot(page)).inputLocked).toBe(true);
   await expect.poll(async () => (await snapshot(page)).discoveredSpotIds).toContain(spotId);
@@ -139,7 +182,7 @@ test('Mage magic reveals all three persistent Wildbloom secrets without changing
   await expect.poll(async () => (await snapshot(page)).inputLocked).toBe(true);
   await page.screenshot({ path: 'test-results/discovery-mage-ability.png', fullPage: true });
   await expect.poll(async () => (await snapshot(page)).discoveredSpotIds).toContain('root-star');
-  await expect.poll(async () => hasCanvasText(page, 'SECRET FOUND')).toBe(true);
+  await expect.poll(async () => canvasTextSeen(page, 'SECRET FOUND')).toBe(true);
   await page.screenshot({ path: 'test-results/discovery-mage-reveal.png', fullPage: true });
 
   expect((await savedInventory(page, 'grade2-mage')).wildbloomSecretRootStar).toBe(1);
@@ -148,41 +191,10 @@ test('Mage magic reveals all three persistent Wildbloom secrets without changing
   await revealSpot(page, 'moonwell-echo');
   await moveToSpot(page, 'foxfire-seed');
   await expect.poll(async () => (await snapshot(page)).activeSpotId).toBe('foxfire-seed');
-  // The completion toast is deliberately transient. Watch every animation
-  // frame before triggering the reveal, then poll the durable observation
-  // flag; sampling the live display list only after persistence updates can
-  // miss the toast on slow software-rendered CI.
-  await page.evaluate(() => {
-    const state = window as unknown as {
-      __WILDBLOOM_COMPLETE_SEEN__?: boolean;
-      __WILDBLOOM_COMPLETE_WATCH_ID__?: number;
-    };
-    state.__WILDBLOOM_COMPLETE_SEEN__ = false;
-
-    const watch = (): void => {
-      const hasText = (item: { active?: boolean; visible?: boolean; text?: unknown; list?: unknown[] }): boolean => {
-        if (item.active === false || item.visible === false) return false;
-        if (String(item.text ?? '').includes('WILDBLOOM SONG COMPLETE')) return true;
-        return Array.isArray(item.list)
-          && item.list.some((child) => hasText(child as { text?: string; list?: unknown[] }));
-      };
-      const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
-        children: { list: Array<{ active?: boolean; visible?: boolean; text?: unknown; list?: unknown[] }> };
-      };
-      if (scene?.children.list.some(hasText)) {
-        state.__WILDBLOOM_COMPLETE_SEEN__ = true;
-        return;
-      }
-      state.__WILDBLOOM_COMPLETE_WATCH_ID__ = requestAnimationFrame(watch);
-    };
-
-    state.__WILDBLOOM_COMPLETE_WATCH_ID__ = requestAnimationFrame(watch);
-  });
+  await resetCanvasTextRecorder(page);
   await clickGame(page, 852, 536);
-  await expect.poll(() => page.evaluate(() => (
-    window as unknown as { __WILDBLOOM_COMPLETE_SEEN__?: boolean }
-  ).__WILDBLOOM_COMPLETE_SEEN__), { timeout: 15000 }).toBe(true);
   await expect.poll(async () => (await snapshot(page)).discoveredSpotIds).toHaveLength(3);
+  await expect.poll(async () => canvasTextSeen(page, 'WILDBLOOM SONG COMPLETE')).toBe(true);
   await page.screenshot({ path: 'test-results/discovery-mage-complete.png', fullPage: true });
 
   const saved = await savedInventory(page, 'grade2-mage');
@@ -217,11 +229,12 @@ test('Ranger tracking reveals the same secret loop with a distinct readable abil
   });
   await page.screenshot({ path: 'test-results/discovery-ranger-hum.png', fullPage: true });
 
+  await resetCanvasTextRecorder(page);
   await clickGame(page, 852, 536);
   await expect.poll(async () => (await snapshot(page)).inputLocked).toBe(true);
   await page.screenshot({ path: 'test-results/discovery-ranger-ability.png', fullPage: true });
   await expect.poll(async () => (await snapshot(page)).discoveredSpotIds).toContain('moonwell-echo');
-  await expect.poll(async () => hasCanvasText(page, 'Moonwell Echo')).toBe(true);
+  await expect.poll(async () => canvasTextSeen(page, 'Moonwell Echo')).toBe(true);
   await page.screenshot({ path: 'test-results/discovery-ranger-reveal.png', fullPage: true });
 
   expect((await savedInventory(page, 'grade5-adventurer')).wildbloomSecretMoonwellEcho).toBe(1);
