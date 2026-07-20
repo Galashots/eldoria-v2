@@ -891,7 +891,10 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   await sceneInteract(page);
   await expect.poll(async () => (await state(page)).gold).toBe(20);
   await expect.poll(async () => (await state(page)).inventory.wildbloomSprig).toBe(1);
-  await expect.poll(async () => (await state(page)).objective).toContain('The Sleepy Sprouts');
+  // Phase 3 objective precedence advances from Mira's completed chain to the
+  // optional Berry Order invitation without gating any adventure progress.
+  await expect.poll(async () => (await state(page)).objective)
+    .toContain('Optional: Visit Baker Pell in Eldoria Village.');
   await expect.poll(async () => canvasTextSeen(page, 'Wildbloom Sprig')).toBe(true);
   await expect.poll(async () => canvasTextSeen(page, '+6 Gold')).toBe(true);
 
@@ -899,7 +902,8 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   await startProfile(page, 240);
   await expect.poll(async () => (await state(page)).gold).toBe(20);
   await expect.poll(async () => (await state(page)).inventory.wildbloomSprig).toBe(1);
-  await expect.poll(async () => (await state(page)).objective).toContain('The Sleepy Sprouts');
+  await expect.poll(async () => (await state(page)).objective)
+    .toContain('Optional: Visit Baker Pell in Eldoria Village.');
 
   await setPlayer(page, 832, 512);
   await sceneInteract(page);

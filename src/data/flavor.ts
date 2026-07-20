@@ -47,6 +47,11 @@ export const POST_PURPOSE_FLAVOR = {
     'The well water glitters deep down.',
     'You hear a soft plip. An echo says hi.',
     'The bucket is full of cool water.'
+  ],
+  'baker-pell': [
+    'Baker Pell: The oven smells wonderful today.',
+    'Baker Pell: Next pie needs moonberries, I think.',
+    'Baker Pell: Best berries in Eldoria, yours!'
   ]
 } as const;
 
