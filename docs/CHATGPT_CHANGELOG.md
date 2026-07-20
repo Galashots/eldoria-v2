@@ -4,6 +4,14 @@ This file keeps recent, high-value change summaries. Full historical entries thr
 
 Entries should remain concise: date/author, branch or PR, scope, compatibility impact, verification, and remaining risk. Detailed implementation narratives belong in the PR description and commits.
 
+## 2026-07-19 — Evidence-first agent workflow
+
+- Author/branch: Codex, `codex/evidence-first-workflow`; draft PR #109.
+- Scope: added proportional root-cause debugging, red/green behavioral regression evidence, condition-based waiting, exact-range read-only review, and fresh exact-head completion evidence to `AGENTS.md`. Created the reusable local `evidence-first-development` Codex skill outside the public repository; existing Game Studio skills remain authoritative for new browser-game architecture, implementation, assets, UI, and playtesting.
+- Verification: local skill `quick_validate.py` passed; `npm ci` completed with 0 vulnerabilities; `npm run check`, `test:visual-targets`, `test:asset-pipeline`, `test:terrain-blend`, and `test:unit` (116/116) passed. After the repeated Wildbloom CI timeout was fixed by merged PR #110, the final merged-base Playwright run passed 65/65. Exact-head CI remains the merge gate; the existing Vite large-chunk warning remains unchanged.
+- Compatibility: documentation/process only; no runtime, save, curriculum, quest, reward, profile-ID, dependency, map, or asset changes.
+- Remaining risk: the local skill is machine-local and will need normal iteration after real use; repository agents remain fully guided by the self-contained `AGENTS.md` rules.
+
 ## 2026-07-19 — Wildbloom transient-text CI hardening
 
 - Author/branch: Codex, `codex/wildbloom-text-recorder`; draft PR #110.
