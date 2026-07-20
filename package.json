@@ -10,7 +10,7 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 0.0.0.0",
     "typecheck": "tsc --noEmit",
-    "smoke": "node scripts/ci-smoke.mjs",
+    "smoke": "playwright test",
     "check": "npm run validate:visual-targets && npm run typecheck && npm run build && npm run test:pwa && npm run test:generated-surfaces",
     "validate:visual-targets": "node scripts/validate-visual-targets.mjs",
     "normalize:asset": "node scripts/normalize-asset-sheet.mjs",
