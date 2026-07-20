@@ -1,28 +1,30 @@
 import Phaser from 'phaser';
+import type { DialogueLine } from '../data/questDefs';
 import { fpx, GAME_HEIGHT, GAME_SCALE, GAME_WIDTH, sx, sy } from '../gameDimensions';
+import type { SpeechHooks, SpeechSupport } from '../systems/speech';
 import { drawRoundedButton, drawRoundedPanelBackground, popInContainer } from './uiHelpers';
 
-type DialogueLine = {
-  speaker: string;
-  text: string;
+type DialogueOptions = {
+  autoRead?: boolean;
+  onClose?: () => void;
 };
 
-type SpeechLike = {
-  cancel: () => void;
-  speak: (text: string) => void;
+type DialogueBoxDependencies = {
+  speech: SpeechSupport;
+  speechHooks?: SpeechHooks;
+  onSpeechUnavailable?: () => void;
 };
 
 const DIALOGUE_BOX_NAME = 'dialogue-box';
 /** Pokemon/Zelda-convention reveal pacing (~24ms per character). */
 const TYPEWRITER_MS_PER_CHAR = 24;
 
-/**
- * Reusable bottom-screen dialogue box (M3 Living World). WORLD-space
- * behavior stays in the scene: this class only owns the panel, text,
- * read-aloud trigger, and input advancement, and it deliberately tolerates
- * scene restarts by destroying itself on Phaser's SHUTDOWN event.
- */
+/** Reusable, scene-owned dialogue presentation with no gameplay authority. */
 export class DialogueBox {
+  private readonly scene: Phaser.Scene;
+  private readonly speech: SpeechSupport;
+  private readonly speechHooks?: SpeechHooks;
+  private readonly onSpeechUnavailable?: () => void;
   private container?: Phaser.GameObjects.Container;
   private speakerText?: Phaser.GameObjects.Text;
   private bodyText?: Phaser.GameObjects.Text;
@@ -36,29 +38,29 @@ export class DialogueBox {
   private lineIndex = 0;
   private autoRead = false;
   private onClose?: () => void;
-  private keyboardKey?: Phaser.Input.Keyboard.Key;
-  private keyboardKeyE?: Phaser.Input.Keyboard.Key;
-  private readonly speech: SpeechLike;
 
-  constructor(
-    private readonly scene: Phaser.Scene,
-    speech: SpeechLike
-  ) {
-    this.speech = speech;
-    scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.dismiss(false));
+  constructor(scene: Phaser.Scene, dependencies: DialogueBoxDependencies) {
+    this.scene = scene;
+    this.speech = dependencies.speech;
+    this.speechHooks = dependencies.speechHooks;
+    this.onSpeechUnavailable = dependencies.onSpeechUnavailable;
+    this.scene.events.once(Phaser.Scenes.Events.SHUTDOWN, this.handleSceneShutdown);
   }
 
-  get isOpen(): boolean {
-    return this.container !== undefined;
-  }
+  open(lines: DialogueLine[], opts: DialogueOptions = {}): void {
+    if (lines.length === 0) {
+      opts.onClose?.();
+      return;
+    }
 
-  open(lines: readonly DialogueLine[], options: { autoRead?: boolean; onClose?: () => void } = {}): void {
+    // Re-opening presentation must never finish the displaced gameplay beat.
     this.dismiss(false);
     this.lines = lines;
     this.lineIndex = 0;
-    this.autoRead = options.autoRead === true;
-    this.onClose = options.onClose;
+    this.autoRead = opts.autoRead === true;
+    this.onClose = opts.onClose;
     this.buildPanel();
+    this.bindKeyboard();
     this.renderCurrentLine();
   }
 
@@ -84,16 +86,32 @@ export class DialogueBox {
     this.dismiss(true);
   }
 
+  isOpen(): boolean {
+    return this.container !== undefined;
+  }
+
+  /** Scene-shutdown disposal intentionally never runs the gameplay callback. */
   destroy(): void {
+    this.scene.events.off(Phaser.Scenes.Events.SHUTDOWN, this.handleSceneShutdown);
     this.dismiss(false);
   }
+
+  private readonly handleSceneShutdown = (): void => {
+    this.dismiss(false);
+  };
+
+  private readonly handleKeyboardAdvance = (event: KeyboardEvent): void => {
+    if (event.repeat) return;
+    event.preventDefault();
+    event.stopPropagation();
+    this.advance();
+  };
 
   private buildPanel(): void {
     const width = GAME_WIDTH - sx(24);
     const height = sy(52);
     const halfWidth = width / 2;
     const halfHeight = height / 2;
-
     const container = this.scene.add.container(GAME_WIDTH / 2, GAME_HEIGHT - sy(64))
       .setName(DIALOGUE_BOX_NAME)
       .setScrollFactor(0)
@@ -109,62 +127,39 @@ export class DialogueBox {
       0,
       width,
       height,
-      0x1a140d,
-      0xc9a66b,
+      0x2a1a08,
+      0xffd666,
       10
-    );
-    background.setInteractive(
+    ).setScrollFactor(0).setInteractive(
       new Phaser.Geom.Rectangle(-halfWidth, -halfHeight, width, height),
       Phaser.Geom.Rectangle.Contains
     );
-    background.on('pointerdown', () => this.advance());
+    background.on('pointerdown', (
+      _pointer: Phaser.Input.Pointer,
+      _localX: number,
+      _localY: number,
+      event: Phaser.Types.Input.EventData
+    ) => {
+      event.stopPropagation();
+      this.advance();
+    });
     container.add(background);
 
-    const speakerBadge = drawRoundedPanelBackground(
-      this.scene,
-      -halfWidth + sx(46),
-      -halfHeight,
-      sx(76),
-      sy(14),
-      0x5f3d12,
-      0xffd666,
-      6
-    );
-    container.add(speakerBadge);
-
-    this.speakerText = this.scene.add.text(-halfWidth + sx(46), -halfHeight, '', {
+    this.speakerText = this.scene.add.text(-halfWidth + sx(12), -halfHeight + sy(7), '', {
       fontFamily: 'system-ui',
-      fontSize: fpx(9),
+      fontSize: fpx(10),
       color: '#ffd666',
       fontStyle: 'bold'
-    }).setName('dialogue-speaker').setOrigin(0.5);
+    }).setName('dialogue-speaker').setOrigin(0, 0);
     container.add(this.speakerText);
 
-    this.bodyText = this.scene.add.text(-halfWidth + sx(14), -halfHeight + sy(12), '', {
+    this.bodyText = this.scene.add.text(-halfWidth + sx(12), -sy(4), '', {
       fontFamily: 'system-ui',
-      fontSize: fpx(11),
-      color: '#fff3c9',
-      lineSpacing: sy(4),
-      wordWrap: { width: width - sx(40) }
-    }).setName('dialogue-body');
+      fontSize: fpx(12),
+      color: '#ffffff',
+      wordWrap: { width: width - sx(42) }
+    }).setName('dialogue-body').setOrigin(0, 0.5);
     container.add(this.bodyText);
-
-    const speakerButton = drawRoundedButton(
-      this.scene,
-      halfWidth - sx(18),
-      -halfHeight + sy(14),
-      sx(28),
-      sy(22),
-      0x2c4a3b,
-      0xa9e783,
-      7
-    );
-    speakerButton.on('pointerdown', () => this.speakCurrentLine());
-    container.add(speakerButton);
-
-    const speakerIcon = this.scene.add.graphics();
-    this.paintSpeakerIcon(speakerIcon, halfWidth - sx(18), -halfHeight + sy(14));
-    container.add(speakerIcon);
 
     // Shown (with a gentle bounce) only once the current line has fully
     // revealed — while the typewriter is mid-line it stays hidden so the
@@ -177,24 +172,44 @@ export class DialogueBox {
     this.continueHintBaseY = this.continueHint.y;
     container.add(this.continueHint);
 
+    const speakerButton = drawRoundedButton(
+      this.scene,
+      halfWidth - sx(18),
+      -halfHeight + sy(14),
+      sx(28),
+      sy(22),
+      0x3a4f8f,
+      0x99c7ff,
+      10
+    ).setName('dialogue-read-button');
+    speakerButton.on('pointerdown', (
+      _pointer: Phaser.Input.Pointer,
+      _localX: number,
+      _localY: number,
+      event: Phaser.Types.Input.EventData
+    ) => {
+      event.stopPropagation();
+      this.speakCurrentLine();
+    });
+    container.add(speakerButton);
+
+    const speakerIcon = this.scene.add.graphics()
+      .setPosition(halfWidth - sx(18), -halfHeight + sy(14))
+      .setScale(GAME_SCALE);
+    this.paintSpeakerIcon(speakerIcon);
+    container.add(speakerIcon);
+
     this.container = container;
-    this.bindKeyboard();
   }
 
   private bindKeyboard(): void {
-    const keyboard = this.scene.input.keyboard;
-    if (!keyboard) return;
-    this.keyboardKey = keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-    this.keyboardKeyE = keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
-    this.keyboardKey.on('down', () => this.advance());
-    this.keyboardKeyE.on('down', () => this.advance());
+    this.scene.input.keyboard?.on('keydown-SPACE', this.handleKeyboardAdvance);
+    this.scene.input.keyboard?.on('keydown-E', this.handleKeyboardAdvance);
   }
 
   private unbindKeyboard(): void {
-    this.keyboardKey?.removeAllListeners();
-    this.keyboardKeyE?.removeAllListeners();
-    this.keyboardKey = undefined;
-    this.keyboardKeyE = undefined;
+    this.scene.input.keyboard?.off('keydown-SPACE', this.handleKeyboardAdvance);
+    this.scene.input.keyboard?.off('keydown-E', this.handleKeyboardAdvance);
   }
 
   private renderCurrentLine(): void {
@@ -289,12 +304,16 @@ export class DialogueBox {
   private speakCurrentLine(): void {
     const line = this.lines[this.lineIndex];
     if (!line) return;
-    this.speech.cancel();
-    this.speech.speak(`${line.speaker}. ${line.text}`);
+    if (!this.speech.supported()) {
+      this.onSpeechUnavailable?.();
+      return;
+    }
+    this.speech.speak(line.readAloudText ?? line.text, this.speechHooks);
   }
 
   private dismiss(runOnClose: boolean): void {
     if (!this.container) return;
+
     const callback = runOnClose ? this.onClose : undefined;
     this.onClose = undefined;
     this.speech.cancel();
@@ -315,16 +334,18 @@ export class DialogueBox {
     callback?.();
   }
 
-  private paintSpeakerIcon(graphics: Phaser.GameObjects.Graphics, x: number, y: number): void {
-    graphics.fillStyle(0xd7ffb8, 1);
-    graphics.fillTriangle(x - 8 * GAME_SCALE / 2, y - 3 * GAME_SCALE, x - 5 * GAME_SCALE / 2, y, x - 8 * GAME_SCALE / 2, y + 3 * GAME_SCALE);
-    graphics.fillRect(x - 5 * GAME_SCALE / 2, y - 2 * GAME_SCALE, 3 * GAME_SCALE, 4 * GAME_SCALE);
-    graphics.lineStyle(2, 0xd7ffb8, 0.9);
+  /** Same hand-painted speaker glyph used by the WorldScene audio control. */
+  private paintSpeakerIcon(graphics: Phaser.GameObjects.Graphics): void {
+    graphics.fillStyle(0xffd666, 1);
+    graphics.fillRect(-9, -3, 4, 6);
+    graphics.fillTriangle(-5, -3, -5, 3, 1, -7);
+    graphics.fillTriangle(-5, 3, 1, -7, 1, 7);
+    graphics.lineStyle(1.5, 0xffd666, 1);
     graphics.beginPath();
-    graphics.arc(x + 1 * GAME_SCALE, y, 3 * GAME_SCALE, Phaser.Math.DegToRad(-55), Phaser.Math.DegToRad(55));
+    graphics.arc(1, 0, 4, Phaser.Math.DegToRad(-40), Phaser.Math.DegToRad(40));
     graphics.strokePath();
     graphics.beginPath();
-    graphics.arc(x + 2 * GAME_SCALE, y, 5 * GAME_SCALE, Phaser.Math.DegToRad(-45), Phaser.Math.DegToRad(45));
+    graphics.arc(1, 0, 7, Phaser.Math.DegToRad(-35), Phaser.Math.DegToRad(35));
     graphics.strokePath();
   }
 }
