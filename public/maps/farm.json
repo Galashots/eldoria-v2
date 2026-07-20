@@ -275,9 +275,6 @@
         9,
         9,
         4,
-        4,
-        9,
-        9,
         13,
         13,
         13,
@@ -305,9 +302,12 @@
         13,
         13,
         13,
-        4,
-        9,
-        9,
+        13,
+        13,
+        13,
+        13,
+        13,
+        13,
         13,
         13,
         13,
@@ -1501,7 +1501,6 @@
         0,
         0,
         4,
-        4,
         0,
         0,
         0,
@@ -1531,7 +1530,8 @@
         0,
         0,
         0,
-        4,
+        0,
+        0,
         0,
         0,
         0,
@@ -1989,6 +1989,30 @@
           "width": 32,
           "x": 928,
           "y": 288
+        },
+        {
+          "height": 64,
+          "id": 9,
+          "name": "GateToVillage",
+          "point": false,
+          "properties": [
+            {
+              "name": "targetMap",
+              "type": "string",
+              "value": "eldoria-village"
+            },
+            {
+              "name": "targetSpawn",
+              "type": "string",
+              "value": "from-farm"
+            }
+          ],
+          "rotation": 0,
+          "type": "exit",
+          "visible": true,
+          "width": 32,
+          "x": 0,
+          "y": 288
         }
       ],
       "opacity": 1,
@@ -1999,7 +2023,7 @@
     }
   ],
   "nextlayerid": 5,
-  "nextobjectid": 9,
+  "nextobjectid": 10,
   "orientation": "orthogonal",
   "renderorder": "right-down",
   "tiledversion": "1.12.2",

@@ -960,6 +960,10 @@ export class WorldScene extends Phaser.Scene {
       if (this.tryConsumePracticeOffer(target)) return;
       this.showFlavorWithPracticeOffer(target, 'mossy-stone', 'exploration');
     },
+    // Phase 3 replaces this placeholder with Pell's dialogue-driven quest.
+    'baker-pell': () => this.showToast('Baker Pell is kneading dough.'),
+    'village-notice-board': () => this.showToast(this.nextFlavorLine('village-notice-board')),
+    'village-well': () => this.showToast(this.nextFlavorLine('village-well')),
     'generic-bonus': (target) => this.openBonusPrompt(target.kind, target.label)
   };
 

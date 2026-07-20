@@ -13,7 +13,7 @@
  * against this registry.
  */
 
-export type MapId = 'farm' | 'wildbloom-woods';
+export type MapId = 'farm' | 'wildbloom-woods' | 'eldoria-village';
 
 export type MapSpawn = {
   /** World px (map px * GAME_SCALE), matching player/interaction coordinates. */
@@ -60,7 +60,9 @@ export const MAP_REGISTRY: Record<MapId, MapDefinition> = {
       default: { x: 320, y: 512 },
       // On the east road, two tiles west of the woods gate, so arriving
       // from the woods never lands inside the exit zone (no bounce-back).
-      'from-woods': { x: 1760, y: 640 }
+      'from-woods': { x: 1760, y: 640 },
+      // On the west road, two tiles east of the village gate.
+      'from-village': { x: 160, y: 640 }
     },
     defaultSpawn: 'default',
     // Fence/water/rock stand-ins on the farm Collision layer (tileset
@@ -83,6 +85,23 @@ export const MAP_REGISTRY: Record<MapId, MapDefinition> = {
     },
     defaultSpawn: 'from-farm',
     // Trees block on the woods Collision layer (water reserved for later).
+    collisionGids: [3, 4]
+  },
+  'eldoria-village': {
+    id: 'eldoria-village',
+    tiledKey: 'eldoria-village',
+    jsonPath: 'maps/eldoria-village.json',
+    displayName: 'Eldoria Village',
+    tilesets: STANDARD_TILESETS,
+    // Reusing the farm loop is the accepted placeholder (same as the woods);
+    // a dedicated village track must be a real reviewed asset first.
+    musicKey: 'bgm-farm',
+    spawns: {
+      // Two tiles west of the east gate (GateToFarm), so arriving from the
+      // farm never lands inside the exit zone.
+      'from-farm': { x: 1120, y: 448 }
+    },
+    defaultSpawn: 'from-farm',
     collisionGids: [3, 4]
   }
 };
@@ -168,6 +187,12 @@ export function validateMapRegistry(
 
     const summary = mapSummaries?.[def.id];
     if (!summary) continue;
+
+    if (!Number.isInteger(summary.width) || summary.width <= 0
+      || !Number.isInteger(summary.height) || summary.height <= 0
+      || !Number.isInteger(summary.tilewidth) || summary.tilewidth <= 0) {
+      throw new Error(`Map ${def.id} has invalid map or tile dimensions`);
+    }
 
     const worldWidth = summary.width * summary.tilewidth * worldScale;
     const worldHeight = summary.height * summary.tilewidth * worldScale;

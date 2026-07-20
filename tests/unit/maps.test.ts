@@ -102,6 +102,23 @@ describe('validateMapRegistry violations', () => {
     expect(() => validateMapRegistry({ farm: def }, { farm: summary })).toThrow(/outside world bounds/);
   });
 
+  it('rejects missing or non-positive map dimensions', () => {
+    const def = validDef();
+    const summary = {
+      width: 30,
+      height: 20,
+      tilewidth: undefined,
+      tilesets: def.tilesets.map((tileset) => ({ name: tileset.tiledName })),
+      exits: []
+    } as unknown as TiledMapSummary;
+    expect(() => validateMapRegistry({ farm: def }, { farm: summary })).toThrow(/invalid map or tile dimensions/);
+
+    expect(() => validateMapRegistry(
+      { farm: def },
+      { farm: { ...summary, tilewidth: 32, width: 0 } }
+    )).toThrow(/invalid map or tile dimensions/);
+  });
+
   it('rejects a declared tileset missing from the map JSON', () => {
     const def = validDef();
     const summary: TiledMapSummary = {

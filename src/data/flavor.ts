@@ -37,6 +37,16 @@ export const POST_PURPOSE_FLAVOR = {
     'The mossy stone feels warm.',
     'Tiny runes glimmer in the moss.',
     'The stone hums when you touch it.'
+  ],
+  'village-notice-board': [
+    'The board lists odd jobs for helpers.',
+    'A drawing of the farm is pinned here.',
+    '"Lost: one oven mitt." — Pell'
+  ],
+  'village-well': [
+    'The well water glitters deep down.',
+    'You hear a soft plip. An echo says hi.',
+    'The bucket is full of cool water.'
   ]
 } as const;
 

@@ -73,7 +73,6 @@ async function moveToSpot(page: Page, spotId: SpotId): Promise<void> {
     scene.heroPresentation.syncPosition();
     scene.wildbloomDiscovery.update();
   }, position);
-  await page.waitForTimeout(160);
 }
 
 async function snapshot(page: Page): Promise<DiscoverySnapshot> {
@@ -138,7 +137,6 @@ test('Mage magic reveals all three persistent Wildbloom secrets without changing
 
   await clickGame(page, 852, 536);
   await expect.poll(async () => (await snapshot(page)).inputLocked).toBe(true);
-  await page.waitForTimeout(110);
   await page.screenshot({ path: 'test-results/discovery-mage-ability.png', fullPage: true });
   await expect.poll(async () => (await snapshot(page)).discoveredSpotIds).toContain('root-star');
   await expect.poll(async () => hasCanvasText(page, 'SECRET FOUND')).toBe(true);
@@ -150,9 +148,41 @@ test('Mage magic reveals all three persistent Wildbloom secrets without changing
   await revealSpot(page, 'moonwell-echo');
   await moveToSpot(page, 'foxfire-seed');
   await expect.poll(async () => (await snapshot(page)).activeSpotId).toBe('foxfire-seed');
+  // The completion toast is deliberately transient. Watch every animation
+  // frame before triggering the reveal, then poll the durable observation
+  // flag; sampling the live display list only after persistence updates can
+  // miss the toast on slow software-rendered CI.
+  await page.evaluate(() => {
+    const state = window as unknown as {
+      __WILDBLOOM_COMPLETE_SEEN__?: boolean;
+      __WILDBLOOM_COMPLETE_WATCH_ID__?: number;
+    };
+    state.__WILDBLOOM_COMPLETE_SEEN__ = false;
+
+    const watch = (): void => {
+      const hasText = (item: { active?: boolean; visible?: boolean; text?: unknown; list?: unknown[] }): boolean => {
+        if (item.active === false || item.visible === false) return false;
+        if (String(item.text ?? '').includes('WILDBLOOM SONG COMPLETE')) return true;
+        return Array.isArray(item.list)
+          && item.list.some((child) => hasText(child as { text?: string; list?: unknown[] }));
+      };
+      const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
+        children: { list: Array<{ active?: boolean; visible?: boolean; text?: unknown; list?: unknown[] }> };
+      };
+      if (scene?.children.list.some(hasText)) {
+        state.__WILDBLOOM_COMPLETE_SEEN__ = true;
+        return;
+      }
+      state.__WILDBLOOM_COMPLETE_WATCH_ID__ = requestAnimationFrame(watch);
+    };
+
+    state.__WILDBLOOM_COMPLETE_WATCH_ID__ = requestAnimationFrame(watch);
+  });
   await clickGame(page, 852, 536);
+  await expect.poll(() => page.evaluate(() => (
+    window as unknown as { __WILDBLOOM_COMPLETE_SEEN__?: boolean }
+  ).__WILDBLOOM_COMPLETE_SEEN__), { timeout: 15000 }).toBe(true);
   await expect.poll(async () => (await snapshot(page)).discoveredSpotIds).toHaveLength(3);
-  await expect.poll(async () => hasCanvasText(page, 'WILDBLOOM SONG COMPLETE')).toBe(true);
   await page.screenshot({ path: 'test-results/discovery-mage-complete.png', fullPage: true });
 
   const saved = await savedInventory(page, 'grade2-mage');
@@ -189,7 +219,6 @@ test('Ranger tracking reveals the same secret loop with a distinct readable abil
 
   await clickGame(page, 852, 536);
   await expect.poll(async () => (await snapshot(page)).inputLocked).toBe(true);
-  await page.waitForTimeout(110);
   await page.screenshot({ path: 'test-results/discovery-ranger-ability.png', fullPage: true });
   await expect.poll(async () => (await snapshot(page)).discoveredSpotIds).toContain('moonwell-echo');
   await expect.poll(async () => hasCanvasText(page, 'Moonwell Echo')).toBe(true);
