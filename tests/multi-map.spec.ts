@@ -300,7 +300,7 @@ test('woods interactables: flower is pure flavor, stone opens practice only on o
   });
   await movePlayerTo(page, 480, 832);
   await sceneInteract(page);
-  await expect.poll(async () => hasCanvasText(page, 'CropBonus: optional learning bonus'), {
+  await expect.poll(async () => hasCanvasText(page, 'Crop Patch: optional learning bonus'), {
     timeout: 10000
   }).toBe(true);
 });

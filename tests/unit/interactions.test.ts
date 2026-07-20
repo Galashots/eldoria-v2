@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveInteractionId, getTiledProperty } from '../../src/data/interactions';
+import { resolveInteractionId, getTiledProperty, interactionDisplayName } from '../../src/data/interactions';
 
 describe('resolveInteractionId fallback', () => {
   it('resolves mapped display names to stable ids', () => {
@@ -41,6 +41,19 @@ describe('getTiledProperty helper', () => {
   it('returns undefined if properties field is missing', () => {
     const obj = {};
     expect(getTiledProperty(obj, 'interactionId')).toBeUndefined();
+  });
+});
+
+describe('interactionDisplayName', () => {
+  it('maps stable ids to kid-friendly display names', () => {
+    expect(interactionDisplayName('crop-bonus', 'CropBonus')).toBe('Crop Patch');
+    expect(interactionDisplayName('practice-slime', 'Practice Slime')).toBe('Practice Slime');
+    expect(interactionDisplayName('mossy-stone', 'MossyStone')).toBe('Mossy Stone');
+    expect(interactionDisplayName('mira', 'Mira')).toBe('Mira');
+  });
+
+  it('falls back to the target label when no display name is curated', () => {
+    expect(interactionDisplayName('generic-bonus', 'Old Crate')).toBe('Old Crate');
   });
 });
 

@@ -37,6 +37,10 @@ async function enterFreshOpening(page: Page, profileY: number): Promise<void> {
 }
 
 test('a fresh Mage profile gets a polished skippable magic hook before the farm', async ({ page }) => {
+  // This full boot+reload flow measures ~25.6s standalone on BOTH main and
+  // this branch in the current container (pre-existing environment slowness,
+  // not a game-feel regression), so it needs headroom past the 30s default.
+  test.setTimeout(60_000);
   await enterFreshOpening(page, 232);
 
   await expect.poll(async () => readOpeningState(page)).toEqual({
