@@ -4,6 +4,14 @@ This file keeps recent, high-value change summaries. Full historical entries thr
 
 Entries should remain concise: date/author, branch or PR, scope, compatibility impact, verification, and remaining risk. Detailed implementation narratives belong in the PR description and commits.
 
+## 2026-07-19 — Wildbloom transient-text CI hardening
+
+- Author/branch: Codex, `codex/wildbloom-text-recorder`; PR pending.
+- Scope: replaced live polling of short-lived Wildbloom reveal/completion toast text with a reset-before-action, recursive browser-side recorder that observes nested Phaser container text. The spec now also explicitly uses the browser-test-only Canvas renderer path.
+- Verification: reproduced twice on PR #109 CI as the same 64/65 completion-toast timeout; `npm ci` (0 vulnerabilities), `npm run check`, `npm run test:unit` (116/116), a five-run focused Mage stress pass (5/5), and `npm run smoke` (65/65) all pass after the fix.
+- Compatibility: test and status documentation only; no runtime, save, curriculum, quest, reward, profile-ID, dependency, map, or asset changes.
+- Remaining risk: the recorder proves the transient text appeared but does not extend its runtime lifetime; physical-device behavior remains unchanged and untested by this PR.
+
 ## 2026-07-20 — Multi-map world foundation (M2)
 
 - Author/branch: Claude Code (repo agent), `world/multi-map-foundation`, executing Build Prompt 02 on top of the merged game-feel milestone (PR #104). This is the **M2** prerequisite named by the approved Mossheart Ruins (Zone #4) design spec.
