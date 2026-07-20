@@ -222,7 +222,7 @@ test('post-purpose interactions show flavor instead of prompts; a second ACTION 
   // ACTION presses (flavor + consume) open the optional prompt.
   await page.waitForTimeout(2200);
   await doubleInteract(page);
-  await expect.poll(async () => hasCanvasText(page, 'CropBonus: optional learning bonus')).toBe(true);
+  await expect.poll(async () => hasCanvasText(page, 'Crop Patch: optional learning bonus')).toBe(true);
   await page.screenshot({ path: 'test-results/post-purpose-crop-optin-prompt.png', fullPage: true });
   await clickGame(page, 480, 484); // skip
   await expect.poll(async () => hasCanvasText(page, 'optional learning bonus')).toBe(false);
@@ -363,7 +363,7 @@ test('quest-relevant interactions still open prompts as before', async ({ page }
   });
   await movePlayerTo(page, 480, 832);
   await sceneInteract(page);
-  await expect.poll(async () => hasCanvasText(page, 'CropBonus: optional learning bonus'), {
+  await expect.poll(async () => hasCanvasText(page, 'Crop Patch: optional learning bonus'), {
     timeout: 10000
   }).toBe(true);
 });

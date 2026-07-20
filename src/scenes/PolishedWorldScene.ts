@@ -5,6 +5,7 @@ import type { MapId } from '../data/maps';
 import type { ProfileId } from '../data/profiles';
 import { fpx, GAME_HEIGHT, GAME_SCALE, GAME_WIDTH, sscale, sx, sy } from '../gameDimensions';
 import type { HeroPresentationController } from '../presentation/HeroPresentationController';
+import { drawMarkerGlyph } from '../presentation/markerGlyphs';
 import {
   PracticeSlimeEncounterController,
   type PracticeSlimeEncounterSnapshot
@@ -75,6 +76,7 @@ type WorldScenePresentationInternals = {
 export class PolishedWorldScene extends WorldScene {
   private arrivedFromOpening = false;
   private playerShadow?: Phaser.GameObjects.Ellipse;
+  private slimeGroundShadow?: Phaser.GameObjects.Ellipse;
   private miraPulse?: Phaser.GameObjects.Arc;
   private presentationHint?: Phaser.GameObjects.Text;
   private presentationObjective?: Phaser.GameObjects.Text;
@@ -192,6 +194,9 @@ export class PolishedWorldScene extends WorldScene {
       onComplete: () => this.openPracticeSlimePrompt(target)
     });
     this.practiceSlimeEncounter.create();
+    // While the encounter has input locked (mid-strike), the slime marker
+    // skips its proximity pop so it cannot fight the strike animation.
+    this.setAffordancePopGuard('practice-slime', () => this.practiceSlimeEncounter?.snapshot().inputLocked === false);
 
     const originalHintLabel = internals.hintLabel.bind(this);
     internals.hintLabel = (candidate) => candidate.id === 'practice-slime'
@@ -253,6 +258,7 @@ export class PolishedWorldScene extends WorldScene {
     // purposeless loop; reset() is now a test-only hook.
     internals.handlePracticeSlimeDefeat();
     this.practiceSlimeEncounter?.retire();
+    this.slimeGroundShadow?.setVisible(false);
     internals.openBonusPrompt(target.kind, target.label, () => {
       const outcome = internals.farmQuest.completeSlimeInteraction();
       internals.applyQuestOutcome(outcome, false);
@@ -349,7 +355,8 @@ export class PolishedWorldScene extends WorldScene {
 
     if (practiceSlimeSprite) {
       // Slime sprite origin is bottom-center, so its base sits at the sprite y.
-      this.add.ellipse(practiceSlimeSprite.x, practiceSlimeSprite.y - sy(1), sx(20), sx(7), 0x06110d, 0.32)
+      // Kept in a field so the defeat path can retire the shadow with the slime.
+      this.slimeGroundShadow = this.add.ellipse(practiceSlimeSprite.x, practiceSlimeSprite.y - sy(1), sx(20), sx(7), 0x06110d, 0.32)
         .setDepth(1);
     }
 
@@ -399,11 +406,7 @@ export class PolishedWorldScene extends WorldScene {
     this.miraPulse = glow;
 
     const marker = this.add.graphics().setPosition(mira.x, markerY).setScale(GAME_SCALE).setDepth(5);
-    marker.fillStyle(0xfff2ad, 1);
-    marker.fillTriangle(0, -7, 3.5, 0, 0, 7);
-    marker.fillTriangle(0, -7, -3.5, 0, 0, 7);
-    marker.fillTriangle(-7, 0, 0, -3.5, 7, 0);
-    marker.fillTriangle(-7, 0, 0, 3.5, 7, 0);
+    drawMarkerGlyph(marker, 'mira', 0xffd666);
 
     this.tweens.add({
       targets: [glow, marker],

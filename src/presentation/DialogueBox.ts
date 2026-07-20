@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import type { DialogueLine } from '../data/questDefs';
 import { fpx, GAME_HEIGHT, GAME_SCALE, GAME_WIDTH, sx, sy } from '../gameDimensions';
 import type { SpeechHooks, SpeechSupport } from '../systems/speech';
-import { drawRoundedButton, drawRoundedPanelBackground } from './uiHelpers';
+import { drawRoundedButton, drawRoundedPanelBackground, popInContainer } from './uiHelpers';
 
 type DialogueOptions = {
   autoRead?: boolean;
@@ -16,6 +16,8 @@ type DialogueBoxDependencies = {
 };
 
 const DIALOGUE_BOX_NAME = 'dialogue-box';
+/** Pokemon/Zelda-convention reveal pacing (~24ms per character). */
+const TYPEWRITER_MS_PER_CHAR = 24;
 
 /** Reusable, scene-owned dialogue presentation with no gameplay authority. */
 export class DialogueBox {
@@ -26,6 +28,12 @@ export class DialogueBox {
   private container?: Phaser.GameObjects.Container;
   private speakerText?: Phaser.GameObjects.Text;
   private bodyText?: Phaser.GameObjects.Text;
+  private continueHint?: Phaser.GameObjects.Text;
+  private continueHintBaseY = 0;
+  private continueHintTween?: Phaser.Tweens.Tween;
+  private typingTimer?: Phaser.Time.TimerEvent;
+  private typingFullText = '';
+  private typingIndex = 0;
   private lines: readonly DialogueLine[] = [];
   private lineIndex = 0;
   private autoRead = false;
@@ -58,6 +66,12 @@ export class DialogueBox {
 
   advance(): void {
     if (!this.container) return;
+    // Mid-typewriter, the first ACTION completes the line instantly instead
+    // of advancing (Pokemon/Zelda convention); the next press advances.
+    if (this.isTyping()) {
+      this.completeTyping();
+      return;
+    }
     this.speech.cancel();
     if (this.lineIndex >= this.lines.length - 1) {
       this.close();
@@ -102,6 +116,10 @@ export class DialogueBox {
       .setName(DIALOGUE_BOX_NAME)
       .setScrollFactor(0)
       .setDepth(41);
+    // Same shallow pop-in as the toast/prompt/stats panels; settles at
+    // exactly scale 1, so the background advance-area hit-test is only
+    // ahead of the visual for the brief settle window.
+    popInContainer(this.scene, container, 1);
 
     const background = drawRoundedPanelBackground(
       this.scene,
@@ -143,12 +161,16 @@ export class DialogueBox {
     }).setName('dialogue-body').setOrigin(0, 0.5);
     container.add(this.bodyText);
 
-    const continueHint = this.scene.add.text(halfWidth - sx(12), halfHeight - sy(7), '▼ ACTION', {
+    // Shown (with a gentle bounce) only once the current line has fully
+    // revealed — while the typewriter is mid-line it stays hidden so the
+    // cue reads as "ready to continue", not just decoration.
+    this.continueHint = this.scene.add.text(halfWidth - sx(12), halfHeight - sy(7), '▼ ACTION', {
       fontFamily: 'system-ui',
       fontSize: fpx(9),
       color: '#c9a66b'
-    }).setName('dialogue-continue-hint').setOrigin(1, 1);
-    container.add(continueHint);
+    }).setName('dialogue-continue-hint').setOrigin(1, 1).setVisible(false);
+    this.continueHintBaseY = this.continueHint.y;
+    container.add(this.continueHint);
 
     const speakerButton = drawRoundedButton(
       this.scene,
@@ -194,8 +216,89 @@ export class DialogueBox {
     const line = this.lines[this.lineIndex];
     if (!line) return;
     this.speakerText?.setText(line.speaker);
-    this.bodyText?.setText(line.text);
+    this.stopTyping();
+    // Read-aloud fires once per line at open, exactly as before the
+    // typewriter pass — TTS always reads the full line, never the partial
+    // reveal.
     if (this.autoRead) this.speakCurrentLine();
+
+    this.typingFullText = line.text;
+    this.typingIndex = 0;
+    // e2e specs assert dialogue text through the canvas-text recorder /
+    // getByName reads, which would race a per-character reveal — typing is
+    // instant under the test flag so every spec observes full lines.
+    if (window.__ELDORIA_E2E__) {
+      this.completeTyping();
+      return;
+    }
+
+    this.bodyText?.setText('');
+    this.typingTimer = this.scene.time.addEvent({
+      delay: TYPEWRITER_MS_PER_CHAR,
+      repeat: Math.max(0, line.text.length - 1),
+      callback: () => this.typeNextCharacter()
+    });
+  }
+
+  private typeNextCharacter(): void {
+    this.typingIndex += 1;
+    const revealed = this.typingFullText.slice(0, this.typingIndex);
+    this.bodyText?.setText(revealed);
+    this.onTypewriterCharacter(this.typingFullText[this.typingIndex - 1] ?? '', this.typingIndex - 1);
+    if (this.typingIndex >= this.typingFullText.length) {
+      this.completeTyping();
+    }
+  }
+
+  private isTyping(): boolean {
+    return this.typingTimer !== undefined;
+  }
+
+  /** Reveals the full line immediately and shows the continue cue. */
+  private completeTyping(): void {
+    this.stopTyping();
+    this.typingIndex = this.typingFullText.length;
+    this.bodyText?.setText(this.typingFullText);
+    this.showContinueHint();
+  }
+
+  private stopTyping(): void {
+    this.typingTimer?.remove(false);
+    this.typingTimer = undefined;
+    this.hideContinueHint();
+  }
+
+  private showContinueHint(): void {
+    const hint = this.continueHint;
+    if (!hint) return;
+    this.continueHintTween?.remove();
+    hint.setVisible(true);
+    this.continueHintTween = this.scene.tweens.add({
+      targets: hint,
+      y: hint.y - sy(2),
+      duration: 420,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+  }
+
+  private hideContinueHint(): void {
+    this.continueHintTween?.remove();
+    this.continueHintTween = undefined;
+    if (this.continueHint) {
+      // Reset the bounce offset so the next show starts from the base y.
+      this.continueHint.setVisible(false).setY(this.continueHintBaseY);
+    }
+  }
+
+  /**
+   * Per-character reveal hook, kept for the planned read-aloud blip pass:
+   * a future change plays a soft tick here as each glyph lands. Internal
+   * only for now — deliberately unused outside this class.
+   */
+  protected onTypewriterCharacter(_char: string, _index: number): void {
+    // Future read-aloud blip hook (intentionally a no-op today).
   }
 
   private speakCurrentLine(): void {
@@ -215,10 +318,16 @@ export class DialogueBox {
     this.onClose = undefined;
     this.speech.cancel();
     this.unbindKeyboard();
+    // Stop the scene-level typewriter timer before its Text target is
+    // destroyed with the container.
+    this.stopTyping();
     this.container.destroy();
     this.container = undefined;
     this.speakerText = undefined;
     this.bodyText = undefined;
+    this.continueHint = undefined;
+    this.typingFullText = '';
+    this.typingIndex = 0;
     this.lines = [];
     this.lineIndex = 0;
     this.autoRead = false;

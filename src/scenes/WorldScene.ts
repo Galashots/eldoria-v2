@@ -11,7 +11,7 @@ import {
   PRACTICE_OFFER_SUFFIX,
   PRACTICE_OFFER_WINDOW_MS
 } from '../data/flavor';
-import { resolveInteractionId, getTiledProperty, type InteractionId } from '../data/interactions';
+import { resolveInteractionId, getTiledProperty, interactionDisplayName, type InteractionId } from '../data/interactions';
 import { getQuestDefinition, type DialogueLine, type QuestObjectiveTarget } from '../data/questDefs';
 import {
   getMapDefinition,
@@ -25,7 +25,14 @@ import {
   HeroPresentationController
 } from '../presentation/HeroPresentationController';
 import { DialogueBox } from '../presentation/DialogueBox';
-import { drawRoundedButton, drawRoundedPanelBackground } from '../presentation/uiHelpers';
+import { InteractableAffordanceController, type AffordanceVisual } from '../presentation/InteractableAffordance';
+import { drawMarkerGlyph } from '../presentation/markerGlyphs';
+import {
+  drawRoundedButton,
+  drawRoundedPanelBackground,
+  installButtonPressFeedback,
+  popInContainer
+} from '../presentation/uiHelpers';
 import { LearningBonusSystem } from '../systems/LearningBonusSystem';
 import { MasterySystem, type LearningMastery } from '../systems/MasterySystem';
 import { FarmQuestSystem, type FarmQuestOutcome } from '../systems/FarmQuestSystem';
@@ -117,7 +124,13 @@ export class WorldScene extends Phaser.Scene {
   private busy = false;
   private statsPanelOpen = false;
   private statsContainer?: Phaser.GameObjects.Container;
-  private statsCloseButton?: Phaser.GameObjects.Graphics;
+  private statsCloseGroup?: Phaser.GameObjects.Container;
+  // Batch 1 affordance pass: every marker visual registered here gets a
+  // staggered idle bob plus a proximity pop (see InteractableAffordance).
+  // `idleBob: false` marks visuals like the slime sprite that should pop on
+  // approach but never bob (it has its own hop animation).
+  private targetMarkerVisuals: { target: InteractionTarget; marker: AffordanceVisual; idleBob: boolean }[] = [];
+  private affordances?: InteractableAffordanceController;
   private readonly speech = createSpeechSupport();
   private dialogueBox?: DialogueBox;
   private hudText!: Phaser.GameObjects.Text;
@@ -180,6 +193,9 @@ export class WorldScene extends Phaser.Scene {
     this.statsPanelOpen = false;
     this.exits = [];
     this.dialogueBox = undefined;
+    this.targetMarkerVisuals = [];
+    this.affordances = undefined;
+    this.statsCloseGroup = undefined;
   }
 
   create(): void {
@@ -264,6 +280,7 @@ export class WorldScene extends Phaser.Scene {
     this.exits = this.makeExits(objectLayer?.objects ?? []);
     this.createPracticeSlimeAnimations();
     this.drawTargetMarkers();
+    this.installInteractableAffordances();
 
     this.cameras.main.startFollow(this.player, true, MOVEMENT_TUNING.cameraLerp, MOVEMENT_TUNING.cameraLerp);
     this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
@@ -312,6 +329,8 @@ export class WorldScene extends Phaser.Scene {
     document.addEventListener('visibilitychange', this.clearStuckInputOnFocusLoss);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.dialogueBox?.destroy();
+      this.affordances?.dispose();
+      this.affordances = undefined;
       this.stopPromptReadAloud();
       this.input.keyboard?.resetKeys();
       this.resetJoystick();
@@ -343,6 +362,9 @@ export class WorldScene extends Phaser.Scene {
     // camera can still be settling (follow lerp) for a frame or two after a
     // prompt opens.
     this.updateObjectiveEdgeArrow();
+    // Proximity pops keep running while panels are open so closing a panel
+    // near a target still shows the affordance; the controller is cheap.
+    this.affordances?.update();
 
     if (this.busy && !this.statsPanelOpen) {
       this.player.setVelocity(0, 0);
@@ -513,6 +535,15 @@ export class WorldScene extends Phaser.Scene {
           .setScale(GAME_SCALE)
           .setDepth(2)
           .play(PRACTICE_SLIME_IDLE_ANIMATION);
+        // The slime's idle animation is already alive, so it pops on
+        // approach but never idle-bobs (two idle systems would fight).
+        this.targetMarkerVisuals.push({ target, marker: this.practiceSlimeSprite, idleBob: false });
+        continue;
+      }
+
+      if (target.id === 'mira') {
+        // PolishedWorldScene.addMiraGuidance draws Mira's NPC silhouette and
+        // quest-glyph marker over the bare target point.
         continue;
       }
 
@@ -520,18 +551,49 @@ export class WorldScene extends Phaser.Scene {
       // bonus-prompt panel via `children.list.find(c => Array.isArray(c.list))`
       // — "the first Container in the scene" — and a persistent marker
       // container created here (during every create()) would wrongly match
-      // that lookup instead of the actual prompt panel. Each pixel literal is
-      // doubled by hand instead.
-      const color = target.kind === 'combat' ? 0xaa3344 : target.kind === 'farm' ? 0x55aa33 : 0x4488cc;
-      this.add.circle(target.x, target.y - sy(12), sx(6), color).setStrokeStyle(2, 0x1a1208);
-      this.add.text(target.x, target.y - sy(30), target.label, {
+      // that lookup instead of the actual prompt panel.
+      const ringColor = target.kind === 'combat' ? 0xaa3344 : target.kind === 'farm' ? 0x55aa33 : 0x4488cc;
+      // Batch 1 marker pass: a literal code-drawn glyph (flower, stone,
+      // slime face, scroll, berries...) identifies the target type; color
+      // is only redundant coding on top, never the sole signal. Drawn in
+      // design px inside a GAME_SCALE-scaled Graphics — the same convention
+      // as the Mira marker — instead of doubling every pixel by hand.
+      const glyph = this.add.graphics()
+        .setPosition(target.x, target.y - sy(12))
+        .setScale(GAME_SCALE)
+        .setDepth(3);
+      drawMarkerGlyph(glyph, target.id, ringColor);
+      this.add.text(target.x, target.y - sy(34), this.targetDisplayName(target), {
         fontFamily: 'system-ui',
-        fontSize: fpx(9),
+        fontSize: fpx(11),
         color: '#ffffff',
         stroke: '#1a1208',
         strokeThickness: 3
-      }).setOrigin(0.5);
+      }).setOrigin(0.5).setDepth(3);
+      this.targetMarkerVisuals.push({ target, marker: glyph, idleBob: true });
     }
+  }
+
+  /**
+   * Kid-friendly marker label: a curated display name when one exists
+   * ("Crop Patch", "Mossy Stone"), falling back to the target's quest label.
+   * Prompts and hints route through this so the dev-style raw ids
+   * ("CropBonus") never reach the screen.
+   */
+  private targetDisplayName(target: InteractionTarget): string {
+    return interactionDisplayName(target.id, target.label);
+  }
+
+  private installInteractableAffordances(): void {
+    this.affordances = new InteractableAffordanceController(this, this.player);
+    for (const { target, marker, idleBob } of this.targetMarkerVisuals) {
+      this.affordances.register({ id: target.id, x: target.x, y: target.y, marker, idleBob });
+    }
+  }
+
+  /** Subclass hook: gate a target's proximity pop (the slime strike owns the sprite mid-beat). */
+  protected setAffordancePopGuard(id: InteractionId, canPop: () => boolean): void {
+    this.affordances?.setPopGuard(id, canPop);
   }
 
   private createPracticeSlimeAnimations(): void {
@@ -896,7 +958,11 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private hintLabel(target: InteractionTarget): string {
-    return this.farmQuest.hintLabel(target.label);
+    // The quest system may translate the raw label into a step hint; when it
+    // passes the label through untouched, swap in the kid-friendly display
+    // name so dev-style ids ("CropBonus") never reach the HUD.
+    const questLabel = this.farmQuest.hintLabel(target.label);
+    return questLabel === target.label ? this.targetDisplayName(target) : questLabel;
   }
 
   private createTouchControls(): void {
@@ -915,13 +981,16 @@ export class WorldScene extends Phaser.Scene {
       .setScrollFactor(0)
       .setInteractive({ useHandCursor: true });
 
-    this.add.text(GAME_WIDTH - sx(54), GAME_HEIGHT - sy(52), 'ACTION', {
+    const actionLabel = this.add.text(GAME_WIDTH - sx(54), GAME_HEIGHT - sy(52), 'ACTION', {
       fontFamily: 'system-ui',
       fontSize: fpx(10),
       color: '#ffd666'
     }).setOrigin(0.5).setScrollFactor(0).setAlpha(isTouchDevice ? 1 : actionAlpha);
 
     action.on('pointerdown', () => this.handleActionInput());
+    // Same squash-and-release as the panel buttons; silent here because
+    // handleActionInput() already plays the contextual interaction sfx.
+    installButtonPressFeedback(this, action, { playTapSound: false, alsoScale: [actionLabel] });
   }
 
   private createDynamicJoystick(): void {
@@ -948,7 +1017,9 @@ export class WorldScene extends Phaser.Scene {
     this.joystickPointer = pointer;
     this.joystickOrigin = { x: pointer.x, y: pointer.y };
     this.joystickBase.setPosition(pointer.x, pointer.y).setVisible(true);
-    this.joystickKnob.setPosition(pointer.x, pointer.y).setVisible(true);
+    // Knob "grabs" on touch-down: a small scale-up + full alpha, released in
+    // resetJoystick — the same press feedback language as the buttons.
+    this.joystickKnob.setPosition(pointer.x, pointer.y).setVisible(true).setScale(1.12).setAlpha(1);
     this.updateJoystick(pointer);
   }
 
@@ -987,7 +1058,7 @@ export class WorldScene extends Phaser.Scene {
     this.joystickPointer = null;
     this.touchMove = { x: 0, y: 0 };
     this.joystickBase?.setVisible(false);
-    this.joystickKnob?.setVisible(false);
+    this.joystickKnob?.setVisible(false).setScale(1).setAlpha(0.82);
   }
 
   private isLowerLeftTouch(pointer: Phaser.Input.Pointer): boolean {
@@ -1048,7 +1119,7 @@ export class WorldScene extends Phaser.Scene {
     'baker-pell': () => this.handleBakerPellInteraction(),
     'village-notice-board': () => this.showToast(this.nextFlavorLine('village-notice-board')),
     'village-well': () => this.showToast(this.nextFlavorLine('village-well')),
-    'generic-bonus': (target) => this.openBonusPrompt(target.kind, target.label)
+    'generic-bonus': (target) => this.openBonusPrompt(target.kind, this.targetDisplayName(target))
   };
 
   private tryInteract(): boolean {
@@ -1127,7 +1198,7 @@ export class WorldScene extends Phaser.Scene {
     this.pendingPracticeOffer = {
       id: target.id,
       context,
-      label: target.label,
+      label: this.targetDisplayName(target),
       expiresAt: this.time.now + PRACTICE_OFFER_WINDOW_MS
     };
   }
@@ -1217,7 +1288,7 @@ export class WorldScene extends Phaser.Scene {
       this.resetJoystick();
       this.player.setVelocity(0, 0);
       this.playCropBonusFeedback(target, () => {
-        this.openBonusPrompt(target.kind, target.label, () => {
+        this.openBonusPrompt(target.kind, this.targetDisplayName(target), () => {
           const outcome = this.farmQuest.completeCropInteraction();
           this.applyQuestOutcome(outcome, false);
           return outcome.message;
@@ -1248,7 +1319,7 @@ export class WorldScene extends Phaser.Scene {
     this.resetJoystick();
     this.player.setVelocity(0, 0);
     this.playPracticeSlimeFeedback('hop', () => {
-      this.openBonusPrompt(target.kind, target.label, () => {
+      this.openBonusPrompt(target.kind, this.targetDisplayName(target), () => {
         const outcome = this.farmQuest.completeSlimeInteraction();
         this.applyQuestOutcome(outcome, false);
         return outcome.message;
@@ -1269,6 +1340,9 @@ export class WorldScene extends Phaser.Scene {
     this.farmQuest.markPracticeSlimeDefeated();
     this.targets = this.targets.filter((target) => target.id !== 'practice-slime');
     this.practiceSlimeSprite?.setVisible(false);
+    // Retire the slime's affordance with it so the hidden sprite can no
+    // longer pop or sparkle when the player crosses the clearing.
+    this.affordances?.unregister('practice-slime');
     this.save();
     this.updateHint();
     // If the objective marker was floating over the slime (find-slime step),
@@ -1289,7 +1363,7 @@ export class WorldScene extends Phaser.Scene {
     this.resetJoystick();
     this.player.setVelocity(0, 0);
     this.playCropBonusFeedback(target, () => {
-      this.openBonusPrompt(target.kind, target.label, () => {
+      this.openBonusPrompt(target.kind, this.targetDisplayName(target), () => {
         const outcome = this.farmQuest.completeSproutInteraction(target.id);
         this.applyQuestOutcome(outcome, false);
         return outcome.message;
@@ -1386,6 +1460,11 @@ export class WorldScene extends Phaser.Scene {
     const panel = this.add.container(GAME_WIDTH / 2, GAME_HEIGHT / 2)
       .setScrollFactor(0)
       .setDepth(30);
+    // Back.easeOut pop-in on the existing container (no wrapper). The
+    // ancestor-scale hit-test caveat above only matters while the tween is
+    // running: it settles at exactly scale 1 in 170ms, before a kid can
+    // reach for a choice.
+    popInContainer(this, panel, 1);
     const panelHeight = isAudioFirst ? sy(220) : sy(190);
     const titleY = isAudioFirst ? -sy(84) : -sy(72);
     const promptY = isAudioFirst ? -sy(52) : -sy(42);
@@ -1614,6 +1693,9 @@ export class WorldScene extends Phaser.Scene {
       .setScale(GAME_SCALE)
       .setDepth(100);
     this.statsContainer = panel;
+    // Same Back.easeOut pop as the other panels, in place on the existing
+    // container — the panel's resting scale is GAME_SCALE.
+    popInContainer(this, panel, GAME_SCALE);
 
     const bg = drawRoundedPanelBackground(this, 0, 0, 380, 240, 0x1a1208, 0xffd666, 10);
     panel.add(bg);
@@ -1773,35 +1855,29 @@ export class WorldScene extends Phaser.Scene {
     });
 
     // --- CLOSE BUTTON ---
-    // Drawn directly via drawRoundedButton in real screen coordinates (same
-    // approach as openBonusPrompt's buttons) instead of drawing the visible
-    // button inside the GAME_SCALE-scaled panel and hand-syncing a second,
-    // separately-computed unscaled hit zone to match its geometry — the
-    // button's own hit area now always matches what's drawn, by construction.
-    this.statsCloseButton = drawRoundedButton(
-      this,
-      GAME_WIDTH / 2,
-      GAME_HEIGHT / 2 + sy(100),
-      sx(100),
-      sy(24),
-      0x5f3d12,
-      0xffd666,
-      12
-    )
+    // Button and label live together in their own unscaled, screen-space
+    // container. Previously the depth-101 button was drawn in screen space
+    // while its "CLOSE" label stayed a child of the depth-100 panel, which
+    // hid the label under the button. Keeping both in one group fixes the
+    // depth split by construction, keeps the button's hit area matched to
+    // what is drawn, and lets the whole button pop in with the panel.
+    const closeGroup = this.add.container(GAME_WIDTH / 2, GAME_HEIGHT / 2 + sy(100))
       .setName(STATS_CLOSE_BUTTON_NAME)
+      .setScrollFactor(0)
       .setDepth(101);
-    this.statsCloseButton.on('pointerdown', () => this.closeStatsPanel());
+    this.statsCloseGroup = closeGroup;
 
-    const closeTxt = this.add.text(0, 100, 'CLOSE', {
+    const closeButton = drawRoundedButton(this, 0, 0, sx(100), sy(24), 0x5f3d12, 0xffd666, 12);
+    closeButton.on('pointerdown', () => this.closeStatsPanel());
+    closeGroup.add(closeButton);
+
+    const closeTxt = this.add.text(0, 0, 'CLOSE', {
       fontFamily: 'system-ui',
-      // Local design-space literal: this text is still a panel child (only
-      // the interactive button was moved to real screen coordinates above),
-      // so it stays in the same GAME_SCALE-scaled local space as the rest
-      // of the panel.
-      fontSize: '12px',
+      fontSize: fpx(12),
       color: '#ffffff'
     }).setOrigin(0.5);
-    panel.add(closeTxt);
+    closeGroup.add(closeTxt);
+    popInContainer(this, closeGroup, 1);
   }
 
   private closeStatsPanel(): void {
@@ -1810,8 +1886,8 @@ export class WorldScene extends Phaser.Scene {
       this.statsContainer.destroy();
       this.statsContainer = undefined;
     }
-    this.statsCloseButton?.destroy();
-    this.statsCloseButton = undefined;
+    this.statsCloseGroup?.destroy();
+    this.statsCloseGroup = undefined;
     this.statsPanelOpen = false;
     this.busy = false;
   }
