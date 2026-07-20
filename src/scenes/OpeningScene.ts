@@ -1,7 +1,11 @@
 import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_SCALE, GAME_WIDTH, LEGACY_GAME_HEIGHT, LEGACY_GAME_WIDTH, sx, sy } from '../gameDimensions';
 import { DEFAULT_PROFILE, PROFILES, type ProfileId } from '../data/profiles';
-import { drawRoundedButton, drawRoundedPanelBackground } from '../presentation/uiHelpers';
+import {
+  drawRoundedButton,
+  drawRoundedPanelBackground,
+  installButtonPressFeedback
+} from '../presentation/uiHelpers';
 import { loadAudioMuted } from '../systems/AudioPreference';
 
 const OPENING_SEEN_PREFIX = 'eldoria_v2_opening_seen_';
@@ -400,7 +404,7 @@ export class OpeningScene extends Phaser.Scene {
       .setStrokeStyle(4, 0xffd666, 1)
       .setDepth(8)
       .setInteractive({ useHandCursor: true });
-    this.add.text(GAME_WIDTH - sx(54), GAME_HEIGHT - sy(48), 'ACTION', {
+    const actionLabel = this.add.text(GAME_WIDTH - sx(54), GAME_HEIGHT - sy(48), 'ACTION', {
       fontFamily: 'system-ui',
       fontSize: '22px',
       color: '#fff1b5',
@@ -408,6 +412,8 @@ export class OpeningScene extends Phaser.Scene {
       stroke: '#3a2108',
       strokeThickness: 4
     }).setOrigin(0.5).setDepth(9);
+    // Squash-only: striking the gate already plays its own interact one-shot.
+    installButtonPressFeedback(this, action, { playTapSound: false, alsoScale: [actionLabel] });
     action.on('pointerdown', () => this.strikeGate());
 
     const skip = drawRoundedButton(this, GAME_WIDTH - sx(38), sy(20), sx(58), sy(22), 0x17110d, 0xc9a66b, 10)
