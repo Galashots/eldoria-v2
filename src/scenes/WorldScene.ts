@@ -1232,7 +1232,7 @@ export class WorldScene extends Phaser.Scene {
       this.showFloatingReward(`Sunberry ${count}/3`, target.x, target.y - sy(26), '#ffd666');
       if (count === 3) {
         this.questSystem.setStep(BERRY_ORDER_ID, 'return-ready');
-        this.showToast('Pell is waiting â€” back to the village!');
+        this.showToast('Pell is waiting — back to the village!');
       }
       this.refreshObjective();
       this.save();
