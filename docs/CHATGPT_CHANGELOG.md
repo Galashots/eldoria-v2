@@ -8,9 +8,17 @@ Entries should remain concise: date/author, branch or PR, scope, compatibility i
 
 - Author/branch: Codex, `codex/evidence-first-workflow`; draft PR #109.
 - Scope: added proportional root-cause debugging, red/green behavioral regression evidence, condition-based waiting, exact-range read-only review, and fresh exact-head completion evidence to `AGENTS.md`. Created the reusable local `evidence-first-development` Codex skill outside the public repository; existing Game Studio skills remain authoritative for new browser-game architecture, implementation, assets, UI, and playtesting.
-- Verification: local skill `quick_validate.py` passed; `npm ci` completed with 0 vulnerabilities; `npm run check`, `test:visual-targets`, `test:asset-pipeline`, `test:terrain-blend`, and `test:unit` (116/116) passed. The full Playwright run passed 64/65: its first test timed out during the initial `page.goto('/')`, all subsequent tests passed, and the failed adaptive-difficulty test passed 1/1 in isolation. Exact-head CI remains the merge gate; the existing Vite large-chunk warning remains unchanged.
+- Verification: local skill `quick_validate.py` passed; `npm ci` completed with 0 vulnerabilities; `npm run check`, `test:visual-targets`, `test:asset-pipeline`, `test:terrain-blend`, and `test:unit` (116/116) passed. After the repeated Wildbloom CI timeout was fixed by merged PR #110, the final merged-base Playwright run passed 65/65. Exact-head CI remains the merge gate; the existing Vite large-chunk warning remains unchanged.
 - Compatibility: documentation/process only; no runtime, save, curriculum, quest, reward, profile-ID, dependency, map, or asset changes.
 - Remaining risk: the local skill is machine-local and will need normal iteration after real use; repository agents remain fully guided by the self-contained `AGENTS.md` rules.
+
+## 2026-07-19 — Wildbloom transient-text CI hardening
+
+- Author/branch: Codex, `codex/wildbloom-text-recorder`; draft PR #110.
+- Scope: replaced live polling of short-lived Wildbloom reveal/completion toast text with a reset-before-action, recursive browser-side recorder that observes nested Phaser container text. The spec now also explicitly uses the browser-test-only Canvas renderer path.
+- Verification: reproduced twice on PR #109 CI as the same 64/65 completion-toast timeout; `npm ci` (0 vulnerabilities), `npm run check`, `npm run test:unit` (116/116), a five-run focused Mage stress pass (5/5), and `npm run smoke` (65/65) all pass after the fix.
+- Compatibility: test and status documentation only; no runtime, save, curriculum, quest, reward, profile-ID, dependency, map, or asset changes.
+- Remaining risk: the recorder proves the transient text appeared but does not extend its runtime lifetime; physical-device behavior remains unchanged and untested by this PR.
 
 ## 2026-07-20 — Multi-map world foundation (M2)
 
