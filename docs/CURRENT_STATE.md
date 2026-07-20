@@ -1,6 +1,6 @@
 # Eldoria-V2 Current State
 
-Last refreshed on 2026-07-20 after the **multi-map world foundation** milestone (M2: map registry, walk-into exits and transitions, save-your-map, and the second real map Wildbloom Woods) — following the game-feel + purposeful-interactions milestone (movement/camera feel tuning, permanent Practice Slime defeat, post-purpose flavor pacing with opt-in practice, and the pre-reader objective direction marker), the browser-test-only Phaser Canvas renderer path (production stays on `Phaser.AUTO`), the approved shoreline family (PR #99), and the independently reviewed Kimi-K3 adaptive-difficulty, PWA, terrain-proof, and E2E-hardening bundle (PR #102). This file owns volatile project status; durable rules live in `AGENTS.md`, and the documentation map lives in `docs/README.md`.
+Last refreshed on 2026-07-21 after the **Living World** milestone (M3: Eldoria Village, reusable profile-aware dialogue, the Berry Order registry quest, and validated cross-map objective guidance) — following the M2 multi-map foundation, game-feel + purposeful-interactions milestone, browser-test-only Phaser Canvas path (production stays on `Phaser.AUTO`), approved shoreline family (PR #99), and independently reviewed Kimi-K3 adaptive-difficulty, PWA, terrain-proof, and E2E-hardening bundle (PR #102). This file owns volatile project status; durable rules live in `AGENTS.md`, and the documentation map lives in `docs/README.md`.
 
 ## Product invariant
 
@@ -9,20 +9,24 @@ Last refreshed on 2026-07-20 after the **multi-map world foundation** milestone 
 ## Playable vertical slice
 
 - Phaser 4, Vite, TypeScript, and Tiled maps.
-- **Multi-map world**: two real maps — **The Farm** and **Wildbloom Woods** — connected by walk-into gate exits with a fade transition and a map-name entry banner. All map specifics (tilemap key, tilesets, collision GIDs, music, named spawns, display name) live in the registry at `src/data/maps.ts`; `WorldScene` has no map-specific hardcodes, so a third map is a registry entry plus a Tiled JSON. Authoring contract: `docs/MAP_AUTHORING.md`.
+- **Multi-map world**: three real maps — **The Farm**, **Wildbloom Woods**, and **Eldoria Village** — connected by reciprocal walk-into gates with fade transitions and map-name entry banners. Map specifics and validated `nextHop` objective routes live in `src/data/maps.ts`; exit geometry remains authoritative in each Tiled JSON. Authoring contract: `docs/MAP_AUTHORING.md`.
+- **Eldoria Village**: a bounded 20×14 town map with a continuous farm road, solid border, plaza, Baker Pell, a notice board, and a well. Village flavor interactions never open learning prompts, and no shop art or economy system is integrated.
 - **Your map persists**: the current map rides the pre-existing `lastArea` save field with no schema version bump — old saves (`lastArea: 'farm'`) and unknown values resolve to the farm, and quitting in the woods returns you to the woods.
 - `960×640` internal canvas with `pixelArt`, `roundPixels`, `FIT`, and `CENTER_BOTH` preserved.
 - Grade 2 audio-first **Mage** and Grade 5 reader-mode **Ranger Explorer** profiles. Stable IDs remain `grade2-mage` and `grade5-adventurer`.
 - Fresh profiles enter a short, skippable **Waking Gate** action scene before the farm. Mage fires spell sparks; Ranger fires tracking shots. Returning saves enter the farm directly.
 - Keyboard movement, dynamic lower-left joystick, lower-right **ACTION**, portrait-orientation guidance, and the **STATS** panel.
 - **Tuned movement/camera feel** (2026-07 play feedback): 350 world px/sec max speed with light per-frame acceleration smoothing and a 0.3 camera-follow lerp, centralized in `src/movementTuning.ts` with unit-tested bounds.
-- **Objective direction for pre-readers**: a bouncing gold chevron above the current quest target (`FarmQuestSystem.currentObjectiveTarget()`) plus a screen-edge arrow while the target is off-camera; both disappear once every errand is complete. The objective text banner and Mira pulse remain.
+- **Cross-map objective compass**: the objective banner, bouncing gold chevron, and screen-edge arrow now resolve both registry and Mira objectives through validated first-hop routes. Same-map objectives point to their interaction target; off-map objectives point to the real exit rectangle's centre. Mira's off-farm wording begins `Head back to The Farm —`, closing the M2 guidance gap.
+- **Reusable dialogue UI**: Baker Pell's bottom dialogue box owns ACTION/pointer advancement, disposes its listeners safely across scene restarts, supports automatic Mage read-aloud, and exposes manual Ranger speaker playback. Speech replacement/cancellation restores music exactly once.
+- **Typed quest registry**: optional `questSteps` remain save-version-2 compatible. The generic `QuestSystem` owns registry quests while Mira's existing `FarmQuestSystem` stays authoritative for her legacy flags and state machine.
 - Mira's First Errand, The Whispering Scarecrow, and The Sleepy Sprouts.
+- **The Berry Order**: an optional Baker Pell quest with non-gating crop gathering, persistent 0/3 progress, and one deterministic reward of 20 gold plus one Berry Pie. Berry gathering never opens a learning prompt and rapid ACTION presses cannot double-grant the reward.
 - Optional crop and three-hit Practice Slime learning bonuses. The prompt opens only after the encounter presentation completes; wrong answers and skips preserve adventure progress.
 - **The Practice Slime's defeat is permanent** (persisted `practiceSlimeDefeated` quest flag; old saves default to present): after the three-hit encounter and its first-defeat prompt, the slime, pips, and interaction target leave the world and stay gone across reloads. Quest soft-locks are guarded (crop completion and save load route past `find-slime` when the slime is already defeated).
 - **Post-purpose interactions give flavor, not quizzes**: once an interactable's quest purpose is fulfilled, repeats show short rotating flavor toasts (`src/data/flavor.ts`); the crop patch and Mira carry an explicit "ACTION again to practice!" opt-in (Mira rotates combat/farm/quest practice contexts, replacing the retired slime as the combat-practice tap), and post-errand sprouts are pure flavor. First-time and quest-relevant interactions are unchanged; learning never gates adventure.
 - Optional Wildbloom Sprig discovery loop with three persistent secrets, profile-specific reveal abilities, and no random or variable reward.
-- Persistent quest, inventory, gold, keepsake, player-position, and mastery data.
+- Persistent registry/Mira quest state, inventory, gold, keepsakes, player position/map, and mastery data.
 - Save version 2 with a tested v1→v2 coordinate migration that scales valid legacy positions exactly once.
 - **Adaptive difficulty** on optional learning bonuses: each skill's derived difficulty is `1 + floor(streak/3)`, capped per template. Requested context remains authoritative, and every context template is reachable at its declared floor; this avoids impossible self-unlock loops for higher-floor skills such as Grade 5 decimals. Correct streaks raise later number ranges, wrong answers ease back toward the floor, and skips do not move difficulty. Rewards and adventure progress remain ungated. See `docs/CURRICULUM_QUESTION_ENGINE.md`.
 - **PWA / Add to Home Screen**: a relative-path web app manifest and deterministic generated icons support standalone home-screen launch with Realm of Eldoria branding. No service worker or offline caching yet; physical iPad installation remains unvalidated.
@@ -92,8 +96,8 @@ The repository includes:
 - a closed-loop ChatGPT asset-generation workflow;
 - deterministic generation checks for PWA icons and the bounded terrain-proof map/sheet;
 - terrain-blend regression coverage for both dirt and shoreline families;
-- Vitest coverage for learning, mastery, adaptive floors/elevation, interactions, curriculum templates, save migration, movement-tuning bounds, the `practiceSlimeDefeated` flag and its soft-lock guards, post-purpose predicates, and the objective-target mapping;
-- Playwright coverage for both profiles, adaptive difficulty through the live WorldScene, the Waking Gate, movement/input, focus-loss recovery, Mira quests, crop prompts, the Practice Slime encounter and its permanent-defeat reload persistence, post-purpose flavor/opt-in pacing, the objective marker/edge arrow, the farm↔woods round trip (spawns, entry banners, quest/marker integrity, save-your-map, woods tree-border collision, interactables on both maps), Wildbloom discovery and persistence, Stats & Mastery, save/reload, and portrait guidance;
+- Vitest coverage for learning, mastery, adaptive floors/elevation, interactions, curriculum templates, save migration, movement tuning, quest definitions/engines, speech lifecycle, the real map exit graph, BFS route validation, and pure objective-guidance resolution;
+- Playwright coverage for both profiles, adaptive difficulty through the live WorldScene, the Waking Gate, movement/input, focus-loss recovery, Mira and Berry Order quests, profile-specific dialogue speech, exact deterministic rewards, crop prompts, the Practice Slime encounter and its permanent-defeat reload persistence, post-purpose flavor/opt-in pacing, local and cross-map marker/edge-arrow guidance, all three maps and their save/reload paths, Wildbloom discovery, Stats & Mastery, and portrait guidance;
 - an intentional renderer split: Playwright sets `window.__ELDORIA_E2E__` before application code, forcing `Phaser.CANVAS`, while production continues to use unchanged `Phaser.AUTO`; the exact base/candidate full-suite benchmark improved from 224s to 194s (30s, 13.4%), with 56/56 candidate tests passing and no `WebGL Context lost` warnings;
 - renderer-agnostic movement round-trip assertions bounded to one `32px` map tile, covering one-frame Canvas/WebGL cadence variation without changing gameplay physics or production controls;
 - browser-side transient-event recorders that are reset immediately before reward actions, avoiding lifetime-text false positives while remaining robust on slow software-rendered runners;
@@ -137,7 +141,7 @@ Batch A is **7 of 7 foundational assets approved**. Batch B status:
 - Mage starter outfit source generation, compiled overlay production, and cosmetic runtime integration after base timing freezes.
 - Merchant/customization gold sink and separately scoped equipment mechanics.
 - UI skin, lighting, atmosphere, and final performance tuning.
-- Quest #4, a second zone, or broader combat architecture only after the visual milestone is reassessed.
+- Mossheart Ruins, Elder Rowan, Quest #4, or broader combat architecture only after a separate approved build scope; M3 does not implement that design.
 
 ## Known risks
 

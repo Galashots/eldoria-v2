@@ -33,6 +33,10 @@ import { QuestSystem } from '../systems/QuestSystem';
 import { CURRENT_SAVE_VERSION, SaveSystem, type StarterQuestStep } from '../systems/SaveSystem';
 import { loadAudioMuted, saveAudioMuted } from '../systems/AudioPreference';
 import { createSpeechSupport } from '../systems/speech';
+import {
+  resolveObjectiveGuidance,
+  type ObjectiveGuidance
+} from '../systems/objectiveGuidance';
 
 type SceneInitData = {
   profileId?: ProfileId;
@@ -67,6 +71,8 @@ type PromptCloseResult = {
  */
 type ExitZone = {
   rect: Phaser.Geom.Rectangle;
+  centerX: number;
+  centerY: number;
   targetMap: MapId;
   targetSpawn: string;
 };
@@ -126,7 +132,6 @@ export class WorldScene extends Phaser.Scene {
   private objectiveMarkerTween?: Phaser.Tweens.Tween;
   private objectiveEdgeArrow?: Phaser.GameObjects.Graphics;
   private objectiveTargetPosition?: { x: number; y: number };
-  private objectiveTarget?: QuestObjectiveTarget | null;
   private heroPresentation!: HeroPresentationController;
   private music?: Phaser.Sound.BaseSound;
   private muteIcon!: Phaser.GameObjects.Graphics;
@@ -175,7 +180,6 @@ export class WorldScene extends Phaser.Scene {
     this.statsPanelOpen = false;
     this.exits = [];
     this.dialogueBox = undefined;
-    this.objectiveTarget = undefined;
   }
 
   create(): void {
@@ -317,7 +321,6 @@ export class WorldScene extends Phaser.Scene {
       this.objectiveMarker = undefined;
       this.objectiveEdgeArrow = undefined;
       this.objectiveTargetPosition = undefined;
-      this.objectiveTarget = undefined;
       this.pendingPracticeOffer = undefined;
       this.heroPresentation.dispose();
       // destroy(), not just stop(): `this.sound` is a Game-level plugin
@@ -443,13 +446,16 @@ export class WorldScene extends Phaser.Scene {
       if (typeof targetMap !== 'string' || resolveMapId(targetMap) !== targetMap) continue;
       if (typeof targetSpawn !== 'string') continue;
 
+      const rect = new Phaser.Geom.Rectangle(
+        (obj.x ?? 0) * GAME_SCALE,
+        (obj.y ?? 0) * GAME_SCALE,
+        (obj.width ?? 0) * GAME_SCALE,
+        (obj.height ?? 0) * GAME_SCALE
+      );
       exits.push({
-        rect: new Phaser.Geom.Rectangle(
-          (obj.x ?? 0) * GAME_SCALE,
-          (obj.y ?? 0) * GAME_SCALE,
-          (obj.width ?? 0) * GAME_SCALE,
-          (obj.height ?? 0) * GAME_SCALE
-        ),
+        rect,
+        centerX: rect.centerX,
+        centerY: rect.centerY,
         targetMap: targetMap as MapId,
         targetSpawn
       });
@@ -726,31 +732,41 @@ export class WorldScene extends Phaser.Scene {
 
   private refreshObjective(): void {
     const presentation = this.resolveObjectivePresentation();
-    this.objectiveTarget = presentation.target;
-    this.objectiveText.setText(`Objective: ${presentation.text}`);
-    this.updateObjectiveMarker();
+    const guidance = resolveObjectiveGuidance(this.mapId, presentation.objective);
+    const bannerText = presentation.source === 'mira' && guidance.kind === 'exit'
+      ? `Head back to The Farm — ${presentation.bannerText}`
+      : presentation.bannerText;
+    this.objectiveText.setText(`Objective: ${bannerText}`);
+    this.updateObjectiveMarker(guidance);
   }
 
-  private resolveObjectivePresentation(): { text: string; target: QuestObjectiveTarget | null } {
+  private resolveObjectivePresentation(): {
+    bannerText: string;
+    objective: QuestObjectiveTarget | null;
+    source: 'berry-order' | 'mira';
+  } {
     const berryStep = this.questSystem.step(BERRY_ORDER_ID);
     if (berryStep === 'gathering' || berryStep === 'return-ready') {
       return {
-        text: this.berryOrderObjectiveText(berryStep),
-        target: BERRY_ORDER.objectiveTargets[berryStep] ?? null
+        bannerText: this.berryOrderObjectiveText(berryStep),
+        objective: BERRY_ORDER.objectiveTargets[berryStep] ?? null,
+        source: 'berry-order'
       };
     }
 
     if (!this.farmQuest.allErrandsComplete()) {
       const target = this.farmQuest.currentObjectiveTarget();
       return {
-        text: this.farmQuest.currentObjective(),
-        target: target ? { map: 'farm', target } : null
+        bannerText: this.farmQuest.currentObjective(),
+        objective: target ? { map: 'farm', target } : null,
+        source: 'mira'
       };
     }
 
     return {
-      text: this.berryOrderObjectiveText(berryStep),
-      target: BERRY_ORDER.objectiveTargets[berryStep] ?? null
+      bannerText: this.berryOrderObjectiveText(berryStep),
+      objective: BERRY_ORDER.objectiveTargets[berryStep] ?? null,
+      source: 'berry-order'
     };
   }
 
@@ -765,13 +781,21 @@ export class WorldScene extends Phaser.Scene {
    * (or hides it when every errand is complete / the target is absent).
    * Called from refreshObjective() so every quest-state change retargets it.
    */
-  private updateObjectiveMarker(): void {
-    const objective = this.objectiveTarget;
-    const target = objective?.map === this.mapId
-      ? this.targets.find((candidate) => candidate.id === objective.target)
-      : undefined;
+  private updateObjectiveMarker(guidance: ObjectiveGuidance): void {
+    let targetPosition: { x: number; y: number; markerY: number } | undefined;
+    if (guidance.kind === 'local') {
+      const target = this.targets.find((candidate) => candidate.id === guidance.target);
+      if (target) {
+        targetPosition = { x: target.x, y: target.y, markerY: target.y - sy(52) };
+      }
+    } else if (guidance.kind === 'exit') {
+      const exit = this.exits.find((candidate) => candidate.targetMap === guidance.exitTo);
+      if (exit) {
+        targetPosition = { x: exit.centerX, y: exit.centerY, markerY: exit.centerY };
+      }
+    }
 
-    if (!target) {
+    if (!targetPosition) {
       this.objectiveTargetPosition = undefined;
       this.objectiveMarkerTween?.remove();
       this.objectiveMarkerTween = undefined;
@@ -780,14 +804,14 @@ export class WorldScene extends Phaser.Scene {
       return;
     }
 
-    this.objectiveTargetPosition = { x: target.x, y: target.y };
+    this.objectiveTargetPosition = { x: targetPosition.x, y: targetPosition.y };
 
     const marker = this.ensureObjectiveMarker();
-    // Above the target's floating label (label sits at y - 60 world px);
-    // clear of Mira's own pulse ring too.
-    const baseY = target.y - sy(52);
+    // Local objectives sit above their floating labels; exit objectives sit
+    // over the gate rectangle's stored centre so routing matches Tiled.
+    const baseY = targetPosition.markerY;
     this.objectiveMarkerTween?.remove();
-    marker.setVisible(true).setPosition(target.x, baseY);
+    marker.setVisible(true).setPosition(targetPosition.x, baseY);
     this.objectiveMarkerTween = this.tweens.add({
       targets: marker,
       y: baseY - sy(6),

@@ -4,6 +4,14 @@ This file keeps recent, high-value change summaries. Full historical entries thr
 
 Entries should remain concise: date/author, branch or PR, scope, compatibility impact, verification, and remaining risk. Detailed implementation narratives belong in the PR description and commits.
 
+## 2026-07-21 — Living World (M3)
+
+- Author/branch: Codex (lead engineering agent), `world/living-world-m3`, draft PR #108. Phase commits through the cross-map compass: village `56e19b3`, quest foundations `79d91d1`, dialogue/Berry Order `f956b6b`, and the Phase 4 commit containing this entry.
+- Scope: added Eldoria Village and reciprocal farm travel; reusable profile-aware Baker Pell dialogue; shared speech lifecycle support; a typed registry-owned Berry Order with no-prompt gathering and a deterministic one-time 20-gold/Berry-Pie reward; and a validated `nextHop` cross-map compass that targets real exit centres and corrects Mira's off-farm banner to `Head back to The Farm —`. Detailed record: [`docs/changelog/2026-07-21-living-world.md`](changelog/2026-07-21-living-world.md).
+- Verification: local `npm run typecheck` exit 0; `npm run test:unit` exit 0 (13 files, 148 tests); `npx playwright test --list` exit 0 (73 tests in 14 files); `npm run check` exit 0 (11 visual-target files / 37 targets, 43-module production build, PWA/generated-surface/village-art checks); full `npx playwright test` exit 0 (73/73 in 5.0 minutes). Phase 3 exact-head CI run [`29710792994`](https://github.com/Galashots/Eldoria-v2/actions/runs/29710792994) passed at `f956b6b81efeb1953f076487490ee86f3582c54e`; final Phase 4 exact-head CI is recorded in PR #108 after push.
+- Compatibility: save version remains 2; optional quest fields default gracefully and Mira's legacy flags/state machine remain authoritative. No migration, profile-ID, curriculum, mastery, dependency, asset-pipeline, economy, learning-gate, Mossheart Ruins, shop, or new art/audio change.
+- Evidence/risk: six committed browser screenshots cover Mage/Ranger dialogue, gathering/reward, and both cross-map guidance directions. Physical-iPad Safari and child validation remain unperformed; village/character bridge art is not final production art.
+
 ## 2026-07-20 — Multi-map world foundation (M2)
 
 - Author/branch: Claude Code (repo agent), `world/multi-map-foundation`, executing Build Prompt 02 on top of the merged game-feel milestone (PR #104). This is the **M2** prerequisite named by the approved Mossheart Ruins (Zone #4) design spec.

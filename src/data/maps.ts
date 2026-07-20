@@ -37,9 +37,11 @@ export type MapDefinition = {
   defaultSpawn: string;
   /** Impassable GIDs on this map's Collision layer. */
   collisionGids: readonly number[];
+  /** First exit-map to take when travelling toward another registered map. */
+  nextHop: Partial<Record<MapId, MapId>>;
 };
 
-// Shared by both current maps: the placeholder structural tileset plus the
+// Shared by all current maps: the placeholder structural tileset plus the
 // approved terrain-proof masters (grass/water/dirt), and the single
 // placeholder music loop. New maps may diverge freely.
 const STANDARD_TILESETS: MapDefinition['tilesets'] = [
@@ -68,7 +70,11 @@ export const MAP_REGISTRY: Record<MapId, MapDefinition> = {
     // Fence/water/rock stand-ins on the farm Collision layer (tileset
     // eldoria-placeholder). Moved here from WorldScene's old
     // FARM_COLLISION_TILE_GIDS constant.
-    collisionGids: [3, 4, 6]
+    collisionGids: [3, 4, 6],
+    nextHop: {
+      'wildbloom-woods': 'wildbloom-woods',
+      'eldoria-village': 'eldoria-village'
+    }
   },
   'wildbloom-woods': {
     id: 'wildbloom-woods',
@@ -85,7 +91,11 @@ export const MAP_REGISTRY: Record<MapId, MapDefinition> = {
     },
     defaultSpawn: 'from-farm',
     // Trees block on the woods Collision layer (water reserved for later).
-    collisionGids: [3, 4]
+    collisionGids: [3, 4],
+    nextHop: {
+      farm: 'farm',
+      'eldoria-village': 'farm'
+    }
   },
   'eldoria-village': {
     id: 'eldoria-village',
@@ -102,7 +112,11 @@ export const MAP_REGISTRY: Record<MapId, MapDefinition> = {
       'from-farm': { x: 1120, y: 448 }
     },
     defaultSpawn: 'from-farm',
-    collisionGids: [3, 4]
+    collisionGids: [3, 4],
+    nextHop: {
+      farm: 'farm',
+      'wildbloom-woods': 'farm'
+    }
   }
 };
 
@@ -223,4 +237,76 @@ export function validateMapRegistry(
       }
     }
   }
+}
+
+/**
+ * Validates the registry's declarative first-hop routes against the exit
+ * graph authored in the real Tiled maps. A route must name a direct exit
+ * from its source map and must be the first hop found by breadth-first
+ * search, so routing tables cannot drift from map geometry or shortest paths.
+ */
+export function validateMapRoutes(
+  registry: Record<string, MapDefinition>,
+  mapSummaries: Partial<Record<string, TiledMapSummary>>
+): void {
+  const exitGraph = new Map<string, string[]>();
+
+  for (const mapId of Object.keys(registry)) {
+    const summary = mapSummaries[mapId];
+    if (!summary) throw new Error(`Map ${mapId} has no summary for route validation`);
+
+    const exits: string[] = [];
+    for (const exit of summary.exits) {
+      if (typeof exit.targetMap === 'string' && exit.targetMap in registry) {
+        exits.push(exit.targetMap);
+      }
+    }
+    exitGraph.set(mapId, exits);
+  }
+
+  for (const [sourceMap, definition] of Object.entries(registry)) {
+    const directExits = exitGraph.get(sourceMap) ?? [];
+    for (const [destinationMap, declaredHop] of Object.entries(definition.nextHop)) {
+      if (!(destinationMap in registry)) {
+        throw new Error(`Map ${sourceMap} declares a route to unregistered map ${destinationMap}`);
+      }
+      if (typeof declaredHop !== 'string' || !directExits.includes(declaredHop)) {
+        throw new Error(`Map ${sourceMap} route to ${destinationMap} names non-exit hop ${String(declaredHop)}`);
+      }
+
+      const expectedHop = firstBreadthFirstHop(sourceMap, destinationMap, exitGraph);
+      if (expectedHop !== declaredHop) {
+        throw new Error(
+          `Map ${sourceMap} route to ${destinationMap} declares ${declaredHop}; BFS first hop is ${expectedHop ?? '<unreachable>'}`
+        );
+      }
+    }
+  }
+}
+
+function firstBreadthFirstHop(
+  sourceMap: string,
+  destinationMap: string,
+  exitGraph: ReadonlyMap<string, readonly string[]>
+): string | undefined {
+  const visited = new Set<string>([sourceMap]);
+  const queue: { mapId: string; firstHop: string }[] = [];
+
+  for (const neighbour of exitGraph.get(sourceMap) ?? []) {
+    if (visited.has(neighbour)) continue;
+    visited.add(neighbour);
+    queue.push({ mapId: neighbour, firstHop: neighbour });
+  }
+
+  for (let index = 0; index < queue.length; index += 1) {
+    const current = queue[index];
+    if (current.mapId === destinationMap) return current.firstHop;
+    for (const neighbour of exitGraph.get(current.mapId) ?? []) {
+      if (visited.has(neighbour)) continue;
+      visited.add(neighbour);
+      queue.push({ mapId: neighbour, firstHop: current.firstHop });
+    }
+  }
+
+  return undefined;
 }

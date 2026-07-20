@@ -59,7 +59,7 @@ async function movePlayerTo(page: Page, x: number, y: number): Promise<void> {
     scene.player.setVelocity(0, 0);
     scene.updateHint();
   }, [x, y]);
-  await page.waitForTimeout(120);
+  await expect.poll(() => playerPosition(page), { timeout: 15000 }).toEqual({ x, y });
 }
 
 /**
@@ -68,7 +68,17 @@ async function movePlayerTo(page: Page, x: number, y: number): Promise<void> {
  * scene to be rebuilt and interactive.
  */
 async function travelVia(page: Page, zoneX: number, zoneY: number, destinationMapId: string): Promise<void> {
-  await movePlayerTo(page, zoneX, zoneY);
+  // The scene can restart before a poll observes the transient exit-zone
+  // coordinate, so assert only the durable destination state here.
+  await page.evaluate(([nextX, nextY]) => {
+    const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
+      player: { setPosition: (x: number, y: number) => void; setVelocity: (x: number, y: number) => void };
+      updateHint: () => void;
+    };
+    scene.player.setPosition(nextX, nextY);
+    scene.player.setVelocity(0, 0);
+    scene.updateHint();
+  }, [zoneX, zoneY]);
   await page.waitForFunction((expected) => {
     const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
       mapId: string;
@@ -77,7 +87,6 @@ async function travelVia(page: Page, zoneX: number, zoneY: number, destinationMa
     };
     return scene.mapId === expected && scene.transitioning === false && Boolean(scene.player);
   }, destinationMapId, { timeout: 30000 });
-  await page.waitForTimeout(200);
 }
 
 async function sceneInteract(page: Page): Promise<void> {
@@ -85,7 +94,6 @@ async function sceneInteract(page: Page): Promise<void> {
     const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as { tryInteract: () => void };
     scene.tryInteract();
   });
-  await page.waitForTimeout(200);
 }
 
 async function doubleInteract(page: Page): Promise<void> {
@@ -94,7 +102,6 @@ async function doubleInteract(page: Page): Promise<void> {
     scene.tryInteract();
     scene.tryInteract();
   });
-  await page.waitForTimeout(200);
 }
 
 async function hasCanvasText(page: Page, text: string): Promise<boolean> {
@@ -109,6 +116,28 @@ async function hasCanvasText(page: Page, text: string): Promise<boolean> {
     };
     return scene.children.list.some(hasText);
   }, text);
+}
+
+async function objectiveGuidanceState(page: Page): Promise<{
+  text: string;
+  marker: { visible: boolean; x: number; y: number } | null;
+  arrow: { visible: boolean; rotation: number } | null;
+}> {
+  return page.evaluate(() => {
+    const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
+      objectiveText: { text: string };
+      children: {
+        getByName: (name: string) => { visible: boolean; x: number; y: number; rotation: number } | null;
+      };
+    };
+    const marker = scene.children.getByName('objective-marker');
+    const arrow = scene.children.getByName('objective-edge-arrow');
+    return {
+      text: scene.objectiveText.text,
+      marker: marker ? { visible: marker.visible, x: marker.x, y: marker.y } : null,
+      arrow: arrow ? { visible: arrow.visible, rotation: arrow.rotation } : null
+    };
+  });
 }
 
 // Farm east gate zone spans world x 1856-1920, y 576-704; woods west gate
@@ -136,13 +165,21 @@ test('farm -> woods -> farm round trip: correct spawns, banners, quest and marke
   expect(await playerPosition(page)).toEqual(WOODS_ARRIVAL);
   await page.screenshot({ path: 'test-results/multimap-woods-arrival.png', fullPage: true });
 
-  // The farm-quest objective marker has no target here: hidden.
-  expect(await page.evaluate(() => {
-    const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
-      children: { getByName: (name: string) => { visible: boolean } | null };
-    };
-    return scene.children.getByName('objective-marker')?.visible ?? false;
-  })).toBe(false);
+  // Mira's farm objective routes to the real GateToFarm centre. Move east so
+  // the gate is off-camera and the edge arrow must point west toward it.
+  await movePlayerTo(page, 1100, 700);
+  await expect.poll(() => objectiveGuidanceState(page), { timeout: 20000 }).toMatchObject({
+    text: 'Objective: Head back to The Farm — Talk to Mira near the path.',
+    marker: { visible: true, x: 32 },
+    arrow: { visible: true }
+  });
+  const woodsArrowRotation = (await objectiveGuidanceState(page)).arrow?.rotation;
+  expect(woodsArrowRotation).toBeDefined();
+  expect(Math.abs(Math.abs(woodsArrowRotation ?? 0) - Math.PI)).toBeLessThan(0.25);
+  await page.screenshot({
+    path: 'docs/playtests/2026-07-21-living-world/multimap-mira-return-guidance.png',
+    fullPage: true
+  });
 
   // Travel back through the woods' west gate.
   await travelVia(page, WOODS_EXIT_POINT.x, WOODS_EXIT_POINT.y, 'farm');
@@ -239,7 +276,9 @@ test('woods interactables: flower is pure flavor, stone opens practice only on o
   // Whispering Flower (world 864, 384): flavor toast, never a prompt.
   await movePlayerTo(page, 864, 384);
   await sceneInteract(page);
-  await page.waitForTimeout(300);
+  await expect.poll(async () => hasCanvasText(page, 'flower hums an old song'), {
+    timeout: 15000
+  }).toBe(true);
   expect(await hasCanvasText(page, 'optional learning bonus')).toBe(false);
 
   // Mossy Stone (world 736, 576): flavor + offer, second ACTION opens the

@@ -277,7 +277,7 @@ async function markerState(page: Page): Promise<MarkerState> {
   });
 }
 
-test('objective marker tracks the current quest target and disappears at completion', async ({ page }) => {
+test('objective marker tracks Mira targets then routes the Berry Order invitation', async ({ page }) => {
   test.setTimeout(180000);
 
   await boot(page, 'grade5-adventurer');
@@ -308,7 +308,9 @@ test('objective marker tracks the current quest target and disappears at complet
   });
   await page.screenshot({ path: 'test-results/objective-marker-slime.png', fullPage: true });
 
-  // All errands complete: no marker, no arrow.
+  // Once Mira's errands are complete, Phase 3 precedence promotes the
+  // not-started Berry Order invitation. Phase 4 routes that off-map target
+  // through the farm's real GateToVillage centre (32, 640).
   await completeAllErrands(page);
   await page.evaluate(() => {
     const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
@@ -316,10 +318,17 @@ test('objective marker tracks the current quest target and disappears at complet
     };
     scene.refreshObjective();
   });
-  await expect.poll(async () => markerState(page)).toMatchObject({
-    markerVisible: false,
-    arrowVisible: false
+  await expect.poll(async () => markerState(page), { timeout: 15000 }).toMatchObject({
+    markerVisible: true,
+    markerX: 32,
+    arrowVisible: true
   });
+  await expect.poll(() => page.evaluate(() => {
+    const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
+      objectiveText: { text: string };
+    };
+    return scene.objectiveText.text;
+  }), { timeout: 15000 }).toContain('Visit Baker Pell in Eldoria Village.');
 });
 
 test('edge arrow appears only while the objective target is off-screen', async ({ page }) => {
