@@ -6,7 +6,7 @@ Entries should remain concise: date/author, branch or PR, scope, compatibility i
 
 ## 2026-07-19 — Wildbloom transient-text CI hardening
 
-- Author/branch: Codex, `codex/wildbloom-text-recorder`; PR pending.
+- Author/branch: Codex, `codex/wildbloom-text-recorder`; draft PR #110.
 - Scope: replaced live polling of short-lived Wildbloom reveal/completion toast text with a reset-before-action, recursive browser-side recorder that observes nested Phaser container text. The spec now also explicitly uses the browser-test-only Canvas renderer path.
 - Verification: reproduced twice on PR #109 CI as the same 64/65 completion-toast timeout; `npm ci` (0 vulnerabilities), `npm run check`, `npm run test:unit` (116/116), a five-run focused Mage stress pass (5/5), and `npm run smoke` (65/65) all pass after the fix.
 - Compatibility: test and status documentation only; no runtime, save, curriculum, quest, reward, profile-ID, dependency, map, or asset changes.
