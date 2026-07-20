@@ -151,6 +151,13 @@ export function popInContainer(
   restingScale: number,
   durationMs = 170
 ): void {
+  // E2E determinism: tests click canvas coordinates, which carry no
+  // element-stability auto-wait, so a mid-pop hit area is a fast-machine
+  // race (same reason DialogueBox types instantly under this flag).
+  if (window.__ELDORIA_E2E__) {
+    container.setScale(restingScale);
+    return;
+  }
   container.setScale(restingScale * 0.85);
   scene.tweens.add({
     targets: container,
