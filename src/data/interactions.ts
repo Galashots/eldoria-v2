@@ -38,6 +38,32 @@ export function resolveInteractionId(targetName: string): InteractionId {
   return INTERACTION_ID_BY_TARGET_NAME[targetName] ?? DEFAULT_INTERACTION_ID;
 }
 
+/**
+ * Kid-friendly display names for interaction targets, keyed by the stable
+ * InteractionId so the raw Tiled object names (which double as save/quest
+ * keys) never have to change. Dev-style Tiled names like "CropBonus" stay
+ * out of the player's view; undefined falls back to the target's own label
+ * (today only the 'generic-bonus' fallback, which has no canonical target).
+ */
+const INTERACTION_DISPLAY_NAME: Readonly<Record<InteractionId, string | undefined>> = {
+  mira: 'Mira',
+  'crop-bonus': 'Crop Patch',
+  'practice-slime': 'Practice Slime',
+  'sprout-1': 'Sleepy Sprout',
+  'sprout-2': 'Sleepy Sprout',
+  'sprout-3': 'Sleepy Sprout',
+  'whispering-flower': 'Whispering Flower',
+  'mossy-stone': 'Mossy Stone',
+  'baker-pell': 'Baker Pell',
+  'village-notice-board': 'Notice Board',
+  'village-well': 'Village Well',
+  'generic-bonus': undefined
+};
+
+export function interactionDisplayName(id: InteractionId, fallback: string): string {
+  return INTERACTION_DISPLAY_NAME[id] ?? fallback;
+}
+
 // Tiled's exported "custom properties" shape is genuinely polymorphic
 // (Phaser's own TiledObject.properties is typed `any` for this reason): an
 // array of {name, value} entries in most Tiled JSON exports, or a plain
