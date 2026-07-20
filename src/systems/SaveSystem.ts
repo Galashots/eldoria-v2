@@ -20,6 +20,7 @@ export type SaveState = {
   mastery?: LearningMastery;
   lastArea: string;
   firstQuestStep?: StarterQuestStep;
+  questSteps?: Record<string, string>;
   questFlags?: Record<string, boolean>;
   player: {
     x: number;
@@ -70,6 +71,11 @@ function isNumberRecord(value: unknown): value is Record<string, number> {
 function isBooleanRecord(value: unknown): value is Record<string, boolean> {
   return isRecord(value)
     && Object.values(value).every((entry) => typeof entry === 'boolean');
+}
+
+function isStringRecord(value: unknown): value is Record<string, string> {
+  return isRecord(value)
+    && Object.values(value).every((entry) => typeof entry === 'string');
 }
 
 function isMasteryRecord(value: unknown): boolean {
@@ -185,6 +191,7 @@ function isSaveState(value: unknown, profileId: ProfileId): value is SaveState {
     && (value.mastery === undefined || isMastery(value.mastery))
     && (value.firstQuestStep === undefined
       || STARTER_QUEST_STEPS.includes(value.firstQuestStep as StarterQuestStep))
+    && (value.questSteps === undefined || isStringRecord(value.questSteps))
     && (value.questFlags === undefined || isBooleanRecord(value.questFlags));
 }
 
