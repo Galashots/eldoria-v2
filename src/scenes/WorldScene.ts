@@ -12,6 +12,7 @@ import {
   PRACTICE_OFFER_WINDOW_MS
 } from '../data/flavor';
 import { resolveInteractionId, getTiledProperty, type InteractionId } from '../data/interactions';
+import { getQuestDefinition, type DialogueLine, type QuestObjectiveTarget } from '../data/questDefs';
 import {
   getMapDefinition,
   resolveMapId,
@@ -23,12 +24,19 @@ import {
   facingFromVector,
   HeroPresentationController
 } from '../presentation/HeroPresentationController';
+import { DialogueBox } from '../presentation/DialogueBox';
 import { drawRoundedButton, drawRoundedPanelBackground } from '../presentation/uiHelpers';
 import { LearningBonusSystem } from '../systems/LearningBonusSystem';
 import { MasterySystem, type LearningMastery } from '../systems/MasterySystem';
 import { FarmQuestSystem, type FarmQuestOutcome } from '../systems/FarmQuestSystem';
+import { QuestSystem } from '../systems/QuestSystem';
 import { CURRENT_SAVE_VERSION, SaveSystem, type StarterQuestStep } from '../systems/SaveSystem';
 import { loadAudioMuted, saveAudioMuted } from '../systems/AudioPreference';
+import { createSpeechSupport } from '../systems/speech';
+import {
+  resolveObjectiveGuidance,
+  type ObjectiveGuidance
+} from '../systems/objectiveGuidance';
 
 type SceneInitData = {
   profileId?: ProfileId;
@@ -63,6 +71,8 @@ type PromptCloseResult = {
  */
 type ExitZone = {
   rect: Phaser.Geom.Rectangle;
+  centerX: number;
+  centerY: number;
   targetMap: MapId;
   targetSpawn: string;
 };
@@ -75,6 +85,8 @@ const PRACTICE_SLIME_HOP_ANIMATION = 'practice-slime-hop';
 const CROP_BONUS_FEEDBACK_NAME = 'crop-bonus-feedback';
 const STATS_CLOSE_BUTTON_NAME = 'stats-close-button';
 const MAP_ENTRY_BANNER_NAME = 'map-entry-banner';
+const BERRY_ORDER_ID = 'pell-berry-order';
+const BERRY_ORDER = getQuestDefinition(BERRY_ORDER_ID);
 export class WorldScene extends Phaser.Scene {
   private player!: Phaser.Physics.Arcade.Sprite;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
@@ -101,11 +113,13 @@ export class WorldScene extends Phaser.Scene {
   private inventory: Record<string, number> = {};
   private mastery: LearningMastery = {};
   private farmQuest!: FarmQuestSystem;
+  private questSystem!: QuestSystem;
   private busy = false;
   private statsPanelOpen = false;
   private statsContainer?: Phaser.GameObjects.Container;
   private statsCloseButton?: Phaser.GameObjects.Graphics;
-  private activeUtterance: SpeechSynthesisUtterance | null = null;
+  private readonly speech = createSpeechSupport();
+  private dialogueBox?: DialogueBox;
   private hudText!: Phaser.GameObjects.Text;
   private objectiveText!: Phaser.GameObjects.Text;
   private hintText!: Phaser.GameObjects.Text;
@@ -135,6 +149,10 @@ export class WorldScene extends Phaser.Scene {
   // Softer here reduces that risk until real licensed music replaces it.
   private readonly musicVolume = 0.22;
   private readonly musicDuckedVolume = 0.06;
+  private readonly speechHooks = {
+    onStart: (): void => this.setMusicVolume(this.musicDuckedVolume),
+    onEnd: (): void => this.setMusicVolume(this.musicVolume)
+  };
   // Bound once so addEventListener/removeEventListener target the same
   // reference. Without this, losing window/tab focus while a movement key
   // is physically held down never delivers its keyup to the canvas, so
@@ -161,6 +179,7 @@ export class WorldScene extends Phaser.Scene {
     this.busy = false;
     this.statsPanelOpen = false;
     this.exits = [];
+    this.dialogueBox = undefined;
   }
 
   create(): void {
@@ -237,6 +256,7 @@ export class WorldScene extends Phaser.Scene {
     }
 
     this.farmQuest = FarmQuestSystem.fromSave(saved);
+    this.questSystem = QuestSystem.fromSave(saved);
 
     this.targets = this.makeTargets(objectLayer?.objects ?? []).filter(
       (target) => target.id !== 'practice-slime' || !this.farmQuest.isPracticeSlimeDefeated()
@@ -270,6 +290,11 @@ export class WorldScene extends Phaser.Scene {
 
     this.music = this.sound.add(this.mapDef.musicKey, { loop: true, volume: this.musicVolume });
     this.music.play();
+    this.dialogueBox = new DialogueBox(this, {
+      speech: this.speech,
+      speechHooks: this.speechHooks,
+      onSpeechUnavailable: () => this.showToast('Read aloud is not available here.')
+    });
 
     // Arriving on a map by explicit request (a transition or scripted boot)
     // persists it immediately — quitting on this map returns here — and
@@ -286,7 +311,9 @@ export class WorldScene extends Phaser.Scene {
     window.addEventListener('blur', this.clearStuckInputOnFocusLoss);
     document.addEventListener('visibilitychange', this.clearStuckInputOnFocusLoss);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.dialogueBox?.destroy();
       this.stopPromptReadAloud();
+      this.input.keyboard?.resetKeys();
       this.resetJoystick();
       // Scene instances are reused across restarts; drop the stale display
       // objects so the next create() rebuilds them fresh.
@@ -419,13 +446,16 @@ export class WorldScene extends Phaser.Scene {
       if (typeof targetMap !== 'string' || resolveMapId(targetMap) !== targetMap) continue;
       if (typeof targetSpawn !== 'string') continue;
 
+      const rect = new Phaser.Geom.Rectangle(
+        (obj.x ?? 0) * GAME_SCALE,
+        (obj.y ?? 0) * GAME_SCALE,
+        (obj.width ?? 0) * GAME_SCALE,
+        (obj.height ?? 0) * GAME_SCALE
+      );
       exits.push({
-        rect: new Phaser.Geom.Rectangle(
-          (obj.x ?? 0) * GAME_SCALE,
-          (obj.y ?? 0) * GAME_SCALE,
-          (obj.width ?? 0) * GAME_SCALE,
-          (obj.height ?? 0) * GAME_SCALE
-        ),
+        rect,
+        centerX: rect.centerX,
+        centerY: rect.centerY,
         targetMap: targetMap as MapId,
         targetSpawn
       });
@@ -701,8 +731,49 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private refreshObjective(): void {
-    this.objectiveText.setText(`Objective: ${this.farmQuest.currentObjective()}`);
-    this.updateObjectiveMarker();
+    const presentation = this.resolveObjectivePresentation();
+    const guidance = resolveObjectiveGuidance(this.mapId, presentation.objective);
+    const bannerText = presentation.source === 'mira' && guidance.kind === 'exit'
+      ? `Head back to The Farm — ${presentation.bannerText}`
+      : presentation.bannerText;
+    this.objectiveText.setText(`Objective: ${bannerText}`);
+    this.updateObjectiveMarker(guidance);
+  }
+
+  private resolveObjectivePresentation(): {
+    bannerText: string;
+    objective: QuestObjectiveTarget | null;
+    source: 'berry-order' | 'mira';
+  } {
+    const berryStep = this.questSystem.step(BERRY_ORDER_ID);
+    if (berryStep === 'gathering' || berryStep === 'return-ready') {
+      return {
+        bannerText: this.berryOrderObjectiveText(berryStep),
+        objective: BERRY_ORDER.objectiveTargets[berryStep] ?? null,
+        source: 'berry-order'
+      };
+    }
+
+    if (!this.farmQuest.allErrandsComplete()) {
+      const target = this.farmQuest.currentObjectiveTarget();
+      return {
+        bannerText: this.farmQuest.currentObjective(),
+        objective: target ? { map: 'farm', target } : null,
+        source: 'mira'
+      };
+    }
+
+    return {
+      bannerText: this.berryOrderObjectiveText(berryStep),
+      objective: BERRY_ORDER.objectiveTargets[berryStep] ?? null,
+      source: 'berry-order'
+    };
+  }
+
+  private berryOrderObjectiveText(step: string): string {
+    const objective = BERRY_ORDER.objectives[step];
+    if (typeof objective === 'function') return objective(this.questSystem.berriesCollected());
+    return objective ?? BERRY_ORDER.name;
   }
 
   /**
@@ -710,11 +781,21 @@ export class WorldScene extends Phaser.Scene {
    * (or hides it when every errand is complete / the target is absent).
    * Called from refreshObjective() so every quest-state change retargets it.
    */
-  private updateObjectiveMarker(): void {
-    const targetId = this.farmQuest.currentObjectiveTarget();
-    const target = targetId ? this.targets.find((candidate) => candidate.id === targetId) : undefined;
+  private updateObjectiveMarker(guidance: ObjectiveGuidance): void {
+    let targetPosition: { x: number; y: number; markerY: number } | undefined;
+    if (guidance.kind === 'local') {
+      const target = this.targets.find((candidate) => candidate.id === guidance.target);
+      if (target) {
+        targetPosition = { x: target.x, y: target.y, markerY: target.y - sy(52) };
+      }
+    } else if (guidance.kind === 'exit') {
+      const exit = this.exits.find((candidate) => candidate.targetMap === guidance.exitTo);
+      if (exit) {
+        targetPosition = { x: exit.centerX, y: exit.centerY, markerY: exit.centerY };
+      }
+    }
 
-    if (!target) {
+    if (!targetPosition) {
       this.objectiveTargetPosition = undefined;
       this.objectiveMarkerTween?.remove();
       this.objectiveMarkerTween = undefined;
@@ -723,14 +804,14 @@ export class WorldScene extends Phaser.Scene {
       return;
     }
 
-    this.objectiveTargetPosition = { x: target.x, y: target.y };
+    this.objectiveTargetPosition = { x: targetPosition.x, y: targetPosition.y };
 
     const marker = this.ensureObjectiveMarker();
-    // Above the target's floating label (label sits at y - 60 world px);
-    // clear of Mira's own pulse ring too.
-    const baseY = target.y - sy(52);
+    // Local objectives sit above their floating labels; exit objectives sit
+    // over the gate rectangle's stored centre so routing matches Tiled.
+    const baseY = targetPosition.markerY;
     this.objectiveMarkerTween?.remove();
-    marker.setVisible(true).setPosition(target.x, baseY);
+    marker.setVisible(true).setPosition(targetPosition.x, baseY);
     this.objectiveMarkerTween = this.tweens.add({
       targets: marker,
       y: baseY - sy(6),
@@ -936,6 +1017,10 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private handleActionInput(): void {
+    if (this.dialogueBox?.isOpen()) {
+      this.dialogueBox.advance();
+      return;
+    }
     if (this.heroPresentation.isHurtPlaying()) return;
     if (!this.tryInteract()) this.heroPresentation.playAction(this.busy);
   }
@@ -960,6 +1045,9 @@ export class WorldScene extends Phaser.Scene {
       if (this.tryConsumePracticeOffer(target)) return;
       this.showFlavorWithPracticeOffer(target, 'mossy-stone', 'exploration');
     },
+    'baker-pell': () => this.handleBakerPellInteraction(),
+    'village-notice-board': () => this.showToast(this.nextFlavorLine('village-notice-board')),
+    'village-well': () => this.showToast(this.nextFlavorLine('village-well')),
     'generic-bonus': (target) => this.openBonusPrompt(target.kind, target.label)
   };
 
@@ -1061,23 +1149,98 @@ export class WorldScene extends Phaser.Scene {
     this.applyQuestOutcome(this.farmQuest.interactWithMira(), true);
   }
 
-  private handleCropBonusInteraction(target: InteractionTarget): void {
-    if (this.farmQuest.cropPurposeFulfilled()) {
-      if (this.tryConsumePracticeOffer(target)) return;
-      this.showFlavorWithPracticeOffer(target, 'crop', target.kind);
+  private handleBakerPellInteraction(): void {
+    const step = this.questSystem.step(BERRY_ORDER_ID);
+    const dialogue = BERRY_ORDER.dialogue;
+    if (!dialogue) return;
+
+    if (step === 'not-started') {
+      this.openDialogue(dialogue.offer, () => {
+        if (this.questSystem.step(BERRY_ORDER_ID) !== 'not-started') return;
+        this.questSystem.setStep(BERRY_ORDER_ID, 'gathering');
+        this.refreshObjective();
+        this.save();
+      });
       return;
     }
 
+    if (step === 'gathering') {
+      this.openDialogue(dialogue.reminder ?? dialogue.offer);
+      return;
+    }
+
+    if (step === 'return-ready') {
+      this.openDialogue(dialogue.return, () => {
+        // Step first, then present/persist the reward. A second rapid ACTION
+        // can only enter the complete/flavor branch and cannot grant twice.
+        if (this.questSystem.step(BERRY_ORDER_ID) !== 'return-ready') return;
+        this.questSystem.setStep(BERRY_ORDER_ID, 'complete');
+        const item = BERRY_ORDER.rewards.item;
+        this.applyQuestOutcome({
+          stateChanged: true,
+          objectiveChanged: true,
+          reward: BERRY_ORDER.rewards,
+          toast: item
+            ? `Quest Complete: ${BERRY_ORDER.name}\nReceived: ${item.name}`
+            : `Quest Complete: ${BERRY_ORDER.name}`
+        }, true);
+      });
+      return;
+    }
+
+    this.showToast(this.nextFlavorLine('baker-pell'));
+  }
+
+  private openDialogue(lines: DialogueLine[], onClose?: () => void): void {
+    if (!this.dialogueBox || this.dialogueBox.isOpen()) return;
     this.busy = true;
     this.resetJoystick();
     this.player.setVelocity(0, 0);
-    this.playCropBonusFeedback(target, () => {
-      this.openBonusPrompt(target.kind, target.label, () => {
-        const outcome = this.farmQuest.completeCropInteraction();
-        this.applyQuestOutcome(outcome, false);
-        return outcome.message;
-      });
+    this.dialogueBox.open(lines, {
+      autoRead: this.profileId === 'grade2-mage',
+      onClose: () => {
+        // DialogueBox owns Space/E while busy, so WorldScene never consumes
+        // the same physical keydown through its update-loop JustDown checks.
+        // Clear those pending edges before unlocking gameplay; keep isDown
+        // intact so a held key cannot become a fresh press on key-repeat.
+        Phaser.Input.Keyboard.JustDown(this.keys.SPACE);
+        Phaser.Input.Keyboard.JustDown(this.keys.E);
+        this.busy = false;
+        onClose?.();
+      }
     });
+  }
+
+  private handleCropBonusInteraction(target: InteractionTarget): void {
+    if (!this.farmQuest.cropPurposeFulfilled()) {
+      this.busy = true;
+      this.resetJoystick();
+      this.player.setVelocity(0, 0);
+      this.playCropBonusFeedback(target, () => {
+        this.openBonusPrompt(target.kind, target.label, () => {
+          const outcome = this.farmQuest.completeCropInteraction();
+          this.applyQuestOutcome(outcome, false);
+          return outcome.message;
+        });
+      });
+      return;
+    }
+
+    if (this.questSystem.step(BERRY_ORDER_ID) === 'gathering'
+      && this.questSystem.berriesCollected() < 3) {
+      const count = this.questSystem.collectNextBerry();
+      this.showFloatingReward(`Sunberry ${count}/3`, target.x, target.y - sy(26), '#ffd666');
+      if (count === 3) {
+        this.questSystem.setStep(BERRY_ORDER_ID, 'return-ready');
+        this.showToast('Pell is waiting — back to the village!');
+      }
+      this.refreshObjective();
+      this.save();
+      return;
+    }
+
+    if (this.tryConsumePracticeOffer(target)) return;
+    this.showFlavorWithPracticeOffer(target, 'crop', target.kind);
   }
 
   private handleSlimeInteraction(target: InteractionTarget): void {
@@ -1111,7 +1274,7 @@ export class WorldScene extends Phaser.Scene {
     // If the objective marker was floating over the slime (find-slime step),
     // hide it now rather than leaving it bouncing over an empty clearing
     // until the prompt-close quest advance re-runs refreshObjective().
-    this.updateObjectiveMarker();
+    this.refreshObjective();
   }
 
   private handleSproutInteraction(target: InteractionTarget): void {
@@ -1339,46 +1502,15 @@ export class WorldScene extends Phaser.Scene {
       return;
     }
 
-    this.stopPromptReadAloud();
-
-    const utterance = new SpeechSynthesisUtterance(this.makeReadAloudText(label, prompt));
-    utterance.rate = 0.85;
-    utterance.pitch = 1.05;
-
-    // Read-aloud always wins over music, so duck it for the duration of the
-    // utterance and restore it on end/error/manual cancel (stopPromptReadAloud).
-    this.setMusicVolume(this.musicDuckedVolume);
-
-    // Prevent garbage collection mid-speech
-    this.activeUtterance = utterance;
-    utterance.onend = () => {
-      if (this.activeUtterance === utterance) {
-        this.activeUtterance = null;
-        this.setMusicVolume(this.musicVolume);
-      }
-    };
-    utterance.onerror = () => {
-      if (this.activeUtterance === utterance) {
-        this.activeUtterance = null;
-        this.setMusicVolume(this.musicVolume);
-      }
-    };
-
-    window.speechSynthesis.speak(utterance);
+    this.speech.speak(this.makeReadAloudText(label, prompt), this.speechHooks);
   }
 
   private stopPromptReadAloud(): void {
-    this.setMusicVolume(this.musicVolume);
-    if (this.hasPromptReadAloudSupport()) {
-      window.speechSynthesis.cancel();
-    }
-    this.activeUtterance = null;
+    this.speech.cancel();
   }
 
   private hasPromptReadAloudSupport(): boolean {
-    return typeof window !== 'undefined'
-      && 'speechSynthesis' in window
-      && 'SpeechSynthesisUtterance' in window;
+    return this.speech.supported();
   }
 
   private makeReadAloudText(label: string, prompt: LearningPrompt): string {
@@ -1776,7 +1908,8 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private save(): void {
-    const questSave = this.farmQuest.toSaveFields();
+    const farmQuestSave = this.farmQuest.toSaveFields();
+    const registryQuestSave = this.questSystem.toSaveFields();
     SaveSystem.save({
       version: CURRENT_SAVE_VERSION,
       profileId: this.profileId,
@@ -1788,7 +1921,14 @@ export class WorldScene extends Phaser.Scene {
       // farm at load). The saved player position is already map-local, so it
       // doubles as the arrival placement on reload.
       lastArea: this.mapId,
-      ...questSave,
+      ...farmQuestSave,
+      questSteps: registryQuestSave.questSteps,
+      // Keep the legacy/Mira flags authoritative if engines ever grow an
+      // overlapping key; registry flags may add data, never erase hers.
+      questFlags: {
+        ...registryQuestSave.questFlags,
+        ...farmQuestSave.questFlags
+      },
       player: {
         x: this.player.x,
         y: this.player.y

@@ -6,7 +6,7 @@ Durable rules live in [`AGENTS.md`](../AGENTS.md); volatile status lives in [`do
 
 ## Architecture in one paragraph
 
-`WorldScene` is map-agnostic. It reads everything map-specific from the registry in [`src/data/maps.ts`](../src/data/maps.ts) — the tilemap cache key, JSON path, display name, tileset wiring, music key, named spawns, and collision GIDs. Exits are **not** in the registry: they are `type: "exit"` objects on each map's own Tiled Objects layer, so a map file stays the single source of truth for its own geometry. `PreloadScene` loads every registered map's JSON in a loop. Adding a map is therefore: a Tiled JSON + a registry entry (+ optionally new art through the asset pipeline).
+`WorldScene` is map-agnostic. It reads everything map-specific from the registry in [`src/data/maps.ts`](../src/data/maps.ts) — the tilemap cache key, JSON path, display name, tileset wiring, music key, named spawns, collision GIDs, and validated objective-routing hints. Exit geometry is **not** in the registry: exits remain `type: "exit"` objects on each map's own Tiled Objects layer, so a map file stays the single source of truth for its own gates. `PreloadScene` loads every registered map's JSON in a loop. Adding a map is therefore: a Tiled JSON + a registry entry (+ optionally new art through the asset pipeline).
 
 ## Checklist for a new map
 
@@ -15,8 +15,9 @@ Durable rules live in [`AGENTS.md`](../AGENTS.md); volatile status lives in [`do
 3. Add `interactionId` values for any new interactables to `src/data/interactions.ts` and register handlers in `WorldScene.interactionHandlers`.
 4. Add exit objects on **both** maps (out and back), with arrival spawns offset clear of the opposing exit zone.
 5. Add flavor lines to `src/data/flavor.ts` if the map has flavor interactables.
-6. Run `npm run typecheck`, `npm run test:unit` (registry validation cross-checks your JSON automatically), then `npx playwright test`.
-7. Update `docs/CURRENT_STATE.md` and add a changelog entry per `AGENTS.md`.
+6. Add the new destination to every reachable map's `nextHop` table and add that map's own first-hop routes. The route validator checks these declarations against the real exit graph.
+7. Run `npm run typecheck`, `npm run test:unit` (registry and route validation cross-check the real JSON automatically), then `npx playwright test`.
+8. Update `docs/CURRENT_STATE.md` and add a changelog entry per `AGENTS.md`.
 
 ## Tiled conventions
 
@@ -64,9 +65,19 @@ An exit triggers when the player's centre enters the rectangle. On trigger: inpu
   musicKey: 'bgm-farm',                   // must be a preloaded audio key
   spawns: { 'from-farm': { x: 320, y: 448 } },  // WORLD px
   defaultSpawn: 'from-farm',
-  collisionGids: [3, 4]
+  collisionGids: [3, 4],
+  nextHop: {                              // first gate to take per destination
+    farm: 'farm',
+    'eldoria-village': 'farm'
+  }
 }
 ```
+
+### Objective routing (`nextHop`)
+
+`nextHop` is a partial destination-to-first-exit table: `nextHop[destination] = exitMap`. It does not duplicate exit coordinates, spawn names, or gate rectangles. Those stay in Tiled. For example, Wildbloom Woods reaches Eldoria Village by first taking its real exit to the farm, so its entry declares `'eldoria-village': 'farm'`.
+
+`validateMapRoutes()` builds the directed graph from the committed maps' real `exit` objects. Every declared hop must be a registered map with a direct exit from the source, and it must equal the first hop found by breadth-first search. Missing routes are allowed and make objective guidance hide safely; incorrect or stale routes fail unit tests. Same-map objectives never need a table entry.
 
 ### Spawns
 
@@ -95,7 +106,7 @@ Use only approved/committed art. New or recoloured art must go through the deter
 
 ## Validation
 
-`validateMapRegistry()` in `src/data/maps.ts` is exercised by `tests/unit/maps.test.ts` against the **real committed map JSONs**. It enforces:
+`validateMapRegistry()` and `validateMapRoutes()` in `src/data/maps.ts` are exercised by `tests/unit/maps.test.ts` against the **real committed map JSONs**. They enforce:
 
 - registry key matches definition id; unique `tiledKey` and `jsonPath`;
 - non-empty `displayName`, `musicKey`, `tilesets`, `collisionGids`;
@@ -103,6 +114,7 @@ Use only approved/committed art. New or recoloured art must go through the deter
 - every spawn lies inside that map's world bounds;
 - every declared tileset name exists in the map JSON;
 - every `exit` object's `targetMap` and `targetSpawn` resolve in the registry.
+- every `nextHop` names a real direct exit and matches the exit graph's breadth-first first hop.
 
 A new map is covered automatically once its registry entry exists — no test edits required.
 

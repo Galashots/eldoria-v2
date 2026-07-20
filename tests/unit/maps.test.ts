@@ -8,6 +8,7 @@ import {
   getMapDefinition,
   resolveMapId,
   resolveSpawn,
+  validateMapRoutes,
   validateMapRegistry,
   type MapDefinition,
   type TiledMapSummary
@@ -55,7 +56,9 @@ function loadRealMapSummaries(): Partial<Record<string, TiledMapSummary>> {
 
 describe('map registry', () => {
   it('validates the real registry against the real committed map JSONs', () => {
-    expect(() => validateMapRegistry(MAP_REGISTRY, loadRealMapSummaries(), GAME_SCALE)).not.toThrow();
+    const summaries = loadRealMapSummaries();
+    expect(() => validateMapRegistry(MAP_REGISTRY, summaries, GAME_SCALE)).not.toThrow();
+    expect(() => validateMapRoutes(MAP_REGISTRY, summaries)).not.toThrow();
   });
 
   it('resolves known ids and falls back to the farm for anything else', () => {
@@ -72,6 +75,32 @@ describe('map registry', () => {
       // Unknown spawn names fall back to the default rather than throwing.
       expect(resolveSpawn(def, 'no-such-spawn')).toEqual(def.spawns[def.defaultSpawn]);
     }
+  });
+});
+
+describe('validateMapRoutes violations', () => {
+  const cloneRegistry = (): typeof MAP_REGISTRY => ({
+    farm: { ...MAP_REGISTRY.farm, nextHop: { ...MAP_REGISTRY.farm.nextHop } },
+    'wildbloom-woods': {
+      ...MAP_REGISTRY['wildbloom-woods'],
+      nextHop: { ...MAP_REGISTRY['wildbloom-woods'].nextHop }
+    },
+    'eldoria-village': {
+      ...MAP_REGISTRY['eldoria-village'],
+      nextHop: { ...MAP_REGISTRY['eldoria-village'].nextHop }
+    }
+  });
+
+  it('rejects a first hop that is not a real exit from the source map', () => {
+    const registry = cloneRegistry();
+    registry['eldoria-village'].nextHop.farm = 'wildbloom-woods';
+    expect(() => validateMapRoutes(registry, loadRealMapSummaries())).toThrow(/non-exit hop/);
+  });
+
+  it('rejects a real exit that contradicts the BFS first hop', () => {
+    const registry = cloneRegistry();
+    registry.farm.nextHop['eldoria-village'] = 'wildbloom-woods';
+    expect(() => validateMapRoutes(registry, loadRealMapSummaries())).toThrow(/BFS first hop/);
   });
 });
 
@@ -100,6 +129,23 @@ describe('validateMapRegistry violations', () => {
       exits: []
     };
     expect(() => validateMapRegistry({ farm: def }, { farm: summary })).toThrow(/outside world bounds/);
+  });
+
+  it('rejects missing or non-positive map dimensions', () => {
+    const def = validDef();
+    const summary = {
+      width: 30,
+      height: 20,
+      tilewidth: undefined,
+      tilesets: def.tilesets.map((tileset) => ({ name: tileset.tiledName })),
+      exits: []
+    } as unknown as TiledMapSummary;
+    expect(() => validateMapRegistry({ farm: def }, { farm: summary })).toThrow(/invalid map or tile dimensions/);
+
+    expect(() => validateMapRegistry(
+      { farm: def },
+      { farm: { ...summary, tilewidth: 32, width: 0 } }
+    )).toThrow(/invalid map or tile dimensions/);
   });
 
   it('rejects a declared tileset missing from the map JSON', () => {

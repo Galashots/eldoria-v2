@@ -20,6 +20,10 @@ export type InteractionId =
   // Wildbloom Woods (quest-free flavor interactables; see data/maps.ts).
   | 'whispering-flower'
   | 'mossy-stone'
+  // Eldoria Village.
+  | 'baker-pell'
+  | 'village-notice-board'
+  | 'village-well'
   | 'generic-bonus';
 
 const DEFAULT_INTERACTION_ID: InteractionId = 'generic-bonus';

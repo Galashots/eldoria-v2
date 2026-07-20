@@ -102,7 +102,6 @@ async function moveToSpot(page: Page, spotId: SpotId): Promise<void> {
     scene.heroPresentation.syncPosition();
     scene.wildbloomDiscovery.update();
   }, position);
-  await page.waitForTimeout(160);
 }
 
 async function snapshot(page: Page): Promise<DiscoverySnapshot> {
@@ -181,7 +180,6 @@ test('Mage magic reveals all three persistent Wildbloom secrets without changing
 
   await clickGame(page, 852, 536);
   await expect.poll(async () => (await snapshot(page)).inputLocked).toBe(true);
-  await page.waitForTimeout(110);
   await page.screenshot({ path: 'test-results/discovery-mage-ability.png', fullPage: true });
   await expect.poll(async () => (await snapshot(page)).discoveredSpotIds).toContain('root-star');
   await expect.poll(async () => canvasTextSeen(page, 'SECRET FOUND')).toBe(true);
@@ -234,7 +232,6 @@ test('Ranger tracking reveals the same secret loop with a distinct readable abil
   await resetCanvasTextRecorder(page);
   await clickGame(page, 852, 536);
   await expect.poll(async () => (await snapshot(page)).inputLocked).toBe(true);
-  await page.waitForTimeout(110);
   await page.screenshot({ path: 'test-results/discovery-ranger-ability.png', fullPage: true });
   await expect.poll(async () => (await snapshot(page)).discoveredSpotIds).toContain('moonwell-echo');
   await expect.poll(async () => canvasTextSeen(page, 'Moonwell Echo')).toBe(true);
