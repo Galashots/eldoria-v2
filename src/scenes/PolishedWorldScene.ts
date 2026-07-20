@@ -219,7 +219,6 @@ export class PolishedWorldScene extends WorldScene {
       scene: this,
       profileId: internals.profileId,
       player: internals.player,
-      slime: internals.practiceSlimeSprite,
       heroPresentation: internals.heroPresentation,
       hasInventoryItem: (key) => (internals.inventory[key] ?? 0) > 0,
       markInventoryItem: (key) => {
