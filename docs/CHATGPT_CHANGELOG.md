@@ -4,6 +4,14 @@ This file keeps recent, high-value change summaries. Full historical entries thr
 
 Entries should remain concise: date/author, branch or PR, scope, compatibility impact, verification, and remaining risk. Detailed implementation narratives belong in the PR description and commits.
 
+## 2026-07-19 — Evidence-first agent workflow
+
+- Author/branch: Codex, `codex/evidence-first-workflow`; PR pending.
+- Scope: added proportional root-cause debugging, red/green behavioral regression evidence, condition-based waiting, exact-range read-only review, and fresh exact-head completion evidence to `AGENTS.md`. Created the reusable local `evidence-first-development` Codex skill outside the public repository; existing Game Studio skills remain authoritative for new browser-game architecture, implementation, assets, UI, and playtesting.
+- Verification: local skill `quick_validate.py` passed; `npm ci` completed with 0 vulnerabilities; `npm run check`, `test:visual-targets`, `test:asset-pipeline`, `test:terrain-blend`, and `test:unit` (116/116) passed. The full Playwright run passed 64/65: its first test timed out during the initial `page.goto('/')`, all subsequent tests passed, and the failed adaptive-difficulty test passed 1/1 in isolation. Exact-head CI remains the merge gate; the existing Vite large-chunk warning remains unchanged.
+- Compatibility: documentation/process only; no runtime, save, curriculum, quest, reward, profile-ID, dependency, map, or asset changes.
+- Remaining risk: the local skill is machine-local and will need normal iteration after real use; repository agents remain fully guided by the self-contained `AGENTS.md` rules.
+
 ## 2026-07-20 — Multi-map world foundation (M2)
 
 - Author/branch: Claude Code (repo agent), `world/multi-map-foundation`, executing Build Prompt 02 on top of the merged game-feel milestone (PR #104). This is the **M2** prerequisite named by the approved Mossheart Ruins (Zone #4) design spec.
