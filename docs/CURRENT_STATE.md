@@ -100,7 +100,7 @@ The repository includes:
 - Playwright coverage for both profiles, adaptive difficulty through the live WorldScene, the Waking Gate, movement/input, focus-loss recovery, Mira and Berry Order quests, profile-specific dialogue speech, exact deterministic rewards, crop prompts, the Practice Slime encounter and its permanent-defeat reload persistence, post-purpose flavor/opt-in pacing, local and cross-map marker/edge-arrow guidance, all three maps and their save/reload paths, Wildbloom discovery, Stats & Mastery, and portrait guidance;
 - an intentional renderer split: Playwright sets `window.__ELDORIA_E2E__` before application code, forcing `Phaser.CANVAS`, while production continues to use unchanged `Phaser.AUTO`; the exact base/candidate full-suite benchmark improved from 224s to 194s (30s, 13.4%), with 56/56 candidate tests passing and no `WebGL Context lost` warnings;
 - renderer-agnostic movement round-trip assertions bounded to one `32px` map tile, covering one-frame Canvas/WebGL cadence variation without changing gameplay physics or production controls;
-- browser-side transient-event recorders that are reset immediately before reward actions, avoiding lifetime-text false positives while remaining robust on slow software-rendered runners;
+- browser-side transient-event recorders that are reset immediately before reward or reveal actions, including recursive capture of text nested in Wildbloom toast containers, avoiding lifetime-text false positives while remaining robust on slow software-rendered runners;
 - reviewable screenshot artifacts, including iPad-like landscape browser viewports.
 
 Browser viewport evidence is not physical-iPad validation. The build remains technically and visually browser-verified rather than child-validated or physically iPad-certified.
@@ -124,7 +124,7 @@ Batch A is **7 of 7 foundational assets approved**. Batch B status:
 3. After the terrain families are source/packed complete, proceed to Batch C vegetation. Do not expand the bounded terrain proof into piecemeal final-map integration before the environment-kit contact-sheet and Wangset gates.
 4. Keep the now-merged dirt and shoreline transition families out of the proof map until the final Wangset-aware composition can demonstrate coherent boundaries at target scale.
 5. In parallel only where it does not displace the environment milestone, produce the dedicated Ranger Explorer base and freeze both heroes' required clip timing before armor source generation.
-6. Track the existing Wildbloom canvas-text timeout as a separate repository-health item if it reappears after the recorder hardening; do not conflate that unrelated flake with asset-only changes.
+6. Keep the Wildbloom recursive transient-text recorder covered in CI; it closes the repeated completion-toast timeout without changing gameplay or toast timing.
 
 ## Decisions for the generation handoff
 
