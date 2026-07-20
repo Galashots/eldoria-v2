@@ -386,6 +386,14 @@ test('Ranger dialogue advances once per input and scene restart cannot accept th
 
   await movePlayerTo(page, BAKER_PELL.x, BAKER_PELL.y);
   await sceneInteract(page);
+  // The Batch 1 typewriter reveals the greeting progressively; a tap that
+  // lands mid-reveal completes the typing instead of advancing the line.
+  // Slow machines finish the reveal before the tap lands, masking the race —
+  // fast CI runners hit it consistently. Wait for the full line first.
+  await expect.poll(() => dialogueState(page), { timeout: 15000 }).toMatchObject({
+    open: true,
+    body: "You must be the farm helper! I'm Baker Pell."
+  });
   // The panel itself is an ACTION surface. This also proves its scroll-fixed
   // hit area remains aligned after the village camera has moved.
   await clickGame(page, 480, 512);
