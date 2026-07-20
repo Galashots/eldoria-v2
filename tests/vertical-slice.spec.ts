@@ -748,7 +748,7 @@ test('Grade 2 vertical slice supports movement, bonuses, read-aloud, quest progr
   await expect.poll(async () => (await state(page)).objective).toContain('crop patch');
 
   await armCropFeedbackWatcher(page);
-  expect(await interactAt(page, 480, 832)).toContain('CropBonus');
+  expect(await interactAt(page, 480, 832)).toContain('Crop Patch');
   await expect.poll(async () => cropFeedbackSeen(page)).toBe(true);
   await expect.poll(async () => hasCanvasText(page, 'READ ALOUD')).toBe(true);
   await expect.poll(async () => cropFeedbackVisible(page)).toBe(false);
