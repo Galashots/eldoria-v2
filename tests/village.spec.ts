@@ -582,11 +582,16 @@ test('Berry Order return grants the fixed reward once and never during shutdown'
   await movePlayerTo(page, BAKER_PELL.x, BAKER_PELL.y);
   await sceneInteract(page);
   await startCanvasTextRecorder(page);
-  // Two deliberately rapid ACTION dispatches advance and close/reward.
+  // Deliberately rapid ACTION dispatches advance and close/reward. With the
+  // typewriter dialogue convention (a press on a still-revealing line
+  // completes it; the next press advances), a two-line exchange takes four
+  // presses — the presses stay rapid, exercising the same double-grant guard.
   await page.evaluate(() => {
     const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
       handleActionInput: () => void;
     };
+    scene.handleActionInput();
+    scene.handleActionInput();
     scene.handleActionInput();
     scene.handleActionInput();
   });
