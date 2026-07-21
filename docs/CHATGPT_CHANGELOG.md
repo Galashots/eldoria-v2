@@ -4,6 +4,15 @@ This file keeps recent, high-value change summaries. Full historical entries thr
 
 Entries should remain concise: date/author, branch or PR, scope, compatibility impact, verification, and remaining risk. Detailed implementation narratives belong in the PR description and commits.
 
+## 2026-07-21 — Protected-path PreToolUse guardrail hook (owner-gated)
+
+- Author/branch: Claude Code (repo agent, local desktop session), `claude/protected-path-hooks` (PR #121). Executes work-queue item (a) from the reconciliation handoff — the deliberate separate enforcement-tooling PR called out in the v1.1 adoption entry below and in guide section 11.
+- Scope: `.claude/settings.json` registers a PreToolUse hook (`Edit|Write|NotebookEdit`, documented portable exec form `command:"node"` + `args`) running `scripts/hooks/protectedPaths.mjs` (Node, no dependencies). Blocks writes to `.github/workflows/**` and `src/systems/SaveSystem*` (exit 2) unless the pattern is unlocked in a gitignored `.owner-approval` marker. Paths canonicalized (`.`/`..`, slashes) and matched case-insensitively. A guardrail against accidental agent writes via the core file tools — not a security boundary; shell/MCP writes remain covered by branch protection, CI, and owner review. Policy + marker protocol + limitations in `scripts/hooks/README.md`.
+- Review round (guide section 10): ChatGPT independent review returned APPROVE WITH AMENDMENTS on `b413595` — two merge-blocking defects (dot-dot traversal bypass; Windows case-variant bypass) confirmed against the code and repaired red-first, exec-form registration adopted per hooks docs, malformed-input path now emits a stderr diagnostic before allowing, README/changelog claims narrowed from "enforcement" to "guardrail".
+- Verification: red-first throughout — 17 pure-logic tests (traversal + case regressions failed pre-fix, green post-fix) + 5 spawned-process tests covering stdin protocol, exit codes, marker I/O, and the committed exec-form registration; 22/22 green on Node 22. Fresh exact-head CI (`build`, `emulation`) required on the amended head before owner merge.
+- Compatibility: no runtime, save, curriculum, quest, asset, or dependency change; no `.github/workflows/**` modification. Guardrail config only.
+- Remaining risk: hook effectiveness on a live Claude Code session is asserted by the spawned-process protocol tests, not by an in-session integration test; first real-session block/allow observations should be noted on PR #121. Owner-merged by definition of the surface it governs.
+
 ## 2026-07-21 — Decor-scatter placement primitive (Model Council Batch 2, D6-A2)
 
 - Author/branch: Kimi K3 (repo agent; implementation reassigned from Claude Code by the owner after Claude's session ended mid red-first TDD — handoff record on issue #120), `claude/d6-decor-scatter`, PR #122. Executes council decision D6-A2 (issue #115). Authorship: scatter core + exclusion spec (Claude, `b9d6fab`/`ec9a34f`); exclusion derivation, Wildbloom extraction, placement proof, docs (Kimi, `9c998c8` + docs commit).
