@@ -4,6 +4,14 @@ This file keeps recent, high-value change summaries. Full historical entries thr
 
 Entries should remain concise: date/author, branch or PR, scope, compatibility impact, verification, and remaining risk. Detailed implementation narratives belong in the PR description and commits.
 
+## 2026-07-21 — Decor-scatter placement primitive (Model Council Batch 2, D6-A2)
+
+- Author/branch: Kimi K3 (repo agent; implementation reassigned from Claude Code by the owner after Claude's session ended mid red-first TDD — handoff record on issue #120), `claude/d6-decor-scatter`, PR #122. Executes council decision D6-A2 (issue #115). Authorship: scatter core + exclusion spec (Claude, `b9d6fab`/`ec9a34f`); exclusion derivation, Wildbloom extraction, placement proof, docs (Kimi, `9c998c8` + docs commit).
+- Scope: `src/systems/decorScatter.ts` (pure seeded placement core) + `src/systems/decorExclusions.ts` (new — static, save-state-independent exclusion derivation: registry-keyed collision cells, all authored Decor cells, full-coverage object footprints + 1-cell Chebyshev ring, registry spawn and Wildbloom spot anchors, grass-only ground allowlist resolved by tileset name; audit decisions Q1–Q11 in the module header) + `src/data/wildbloomSpots.ts` (spot constants extracted from the Phaser-importing controller — audit Q7; behaviour-identical). Placeholder decals (`tuft_a`/`tuft_b`/`pebble_a`/`flower_a`) are config-driven, so the A1 art swap is a config change. Not scene-integrated.
+- Verification: red-first spec failed at import pre-implementation, then green; `vitest run` 207/207 (20 files) incl. new `tests/unit/decorPlacementProof.test.ts` pinning the end-to-end farm plan (316 eligible grass cells → 38 placements at seed `farm-v1`) as the deterministic diff gate; `tsc --noEmit`, `vite build`, `validate-visual-targets` all clean. Placeholder-decal proof render (ASCII grid in PR body + PNG) reviewed. `test:pwa`, `test:generated-surfaces`, and Playwright suites left to CI as the long-run surface (no generated surfaces touched by this diff).
+- Compatibility: additive only — no save, quest, curriculum, mastery, profile-ID, map-data, dependency, workflow, or gameplay-authority change; no runtime visual change (primitive unintegrated pending the A1 scatter masters).
+- Remaining risk: none material to gameplay. Ring/padding policy (objects +1, all else +0) and the grass-only allowlist are encoded audit decisions; revisiting them is a config/test-pin change, not a schema change.
+
 ## 2026-07-21 — Governance: multi-model operating guide v1.1 adopted into the repo
 
 - Author/branch: Claude Code (repo agent, implementer), `docs/multi-model-operating-guide-v1-1`. Docs/governance only. Source documents: ChatGPT-ratified Operating Guide v1.1 and verified research errata (three-provider review round: Claude and Kimi independent reviews → Claude consolidation → ChatGPT adjudication, all APPROVE WITH AMENDMENTS/RATIFIED).
