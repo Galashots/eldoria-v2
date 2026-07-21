@@ -109,3 +109,40 @@ describe('deriveDecorEligibility eligible set', () => {
     expect(eligibleSet.has('20,8')).toBe(true);
   });
 });
+
+describe('Tiled gid transformation flags', () => {
+  // Tiled stores four transformation flags in the high nibble of a gid:
+  // 0x80000000 horizontal flip, 0x40000000 vertical flip, 0x20000000 diagonal
+  // flip, 0x10000000 hexagonal 120-degree rotation. ALL must be masked off
+  // before comparing tile ids. The orthogonal farm map never sets the
+  // hexagonal bit, so this synthetic map is the only coverage for it.
+  const HEX_ROTATION_FLAG = 0x10000000;
+  const flagMap = {
+    width: 2,
+    height: 1,
+    tilewidth: 32,
+    tileheight: 32,
+    tilesets: [{ firstgid: 1, name: 'flag-proof' }],
+    layers: [
+      { type: 'tilelayer', name: 'Ground', data: [1 | HEX_ROTATION_FLAG, 1], width: 2, height: 1 },
+      { type: 'tilelayer', name: 'Collision', data: [0, 1 | HEX_ROTATION_FLAG], width: 2, height: 1 },
+    ],
+  };
+
+  function deriveFlagged() {
+    return deriveDecorEligibility(flagMap, {
+      collisionGids: [1],
+      registrySpawnsWorldPx: [],
+      wildbloomSpotsWorldPx: [],
+      scatterable: { tilesetName: 'flag-proof', localIds: [0] },
+    });
+  }
+
+  it('resolves a scatterable gid carrying the hexagonal-rotation flag to its tile id', () => {
+    expect(deriveFlagged().eligible).toEqual(['0,0']);
+  });
+
+  it('resolves a collision gid carrying the hexagonal-rotation flag to its tile id', () => {
+    expect(deriveFlagged().breakdown.collision).toEqual(['1,0']);
+  });
+});

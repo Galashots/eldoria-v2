@@ -57,13 +57,48 @@ describe('farm decor plan end-to-end (diff gate)', () => {
     expect(farmPlacements().length).toBe(38);
   });
 
-  it('pins the deterministic leading placements for the farm-v1 seed', () => {
-    expect(farmPlacements().slice(0, 5)).toEqual([
+  it('pins the complete deterministic placement array for the farm-v1 seed', () => {
+    // The whole 38-placement result (every coordinate + decal assignment) is
+    // pinned literally, so any drift anywhere in the pipeline fails this gate.
+    expect(farmPlacements()).toEqual([
       { x: 3, y: 1, decal: 'tuft_b' },
       { x: 8, y: 1, decal: 'flower_a' },
       { x: 13, y: 1, decal: 'pebble_a' },
       { x: 20, y: 1, decal: 'tuft_a' },
       { x: 25, y: 1, decal: 'tuft_b' },
+      { x: 10, y: 2, decal: 'tuft_b' },
+      { x: 28, y: 2, decal: 'pebble_a' },
+      { x: 2, y: 3, decal: 'tuft_b' },
+      { x: 19, y: 3, decal: 'tuft_a' },
+      { x: 22, y: 3, decal: 'flower_a' },
+      { x: 27, y: 4, decal: 'pebble_a' },
+      { x: 9, y: 5, decal: 'tuft_a' },
+      { x: 11, y: 5, decal: 'pebble_a' },
+      { x: 25, y: 5, decal: 'pebble_a' },
+      { x: 19, y: 6, decal: 'tuft_a' },
+      { x: 2, y: 7, decal: 'pebble_a' },
+      { x: 11, y: 7, decal: 'tuft_b' },
+      { x: 22, y: 8, decal: 'flower_a' },
+      { x: 27, y: 8, decal: 'pebble_a' },
+      { x: 4, y: 12, decal: 'pebble_a' },
+      { x: 10, y: 12, decal: 'tuft_a' },
+      { x: 15, y: 12, decal: 'tuft_a' },
+      { x: 23, y: 12, decal: 'pebble_a' },
+      { x: 26, y: 12, decal: 'pebble_a' },
+      { x: 1, y: 13, decal: 'flower_a' },
+      { x: 17, y: 13, decal: 'tuft_a' },
+      { x: 13, y: 14, decal: 'tuft_b' },
+      { x: 21, y: 14, decal: 'pebble_a' },
+      { x: 26, y: 14, decal: 'tuft_b' },
+      { x: 28, y: 14, decal: 'tuft_b' },
+      { x: 24, y: 15, decal: 'tuft_a' },
+      { x: 11, y: 16, decal: 'flower_a' },
+      { x: 13, y: 16, decal: 'flower_a' },
+      { x: 9, y: 17, decal: 'tuft_b' },
+      { x: 17, y: 17, decal: 'pebble_a' },
+      { x: 22, y: 17, decal: 'flower_a' },
+      { x: 24, y: 17, decal: 'flower_a' },
+      { x: 2, y: 18, decal: 'pebble_a' },
     ]);
   });
 

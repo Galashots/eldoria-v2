@@ -36,8 +36,10 @@
 
 import { GAME_SCALE } from '../gameDimensions';
 
-/** Tiled encodes flip flags in the high bits of a gid; mask them off. */
-const TILE_ID_MASK = 0x1fffffff;
+/** Tiled encodes its four transformation flags (horizontal/vertical/diagonal
+ * flip, hexagonal 120-degree rotation) in the high nibble of a gid; mask all
+ * of them off before comparing tile ids. */
+const TILE_ID_MASK = 0x0fffffff;
 
 export interface TiledObjectLike {
   x?: number;
