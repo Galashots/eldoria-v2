@@ -1,786 +1,400 @@
-# Eldoria-V2 Beautification Execution Plan for Claude Code
+# Eldoria-V2 Visual Transformation Plan
 
-## Mission
+**Status:** Active visual-production subplan  
+**Overall product authority:** [`../ELDORIA_MASTER_PLAN.md`](../ELDORIA_MASTER_PLAN.md)  
+**Current progress and next task:** [`../CURRENT_STATE.md`](../CURRENT_STATE.md)  
+**Historical baseline:** [`BEAUTIFICATION_BASELINE_2026-07.md`](BEAUTIFICATION_BASELINE_2026-07.md)
 
-Transform Eldoria-V2 from a technically functional prototype into a cohesive, premium-looking, family-friendly 2D fantasy RPG that approaches the visual quality and atmosphere of the approved reference art while preserving the existing gameplay, curriculum, save compatibility, accessibility, and iPad support.
+This plan explains how Eldoria's visual presentation will reach the owner-approved painterly, layered fantasy reference direction. It is not the overall game roadmap and contains no volatile “next asset” status. Use `CURRENT_STATE.md` to determine which part is active.
 
-This is an execution brief, not a request for a single giant rewrite. Work in small, reviewable pull requests. Each phase must be independently green, visually inspected, and safe to merge.
-
----
-
-## Executive Decision: Canvas and Display Resolution
-
-### Adopt a 960 × 640 internal game canvas
-
-Change the Phaser logical game size from:
-
-```ts
-480 × 320
-```
-
-to:
-
-```ts
-960 × 640
-```
-
-This preserves the existing **3:2 aspect ratio** used by the current game and the approved reference artwork, while providing exactly **2× the linear resolution and 4× the drawable pixel area**.
-
-### Why 960 × 640 is the correct target
-
-1. **Exact 2× migration path**
-   - Existing coordinates, camera framing, UI positions, tile placement, effects, and touch targets can be converted predictably by multiplying by two.
-   - Existing 32 × 48 hero presentation can migrate toward 64 × 96 production presentation without fractional scaling.
-   - Existing 32-pixel tiles can migrate toward 64-pixel visual tiles while preserving map topology.
-
-2. **Appropriate for iPad Safari**
-   - The rendered frame is only about 0.61 megapixels before browser compositing, which is modest for modern iPads.
-   - Phaser `FIT` scaling can continue to preserve aspect ratio and center the canvas.
-   - A 3:2 game displayed on a roughly 4:3 iPad leaves modest letterboxing instead of cropping important HUD or world content.
-   - Landscape remains mandatory; preserve the existing portrait-orientation guidance.
-
-3. **Enough visual density for the reference direction**
-   - Allows richer terrain transitions, water edges, foliage, shadows, particles, ornamental UI, and readable character detail.
-   - Supports larger production sprites and higher-quality UI without making text and icons microscopic.
-   - Avoids the performance and authoring burden of 1536 × 1024 or full Retina-native rendering.
-
-4. **Safer than 1024 × 768**
-   - 1024 × 768 would force a 4:3 redesign and invalidate the current 3:2 scene composition.
-   - The attached reference art is 3:2, and the current opening/farm composition already assumes 3:2.
-
-5. **Safer than 768 × 512**
-   - 768 × 512 is workable but does not provide the clean 2× conversion from 480 × 320.
-   - Fractional scaling of existing systems would create more layout churn and visual inconsistency.
-
-### Renderer policy
-
-For the first resolution migration:
-
-- Keep `pixelArt: true`.
-- Keep `roundPixels: true`.
-- Keep `Phaser.Scale.FIT` and `CENTER_BOTH`.
-- Do **not** also apply a device-pixel-ratio renderer multiplier in the first PR.
-- Do **not** target a 1920 × 1280 backing buffer until real-device profiling proves it is needed.
-- Use CSS/browser scaling only through the existing Scale Manager contract.
-
-After the visual replacement is integrated and stable, a later optional experiment may compare renderer resolution `1` versus a capped high-DPI value such as `Math.min(devicePixelRatio, 1.5)`. That experiment must be separately profiled on iPad and must not be bundled into the canvas migration.
-
-### Performance target
-
-At 960 × 640 on an actual iPad in landscape:
-
-- Maintain 60 FPS during ordinary movement where feasible.
-- Never remain below 45 FPS during normal gameplay.
-- Temporary spell/reveal bursts may dip briefly but must remain responsive.
-- Avoid full-screen per-frame shader work, large alpha layers, or uncontrolled particle counts.
-- Use texture atlases, static layers, and pooled/reused effects where sensible.
+The earlier canvas migration, baseline capture, and initial terrain-production work are implemented history. Do not restart them from this document.
 
 ---
 
-## Non-Negotiable Product Rules
+## 1. Visual mission
 
-- Learning never gates adventure.
-- Grade 2 remains audio-first and usable by a child who cannot yet read independently.
-- Grade 5 remains reader-mode and must feel older and more capable.
-- No random loot, countdown timers, streak pressure, daily pressure, manipulative retention loops, or variable-reward mechanics.
-- Preserve save compatibility unless a migration is explicitly approved, implemented, and tested.
-- Do not rename internal profile IDs.
-- Do not destructively rewrite existing quests, curriculum, mastery, or reward systems.
-- Keep gameplay logic out of visual controllers.
-- Keep new features and visual systems isolated in narrow classes/controllers instead of growing `WorldScene` indiscriminately.
-- Do not copy protected game assets or UI. The approved reference images define quality, palette, composition, hierarchy, and atmosphere only.
-- Generated concept art is not automatically production-ready runtime art.
+Transform the current functional world into a cohesive, premium-looking, child-readable fantasy RPG while preserving:
 
----
+- gameplay and quest semantics;
+- bonus-only learning;
+- Grade 2 audio-first support;
+- Grade 5 Ranger Explorer identity;
+- stable profile and interaction IDs;
+- save compatibility unless separately approved;
+- iPad touch and performance requirements;
+- original/generated-art licensing rules.
 
-## Required Reading Before Work
-
-Read the latest versions on `main` before changing anything:
-
-- `AGENTS.md`
-- `README.md`
-- `docs/CURRENT_STATE.md`
-- `docs/VISUAL_ASSET_CONTRACT.md`
-- `docs/research/visual-design/STARDEW_CALIBER_VISUAL_RESEARCH_2026-07.md`
-- relevant visual-target specifications under `docs/visual-targets/`
-- relevant art-pipeline guidance under `docs/art-pipeline/`
-- `src/gameConfig.ts`
-- `src/scenes/OpeningScene.ts`
-- `src/scenes/WorldScene.ts`
-- `src/scenes/PolishedWorldScene.ts`
-- `src/presentation/HeroPresentationController.ts`
-- `src/presentation/WildbloomDiscoveryController.ts`
-- `src/presentation/PracticeSlimeEncounterController.ts`
-- `public/maps/farm.json`
-- `.github/workflows/ci.yml`
-- all current Playwright visual tests
-
-Also inspect the recent Claude work already merged after PR #63, including the visual research, asset-contract additions, terrain-blend targets, scatter targets, and PR #64 ground-shadow pass. Do not duplicate or casually overwrite that work.
+The target is not “more decoration.” It is a world with deliberate composition, consistent elevated perspective, memorable landmarks, layered depth, coherent materials, grounded characters, restrained atmosphere, and readable UI.
 
 ---
 
-## Working Method
+## 2. Reference-image translation
 
-### General branch discipline
+The owner-provided reference defines quality, camera, composition, depth, palette, atmosphere, and environmental storytelling. It is **STYLE REFERENCE ONLY**, not production source art.
 
-- Start each phase from fresh, updated `main`.
-- Use one branch and one PR per phase.
-- Do not stack unrelated phases into one PR.
-- Keep each PR mergeable and independently valuable.
-- Use squash merge only after all required CI and visual checks are green.
-- Do not merge on the basis of build success alone.
+### Required visual traits
 
-### Required evidence for every visual PR
+1. **Elevated three-quarter projection**
+   - environments, characters, NPCs, creatures, props, buildings, equipment, and shadows share one camera pitch;
+   - down-facing characters are foreshortened rather than direct frontal elevations;
+   - side facings remain three-quarter views rather than flat profiles.
 
-Each PR must include:
+2. **Layered world depth**
+   - quiet ground plane;
+   - mid-layer flora, stones, crops, fences, shoreline, and props;
+   - border/canopy masses framing the playable space;
+   - occasional foreground overlap that never blocks touch or objectives.
 
-- Before screenshot.
-- After screenshot.
-- Grade 2 Mage screenshot.
-- Grade 5 Ranger screenshot.
-- At least one iPad-like viewport screenshot.
-- A contact sheet or clearly named image set in the CI artifact.
-- Short visual critique in the PR description covering what improved and what remains weak.
+3. **Authored composition**
+   - strong arrival framing;
+   - clear navigation lanes;
+   - negative space around actors and interactions;
+   - landmarks readable without labels;
+   - dense borders and focal areas rather than uniform clutter.
 
-### Required automated checks
+4. **Material and lighting cohesion**
+   - one palette family system;
+   - consistent upper-left key light;
+   - compatible outline and shadow language;
+   - atmosphere applied coherently rather than baked differently into every asset.
 
-Run the complete repository suite, including at minimum:
-
-```bash
-npm ci
-npm run check
-npm run test:asset-pipeline
-npm run test:unit
-npm run smoke
-```
-
-Use the exact scripts available in the repository if names have changed. Do not weaken or skip tests to make a PR green.
+5. **Readable hierarchy**
+   - heroes, NPCs, enemies, interactables, and objectives remain more salient than terrain;
+   - UI supports the world rather than covering it;
+   - Grade 2 text and touch targets remain obvious.
 
 ---
 
-# Phase 0 — Baseline Audit and Screenshot Lock
+## 3. Ground-versus-Decor doctrine
 
-## Goal
+Terrain blend families are the correct foundation for clean grass, dirt, and water boundaries. They are not the main lever for the painterly reference look.
 
-Establish a trustworthy baseline after the user’s recent Claude changes before beginning the visual migration.
+The layered target depends on:
 
-## Tasks
+- approved Decor scatter;
+- vegetation and flower variation;
+- props and structures;
+- canopy and border silhouettes;
+- dappled light/shadow decals;
+- landmark composition;
+- coherent character perspective;
+- restrained motion and atmosphere.
 
-1. Pull latest `main`.
-2. Confirm the exact current commit and recent merged PRs.
-3. Run the full test suite before modifications.
-4. Capture baseline screenshots for:
-   - title screen;
-   - Mage Waking Gate start and first hit;
-   - Ranger Waking Gate start and first hit;
-   - Mage farm arrival;
-   - Ranger farm arrival;
-   - Mira interaction area;
-   - Practice Slime encounter;
-   - Wildbloom sensing and reveal;
-   - Stats panel;
-   - optional-learning prompt.
-5. Record current FPS and renderer information in desktop Chromium.
-6. Record current canvas dimensions, CSS display dimensions, and scale factor.
-7. Create a short audit file:
-
-```text
-docs/beautification/BEAUTIFICATION_BASELINE_2026-07.md
-```
-
-## No runtime changes in Phase 0
-
-This is a baseline-only PR or commit. Do not begin the resolution migration until the baseline is captured.
+Do not respond to a flat scene by generating unlimited ground variants. Diagnose which visual layer is actually missing.
 
 ---
 
-# Phase 1 — Canvas Resolution Migration to 960 × 640
+## 4. Production sequence
 
-## Goal
+The sequence is strategic, not a live checklist. `CURRENT_STATE.md` identifies the current step.
 
-Double the logical resolution without changing gameplay semantics, visible world coverage, quest behaviour, saves, or input behaviour.
+### Phase A — Layered Farm environment foundation
 
-## Core requirement
+Complete and integrate the production families required to move beyond the development-grid look:
 
-The game should display approximately the same amount of world and preserve existing compositions, but at twice the coordinate and visual resolution.
+- deterministic grass Decor scatter;
+- grass tufts, flowers, pebbles, weeds, and fern variants;
+- pond lilies, reeds, shoreline rocks, and subtle shimmer;
+- tree silhouettes and canopy/border masses;
+- bushes, stones, logs, and landmark rocks;
+- fences, posts, corners, gates, broken variants, and signs;
+- crop rows, tilled soil, and gardening props;
+- Farm structures and readable entrances;
+- Wildbloom landmark families.
 
-## Implementation strategy
+Use the manifest-driven art pipeline, applicable target JSON, palette lock, and type-specific audit evidence.
 
-### 1. Introduce explicit design-scale constants
+#### Scatter acceptance
 
-In or near `src/gameConfig.ts`, establish:
+The deterministic scatter primitive is infrastructure, not a visual success claim.
 
-```ts
-export const LEGACY_GAME_WIDTH = 480;
-export const LEGACY_GAME_HEIGHT = 320;
-export const GAME_SCALE = 2;
-export const GAME_WIDTH = 960;
-export const GAME_HEIGHT = 640;
-```
+Before runtime integration:
 
-Do not leave unexplained magic numbers scattered through scenes.
+- approve exact runtime masters for each configured decal;
+- confirm the set reads as one family;
+- tune density and spacing from in-game screenshots, not only an ASCII/grid proof;
+- preserve clear routes, gate mouths, spawns, interactables, crop areas, and discovery landmarks;
+- avoid regular wallpaper spacing and equal-probability visual noise;
+- permit authored density zones or weighted families when evidence shows uniform scatter is visually weak.
 
-Create helpers where useful:
+### Phase B — Farm recomposition
 
-```ts
-export const sx = (value: number): number => value * GAME_SCALE;
-export const sy = (value: number): number => value * GAME_SCALE;
-```
+Rebuild the Farm as a deliberate adventure space while preserving gameplay reachability and interaction semantics.
 
-Prefer named layout constants for final code rather than blindly wrapping every number forever.
+#### Required composition zones
 
-### 2. Preserve world coverage
+**Arrival glade**
 
-Two acceptable implementation approaches exist. Choose one after auditing the current camera/map behaviour:
+- readable player landing;
+- clear sightline toward the first useful objective;
+- open ground under the hero;
+- immediate magical or environmental promise.
 
-#### Preferred approach: scale the map and world presentation by 2
+**Mira path area**
 
-- Scale Tiled tile display from 32 to 64 pixels without changing logical tile topology.
-- Multiply object-layer coordinates by two at runtime or export a 2× map representation through a controlled loader seam.
-- Scale collision bodies and interaction radii by two.
-- Scale player speed by two so traversal time remains approximately unchanged.
-- Scale camera bounds, world bounds, spawn positions, target locations, discovery coordinates, and effect offsets by two.
-- Scale hero/slime/NPC display sizes by two while keeping animation frame contracts clear.
+- authored path and local landmark;
+- negative space for interaction, dialogue, and quest feedback;
+- Mira reads as a character, not a floating marker.
 
-Do not manually rewrite hundreds of map coordinates in uncontrolled fashion. Prefer a centralized map/world scale seam.
+**Pond landmark**
 
-#### Alternative approach: world camera zoom and dedicated UI camera
+- coherent shoreline and water treatment;
+- lilies, reeds, rocks, and visual depth;
+- strong navigation anchor and future story value.
 
-Only use this if it materially reduces risk and is cleanly supported by the current architecture. If used:
+**Practice Slime meadow**
 
-- Keep world coordinates in legacy space.
-- Render the world through a 2× camera zoom.
-- Render HUD and fixed UI through a separate unzoomed UI camera at 960 × 640.
-- Explicitly assign world objects and UI objects to their respective cameras.
-- Prove input mapping, pointer coordinates, camera follow, interaction distances, and Playwright coordinates remain correct.
+- distinct training-space identity;
+- clear creature contrast;
+- readable health, impact, reward, and optional-learning presentation.
 
-Do not use a single zoomed camera for both world and HUD if that causes edge positioning or hitbox errors.
+**Crop area**
 
-### 3. Convert HUD and touch controls
+- clear tilled-soil and crop-row language;
+- crop and sprout interactions embedded naturally;
+- enough open space for touch and effects.
 
-- Rebuild fixed UI layout for 960 × 640 using named layout constants.
-- Keep physical touch targets large enough on iPad.
-- ACTION target should remain at least roughly 88–110 CSS pixels across after FIT scaling.
-- Dynamic joystick must remain lower-left and must not cover objective text or world actors.
-- Preserve portrait guidance.
-- Preserve screen-safe margins.
+**Wildbloom discoveries**
 
-### 4. Update visual tests
+- each secret tied to a unique environmental feature;
+- revealed landmarks feel native to the environment kit;
+- sensing/tracking routes remain readable.
 
-Existing tests that click fixed canvas coordinates must be updated through a shared coordinate helper. Do not leave each test hardcoded independently.
+#### Density model
 
-Create or update a helper similar to:
+- **navigation lanes:** low clutter;
+- **activity areas:** moderate authored detail;
+- **borders and landmarks:** high visual density;
+- **touch-critical zones:** deliberate negative space.
 
-```ts
-clickGame(page, gameX, gameY)
-```
+Do not fill every eligible tile.
 
-It must derive click positions from `GAME_WIDTH` and `GAME_HEIGHT` rather than assuming 480 × 320.
+### Phase C — Character and creature perspective rebuild
 
-### 5. Resolution acceptance criteria
+Production characters must follow:
 
-- Same gameplay progression before and after.
-- Same visible world coverage within a small intentional tolerance.
-- No clipped HUD.
-- No broken touch targets.
-- No changed save schema.
-- No changed curriculum logic.
-- No changed quest logic.
-- No interaction-radius regressions.
-- No blurry fractional internal asset scaling where avoidable.
-- Both profiles fully playable.
-- Full CI green.
+[`../visual-targets/CHARACTER_PERSPECTIVE_LOCK_V1.md`](../visual-targets/CHARACTER_PERSPECTIVE_LOCK_V1.md)
 
-## Required screenshots
+Expected scope:
 
-- 480 × 320 baseline next to 960 × 640 migrated screen.
-- Mage and Ranger farm entry.
-- Opening scene.
-- Stats panel.
-- Prompt panel.
-- Landscape iPad-sized browser viewport.
+1. bounded four-direction perspective proof;
+2. production Mage base family;
+3. production Ranger Explorer base family;
+4. production Mira;
+5. core NPC families;
+6. Practice Slime and other creatures requiring projection correction;
+7. base timing/pivot freeze;
+8. armor, clothing, weapon, and accessory production only after the bases pass.
 
-## PR title
+The current direct-to-camera down facings are transitional. Do not build large armor libraries against bases already scheduled for replacement.
 
-```text
-Migrate Eldoria to a 960×640 internal canvas
-```
+### Phase D — Reusable fantasy UI
 
----
+Create one coherent UI system for:
 
-# Phase 2 — Environment Art Pipeline and Production Farm Kit v1
+- title/profile selection;
+- objective and guidance presentation;
+- dialogue and read-aloud state;
+- prompts and answer choices;
+- Stats & Mastery;
+- rewards, gold, keepsakes, and discoveries;
+- ACTION, mute/settings, and contextual hints;
+- quest and interaction markers.
 
-## Goal
+Requirements:
 
-Replace the development-grid look with a cohesive production environment kit that matches the approved reference’s visual language.
+- reusable nine-slice or scalable components;
+- world remains visible;
+- Grade 2 text remains large, sparse, and readable;
+- Grade 5 presentation can carry richer information without feeling like schoolwork;
+- all touch targets meet the supported iPad viewport policy;
+- visual skin stays separate from interaction authority.
 
-## Do not redesign gameplay in this phase
+### Phase E — Atmosphere, motion, and juice
 
-This phase is visual and map-composition work. Existing interactions, quests, discoveries, collisions, and traversal routes must continue working.
+Add depth only after art and composition are stable.
 
-## Required art kit
+Preferred effects:
 
-Create or acquire through the approved asset-generation pipeline:
+- upper-left contact shadows;
+- soft ambient color grade;
+- controlled edge framing;
+- pond shimmer;
+- selected foliage movement;
+- localized magical light;
+- short arrival, reveal, reward, and impact bursts;
+- small camera response for strong events only;
+- environmental audio identities when approved production audio exists.
 
-### Terrain
+Restrictions:
 
-- 3–5 grass base tiles with subtle value/hue variation.
-- 6–10 grass scatter overlays.
-- Dirt-path center tiles.
-- Horizontal and vertical path edges.
-- Inner and outer corners.
-- Narrow and wide path transitions.
-- Grass-to-dirt blend tiles.
-- Tilled-soil center and edge tiles.
-- Optional packed-earth or meadow variant for the Practice Slime area.
+- no permanent particle spam;
+- no glow on every object;
+- no heavy full-screen shader dependency without profiling;
+- no animation that competes with navigation, text, or comfort;
+- reduced-motion behavior remains supported.
 
-### Water and shoreline
+### Phase F — Three-map visual cohesion
 
-- Pond water base frames.
-- Shoreline edges and corners.
-- Water-to-grass transitions.
-- Lily pads.
-- Small water flowers.
-- Shore rocks.
-- Reeds and edge plants.
-- One subtle looping shimmer or water animation.
+After the Farm establishes the production grammar, extend it to Wildbloom Woods and Eldoria Village.
 
-### Vegetation
+Each location should share the world's projection and material logic while retaining a distinct identity.
 
-- At least three tree silhouettes.
-- Bush clusters in multiple sizes.
-- Flower clusters in several palettes.
-- Weeds and fern-like plants.
-- Small stones and medium rocks.
-- Fallen branch/log option.
-- Fence posts, rails, corners, gates, and broken variants.
+**Wildbloom Woods**
 
-### Props
+- deeper canopy and mystery;
+- tracking/sensing landmarks;
+- ancient natural-magic accents;
+- stronger shadow, flora, and route silhouettes;
+- reasons to revisit after discoveries.
 
-- Farm signpost.
-- Small crate/barrel or gardening prop family.
-- Crop-row visual kit.
-- One magical environmental prop family compatible with Wildbloom reveals.
+**Eldoria Village**
 
-## Art direction
+- readable streets, buildings, entrances, signs, and social spaces;
+- warm windows and community landmarks;
+- NPC identity and services;
+- visible consequences of completed quests;
+- visual contrast from Farm and Woods without changing camera or asset rules.
 
-- Family-friendly fantasy.
-- Rich but readable.
-- Painterly pixel-art feel, not flat vector shapes.
-- Warm sunlight from upper-left.
-- Consistent outline and shadow language.
-- No photorealism.
-- No excessive micro-detail that disappears at gameplay size.
-- Actors must remain more visually salient than terrain.
-- Avoid obvious repeated tile stamps.
+Do not add another major zone merely to increase map count before these three feel complete and connected.
 
-## Asset pipeline requirements
+### Phase G — Physical iPad and child evidence
 
-- Use the existing manifest-driven normalization pipeline.
-- Add or update target specs before generating final runtime files.
-- Keep source art separate from normalized runtime art.
-- Validate dimensions, alpha, color-key cleanup, pivots, and naming.
-- Record provenance and attribution.
-- Do not commit temporary generated junk or unused variants.
-- Build contact sheets for asset review before map integration.
+Browser automation and emulation are required regression surfaces but do not certify the final experience.
 
-## Visual acceptance gate before map integration
+Physical iPad checks include:
 
-Do not integrate the full kit until a review contact sheet proves:
+- load and offline behavior;
+- canvas fit, centering, safe area, and orientation;
+- joystick and ACTION comfort;
+- accidental taps and browser interference;
+- text fit and read-aloud balance;
+- touch latency and frame pacing;
+- memory/thermal stability over a normal session;
+- terrain, character, and UI sharpness;
+- both profile paths and all three maps.
 
-- tiles share one palette;
-- path transitions join cleanly;
-- shoreline corners work;
-- tree silhouettes are consistent;
-- scatter overlays do not look like stickers;
-- props match the same perspective;
-- assets remain readable at final runtime size.
+Child evidence should observe:
 
-## PR title
+- first-minute comprehension;
+- remembered characters and landmarks;
+- voluntary continuation;
+- near-term goal understanding;
+- confusion, friction, or adult-coaching needs;
+- whether permanent progress feels meaningful.
 
-```text
-Add the production farm environment kit v1
-```
+Do not claim child validation from adult inspection or automation.
 
 ---
 
-# Phase 3 — Recompose the Farm Map
+## 5. Perspective and sprite acceptance
 
-## Goal
+All new character, NPC, creature, armor, and weapon work must pass the perspective lock before integration.
 
-Use the production environment kit to rebuild the existing farm into a deliberate, attractive, readable adventure space.
+Minimum evidence:
 
-## Composition target
-
-The opening farm view should communicate:
-
-- a welcoming magical farm;
-- a clear player arrival point;
-- an obvious path to Mira;
-- depth created by trees, pond, fences, and foliage;
-- natural terrain variation rather than a tile grid;
-- room for touch controls without obscuring critical actors;
-- memorable landmarks that make navigation possible without heavy reading.
-
-## Required landmarks
-
-### Arrival glade
-
-- Open readable ground around the player.
-- Arrival magic integrated into grass and path.
-- No clutter directly under the hero.
-- Clear sightline toward Mira.
-
-### Mira path area
-
-- Mira positioned beside an authored path, sign, flower cluster, or fence feature.
-- Quest marker complements rather than replaces the character.
-- Enough negative space for interaction text and effects.
-
-### Pond landmark
-
-- Pond in the northwest or another compositionally strong location.
-- Rocks, lilies, reeds, and shoreline transitions.
-- Used as a navigation anchor and future story location.
-
-### Practice Slime meadow
-
-- Distinct soft meadow or training patch.
-- Creature remains visible against background.
-- Health pips and effects remain readable.
-
-### Crop area
-
-- Recognizable tilled soil and crop rows.
-- Better integration of crop-bonus and sleepy-sprout interactions.
-- Avoid marker-like floating objects.
-
-### Wildbloom discoveries
-
-- Each secret placed near a unique environmental feature.
-- Root-Star near roots/tree landmark.
-- Moonwell near water/stone landmark.
-- Foxfire near meadow/log/flower landmark.
-- Revealed landmarks must look native to the environment kit.
-
-## Technical constraints
-
-- Preserve stable interaction IDs.
-- Preserve quest target semantics.
-- Preserve collision reachability.
-- Preserve save-loaded player positions or safely clamp them to valid nearby ground.
-- Avoid changing save schema.
-- Update map tests and reachability checks.
-- Do not hide interactive targets behind decoration.
-
-## Visual-density rule
-
-Use a three-tier density model:
-
-- **Navigation lanes:** low clutter.
-- **Activity areas:** moderate detail.
-- **Borders and landmarks:** high foliage/prop density.
-
-Do not fill every tile with decoration.
-
-## PR title
-
-```text
-Recompose the farm with production environment art
-```
+- four-direction contact sheet;
+- exact runtime sheet and enlarged nearest-neighbour preview;
+- baseline/pivot overlay;
+- bright Farm screenshot;
+- darker Woods screenshot;
+- apparent-height and identity comparison;
+- idle/walk or required action timing review;
+- no per-direction camera change;
+- no direct-frontal downward facing;
+- no pure-profile side facing;
+- no armor/customization work before base geometry freezes.
 
 ---
 
-# Phase 4 — Production Character and NPC Pass
+## 6. Reference-alignment scorecard
 
-## Priority order
+A visual milestone is not complete merely because assets exist or tests pass.
 
-1. Mira.
-2. Ranger Explorer.
-3. Mage refinement if needed.
-4. Sleepy Sprouts and crop interaction actors.
-5. Wildbloom landmarks.
-6. Practice Slime integration details.
+Review the exact in-game result against these questions:
 
-## Mira requirements
+### Composition
 
-- Dedicated production sprite.
-- Four-direction idle minimum.
-- Simple talk/wave animation if feasible.
-- Same perspective and lighting as the heroes.
-- Quest marker floats above a real character, not a code-drawn silhouette.
-- Clear silhouette at iPad gameplay scale.
+- Is the first screen intentionally framed?
+- Are paths and landmarks understandable without labels?
+- Is important negative space preserved?
+- Do high-density areas support rather than obscure play?
 
-## Ranger requirements
+### Depth
 
-- Replace bridge overlay with dedicated `char_ranger_boy_base` production sheets.
-- Four-direction idle and walk minimum.
-- Action/shot animation.
-- Bow and quiver must be baked consistently into the sprite design.
-- Preserve the internal `grade5-adventurer` profile ID.
-- Keep collision and gameplay logic unchanged.
+- Are ground, Decor, structure, canopy, actors, and atmosphere visibly layered?
+- Does the scene avoid both flatness and uniform clutter?
+- Do borders frame the space without creating corridors everywhere?
 
-## Mage requirements
+### Cohesion
 
-- Preserve existing approved identity.
-- Upscale/re-author through the pipeline rather than applying blurry runtime scaling.
-- Ensure cast effects originate from consistent hand/staff anchors.
+- Do materials share palette, light, outline, and perspective?
+- Do characters belong to the same camera as the landscape?
+- Do buildings, props, and vegetation feel produced for one game?
 
-## Animation and anchoring
+### Kid readability
 
-- Define bottom-center anchors.
-- Keep feet aligned across frames.
-- Avoid visible sprite jumping.
-- Maintain collision-body independence from decorative sprite height.
-- Add subtle contact shadows.
+- Is the next useful action visible?
+- Are actors and interactables more salient than terrain?
+- Are touch-critical areas uncluttered?
+- Can both profiles understand guidance at their intended reading level?
 
-## PR strategy
+### Delight and memory
 
-Do not combine all characters into one massive PR if assets are not ready. Mira and Ranger may be separate PRs.
+- Is there a visible curiosity or magical promise?
+- Can the location be recognized from a screenshot?
+- Is at least one landmark or character memorable?
+- Does completing an objective produce a satisfying visible response?
+
+Material failures require correction even when CI is green.
 
 ---
 
-# Phase 5 — UI Skin and Typography Pass
+## 7. Evidence requirements by change type
 
-## Goal
+Use the smallest evidence set that proves the change, following `VISUAL_EVIDENCE_RETENTION_POLICY.md`.
 
-Replace prototype-like panels with a reusable ornamental fantasy UI system that echoes the approved reference without copying it.
+- source-only asset: exact runtime output, enlarged preview, type-specific audit;
+- terrain: one cell, 3×3 repeat, large-field repeat, transition context;
+- scatter family: family contact sheet plus in-game density proof before integration;
+- character family: four-direction/state contact sheet, pivots, runtime backgrounds;
+- map composition: same-camera before/after, both profiles where relevant, iPad-like viewport;
+- UI: state matrix, touch dimensions, long/short text, both profiles;
+- atmosphere: before/after plus reduced-motion and performance evidence.
 
-## Required reusable assets/components
-
-- Nine-slice top status bar.
-- Nine-slice objective panel.
-- Nine-slice bottom hint panel.
-- Profile crest frame.
-- Stats button frame.
-- Mute/settings button frame.
-- Large ACTION button frame.
-- Quest marker.
-- Gold/coin icon.
-- Keepsake slot frame.
-- Prompt panel frame.
-
-## UI architecture
-
-- Centralize skin assets and dimensions.
-- Use nine-slice or reusable scalable components.
-- Do not embed a different bespoke frame in every scene.
-- Preserve current input hitboxes or explicitly update tests.
-- Separate visual skin from interaction logic.
-
-## Typography
-
-- Use a readable fantasy display face only for large headings if licensing is safe.
-- Use a highly readable UI/body face for instructions and Grade 2 content.
-- Ensure Grade 2 text remains large and sparse.
-- Avoid all-caps for long sentences.
-- Maintain strong contrast and text strokes/shadows where necessary.
-
-## HUD reduction
-
-- Keep the world visible.
-- Avoid oversized permanent bars.
-- Objective panel may collapse or shorten after the player understands the task.
-- Bottom hint should appear contextually and fade when unnecessary.
-- Do not remove essential accessibility guidance.
-
-## ACTION button
-
-- Retain a large, obvious lower-right target.
-- Use a more ornate, tactile fantasy frame.
-- Include clear pressed/disabled states.
-- Preserve reliable iPad touch behaviour.
+Temporary galleries remain artifacts or attachments. Commit only durable evidence needed to reproduce the final decision.
 
 ---
 
-# Phase 6 — Lighting, Atmosphere, and Juice
+## 8. Technical constraints
 
-## Goal
-
-Add final depth only after production art and composition are stable.
-
-## Approved effects
-
-- Upper-left directional contact shadows.
-- Soft ambient color grade.
-- Controlled edge vignette.
-- Pond shimmer.
-- Selected flower/grass sway.
-- Magic illumination near active spell impacts.
-- Quest-marker glow.
-- Short arrival/reveal bursts.
-- Small camera shake for strong impacts only.
-
-## Restrictions
-
-- No full-screen heavy shader stack without profiling.
-- No permanent particle spam.
-- No glow on every object.
-- No animation that competes with navigation or reading.
-- Respect photosensitivity and comfort.
-
-## Phaser lighting
-
-The repository notes indicate Phaser 4’s `PointLight` is available. Use it only for localized effects such as spell impacts, magical props, windows, or torches. Do not convert the entire game to an expensive dynamic-lighting pipeline in one pass.
+- Preserve stable interaction IDs and quest targets.
+- Preserve collision reachability and exits.
+- Preserve or safely clamp loaded positions when map geometry changes.
+- Keep gameplay authority out of presentation-only systems.
+- Use deterministic generation and regeneration gates for committed surfaces.
+- Avoid fractional/filtering blur where exact pixel presentation is intended.
+- Keep production assets separate from source and review-only evidence.
+- Use original/generated art with recorded provenance.
+- Follow the current merge and independent-review policy in `AGENTS.md`.
 
 ---
 
-# Phase 7 — iPad Quality and Performance Certification
+## 9. Definition of visual transformation complete
 
-## Required real-device checks
+The visual program is complete enough for the first family release when:
 
-Test at least one actual iPad in landscape Safari.
-
-Verify:
-
-- load time;
-- canvas fit and centering;
-- orientation message;
-- ACTION button size;
-- joystick comfort;
-- accidental double taps;
-- text fit;
-- audio/read-aloud balance;
-- touch latency;
-- frame pacing;
-- memory stability after 10–15 minutes;
-- no browser zoom/selection/scroll interference;
-- no clipped safe-area content;
-- no blurry or shimmering terrain transitions;
-- both Mage and Ranger paths;
-- opening, Mira, slime, Wildbloom, prompt, Stats panel.
-
-## Performance instrumentation
-
-Add a development-only lightweight performance overlay or logging seam that can report:
-
-- average FPS;
-- low-percentile frame time if practical;
-- active texture count;
-- active game-object count;
-- particle/effect count during bursts;
-- canvas and display dimensions;
-- renderer type;
-- device pixel ratio.
-
-Do not expose this in production UI.
-
-## Fallback policy
-
-If the actual iPad cannot sustain acceptable performance at 960 × 640:
-
-1. reduce particle counts;
-2. remove unnecessary full-screen alpha layers;
-3. atlas textures;
-4. cache static map layers;
-5. reduce animated foliage density;
-6. cap localized lights;
-7. only then consider a lower fallback resolution.
-
-Do not immediately revert to 480 × 320.
-
-A possible fallback is 768 × 512, but only after profiling demonstrates that optimization cannot make 960 × 640 acceptable.
-
----
-
-# Testing Matrix
-
-## Profiles
-
-- Grade 2 Mage fresh profile.
-- Grade 2 Mage returning save.
-- Grade 5 Ranger fresh profile.
-- Grade 5 Ranger returning save.
-
-## Viewports
-
-- 960 × 640 direct desktop capture.
-- 1024 × 768 browser viewport.
-- Modern iPad-like landscape viewport.
-- Narrow landscape viewport.
-- Portrait orientation warning.
-
-## Gameplay states
-
-- Title.
-- Waking Gate start.
-- Waking Gate first hit.
-- Waking Gate completion.
-- Farm arrival.
-- Mira interaction.
-- Crop bonus.
-- Practice Slime before/impact/completion/prompt.
-- Sleepy Sprouts.
-- Wildbloom sensing/ability/reveal/completion.
-- Stats panel.
-- Save/reload.
-
-## Visual regression checks
-
-- No clipped panels.
-- No floating markers without actors or world anchors.
-- No obvious tile seams.
-- No repeated scatter pattern visible at first glance.
-- No interaction labels hidden behind foliage.
-- No effects rendering beneath terrain incorrectly.
-- No character feet floating above ground.
-- No world props covering touch controls.
-
----
-
-# Pull Request Sequence
-
-Use this order unless a discovered blocker justifies a documented change:
-
-1. `Baseline visual audit and screenshot lock`
-2. `Migrate Eldoria to a 960×640 internal canvas`
-3. `Add the production farm environment kit v1`
-4. `Recompose the farm with production environment art`
-5. `Add production Mira art`
-6. `Replace the Ranger bridge with production sprites`
-7. `Apply the production fantasy UI skin`
-8. `Add restrained farm lighting and atmosphere`
-9. `Certify the beautified build on iPad Safari`
-
-Do not combine phases 2–8 into one PR.
-
----
-
-# Definition of Beautification Complete
-
-The beautification milestone is complete when:
-
-- The farm no longer reads as a development grid.
-- The first screen has intentional composition and memorable landmarks.
-- Paths and terrain blend naturally.
-- Water, trees, foliage, rocks, and props share one coherent style.
-- Mira and Ranger use production sprites.
-- Mage, Ranger, Mira, and Slime share scale, perspective, lighting, and grounding.
-- Wildbloom reveals look embedded in the world.
-- UI uses one reusable fantasy skin.
-- The game remains fully playable on iPad Safari.
-- Both profiles remain distinct and accessible.
-- All existing quests, curriculum, saves, rewards, and bonus-only rules remain correct.
-- CI and visual-playtest evidence are green for every merged PR.
-- No claim of child validation is made until the children actually play it.
-
----
-
-# First Claude Code Command
-
-Begin with Phase 0 and Phase 1 only.
-
-```text
-You are working in Galashots/eldoria-v2.
-
-Execute the first two stages of docs/beautification/ELDORIA_BEAUTIFICATION_EXECUTION_PLAN.md, but keep them as separate PRs:
-
-1. Baseline visual audit and screenshot lock.
-2. Canvas resolution migration from 480×320 to 960×640.
-
-Read all required files listed in the plan before changing code. Audit the recent Claude-generated visual research and PR #64 changes already on main. Do not duplicate or undo them.
-
-For the canvas migration, preserve the existing 3:2 aspect ratio, visible world coverage, gameplay timing, touch behaviour, stable interaction IDs, saves, quests, curriculum, and both profiles. Centralize the 2× scaling strategy rather than scattering arbitrary coordinate edits. Update Playwright coordinate helpers so tests derive from the configured game dimensions. Keep pixelArt, roundPixels, FIT, and CENTER_BOTH. Do not add a devicePixelRatio renderer multiplier in this PR.
-
-Run the full CI suite and capture reviewable screenshots for both profiles at the opening, farm entry, slime encounter, Wildbloom interaction, prompt panel, and Stats panel. Include an iPad-like viewport. Open each phase as its own PR and do not merge until green and visually inspected.
-```
+- the Farm no longer reads as a development grid;
+- all three maps share one elevated visual grammar and retain distinct identities;
+- first screens have authored composition and memorable landmarks;
+- ground transitions, Decor, vegetation, structures, and atmosphere work as layers;
+- Mage, Ranger Explorer, Mira, core NPCs, and creatures share the environment's projection;
+- current direct-frontal bridge facings are replaced where required;
+- base character families are frozen before armor/customization expansion;
+- Wildbloom discoveries appear embedded in the world;
+- UI uses one readable fantasy system;
+- iPad Safari behavior is physically verified;
+- both profiles remain distinct, accessible, and fully playable;
+- quests, curriculum, saves, rewards, and bonus-only learning remain correct;
+- children demonstrate remembered goals, landmarks, or characters and voluntary return;
+- remaining limitations are recorded honestly rather than hidden by a “beautification complete” label.
