@@ -57,3 +57,23 @@ export const sscale = (factor: number): number => factor * GAME_SCALE;
  * ever changes (same rule LEGACY_GAME_WIDTH/HEIGHT document above).
  */
 export const fpx = (legacySize: number): string => `${legacySize * GAME_SCALE}px`;
+
+/**
+ * Touch-target floor for fixed on-screen controls, in CSS px — the
+ * conventional minimum comfortable target for child players on tablets
+ * (see docs/VISUAL_ASSET_CONTRACT.md "large touch targets").
+ */
+export const MIN_TOUCH_TARGET_CSS_PX = 44;
+
+/**
+ * Reference viewport for converting internal canvas px to on-screen CSS px:
+ * iPad Pro 11" landscape (1194×834), the same profile the iPad-emulation
+ * harness uses. The 960×640 canvas (aspect 1.5) is wider than that viewport
+ * (≈1.43), so Scale.FIT there is width-limited — hence 1194/960 ≈ 1.244.
+ */
+export const REFERENCE_VIEWPORT_WIDTH = 1194;
+export const REFERENCE_VIEWPORT_HEIGHT = 834;
+export const REFERENCE_FIT_SCALE = Math.min(
+  REFERENCE_VIEWPORT_WIDTH / GAME_WIDTH,
+  REFERENCE_VIEWPORT_HEIGHT / GAME_HEIGHT
+);

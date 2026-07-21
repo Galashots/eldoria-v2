@@ -48,7 +48,11 @@ function loadRealMapSummaries(): Partial<Record<string, TiledMapSummary>> {
         .map((obj) => ({
           targetMap: obj.properties?.find((p) => p.name === 'targetMap')?.value,
           targetSpawn: obj.properties?.find((p) => p.name === 'targetSpawn')?.value
-        }))
+        })),
+      interactionIds: objects
+        .filter((obj) => obj.type === 'npc' || obj.type === 'bonus' || obj.type === 'enemy')
+        .map((obj) => obj.properties?.find((p) => p.name === 'interactionId')?.value)
+        .filter((value) => value !== undefined)
     };
   }
   return summaries;
@@ -126,7 +130,8 @@ describe('validateMapRegistry violations', () => {
     const summary: TiledMapSummary = {
       width: 30, height: 20, tilewidth: 32,
       tilesets: def.tilesets.map((tileset) => ({ name: tileset.tiledName })),
-      exits: []
+      exits: [],
+      interactionIds: []
     };
     expect(() => validateMapRegistry({ farm: def }, { farm: summary })).toThrow(/outside world bounds/);
   });
@@ -153,7 +158,8 @@ describe('validateMapRegistry violations', () => {
     const summary: TiledMapSummary = {
       width: 30, height: 20, tilewidth: 32,
       tilesets: [{ name: 'something-else' }],
-      exits: []
+      exits: [],
+      interactionIds: []
     };
     expect(() => validateMapRegistry({ farm: def }, { farm: summary })).toThrow(/missing from its JSON/);
   });
@@ -162,7 +168,8 @@ describe('validateMapRegistry violations', () => {
     const def = validDef();
     const base = {
       width: 30, height: 20, tilewidth: 32,
-      tilesets: def.tilesets.map((tileset) => ({ name: tileset.tiledName }))
+      tilesets: def.tilesets.map((tileset) => ({ name: tileset.tiledName })),
+      interactionIds: [] as unknown[]
     };
     expect(() => validateMapRegistry(
       { farm: def },
@@ -172,5 +179,27 @@ describe('validateMapRegistry violations', () => {
       { farm: def },
       { farm: { ...base, exits: [{ targetMap: 'farm', targetSpawn: 'nope' }] } }
     )).toThrow(/unknown spawn/);
+  });
+
+  it('rejects an unregistered interactionId declared on a map object', () => {
+    const def = validDef();
+    const summary: TiledMapSummary = {
+      width: 30, height: 20, tilewidth: 32,
+      tilesets: def.tilesets.map((tileset) => ({ name: tileset.tiledName })),
+      exits: [],
+      interactionIds: ['mira', 'mria'] // second entry is a transposition typo
+    };
+    expect(() => validateMapRegistry({ farm: def }, { farm: summary })).toThrow(/unknown interactionId/);
+  });
+
+  it('accepts registered interactionIds and targets that omit the property', () => {
+    const def = validDef();
+    const summary: TiledMapSummary = {
+      width: 30, height: 20, tilewidth: 32,
+      tilesets: def.tilesets.map((tileset) => ({ name: tileset.tiledName })),
+      exits: [],
+      interactionIds: ['mira', 'crop-bonus', 'generic-bonus']
+    };
+    expect(() => validateMapRegistry({ farm: def }, { farm: summary })).not.toThrow();
   });
 });
