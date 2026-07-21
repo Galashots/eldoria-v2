@@ -2,8 +2,6 @@
 
 Read and follow [`AGENTS.md`](AGENTS.md) first.
 
-For multi-model role allocation, coordination, review separation, and evidence rules, also read
-[`docs/MULTI_MODEL_OPERATING_GUIDE.md`](docs/MULTI_MODEL_OPERATING_GUIDE.md).
+Use [`docs/README.md`](docs/README.md) to load only the authoritative documents required for the current task.
 
-Repository-specific authoritative documents remain indexed by
-[`docs/README.md`](docs/README.md).
+Read [`docs/MULTI_MODEL_OPERATING_GUIDE.md`](docs/MULTI_MODEL_OPERATING_GUIDE.md) when the work involves cross-provider coordination, branch ownership, independent review, governance, protected paths, or delegated merging. Routine single-branch implementation does not require loading the full coordination guide after `AGENTS.md` and the task-specific authorities are understood.
