@@ -102,7 +102,7 @@ Completed execution plans should identify themselves as historical. Do not re-ru
 ## Updating documentation
 
 - Update `CURRENT_STATE.md` only for material capability, milestone, next-step, or risk changes.
-- Update `CHATGPT_CHANGELOG.md` for meaningful repository changes and keep entries concise.
+- Update `CHATGPT_CHANGELOG.md` for meaningful repository changes and keep entries concise; archive older entries into `docs/changelog/` when the live file exceeds 25 entries or a major milestone lands, whichever comes first.
 - Update `ELDORIA_MASTER_PLAN.md` only when stable product or strategic direction changes.
 - Update durable contracts only when a durable rule changes.
 - Keep current branches, exact heads, “next asset,” and temporary milestone snapshots out of durable contracts.

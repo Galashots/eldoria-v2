@@ -237,4 +237,33 @@ function baseTarget(overrides = {}) {
   fs.rmSync(root, { recursive: true, force: true });
 }
 
+{
+  // productionClass (derive-over-generate policy, PR #123 adjudication):
+  // optional; when present it must be exactly one of the three declared
+  // production classes. Absent means unclassified legacy and stays valid.
+  const palette = basePalette();
+  for (const productionClass of ['anchor', 'derived', 'procedural']) {
+    assert.deepEqual(
+      validateTargetPaletteFamiliesDocument(baseTarget({ productionClass }), palette),
+      [],
+      `productionClass ${productionClass} must pass`
+    );
+  }
+  assert.deepEqual(
+    validateTargetPaletteFamiliesDocument(baseTarget(), palette),
+    [],
+    'absent productionClass remains valid (unclassified legacy default)'
+  );
+  const unknown = validateTargetPaletteFamiliesDocument(baseTarget({ productionClass: 'generated' }), palette);
+  assert.ok(
+    unknown.some((error) => error.includes('productionClass must equal one of anchor, derived, procedural')),
+    `expected an invalid productionClass to fail, got: ${unknown.join('; ')}`
+  );
+  const nonString = validateTargetPaletteFamiliesDocument(baseTarget({ productionClass: ['anchor'] }), palette);
+  assert.ok(
+    nonString.some((error) => error.includes('productionClass must equal one of anchor, derived, procedural')),
+    `expected a non-string productionClass to fail, got: ${nonString.join('; ')}`
+  );
+}
+
 console.log('Visual target validation test passed.');

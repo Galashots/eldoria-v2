@@ -71,7 +71,7 @@ Examples: trees, large bushes, landmark rocks, reeds, fences, gates, signposts, 
 
 ## Strategic production order
 
-The order below expresses dependencies, not current completion status.
+The order below expresses dependencies, not current completion status. Each target's `productionClass` (anchor / derived / procedural) and the recipe-level approval gate are defined in [`CLOSED_LOOP_ASSET_GENERATION_WORKFLOW.md`](CLOSED_LOOP_ASSET_GENERATION_WORKFLOW.md#production-classes-derive-over-generate).
 
 ### Batch A — style and geometry anchors
 
@@ -79,23 +79,23 @@ Approve representative grass, dirt, water, tree, fence, rock, and Wildbloom land
 
 ### Batch B — variation and scatter
 
-Produce the grass base variants and the configured grass-scatter family. Review the scatter assets as one family before runtime wiring.
+Produce the grass base variants and the configured grass-scatter family — the first derived-family pilot under the production-class policy. The scatter family is gated as **anchor** because `tuft_a`, `flower_a`, and `pebble_a` are independently approved anchors; only `tuft_b` may be produced as a deterministic derived sibling of `tuft_a`. Flowers and pebbles are never derived from grass texture. Review the scatter assets as one family before runtime wiring.
 
 ### Batch C — terrain families
 
-Complete required dirt, shoreline, water, and tilled-soil families using approved centre materials and deterministic composition where practical. Author all declared edge/corner topologies and verify adjacency.
+Complete required dirt, shoreline, water, and tilled-soil families using approved centre materials and deterministic composition where practical. Tilled soil requires an approved authored furrow/groove mask or anchor before it may be classified derived. Author all declared edge/corner topologies and verify adjacency.
 
 ### Batch D — vegetation and water detail
 
-Produce bushes, flowers, weeds, logs, reeds, lilies, shore rocks, and related Decor layers. Preserve navigation hierarchy and keep the ground plane quiet.
+Produce bushes, flowers, weeds, logs, reeds, lilies, shore rocks, and related Decor layers. Lilies and water flowers require their own approved anchor silhouettes before any variant derivation. Preserve navigation hierarchy and keep the ground plane quiet.
 
 ### Batch E — Farm structures, props, and crops
 
-Produce complete fence/gate/sign families, crop states, gardening props, buildings, entrances, and landmark-supporting objects. Modular families must prove connection behavior and lighting without relying on invalid mirroring.
+Produce complete fence/gate/sign families, crop states, gardening props, buildings, entrances, and landmark-supporting objects. Modular families must prove connection behavior and lighting without relying on invalid mirroring. Structures and fences are sequenced **after** the character perspective trial so camera and scale language are validated together. Each crop's sprout and harvest identities are anchors; intermediate growth stages may be derived only through a recipe that preserves a believable progression and passes the complete-family visual gate.
 
 ### Batch F — magical-landmark and family cohesion
 
-Complete Wildbloom landmark states and review the full environment contact sheet for scale, palette, projection, light, material cohesion, density, and child readability.
+Complete Wildbloom landmark states and review the full environment contact sheet for scale, palette, projection, light, material cohesion, density, and child readability. Water shimmer, foliage sway, light dapples, and glow are **procedural** class — runtime presentation judged in-game with reduced-motion and performance evidence, not generated source-art families.
 
 ## Audit and advancement gates
 

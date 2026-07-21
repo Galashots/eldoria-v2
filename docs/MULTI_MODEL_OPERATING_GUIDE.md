@@ -115,6 +115,8 @@ Material overlapping work uses one visible coordination surface:
 
 Do not coordinate material decisions through private side channels or uncommitted local notes.
 
+When a material disagreement or consequential decision needs a dedicated venue, run it as a **council**: one GitHub issue with a named chair, declared rounds and speaking order, a visible decision log, and an explicit closure naming the deciding authority and execution owner. Councils are for material architecture, overlapping-PR reconciliation, unresolved consequential disagreement, player-experience conflicts, and save/deployment/privacy/scope decisions — not routine work.
+
 Parallel sessions must declare:
 
 - provider/session;

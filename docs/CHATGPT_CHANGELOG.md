@@ -4,6 +4,14 @@ This file keeps recent, high-value change summaries. Detailed historical entries
 
 Each entry should state the actual author, branch or PR, concise scope, verification, compatibility, and remaining risk. Implementation narratives belong in PR descriptions, commits, and audit records.
 
+## 2026-07-21 — Derive-over-generate production classes + governance follow-ups
+
+- Author/branch: Kimi K3 (repo agent), `kimi/production-classes-policy`. Implements ChatGPT's APPROVE-WITH-AMENDMENTS adjudication of the derive-over-generate proposal (PR #123 comment), all nine amendments encoded; plus the three follow-ups accepted from Kimi's #123 review.
+- Scope: (1) three production classes (`anchor` / `derived` / `procedural`) with classification rules and the recipe-level approval gate added to `CLOSED_LOOP_ASSET_GENERATION_WORKFLOW.md` — derived families get one committed tested recipe, locked input hashes, full machine validation, hard-case audit, full-family contact sheet, one family-level verdict, machine-generated report; (2) `productionClass` added to the visual-target validator (optional; `anchor|derived|procedural`; absent = unclassified legacy, still valid) with red-first tests, and the `tile_farm_grass_scatter` pilot target classified `anchor` (tuft_a/flower_a/pebble_a anchors; only tuft_b derivable, per adjudication); (3) Farm handoff Batch B–F order corrected around derivation (furrow-mask requirement for tilled soil, lily/flower anchors, structures after the perspective trial, shimmer/sway/dapples/glow as procedural); (4) concise council-format rule restored in `MULTI_MODEL_OPERATING_GUIDE.md` §5; (5) changelog archival cadence (25 entries or major milestone) in `AGENTS.md` + `docs/README.md`; (6) `CURRENT_STATE.md` refreshed post-#123 (new verified main, next work = scatter pilot + parallel perspective trial + scatter wiring).
+- Verification: red-first validator tests failed pre-implementation (`expected an invalid productionClass to fail, got: `), green after; `test:visual-targets`, `test:asset-pipeline`, `test:terrain-blend`, `test:unit` 231/231 all green; `npm run check` green on the committed head (generated-surfaces diff gate clean — the gate diffs the modified target JSON against HEAD, so it only passes post-commit).
+- Compatibility: docs, validator tooling, and one optional target-metadata field. No runtime, map, save, curriculum, quest, dependency, workflow, or asset-pixel change; existing 37 targets validate unchanged.
+- Remaining risk: classification of the remaining legacy targets happens as they enter production batches; the derived-family efficiency claim is measured after the scatter pilot, not promised.
+
 ## 2026-07-21 — Product master plan, guidance compaction, and character perspective lock
 
 - Author/branch: ChatGPT, `chatgpt/eldoria-master-plan-v2`, PR #123.
