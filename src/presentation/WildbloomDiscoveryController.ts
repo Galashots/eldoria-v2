@@ -24,7 +24,9 @@ type WildbloomSpotDefinition = {
   rune: 'star' | 'waves' | 'flame';
 };
 
-const WILDBLOOM_SPOTS: readonly WildbloomSpotDefinition[] = [
+// Exported for the decor-scatter exclusion derivation (issue #120, Q7):
+// positions are static constants even though visibility is save-dependent.
+export const WILDBLOOM_SPOTS: readonly WildbloomSpotDefinition[] = [
   {
     id: 'root-star',
     name: 'Root-Star Sigil',
