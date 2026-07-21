@@ -4,6 +4,14 @@ This file keeps recent, high-value change summaries. Full historical entries thr
 
 Entries should remain concise: date/author, branch or PR, scope, compatibility impact, verification, and remaining risk. Detailed implementation narratives belong in the PR description and commits.
 
+## 2026-07-21 — Docs repair: CURRENT_STATE terrain-integration contradiction
+
+- Author/branch: Claude Code (repo agent, Local Council executor), `claude/docs-current-state-terrain-repair`. Docs-only.
+- Scope: `docs/CURRENT_STATE.md` simultaneously claimed the 24 dirt-blend/shoreline transition cells were integrated into the farm Ground layer (true, per merged PR #114) *and*, in five other places, that the proof map "uses centre only" / that transitions were "deliberately absent" / that a next step was to "keep the transition families out of the proof map" (all stale, now false). Reconciled every statement to the merged reality: transition cells are integrated Farm-only via the pure `resolveTransitionCell` neighborhood resolver, with only the final Wangset-aware/Tiled-native authoring pass still deferred.
+- Compatibility: documentation only — no code, asset, save, or behavior change; gives restacking PRs a self-consistent `main` to target.
+- Verification: no-code diff; `grep` confirms no residual "centre only / not integrated / absent until / out of the proof map" terrain contradictions remain.
+- Remaining risk: none material; the final terrain-composition pass is tracked in "Immediate next steps".
+
 ## 2026-07-21 — Farm terrain transitions from the approved blend families
 
 - Author/branch: Claude Code (repo agent), `claude/farm-terrain-transitions`. User-authorized bounded relaxation of the "complete Batch A–F kit before map recomposition" gate, in response to the owner's Stardew-caliber visual reference: the farm path and pond now meet the grass with the approved blended edges instead of hard tile boundaries.
