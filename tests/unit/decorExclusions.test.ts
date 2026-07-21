@@ -5,7 +5,7 @@
 import { describe, expect, it } from 'vitest';
 import farmMap from '../../public/maps/farm.json';
 import { MAP_REGISTRY } from '../../src/data/maps';
-import { WILDBLOOM_SPOTS } from '../../src/presentation/WildbloomDiscoveryController';
+import { WILDBLOOM_SPOTS } from '../../src/data/wildbloomSpots';
 import { deriveDecorEligibility } from '../../src/systems/decorExclusions';
 
 const farm = MAP_REGISTRY['farm'];
