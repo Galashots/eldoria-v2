@@ -70,6 +70,14 @@ export const MIN_TOUCH_TARGET_CSS_PX = 44;
  * iPad Pro 11" landscape (1194×834), the same profile the iPad-emulation
  * harness uses. The 960×640 canvas (aspect 1.5) is wider than that viewport
  * (≈1.43), so Scale.FIT there is width-limited — hence 1194/960 ≈ 1.244.
+ *
+ * This viewport is also the **declared minimum supported playtest viewport**
+ * (owner decision, 2026-07-21: the players use current-generation iPads). The
+ * ≥44 CSS-px touch-target gate is therefore asserted at this scale
+ * deliberately — it is the supported floor, not a favorable cherry-pick. A
+ * smaller landscape viewport (e.g. 1024×768 on older iPads) would render the
+ * same controls below 44 CSS px and would need a larger internal size; that is
+ * explicitly out of the supported set until an older device enters use.
  */
 export const REFERENCE_VIEWPORT_WIDTH = 1194;
 export const REFERENCE_VIEWPORT_HEIGHT = 834;

@@ -189,6 +189,52 @@ function applyEdgeFlood(img, bg, sourceRect) {
   return { ...img, colorType: 6, data };
 }
 
+function applyCleanup(img, cleanup) {
+  if (!cleanup) return img;
+  const data = new Uint8Array(img.data);
+  const floor = cleanup.alphaFloor ?? 0;
+  if (floor > 0) {
+    for (let i = 3; i < data.length; i += 4) if (data[i] > 0 && data[i] < floor) data[i] = 0;
+  }
+  const minPx = cleanup.minComponentPx ?? 0;
+  if (minPx > 1) {
+    // Remove 8-connected opaque components smaller than minComponentPx.
+    // Stray anti-aliasing crumbs from AI-generated sources survive alpha
+    // keying and end up scattered around the sprite after downscaling.
+    const { width, height } = img;
+    const labels = new Int32Array(width * height);
+    let next = 0;
+    const sizes = [];
+    const stack = [];
+    for (let start = 0; start < width * height; start += 1) {
+      if (labels[start] !== 0 || data[start * 4 + 3] === 0) continue;
+      next += 1;
+      let size = 0;
+      labels[start] = next;
+      stack.push(start);
+      while (stack.length) {
+        const p = stack.pop();
+        size += 1;
+        const px = p % width;
+        const py = (p - px) / width;
+        for (let dy = -1; dy <= 1; dy += 1) for (let dx = -1; dx <= 1; dx += 1) {
+          if (!dx && !dy) continue;
+          const nx = px + dx;
+          const ny = py + dy;
+          if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+          const n = ny * width + nx;
+          if (labels[n] === 0 && data[n * 4 + 3] > 0) { labels[n] = next; stack.push(n); }
+        }
+      }
+      sizes[next] = size;
+    }
+    for (let p = 0; p < width * height; p += 1) {
+      if (labels[p] !== 0 && sizes[labels[p]] < minPx) data[p * 4 + 3] = 0;
+    }
+  }
+  return { ...img, colorType: 6, data };
+}
+
 function alphaBounds(img, r) {
   let minX = Infinity, minY = Infinity, maxX = -1, maxY = -1;
   for (let y = r.y; y < r.y + r.h; y += 1) for (let x = r.x; x < r.x + r.w; x += 1) {
@@ -197,12 +243,22 @@ function alphaBounds(img, r) {
   return maxX < minX ? null : { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 };
 }
 
-function paste(src, sr, dst, destCell, cellPx, anchor, fit = 'contain') {
+function paste(src, sr, dst, destCell, cellPx, anchor, fit = 'contain', fixedScale = undefined) {
   const [cw, ch] = cellPx;
   let dw, dh;
   if (fit === 'fill') {
     dw = cw;
     dh = ch;
+  } else if (fit === 'fixed') {
+    // Explicit manifest-declared scale so every frame of a clip (and every
+    // clip of a character) renders the subject at one consistent size,
+    // instead of per-frame contain scaling that grows or shrinks the
+    // subject with its trimmed extent.
+    dw = Math.max(1, Math.round(sr.w * fixedScale));
+    dh = Math.max(1, Math.round(sr.h * fixedScale));
+    if (dw > cw || dh > ch) {
+      throw new Error(`fixed scale ${fixedScale} maps ${sr.w}x${sr.h} to ${dw}x${dh}, exceeding cell ${cw}x${ch} at destCell [${destCell}].`);
+    }
   } else {
     const scale = Math.min(cw / sr.w, ch / sr.h);
     dw = Math.max(1, Math.round(sr.w * scale));
@@ -259,6 +315,16 @@ export function collectManifestErrors(manifestPath, options = {}) {
     }
     if (s.background && !['alpha', 'color_key', 'edge_flood_color_key'].includes(s.background.mode)) out.push(err(manifestPath, `sources.${s.ref}.background.mode`, 'background.mode must be alpha, color_key, or edge_flood_color_key.'));
     if (s.grid && (!okInt(s.grid.cols) || !okInt(s.grid.rows) || img.width % s.grid.cols !== 0 || img.height % s.grid.rows !== 0)) out.push(err(manifestPath, `sources.${s.ref}.grid`, 'source dimensions must divide evenly by positive grid cols and rows.'));
+    if (s.cleanup !== undefined) {
+      if (typeof s.cleanup !== 'object' || s.cleanup === null || Array.isArray(s.cleanup)) out.push(err(manifestPath, `sources.${s.ref}.cleanup`, 'cleanup must be an object.'));
+      else {
+        if (s.cleanup.alphaFloor !== undefined && !(Number.isInteger(s.cleanup.alphaFloor) && s.cleanup.alphaFloor >= 0 && s.cleanup.alphaFloor <= 255)) out.push(err(manifestPath, `sources.${s.ref}.cleanup.alphaFloor`, 'alphaFloor must be an integer from 0 to 255.'));
+        if (s.cleanup.minComponentPx !== undefined && !okInt(s.cleanup.minComponentPx)) out.push(err(manifestPath, `sources.${s.ref}.cleanup.minComponentPx`, 'minComponentPx must be a positive integer.'));
+        const known = Object.keys(s.cleanup).filter((k) => !['alphaFloor', 'minComponentPx'].includes(k));
+        if (known.length) out.push(err(manifestPath, `sources.${s.ref}.cleanup`, `unknown cleanup keys: ${known.join(', ')}.`));
+        if (s.background?.mode === 'edge_flood_color_key') out.push(err(manifestPath, `sources.${s.ref}.cleanup`, 'cleanup is not supported with edge_flood_color_key sources (background is still opaque when cleanup runs).'));
+      }
+    }
   }
   if (!Array.isArray(m.frames) || !m.frames.length) out.push(err(manifestPath, 'frames', 'frames must be a non-empty array.'));
   const seen = new Set();
@@ -296,7 +362,9 @@ export function collectManifestErrors(manifestPath, options = {}) {
     }
     if (f.sourceRect !== undefined && (!rect(f.sourceRect) || f.sourceRect[0] + f.sourceRect[2] > img.width || f.sourceRect[1] + f.sourceRect[3] > img.height)) out.push(err(manifestPath, `${c}.sourceRect`, 'sourceRect is invalid or outside source image.'));
     if (f.trim !== undefined && !['alpha', 'none'].includes(f.trim)) out.push(err(manifestPath, `${c}.trim`, 'trim must be alpha or none.'));
-    if (f.fit !== undefined && !['contain', 'fill'].includes(f.fit)) out.push(err(manifestPath, `${c}.fit`, 'fit must be contain or fill.'));
+    if (f.fit !== undefined && !['contain', 'fill', 'fixed'].includes(f.fit)) out.push(err(manifestPath, `${c}.fit`, 'fit must be contain, fill, or fixed.'));
+    if (f.fit === 'fixed' && !(typeof f.scale === 'number' && Number.isFinite(f.scale) && f.scale > 0)) out.push(err(manifestPath, `${c}.scale`, 'fit "fixed" requires a positive finite scale.'));
+    if (f.fit !== 'fixed' && f.scale !== undefined) out.push(err(manifestPath, `${c}.scale`, 'scale is only valid with fit "fixed".'));
     if (f.anchor !== undefined && !['center', 'center_bottom', 'top_left'].includes(f.anchor)) out.push(err(manifestPath, `${c}.anchor`, 'anchor must be center, center_bottom, or top_left.'));
   }
   if (t.expectedEmptyCells !== undefined && !Array.isArray(t.expectedEmptyCells)) out.push(err(manifestPath, 'target.expectedEmptyCells', 'expectedEmptyCells must be an array.'));
@@ -341,13 +409,13 @@ export function normalizeAssetSheet(manifestPath) {
   const cache = new Map();
   for (const f of m.frames) {
     const s = f.sourceRef ? byRef.get(f.sourceRef) : { ref: f.sourcePath, path: f.sourcePath, background: f.background };
-    if (!cache.has(s.ref)) cache.set(s.ref, applyBg(readPng(path.resolve(dir, s.path)), s.background));
+    if (!cache.has(s.ref)) cache.set(s.ref, applyCleanup(applyBg(readPng(path.resolve(dir, s.path)), s.background), s.cleanup));
     const sourceImage = cache.get(s.ref);
     const sr = sourceRect(sourceImage, s, f);
     const img = applyEdgeFlood(sourceImage, s.background, sr);
     const bounds = alphaBounds(img, sr);
     if (!bounds) throw new Error(`frame ${JSON.stringify(f.destCell)} contains no non-transparent pixels.`);
-    paste(img, (f.trim ?? 'alpha') === 'none' ? sr : bounds, output, f.destCell, t.cellPx, f.anchor ?? 'center_bottom', f.fit ?? 'contain');
+    paste(img, (f.trim ?? 'alpha') === 'none' ? sr : bounds, output, f.destCell, t.cellPx, f.anchor ?? 'center_bottom', f.fit ?? 'contain', f.scale);
   }
   const op = path.resolve(dir, t.outputPath);
   writePng(op, output);

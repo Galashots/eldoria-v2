@@ -188,7 +188,10 @@ test('stats CLOSE stays hittable tapped immediately after open and after the pan
   // Open via the HUD STATS button itself (also exercises the enlarged touch
   // target), then tap CLOSE inside the pop-in settle window.
   await clickGame(page, 860, 28);
-  await expect.poll(() => statsPanelState(page), { timeout: 15000 }).toMatchObject({ open: true });
+  // Precondition: the panel is open but NOT yet settled, so the CLOSE tap below
+  // provably lands inside the pop-in window (an `{ open: true }`-only wait could
+  // let the panel finish settling first, making the mid-settle claim vacuous).
+  await expect.poll(() => statsPanelState(page), { timeout: 15000 }).toMatchObject({ open: true, settled: false });
   await clickGame(page, 480, 520);
   await expect.poll(() => statsPanelState(page), { timeout: 15000 }).toMatchObject({ open: false });
 
