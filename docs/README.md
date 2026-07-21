@@ -15,7 +15,9 @@ When documents disagree, use this order:
 
 A planning document does not prove implementation. A browser-emulated iPad viewport does not prove physical-iPad behavior. Generated concept art does not become production source art until it receives an explicit audit verdict.
 
-## Always-read entry points
+## Core entry points
+
+`AGENTS.md` is always required. Load the other entry points only when the task needs their subject matter.
 
 - [`../AGENTS.md`](../AGENTS.md) — binding product rules, workflow, evidence, merge authority, protected surfaces, and change control.
 - [`ELDORIA_MASTER_PLAN.md`](ELDORIA_MASTER_PLAN.md) — stable product mission, hero promises, healthy-return model, world-building framework, visual north star, progression, and strategic sequence.
