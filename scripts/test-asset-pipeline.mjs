@@ -293,7 +293,7 @@ fs.mkdirSync(ROOT, { recursive: true });
   });
   const badResult = validateAssetSheet(badManifest);
   assert.equal(badResult.ok, false);
-  assert.ok(badResult.errors.some((e) => e.includes('fit must be contain or fill')), 'expected fit rejection error');
+  assert.ok(badResult.errors.some((e) => e.includes('fit must be contain, fill, or fixed')), 'expected fit rejection error');
 }
 
 {
@@ -373,6 +373,128 @@ fs.mkdirSync(ROOT, { recursive: true });
   assert.deepEqual(pixel(reread, 0, 0), expectedBlocks[0]);
   assert.deepEqual(pixel(reread, scale, 0), expectedBlocks[1]);
   assert.deepEqual(pixel(reread, scale * 2, 0), expectedBlocks[2]);
+}
+
+{
+  // Source cleanup: alphaFloor removes low-alpha fringe, minComponentPx removes
+  // small stray components, and cleaned crumbs no longer inflate trim bounds.
+  const src = path.join(ROOT, 'cleanup-source.png');
+  const outClean = path.join(ROOT, 'cleanup-output.png');
+  const outDirty = path.join(ROOT, 'cleanup-dirty-output.png');
+  const cleanManifest = path.join(ROOT, 'cleanup-manifest.json');
+  const dirtyManifest = path.join(ROOT, 'cleanup-dirty-manifest.json');
+  const sheet = image(64, 64);
+  rect(sheet, 22, 30, 20, 20, [40, 90, 200, 255]);          // body (400px component)
+  rect(sheet, 2, 2, 3, 3, [200, 30, 30, 255]);              // stray crumb (9px < 30)
+  rect(sheet, 50, 4, 2, 2, [90, 90, 90, 40]);               // low-alpha fringe blob
+  writePng(src, sheet);
+  const base = (out, cleanup) => ({
+    version: 1,
+    id: 'test_cleanup_sheet',
+    target: { outputPath: out, cellPx: [32, 32], cols: 1, rows: 1 },
+    sources: { sheet: { path: src, background: { mode: 'alpha' }, ...(cleanup ? { cleanup } : {}) } },
+    frames: [{ sourceRef: 'sheet', destCell: [0, 0], trim: 'alpha', fit: 'contain', anchor: 'center_bottom' }]
+  });
+  writeJson(dirtyManifest, base(outDirty, null));
+  normalizeAssetSheet(dirtyManifest);
+  const dirty = readPng(outDirty);
+  assert.equal(hasOpaqueColor(dirty, [200, 30, 30]), true, 'without cleanup the stray crumb must survive (fixture can fail)');
+  writeJson(cleanManifest, base(outClean, { alphaFloor: 64, minComponentPx: 30 }));
+  normalizeAssetSheet(cleanManifest);
+  requireOk(validateAssetSheet(cleanManifest));
+  const clean = readPng(outClean);
+  assert.equal(hasOpaqueColor(clean, [200, 30, 30]), false, 'minComponentPx must remove the stray crumb');
+  assert.equal(hasOpaqueColor(clean, [40, 90, 200]), true, 'the body must survive cleanup');
+  for (let i = 3; i < clean.data.length; i += 4) assert.ok(clean.data[i] === 0 || clean.data[i] >= 64, 'alphaFloor must zero low-alpha pixels');
+  // With crumbs gone, the trim bounds are the 20x20 body alone: contain scales it
+  // to fill the 32x32 cell. With crumbs kept, the body occupies less of the cell.
+  const bodyWidth = (img) => {
+    let minX = Infinity, maxX = -1;
+    for (let y = 0; y < 32; y += 1) for (let x = 0; x < 32; x += 1) {
+      const a = img.data[(y * img.width + x) * 4 + 3];
+      const i = (y * img.width + x) * 4;
+      if (a > 0 && img.data[i] === 40) { minX = Math.min(minX, x); maxX = Math.max(maxX, x); }
+    }
+    return maxX - minX + 1;
+  };
+  assert.equal(bodyWidth(clean), 32, 'cleaned trim bounds must equal the body alone');
+  assert.ok(bodyWidth(dirty) < 32, 'crumb-inflated trim bounds must shrink the body');
+}
+
+{
+  // fit "fixed": an explicit scale renders trimmed content at a deterministic
+  // size regardless of each frame's trim extent, anchored center_bottom.
+  const src = path.join(ROOT, 'fixed-source.png');
+  const out = path.join(ROOT, 'fixed-output.png');
+  const manifest = path.join(ROOT, 'fixed-manifest.json');
+  const sheet = image(128, 64);
+  rect(sheet, 4, 24, 20, 40, [40, 90, 200, 255]);           // frame 0: 20x40 body
+  rect(sheet, 68, 4, 20, 40, [40, 200, 90, 255]);           // frame 1: same body size...
+  rect(sheet, 92, 4, 4, 60, [180, 180, 40, 255]);           // ...plus a tall thin prop
+  writePng(src, sheet);
+  writeJson(manifest, {
+    version: 1,
+    id: 'test_fixed_scale_sheet',
+    target: { outputPath: out, cellPx: [32, 32], cols: 2, rows: 1 },
+    sources: { sheet: { path: src, background: { mode: 'alpha' }, grid: { cols: 2, rows: 1 } } },
+    frames: [
+      { sourceRef: 'sheet', sourceCell: [0, 0], destCell: [0, 0], trim: 'alpha', fit: 'fixed', scale: 0.5, anchor: 'center_bottom' },
+      { sourceRef: 'sheet', sourceCell: [1, 0], destCell: [1, 0], trim: 'alpha', fit: 'fixed', scale: 0.5, anchor: 'center_bottom' }
+    ]
+  });
+  normalizeAssetSheet(manifest);
+  requireOk(validateAssetSheet(manifest));
+  const png = readPng(out);
+  const bodyHeight = (cell, color) => {
+    let minY = Infinity, maxY = -1;
+    for (let y = 0; y < 32; y += 1) for (let x = 0; x < 32; x += 1) {
+      const i = ((y) * png.width + cell * 32 + x) * 4;
+      if (png.data[i + 3] > 0 && png.data[i] === color) { minY = Math.min(minY, y); maxY = Math.max(maxY, y); }
+    }
+    return maxY - minY + 1;
+  };
+  assert.equal(bodyHeight(0, 40), 20, 'frame 0 body must render at exactly scale 0.5');
+  assert.equal(bodyHeight(1, 40), 20, 'frame 1 body must render at scale 0.5 despite the taller trim (contain would shrink it)');
+}
+
+{
+  // Validation: fixed-fit and cleanup constraints are enforced, and an
+  // over-cell fixed scale fails at normalization time.
+  const src = path.join(ROOT, 'fixed-invalid-source.png');
+  const sheet = image(64, 64);
+  rect(sheet, 8, 8, 48, 48, [40, 90, 200, 255]);
+  writePng(src, sheet);
+  const bad = path.join(ROOT, 'fixed-invalid-manifest.json');
+  writeJson(bad, {
+    version: 1,
+    id: 'test_fixed_invalid_sheet',
+    target: { outputPath: path.join(ROOT, 'fixed-invalid-output.png'), cellPx: [32, 32], cols: 3, rows: 1 },
+    sources: { sheet: { path: src, background: { mode: 'edge_flood_color_key', color: '#ff00ff' }, cleanup: { alphaFloor: 300, minComponentPx: 0, mystery: 1 } } },
+    frames: [
+      { sourceRef: 'sheet', destCell: [0, 0], fit: 'fixed' },
+      { sourceRef: 'sheet', destCell: [1, 0], fit: 'contain', scale: 0.5 },
+      { sourceRef: 'sheet', destCell: [2, 0], fit: 'fixed', scale: -1 }
+    ]
+  });
+  const result = validateAssetSheet(bad);
+  assert.equal(result.ok, false);
+  const text = result.errors.join('\n');
+  assert.ok(text.includes('requires a positive finite scale'), 'missing scale must be rejected');
+  assert.ok(text.includes('only valid with fit "fixed"'), 'scale without fixed fit must be rejected');
+  assert.ok(text.includes('alphaFloor must be an integer from 0 to 255'), 'bad alphaFloor must be rejected');
+  assert.ok(text.includes('minComponentPx must be a positive integer'), 'bad minComponentPx must be rejected');
+  assert.ok(text.includes('unknown cleanup keys'), 'unknown cleanup keys must be rejected');
+  assert.ok(text.includes('not supported with edge_flood_color_key'), 'cleanup with edge flood must be rejected');
+
+  const tooBig = path.join(ROOT, 'fixed-too-big-manifest.json');
+  writeJson(tooBig, {
+    version: 1,
+    id: 'test_fixed_too_big_sheet',
+    target: { outputPath: path.join(ROOT, 'fixed-too-big-output.png'), cellPx: [16, 16], cols: 1, rows: 1 },
+    sources: { sheet: { path: src, background: { mode: 'alpha' } } },
+    frames: [{ sourceRef: 'sheet', destCell: [0, 0], trim: 'alpha', fit: 'fixed', scale: 1, anchor: 'center_bottom' }]
+  });
+  assert.throws(() => normalizeAssetSheet(tooBig), /exceeding cell/, 'an over-cell fixed scale must fail loudly');
 }
 
 console.log('Asset pipeline test passed.');
