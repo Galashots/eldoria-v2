@@ -4,6 +4,14 @@ This file keeps recent, high-value change summaries. Full historical entries thr
 
 Entries should remain concise: date/author, branch or PR, scope, compatibility impact, verification, and remaining risk. Detailed implementation narratives belong in the PR description and commits.
 
+## 2026-07-21 — Governance: multi-model operating guide v1.1 adopted into the repo
+
+- Author/branch: Claude Code (repo agent, implementer), `docs/multi-model-operating-guide-v1-1`. Docs/governance only. Source documents: ChatGPT-ratified Operating Guide v1.1 and verified research errata (three-provider review round: Claude and Kimi independent reviews → Claude consolidation → ChatGPT adjudication, all APPROVE WITH AMENDMENTS/RATIFIED).
+- Scope: adds `docs/MULTI_MODEL_OPERATING_GUIDE.md` (stable cross-provider roles, coordination-surface + session-registry rules, evidence gate, test ownership, review separation); `docs/research/2026-07-21_FRONTIER_MODEL_STACK_RESEARCH.md` + `_ERRATA.md` (dated snapshot + verified corrections and ChatGPT rulings); thin `CLAUDE.md` pointer to `AGENTS.md` (no doctrine fork); `AGENTS.md` gains a "Change control and multi-agent coordination" section and a **reconciled merge policy — merge commits only, never squash**, replacing the prior text that permitted routine squash merges (contradicted the accepted council charter); `docs/README.md` indexes the new documents.
+- Compatibility: no runtime, save, curriculum, workflow, test, asset, or dependency change.
+- Verification: docs-only diff inspected; `npm ci && npm run check` green on the exact head; no `.github/workflows/**` changes.
+- Remaining risk: none material. Protected-path enforcement hooks are a deliberate separate owner-gated follow-up PR. Owner merge pending (this governance PR is owner-merged by ChatGPT's Ruling C).
+
 ## 2026-07-18 — Offline-capable PWA service worker + iPad-fidelity emulation harness
 
 - Author/branch: Claude Code (repo agent), `chatgpt/offline-pwa-ipad-emulation` (draft PR). Implements the "offline-capable PWA + iPad-fidelity emulation" build brief. The PWA manifest + generated icons it targets already existed on `main` (PR #102); this adds the service worker and the test harness on top.

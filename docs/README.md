@@ -16,7 +16,8 @@ A planning document does not prove implementation. A browser-emulated iPad viewp
 
 ## Start here
 
-- [`../AGENTS.md`](../AGENTS.md) — durable product rules, workflow, testing, visual evidence, and merge policy.
+- [`../AGENTS.md`](../AGENTS.md) — durable product rules, workflow, testing, visual evidence, merge policy, and change control.
+- [`MULTI_MODEL_OPERATING_GUIDE.md`](MULTI_MODEL_OPERATING_GUIDE.md) — stable cross-provider role allocation, coordination, review separation, and evidence rules for ChatGPT, Claude Code, Kimi, and the human owner.
 - [`CURRENT_STATE.md`](CURRENT_STATE.md) — current playable capabilities, active milestone, near-term work, and known risks.
 - [`../README.md`](../README.md) — live-build link, controls, setup, and verification commands.
 - [`CHATGPT_CHANGELOG.md`](CHATGPT_CHANGELOG.md) — chronological record of meaningful repository changes.
@@ -69,6 +70,9 @@ Use these terms precisely:
 ## Research and reference material
 
 Research reports under `docs/research/` explain why decisions were made. They are not volatile status documents and should not be rewritten merely because implementation progresses. When later findings supersede an earlier recommendation, record the updated decision in a durable contract or current execution plan and preserve the research as historical evidence.
+
+- [`research/2026-07-21_FRONTIER_MODEL_STACK_RESEARCH.md`](research/2026-07-21_FRONTIER_MODEL_STACK_RESEARCH.md) — dated snapshot of the three-provider model/subscription landscape behind the operating guide. Non-authoritative; volatile facts (model names, prices, quotas) go stale.
+- [`research/2026-07-21_FRONTIER_MODEL_STACK_RESEARCH_ERRATA.md`](research/2026-07-21_FRONTIER_MODEL_STACK_RESEARCH_ERRATA.md) — verified corrections from the independent Claude and Kimi provider reviews and the final ChatGPT adjudication, including the ratified governance rulings.
 
 ## Updating documentation
 

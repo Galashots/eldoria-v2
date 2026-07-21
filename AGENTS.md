@@ -169,7 +169,11 @@ Do not use a hard-coded model identity. Historical entries may retain the identi
 
 ## Merge policy
 
-A routine PR may be squash-merged without another product-design review only when:
+Eldoria merges every PR with a **merge commit — never squash, never rebase-merge** (owner decision, 2026-07-21, superseding earlier guidance in this section that permitted routine squash merges). Merge commits preserve the branch's individual commits and review history, which this repository's multi-agent workflow depends on.
+
+Merge authority follows explicit owner delegation and repository policy. Governance changes, protected-path changes, and anything under `.github/workflows/**` remain owner-merged unless explicitly delegated.
+
+A routine PR may be merged without another product-design review only when:
 
 - it remains inside a previously approved objective;
 - the exact final head is green;
@@ -178,6 +182,20 @@ A routine PR may be squash-merged without another product-design review only whe
 - the final diff contains no unrelated work.
 
 Stop for user or ChatGPT review when those conditions are not met. Preserve draft status while evidence or design approval is incomplete.
+
+## Change control and multi-agent coordination
+
+Standing repository rules for multi-agent work. Cross-provider role allocation, review separation, and coordination doctrine live in [`docs/MULTI_MODEL_OPERATING_GUIDE.md`](docs/MULTI_MODEL_OPERATING_GUIDE.md); this section records only the Eldoria-specific decisions.
+
+1. **Merge commits only, never squash** (see Merge policy above).
+2. **Fresh exact-head CI** is required after every rebase, restack, conflict resolution, or repair. A green run on an earlier head is stale evidence. The named CI jobs are `build` (full smoke suite), `emulation` (iPad-fidelity checks), and `deploy` (runs only on push to `main`).
+3. **A merged branch is never reused** for follow-up work; restart the branch from the latest default branch.
+4. **Owner-gated surfaces:** `.github/workflows/**`, save schema and migrations, stable profile IDs, privacy/analytics/accounts/monetization, deployment cutovers, and secrets remain owner-gated unless explicitly delegated.
+5. **Declared minimum supported playtest viewport: 1194×834** (iPad Pro 11" landscape, owner decision 2026-07-21). Touch-target guarantees (≥44 CSS px) are asserted at this scale; smaller viewports are explicitly outside the supported set.
+6. **One coordination surface:** for material cross-agent decisions with overlapping scope, at most one coordination or council surface may be active — a named GitHub issue with a chair and decision log, never local files or side channels. Unrelated, explicitly registered work may continue in parallel.
+7. **Session registry:** parallel agent sessions declare their branch/sandbox and owned files, systems, or questions before starting. One branch has one accountable owner; ownership transfers whole and explicitly.
+8. **Environment ceilings are part of task design:** when the active environment cannot reliably run a long test/e2e suite (command timeouts, no background shell), pre-chunk it into targeted specs or delegate to CI as the authoritative long-run evidence surface.
+9. **Changelog conflicts:** concurrent branches routinely produce add/add conflicts at the top of `docs/CHATGPT_CHANGELOG.md`; the accepted resolution is keep-both (preserve both entries, newest first).
 
 ## Completion report
 
