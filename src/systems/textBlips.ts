@@ -24,6 +24,30 @@ const SILENT_BLIP_CHARS = new Set([
 
 export const DEFAULT_BLIP_THROTTLE = 2;
 
+/**
+ * Typewriter reveal pacing (ms per character). Single source of truth, imported
+ * by DialogueBox for its reveal timer. Exported here (in the Phaser-free policy
+ * module) so the cadence↔cooldown invariant below is unit-testable without
+ * pulling in the scene.
+ */
+export const TYPEWRITER_MS_PER_CHAR = 24;
+
+/**
+ * Dedicated cooldown for the `sfx-text-blip` key, deliberately *below* the
+ * minimum spacing between two emitted blips so the audible cadence equals the
+ * documented one (every `DEFAULT_BLIP_THROTTLE`-th voiced glyph).
+ *
+ * Why this exists: blips route through the scene's per-key SFX cooldown (which
+ * defaults to 90ms to stop enthusiastic tap-spam from buzzing). At throttle 2 a
+ * blip is emitted every `2 × 24 = 48ms` in a dense word, so the 90ms default
+ * would silently swallow every other one — audible ≈ every 4th glyph, not the
+ * documented 2nd. A 40ms cooldown clears the 48ms spacing (8ms margin) while
+ * still preventing true machine-gun stacking. The invariant
+ * `TEXT_BLIP_COOLDOWN_MS < DEFAULT_BLIP_THROTTLE × TYPEWRITER_MS_PER_CHAR`
+ * (40 < 48) is asserted in the tests.
+ */
+export const TEXT_BLIP_COOLDOWN_MS = 40;
+
 /** True when a glyph is voiced (eligible to blip), i.e. not a pause character. */
 export function isBlipEligible(char: string): boolean {
   return char.length > 0 && !SILENT_BLIP_CHARS.has(char);
@@ -55,4 +79,33 @@ export function computeBlipIndices(text: string, throttle: number = DEFAULT_BLIP
 export function blipShouldPlay(index: number, blipIndices: ReadonlySet<number>, lineVoiced: boolean): boolean {
   if (lineVoiced) return false;
   return blipIndices.has(index);
+}
+
+/** Fires the injected player as reveal indices land; nothing else. */
+export type BlipEmitter = {
+  onReveal(index: number): void;
+};
+
+/**
+ * Bundles the per-line blip decision so the owning presentation layer stays a
+ * thin adapter and the production path is unit-testable without Phaser.
+ *
+ * Given a line's `text`, whether it's TTS-`voiced`, and an injected `play`
+ * (which the scene routes through its cooldown + global mute), the returned
+ * emitter fires `play` exactly on the emitted indices — and only for reveals it
+ * is actually fed. That last point is what makes early completion safe: when a
+ * child taps to finish a line mid-reveal, the reveal loop simply stops calling
+ * `onReveal`, so no further blips play. No RNG, no Phaser, no audio here.
+ */
+export function createBlipEmitter(
+  text: string,
+  options: { voiced: boolean; play: () => void; throttle?: number }
+): BlipEmitter {
+  const { voiced, play, throttle = DEFAULT_BLIP_THROTTLE } = options;
+  const indices = computeBlipIndices(text, throttle);
+  return {
+    onReveal(index: number): void {
+      if (blipShouldPlay(index, indices, voiced)) play();
+    }
+  };
 }

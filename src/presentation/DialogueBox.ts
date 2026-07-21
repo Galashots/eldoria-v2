@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import type { DialogueLine } from '../data/questDefs';
 import { fpx, GAME_HEIGHT, GAME_SCALE, GAME_WIDTH, sx, sy } from '../gameDimensions';
 import type { SpeechHooks, SpeechSupport } from '../systems/speech';
-import { blipShouldPlay, computeBlipIndices } from '../systems/textBlips';
+import { createBlipEmitter, TYPEWRITER_MS_PER_CHAR, type BlipEmitter } from '../systems/textBlips';
 import { drawRoundedButton, drawRoundedPanelBackground, popInContainer } from './uiHelpers';
 
 type DialogueOptions = {
@@ -23,8 +23,6 @@ type DialogueBoxDependencies = {
 };
 
 const DIALOGUE_BOX_NAME = 'dialogue-box';
-/** Pokemon/Zelda-convention reveal pacing (~24ms per character). */
-const TYPEWRITER_MS_PER_CHAR = 24;
 
 /** Reusable, scene-owned dialogue presentation with no gameplay authority. */
 export class DialogueBox {
@@ -33,9 +31,8 @@ export class DialogueBox {
   private readonly speechHooks?: SpeechHooks;
   private readonly onSpeechUnavailable?: () => void;
   private readonly playBlip?: () => void;
-  private blipIndices: ReadonlySet<number> = new Set();
-  /** True while the current line is being TTS-voiced; suppresses blips. */
-  private lineVoiced = false;
+  /** Per-line blip sequencer; absent when blips are disabled or TTS-voiced. */
+  private blipEmitter?: BlipEmitter;
   private container?: Phaser.GameObjects.Container;
   private speakerText?: Phaser.GameObjects.Text;
   private bodyText?: Phaser.GameObjects.Text;
@@ -238,8 +235,10 @@ export class DialogueBox {
     // actually voicing this line (Mage autoRead + speech available) the blips
     // suppress and the TTS is the voice; otherwise (Ranger reader-mode, or
     // autoRead with speech unavailable) the per-char blips carry the texture.
-    this.lineVoiced = this.autoRead && this.speech.supported();
-    this.blipIndices = this.playBlip ? computeBlipIndices(line.text) : new Set();
+    const lineVoiced = this.autoRead && this.speech.supported();
+    this.blipEmitter = this.playBlip
+      ? createBlipEmitter(line.text, { voiced: lineVoiced, play: this.playBlip })
+      : undefined;
 
     this.typingFullText = line.text;
     this.typingIndex = 0;
@@ -320,9 +319,7 @@ export class DialogueBox {
    * reveal (and no blip) occurs, keeping specs deterministic.
    */
   protected onTypewriterCharacter(_char: string, index: number): void {
-    if (this.playBlip && blipShouldPlay(index, this.blipIndices, this.lineVoiced)) {
-      this.playBlip();
-    }
+    this.blipEmitter?.onReveal(index);
   }
 
   private speakCurrentLine(): void {
@@ -355,8 +352,7 @@ export class DialogueBox {
     this.lines = [];
     this.lineIndex = 0;
     this.autoRead = false;
-    this.lineVoiced = false;
-    this.blipIndices = new Set();
+    this.blipEmitter = undefined;
     callback?.();
   }
 

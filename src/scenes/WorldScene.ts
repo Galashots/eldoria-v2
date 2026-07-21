@@ -40,6 +40,7 @@ import { QuestSystem } from '../systems/QuestSystem';
 import { CURRENT_SAVE_VERSION, SaveSystem, type StarterQuestStep } from '../systems/SaveSystem';
 import { loadAudioMuted, saveAudioMuted } from '../systems/AudioPreference';
 import { createSpeechSupport } from '../systems/speech';
+import { TEXT_BLIP_COOLDOWN_MS } from '../systems/textBlips';
 import {
   resolveObjectiveGuidance,
   type ObjectiveGuidance
@@ -311,9 +312,11 @@ export class WorldScene extends Phaser.Scene {
       speech: this.speech,
       speechHooks: this.speechHooks,
       onSpeechUnavailable: () => this.showToast('Read aloud is not available here.'),
-      // Routed through playSfx so the blip key gets its own anti-buzz cooldown
-      // bucket and the global mute pref applies (Council #115 D5 conditions 1-2).
-      playBlip: () => this.playSfx('sfx-text-blip', 0.18)
+      // Routed through playSfx so the global mute pref applies (Council #115 D5
+      // conditions 1-2). Uses a dedicated sub-48ms cooldown (TEXT_BLIP_COOLDOWN_MS)
+      // so the documented every-2nd-glyph cadence is actually audible instead of
+      // being halved by the default 90ms tap-spam guard.
+      playBlip: () => this.playSfx('sfx-text-blip', 0.18, TEXT_BLIP_COOLDOWN_MS)
     });
 
     // Arriving on a map by explicit request (a transition or scripted boot)
@@ -1139,12 +1142,14 @@ export class WorldScene extends Phaser.Scene {
     return true;
   }
 
-  private playSfx(key: string, volume = 0.5): void {
+  private playSfx(key: string, volume = 0.5, cooldownMs = this.sfxCooldownMs): void {
     // A short per-key cooldown keeps enthusiastic repeated taps (a common
     // pattern for young kids) from stacking overlapping copies of the same
-    // one-shot sound into a buzz.
+    // one-shot sound into a buzz. The default (90ms) suits tap-driven SFX;
+    // callers on a faster natural cadence (the typewriter blip fires every
+    // ~48ms) pass a smaller cooldown so their intended rhythm is not swallowed.
     const now = this.time.now;
-    if ((this.lastSfxAt[key] ?? -Infinity) + this.sfxCooldownMs > now) return;
+    if ((this.lastSfxAt[key] ?? -Infinity) + cooldownMs > now) return;
     this.lastSfxAt[key] = now;
     this.sound.play(key, { volume });
   }
