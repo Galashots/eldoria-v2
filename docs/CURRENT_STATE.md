@@ -38,7 +38,7 @@ Last refreshed on 2026-07-21 after the **Batch 1 game feel & readability pass** 
 
 ### Runtime-integrated
 
-- Grade 2 Mage directional idle, walk, and cast animation sheets.
+- Grade 2 Mage directional idle, walk, cast, and hurt animation sheets, regenerated 2026-07-21 with uniform per-clip fixed scaling (one 46.7px body height across every idle/walk direction), per-sprite source rectangles, and source cleanup that removes stray-pixel residue. Awaiting ChatGPT visual re-audit of the regenerated masters.
 - Practice Slime v001 idle and encounter presentation.
 - Code-drawn or layered bridge presentation for Ranger Explorer, Mira, Wildbloom landmarks, quest markers, crop/sprout markers, shadows, projectiles, and feedback effects.
 - **Bounded terrain integration (centres + transitions):** the farm Ground layer uses approved `grass_b`/`grass_c`, `water_a`/`water_b`, and dirt-centre runtime pixels through a deterministic generated tileset, and — user-authorized on 2026-07-21 as a bounded relaxation of the complete-kit gate — all 24 approved dirt-blend and shoreline transition cells, assigned by a pure tested neighborhood resolver so the path and pond blend into the grass. Farm only; woods/village keep hard edges, and the final Wangset/Tiled-native pass remains deferred.

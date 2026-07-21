@@ -3,7 +3,10 @@
   "id": "char_mage_boy_base_cast_v001",
   "target": {
     "outputPath": "../sprites/char_mage_boy_base_cast_v001.png",
-    "cellPx": [32, 48],
+    "cellPx": [
+      32,
+      48
+    ],
     "cols": 4,
     "rows": 4
   },
@@ -12,25 +15,301 @@
       "path": "../source/generated/char_mage_boy_base_cast_v001/source_sheet.png",
       "background": {
         "mode": "alpha"
+      },
+      "cleanup": {
+        "alphaFloor": 64,
+        "minComponentPx": 30
       }
     }
   },
   "frames": [
-    { "clip": "cast_front", "sourceRef": "source_sheet", "sourceRect": [0, 0, 313, 313], "destCell": [0, 0], "trim": "alpha", "fit": "contain", "anchor": "center_bottom" },
-    { "clip": "cast_front", "sourceRef": "source_sheet", "sourceRect": [313, 0, 314, 313], "destCell": [1, 0], "trim": "alpha", "fit": "contain", "anchor": "center_bottom" },
-    { "clip": "cast_front", "sourceRef": "source_sheet", "sourceRect": [627, 0, 313, 313], "destCell": [2, 0], "trim": "alpha", "fit": "contain", "anchor": "center_bottom" },
-    { "clip": "cast_front", "sourceRef": "source_sheet", "sourceRect": [940, 0, 314, 313], "destCell": [3, 0], "trim": "alpha", "fit": "contain", "anchor": "center_bottom" },
-    { "clip": "cast_back", "sourceRef": "source_sheet", "sourceRect": [0, 313, 313, 314], "destCell": [0, 1], "trim": "alpha", "fit": "contain", "anchor": "center_bottom" },
-    { "clip": "cast_back", "sourceRef": "source_sheet", "sourceRect": [313, 313, 314, 314], "destCell": [1, 1], "trim": "alpha", "fit": "contain", "anchor": "center_bottom" },
-    { "clip": "cast_back", "sourceRef": "source_sheet", "sourceRect": [627, 313, 313, 314], "destCell": [2, 1], "trim": "alpha", "fit": "contain", "anchor": "center_bottom" },
-    { "clip": "cast_back", "sourceRef": "source_sheet", "sourceRect": [940, 313, 314, 314], "destCell": [3, 1], "trim": "alpha", "fit": "contain", "anchor": "center_bottom" },
-    { "clip": "cast_left", "sourceRef": "source_sheet", "sourceRect": [0, 627, 313, 313], "destCell": [0, 2], "trim": "alpha", "fit": "contain", "anchor": "center_bottom" },
-    { "clip": "cast_left", "sourceRef": "source_sheet", "sourceRect": [313, 627, 314, 313], "destCell": [1, 2], "trim": "alpha", "fit": "contain", "anchor": "center_bottom" },
-    { "clip": "cast_left", "sourceRef": "source_sheet", "sourceRect": [627, 627, 313, 313], "destCell": [2, 2], "trim": "alpha", "fit": "contain", "anchor": "center_bottom" },
-    { "clip": "cast_left", "sourceRef": "source_sheet", "sourceRect": [940, 627, 314, 313], "destCell": [3, 2], "trim": "alpha", "fit": "contain", "anchor": "center_bottom" },
-    { "clip": "cast_right", "sourceRef": "source_sheet", "sourceRect": [0, 940, 313, 314], "destCell": [0, 3], "trim": "alpha", "fit": "contain", "anchor": "center_bottom" },
-    { "clip": "cast_right", "sourceRef": "source_sheet", "sourceRect": [313, 940, 314, 314], "destCell": [1, 3], "trim": "alpha", "fit": "contain", "anchor": "center_bottom" },
-    { "clip": "cast_right", "sourceRef": "source_sheet", "sourceRect": [627, 940, 313, 314], "destCell": [2, 3], "trim": "alpha", "fit": "contain", "anchor": "center_bottom" },
-    { "clip": "cast_right", "sourceRef": "source_sheet", "sourceRect": [940, 940, 314, 314], "destCell": [3, 3], "trim": "alpha", "fit": "contain", "anchor": "center_bottom" }
+    {
+      "clip": "cast_front",
+      "sourceRef": "source_sheet",
+      "sourceRect": [
+        99,
+        50,
+        160,
+        259
+      ],
+      "destCell": [
+        0,
+        0
+      ],
+      "trim": "alpha",
+      "fit": "fixed",
+      "scale": 0.1675,
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "cast_front",
+      "sourceRef": "source_sheet",
+      "sourceRect": [
+        387,
+        50,
+        186,
+        259
+      ],
+      "destCell": [
+        1,
+        0
+      ],
+      "trim": "alpha",
+      "fit": "fixed",
+      "scale": 0.1675,
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "cast_front",
+      "sourceRef": "source_sheet",
+      "sourceRect": [
+        678,
+        50,
+        195,
+        259
+      ],
+      "destCell": [
+        2,
+        0
+      ],
+      "trim": "alpha",
+      "fit": "fixed",
+      "scale": 0.1675,
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "cast_front",
+      "sourceRef": "source_sheet",
+      "sourceRect": [
+        994,
+        50,
+        162,
+        259
+      ],
+      "destCell": [
+        3,
+        0
+      ],
+      "trim": "alpha",
+      "fit": "fixed",
+      "scale": 0.1675,
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "cast_back",
+      "sourceRef": "source_sheet",
+      "sourceRect": [
+        72,
+        359,
+        138,
+        246
+      ],
+      "destCell": [
+        0,
+        1
+      ],
+      "trim": "alpha",
+      "fit": "fixed",
+      "scale": 0.1818,
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "cast_back",
+      "sourceRef": "source_sheet",
+      "sourceRect": [
+        363,
+        359,
+        156,
+        247
+      ],
+      "destCell": [
+        1,
+        1
+      ],
+      "trim": "alpha",
+      "fit": "fixed",
+      "scale": 0.1818,
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "cast_back",
+      "sourceRef": "source_sheet",
+      "sourceRect": [
+        683,
+        359,
+        180,
+        247
+      ],
+      "destCell": [
+        2,
+        1
+      ],
+      "trim": "alpha",
+      "fit": "fixed",
+      "scale": 0.1818,
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "cast_back",
+      "sourceRef": "source_sheet",
+      "sourceRect": [
+        988,
+        359,
+        156,
+        246
+      ],
+      "destCell": [
+        3,
+        1
+      ],
+      "trim": "alpha",
+      "fit": "fixed",
+      "scale": 0.1818,
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "cast_left",
+      "sourceRef": "source_sheet",
+      "sourceRect": [
+        93,
+        663,
+        134,
+        245
+      ],
+      "destCell": [
+        0,
+        2
+      ],
+      "trim": "alpha",
+      "fit": "fixed",
+      "scale": 0.186,
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "cast_left",
+      "sourceRef": "source_sheet",
+      "sourceRect": [
+        364,
+        663,
+        150,
+        245
+      ],
+      "destCell": [
+        1,
+        2
+      ],
+      "trim": "alpha",
+      "fit": "fixed",
+      "scale": 0.186,
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "cast_left",
+      "sourceRef": "source_sheet",
+      "sourceRect": [
+        634,
+        663,
+        176,
+        245
+      ],
+      "destCell": [
+        2,
+        2
+      ],
+      "trim": "alpha",
+      "fit": "fixed",
+      "scale": 0.186,
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "cast_left",
+      "sourceRef": "source_sheet",
+      "sourceRect": [
+        984,
+        663,
+        130,
+        245
+      ],
+      "destCell": [
+        3,
+        2
+      ],
+      "trim": "alpha",
+      "fit": "fixed",
+      "scale": 0.186,
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "cast_right",
+      "sourceRef": "source_sheet",
+      "sourceRect": [
+        103,
+        944,
+        127,
+        247
+      ],
+      "destCell": [
+        0,
+        3
+      ],
+      "trim": "alpha",
+      "fit": "fixed",
+      "scale": 0.1767,
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "cast_right",
+      "sourceRef": "source_sheet",
+      "sourceRect": [
+        395,
+        944,
+        153,
+        247
+      ],
+      "destCell": [
+        1,
+        3
+      ],
+      "trim": "alpha",
+      "fit": "fixed",
+      "scale": 0.1767,
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "cast_right",
+      "sourceRef": "source_sheet",
+      "sourceRect": [
+        687,
+        944,
+        185,
+        247
+      ],
+      "destCell": [
+        2,
+        3
+      ],
+      "trim": "alpha",
+      "fit": "fixed",
+      "scale": 0.1767,
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "cast_right",
+      "sourceRef": "source_sheet",
+      "sourceRect": [
+        994,
+        944,
+        133,
+        247
+      ],
+      "destCell": [
+        3,
+        3
+      ],
+      "trim": "alpha",
+      "fit": "fixed",
+      "scale": 0.1767,
+      "anchor": "center_bottom"
+    }
   ]
 }
