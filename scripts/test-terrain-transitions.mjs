@@ -115,11 +115,25 @@ assert.equal(resolveTransitionCell(G({ s: true, se: true, sw: true })), 'edge_no
   assert.ok(transitionCount >= 40, `expected a substantial transition repaint, found ${transitionCount}`);
   const tileset = map.tilesets.find((entry) => entry.name === 'farm-terrain-proof');
   assert.equal(tileset.tilecount, CELLS.length, 'tileset tilecount must cover all composed cells');
-  // Sanity: every Ground gid is either a known category or an out-of-scope
-  // decor/structure gid from the placeholder tileset (never undefined).
+  // Sanity: every Ground gid is either a known terrain category or one of
+  // the placeholder tileset's out-of-scope decor/structure stand-ins
+  // (gids 4-8: fence/rock/crop tiles painted on Ground). The PR #114
+  // review caught the original `!== undefined` guard as vacuously true —
+  // categoryOf returns null for unknown gids — and tightening it exposed
+  // that Ground legitimately carries the 4-8 range, so the guard is now an
+  // explicit allowlist with negative coverage proving it can fail.
+  const knownGroundGid = (gid) => categoryOf(gid) !== null || (gid >= 4 && gid <= 8);
+  assert.equal(categoryOf(9999), null, 'an out-of-range gid must have no category');
+  assert.equal(categoryOf(4), null, 'a decor/structure placeholder gid must have no category');
+  assert.equal(knownGroundGid(9999), false, 'the allowlist must reject an unknown gid');
+  assert.throws(
+    () => { for (const gid of [gidOf('grass_b'), 9999]) assert.ok(knownGroundGid(gid), `unknown gid ${gid}`); },
+    /unknown gid 9999/,
+    'the Ground sanity guard must reject an unknown gid'
+  );
   for (const gid of ground.data) {
     assert.ok(gid > 0, 'Ground must not contain empty cells');
-    assert.ok(categoryOf(gid) !== undefined, `unknown gid ${gid}`);
+    assert.ok(knownGroundGid(gid), `unknown gid ${gid}`);
   }
 }
 
