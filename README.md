@@ -4,7 +4,7 @@ A Phaser + Vite + Tiled fantasy-learning RPG designed for Grade 2 and Grade 5 pl
 
 ## Play on iPad or in a browser
 
-[Open Realm of Eldoria v2](https://galashots.github.io/eldoria-v2/)
+[Open Realm of Eldoria v2](https://eldoria-v2.vercel.app/)
 
 On iPad, open the link in Safari and turn the device to landscape. Use Safari's Share menu and **Add to Home Screen** for a game-like launcher icon.
 
@@ -28,7 +28,7 @@ Learning may provide optional bonuses such as extra harvest, gold, combat help, 
 - TypeScript
 - Tiled JSON maps
 - Local-first browser saves
-- GitHub Pages static deployment
+- Vercel static deployment ([`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md))
 
 ## Quick start
 
@@ -59,7 +59,7 @@ Use `npm install` only when intentionally changing dependencies or the lockfile.
 - Production Grade 2 Mage and Practice Slime presentation assets
 - Ranger Explorer bridge presentation pending dedicated production sprites
 - Stats & Mastery panel with gold, keepsakes, and per-skill progress
-- GitHub Actions validation, browser smoke tests, visual-playtest artifacts, and deployment from verified `main`
+- GitHub Actions validation, browser smoke tests, and visual-playtest artifacts; Vercel deploys `main` to production and every PR to a preview URL
 
 For volatile implementation status and the active milestone, read [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md).
 

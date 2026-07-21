@@ -10,7 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pages: read
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -72,46 +71,7 @@ jobs:
             test-results/baseline-*.png
           if-no-files-found: warn
           retention-days: 14
-      - name: Configure GitHub Pages
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: actions/configure-pages@v5
-      - name: Upload GitHub Pages artifact
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: actions/upload-pages-artifact@v4
-        with:
-          path: dist
 
-  deploy:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    concurrency:
-      group: github-pages
-      cancel-in-progress: false
-    steps:
-      - name: Deploy GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-      - name: Post-deploy health check
-        run: |
-          # Lightweight smoke check that the published Pages URL
-          # (https://galashots.github.io/eldoria-v2/) is actually serving
-          # after deploy-pages reports success. A couple of retries with a
-          # short delay absorbs normal Pages propagation lag.
-          url="${{ steps.deployment.outputs.page_url }}"
-          for attempt in 1 2 3; do
-            if curl -sf --max-time 10 "$url" > /dev/null; then
-              echo "Health check passed on attempt $attempt for $url"
-              exit 0
-            fi
-            echo "Health check attempt $attempt failed for $url, retrying..."
-            sleep 5
-          done
-          echo "Health check failed after 3 attempts for $url"
-          exit 1
+# Deployment moved to Vercel (Git integration): production deploys on push to
+# main, preview deploys on every PR. See docs/DEPLOYMENT.md. This workflow is
+# now verification-only.

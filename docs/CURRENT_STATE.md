@@ -32,7 +32,7 @@ Last refreshed on 2026-07-21 after the **Batch 1 game feel & readability pass** 
 - **Adaptive difficulty** on optional learning bonuses: each skill's derived difficulty is `1 + floor(streak/3)`, capped per template. Requested context remains authoritative, and every context template is reachable at its declared floor; this avoids impossible self-unlock loops for higher-floor skills such as Grade 5 decimals. Correct streaks raise later number ranges, wrong answers ease back toward the floor, and skips do not move difficulty. Rewards and adventure progress remain ungated. See `docs/CURRICULUM_QUESTION_ENGINE.md`.
 - **PWA / Add to Home Screen**: a relative-path web app manifest and deterministic generated icons support standalone home-screen launch with Realm of Eldoria branding. No service worker or offline caching yet; physical iPad installation remains unvalidated.
 - Background music, interaction/reward/UI effects, read-aloud support, and music ducking. Shipped audio remains placeholder material pending a later licensed-art pass.
-- GitHub Pages deployment from verified `main` builds.
+- Vercel deployment: production from `main`, automatic preview URLs per PR (`docs/DEPLOYMENT.md`). GitHub Actions remains verification-only. Saves are origin-keyed, so devices that played the old GitHub Pages URL start fresh on the Vercel domain.
 
 ## Presentation and asset state
 

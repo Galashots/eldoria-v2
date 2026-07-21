@@ -4,6 +4,14 @@ This file keeps recent, high-value change summaries. Full historical entries thr
 
 Entries should remain concise: date/author, branch or PR, scope, compatibility impact, verification, and remaining risk. Detailed implementation narratives belong in the PR description and commits.
 
+## 2026-07-21 — Deployment moved from GitHub Pages to Vercel
+
+- Author/branch: Claude Code (repo agent), `claude/eldoria-v2-vercel-migration-9e7yaa`.
+- Scope: hosting/infrastructure only. Added `vercel.json` (Vite framework, `npm run build`, `dist/`) so Vercel's Git integration deploys `main` to production and every PR to a preview URL; removed the GitHub Pages configure/upload steps, `deploy` job, and post-deploy health check from `.github/workflows/ci.yml` (now verification-only); new `docs/DEPLOYMENT.md` documents the one-time Vercel project import, the Pages shutdown step, and the cutover checklist; live-build URLs in `README.md` and `docs/REAL_CHILD_PLAYTEST_GUIDE.md` now point at the expected `https://eldoria-v2.vercel.app/` (confirm after the first Vercel deploy and adjust if the assigned project URL differs); `index.html` PWA comment updated (relative hrefs are host/subpath-agnostic).
+- Verification: `npm ci` and `npm run check` exit 0 (typecheck, build, PWA manifest, generated-surface diff gate); `npm run test:unit` green. Full Playwright smoke not run locally — no runtime behavior changed; PR CI runs it on the exact head. The Vercel deployment itself cannot be verified from the repo until the owner imports the project (see `docs/DEPLOYMENT.md`).
+- Compatibility: no save schema, gameplay, curriculum, quest, profile-ID, dependency, or asset changes. **Origin change caveat:** browser saves are keyed to the page origin, so devices that played at `galashots.github.io` start fresh on the Vercel domain; the cutover should not happen mid-quest during real-child playtesting.
+- Remaining risk: production URL is unconfirmed until the Vercel project exists; GitHub Pages keeps serving the stale build until disabled in repo settings; deployed-site behavior on physical iPad Safari (including Add to Home Screen at the new origin) needs a quick re-check after cutover.
+
 ## 2026-07-21 — Batch 1: Game feel & readability pass
 
 - Author/branch: Kimi K3 (repo agent), `kimi/game-feel-batch1`.

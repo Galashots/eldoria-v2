@@ -20,6 +20,7 @@ A planning document does not prove implementation. A browser-emulated iPad viewp
 - [`CURRENT_STATE.md`](CURRENT_STATE.md) — current playable capabilities, active milestone, near-term work, and known risks.
 - [`../README.md`](../README.md) — live-build link, controls, setup, and verification commands.
 - [`CHATGPT_CHANGELOG.md`](CHATGPT_CHANGELOG.md) — chronological record of meaningful repository changes.
+- [`DEPLOYMENT.md`](DEPLOYMENT.md) — Vercel hosting, one-time project setup, and the save-data impact of the hosting move.
 
 ## Active beautification milestone
 

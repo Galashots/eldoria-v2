@@ -2,7 +2,7 @@
 
 Use this guide for one supervised 10–15 minute session per profile on an actual iPad. The live build is:
 
-https://galashots.github.io/eldoria-v2/
+https://eldoria-v2.vercel.app/
 
 Use Safari in landscape with sound enabled. Keep the session observational: introduce the game, then let the player discover controls, objectives, and interactions before offering help.
 
@@ -22,8 +22,8 @@ Do not commit names, photos, audio, video, account details, or other identifying
 
 For a clean test, clear the saved site data before choosing a profile:
 
-- iPad: remove `galashots.github.io` website data in Safari settings. Depending on iPadOS, this is under **Settings > Safari** or **Settings > Apps > Safari**, then **Advanced > Website Data**.
-- Desktop troubleshooting only: clear Local Storage for `https://galashots.github.io`.
+- iPad: remove `eldoria-v2.vercel.app` website data in Safari settings. Depending on iPadOS, this is under **Settings > Safari** or **Settings > Apps > Safari**, then **Advanced > Website Data**.
+- Desktop troubleshooting only: clear Local Storage for `https://eldoria-v2.vercel.app`.
 - Profile-only desktop reset: remove `eldoria_v2_save_grade2-mage` or `eldoria_v2_save_grade5-adventurer`.
 
 Clearing site data removes Eldoria saves on that device. Do not clear data between the reload check and confirming that progress persisted.
