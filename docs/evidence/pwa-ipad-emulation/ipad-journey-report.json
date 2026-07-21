@@ -1,0 +1,11 @@
+{
+  "note": "Representative iPad-emulation journey metrics under 4x CPU throttle. Regenerated on every CI run of `npm run test:emulation`; the live run attaches this report plus the offline-boot / journey / portrait-lock screenshots as PR artifacts. Emulated, not physically iPad-validated. Frame budgets are regression backstops calibrated to CI, not a smoothness certification.",
+  "device": "iPad Pro 11 (1194x834 CSS, DPR 2, touch, spoofed Mobile Safari UA) on Chromium",
+  "budgets": { "p50FrameMs": 65, "p95FrameMs": 80, "heapGrowthMb": 25, "coldLoadMs": 6000 },
+  "observed": {
+    "local_i7_7700": { "p50FrameMs": 33.3, "p95FrameMs": 33.4, "heapGrowthMb": 0, "coldLoadMs": 1943, "note": "~30 fps throttled cadence" },
+    "github_2core_ci": { "p50FrameMs": 49.9, "p95FrameMs": 50.1, "heapGrowthMb": 0, "coldLoadMs": 1840, "note": "~20 fps throttled cadence; identical across run + retry" }
+  },
+  "consoleErrors": [],
+  "pageErrors": []
+}

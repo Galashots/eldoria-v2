@@ -11,6 +11,7 @@
     "preview": "vite preview --host 0.0.0.0",
     "typecheck": "tsc --noEmit",
     "smoke": "playwright test",
+    "test:emulation": "playwright test --config playwright.emulation.config.ts",
     "check": "npm run validate:visual-targets && npm run typecheck && npm run build && npm run test:pwa && npm run test:generated-surfaces",
     "validate:visual-targets": "node scripts/validate-visual-targets.mjs",
     "normalize:asset": "node scripts/normalize-asset-sheet.mjs",

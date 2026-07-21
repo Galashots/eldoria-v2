@@ -81,6 +81,47 @@ jobs:
         with:
           path: dist
 
+  # Offline-PWA + iPad-emulation suites. A SEPARATE job (not extra steps in
+  # `build`) so it runs in parallel and never slows the default smoke suite:
+  # `build` uses the dev server and never builds a preview, this job builds the
+  # production bundle and drives it through `vite preview`.
+  emulation:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Get installed Playwright version
+        id: playwright-version
+        run: |
+          echo "version=$(node -e "console.log(require('./package-lock.json').packages['node_modules/@playwright/test'].version)")" >> "$GITHUB_OUTPUT"
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-browsers-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
+      - run: npx playwright install --with-deps chromium
+      - name: Run offline-PWA + iPad-emulation suites
+        run: |
+          set -o pipefail
+          npm run test:emulation 2>&1 | tee emulation-output.txt
+      - name: Upload emulation report and evidence
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: emulation-evidence-pr-${{ github.event.pull_request.number }}
+          path: |
+            emulation-output.txt
+            playwright-report/**
+            test-results/**
+          if-no-files-found: warn
+          retention-days: 14
+
   deploy:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: build
