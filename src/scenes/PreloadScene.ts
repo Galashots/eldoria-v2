@@ -55,6 +55,7 @@ export class PreloadScene extends Phaser.Scene {
     this.load.audio('sfx-reward', 'assets/audio/sfx/reward.wav');
     this.load.audio('sfx-quest-complete', 'assets/audio/sfx/quest-complete.wav');
     this.load.audio('sfx-ui-tap', 'assets/audio/sfx/ui-tap.wav');
+    this.load.audio('sfx-text-blip', 'assets/audio/sfx/text-blip.wav');
   }
 
   create(): void {
