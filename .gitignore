@@ -7,3 +7,6 @@ dist/
 playwright-report/
 test-results/
 .tmp/
+
+# Local owner-approval marker for protected-path hook (never committed)
+.owner-approval
