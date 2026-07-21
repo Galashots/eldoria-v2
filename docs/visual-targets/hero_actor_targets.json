@@ -42,7 +42,9 @@
       },
       "notes": [
         "Specification only; no art is included.",
-        "Armor and weapon overlays must match this canvas, pivot, directions, and frame timing in future PRs.",
+        "Apply docs/visual-targets/CHARACTER_PERSPECTIVE_LOCK_V1.md: front/down is elevated and foreshortened, side facings are three-quarter rather than pure profile, and every direction shares one camera pitch.",
+        "The 32x48 canvas is the perspective-proof target; use an approved CHANGE TARGET SIZE verdict rather than forcing the projection into an unsuitable canvas.",
+        "Armor and weapon overlays must match the approved base canvas, pivot, projection, directions, sockets, and frame timing in future PRs.",
         "Grade 2 readability and audio-first gameplay remain protected."
       ]
     }
