@@ -1,5 +1,24 @@
 import { describe, expect, it } from 'vitest';
-import { resolveInteractionId, getTiledProperty, interactionDisplayName } from '../../src/data/interactions';
+import { resolveInteractionId, getTiledProperty, interactionDisplayName, isInteractionId, INTERACTION_IDS } from '../../src/data/interactions';
+
+describe('isInteractionId guard', () => {
+  it('accepts every registered id', () => {
+    for (const id of INTERACTION_IDS) {
+      expect(isInteractionId(id)).toBe(true);
+    }
+  });
+
+  it('rejects mistyped, unregistered, and non-string candidates', () => {
+    expect(isInteractionId('mria')).toBe(false); // transposition typo
+    expect(isInteractionId('Mira')).toBe(false); // display name, not an id
+    expect(isInteractionId('crop_bonus')).toBe(false);
+    expect(isInteractionId('')).toBe(false);
+    expect(isInteractionId(undefined)).toBe(false);
+    expect(isInteractionId(null)).toBe(false);
+    expect(isInteractionId(42)).toBe(false);
+    expect(isInteractionId({ id: 'mira' })).toBe(false);
+  });
+});
 
 describe('resolveInteractionId fallback', () => {
   it('resolves mapped display names to stable ids', () => {

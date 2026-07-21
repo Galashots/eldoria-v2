@@ -11,7 +11,7 @@ import {
   PRACTICE_OFFER_SUFFIX,
   PRACTICE_OFFER_WINDOW_MS
 } from '../data/flavor';
-import { resolveInteractionId, getTiledProperty, interactionDisplayName, type InteractionId } from '../data/interactions';
+import { resolveInteractionId, getTiledProperty, interactionDisplayName, isInteractionId, type InteractionId } from '../data/interactions';
 import { getQuestDefinition, type DialogueLine, type QuestObjectiveTarget } from '../data/questDefs';
 import {
   getMapDefinition,
@@ -26,6 +26,7 @@ import {
 } from '../presentation/HeroPresentationController';
 import { DialogueBox } from '../presentation/DialogueBox';
 import { InteractableAffordanceController, type AffordanceVisual } from '../presentation/InteractableAffordance';
+import { HUD_CONTROL_SIZES } from '../presentation/hudControls';
 import { drawMarkerGlyph } from '../presentation/markerGlyphs';
 import {
   drawRoundedButton,
@@ -448,9 +449,17 @@ export class WorldScene extends Phaser.Scene {
       .filter((obj) => obj.type === 'npc' || obj.type === 'bonus' || obj.type === 'enemy')
       .map((obj) => {
         const label = obj.name || obj.type || 'Target';
-        const customId = getTiledProperty(obj, 'interactionId') as InteractionId | undefined;
+        const customId = getTiledProperty(obj, 'interactionId');
+        if (customId !== undefined && !isInteractionId(customId)) {
+          // A hand-authored mistake the committed-map validator rejects:
+          // degrade to the name-based fallback instead of crashing dispatch
+          // on tap (interactions.ts isInteractionId is the runtime backstop).
+          console.warn(`[WorldScene] target "${label}" has unknown interactionId ${String(customId)}; falling back to name resolution`);
+        }
         return {
-          id: customId || resolveInteractionId(label),
+          // An explicit custom interactionId wins when it is a registered
+          // id; anything else resolves by display name (generic-bonus floor).
+          id: isInteractionId(customId) ? customId : resolveInteractionId(label),
           kind: obj.type === 'enemy' ? 'combat' : obj.type === 'bonus' ? 'farm' : 'quest',
           x: (obj.x ?? 0) * GAME_SCALE,
           y: (obj.y ?? 0) * GAME_SCALE,
@@ -743,7 +752,7 @@ export class WorldScene extends Phaser.Scene {
       color: '#ffd666'
     }).setScrollFactor(0);
 
-    const statsBtn = drawRoundedButton(this, GAME_WIDTH - sx(50), sy(14), sx(56), sy(16), 0x5f3d12, 0xffd666, 10);
+    const statsBtn = drawRoundedButton(this, GAME_WIDTH - sx(50), sy(14), HUD_CONTROL_SIZES.stats.width, HUD_CONTROL_SIZES.stats.height, 0x5f3d12, 0xffd666, 10);
 
     this.add.text(GAME_WIDTH - sx(50), sy(14), 'STATS', {
       fontFamily: 'system-ui',
@@ -754,7 +763,7 @@ export class WorldScene extends Phaser.Scene {
 
     statsBtn.on('pointerdown', () => this.toggleStatsPanel());
 
-    const muteBtn = drawRoundedButton(this, GAME_WIDTH - sx(96), sy(14), sx(24), sy(16), 0x5f3d12, 0xffd666, 10);
+    const muteBtn = drawRoundedButton(this, GAME_WIDTH - sx(96), sy(14), HUD_CONTROL_SIZES.mute.width, HUD_CONTROL_SIZES.mute.height, 0x5f3d12, 0xffd666, 10);
 
     this.muteIcon = this.add.graphics()
       .setScrollFactor(0)
@@ -1137,8 +1146,17 @@ export class WorldScene extends Phaser.Scene {
       return false;
     }
 
+    const handler = this.interactionHandlers[target.id];
+    if (!handler) {
+      // Defensive: ids are validated at target creation (makeTargets) and by
+      // the committed-map unit validator, so this should never fire — but a
+      // bad id must degrade to a toast, never crash interaction handling.
+      this.showToast('Nothing to use here yet.');
+      return false;
+    }
+
     this.playSfx('sfx-interact', 0.3);
-    this.interactionHandlers[target.id](target);
+    handler(target);
     return true;
   }
 

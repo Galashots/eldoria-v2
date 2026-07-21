@@ -10,8 +10,10 @@
  * map's Tiled Objects layer (properties `targetMap`/`targetSpawn`), so the
  * map file remains the single source of truth for its own geometry. The
  * unit-test layer cross-validates that every exit in every map JSON resolves
- * against this registry.
+ * against this registry — and that every `interactionId` custom property on
+ * a map's npc/bonus/enemy objects is a registered InteractionId.
  */
+import { isInteractionId } from './interactions';
 
 export type MapId = 'farm' | 'wildbloom-woods' | 'eldoria-village';
 
@@ -163,6 +165,14 @@ export type TiledMapSummary = {
   tilewidth: number;
   tilesets: { name: string }[];
   exits: { targetMap: unknown; targetSpawn: unknown }[];
+  /**
+   * Every `interactionId` custom property declared by the map's
+   * npc/bonus/enemy objects. A target that omits the property resolves by
+   * name (always safe), so only explicitly declared ids are listed here —
+   * and each must be a registered InteractionId, because WorldScene
+   * dispatches interaction handlers by id at tap time.
+   */
+  interactionIds: unknown[];
 };
 
 /**
@@ -233,6 +243,14 @@ export function validateMapRegistry(
       if (typeof exit.targetSpawn !== 'string' || !(exit.targetSpawn in targetDef.spawns)) {
         throw new Error(
           `Map ${def.id} exit to ${targetDef.id} targets unknown spawn ${String(exit.targetSpawn)}`
+        );
+      }
+    }
+
+    for (const interactionId of summary.interactionIds) {
+      if (!isInteractionId(interactionId)) {
+        throw new Error(
+          `Map ${def.id} declares unknown interactionId ${String(interactionId)} — use a registered InteractionId or omit the property (name-based fallback)`
         );
       }
     }

@@ -10,21 +10,37 @@ import { MIRA_FIRST_ERRAND } from './quests';
  * `'generic-bonus'` fallback, which is the same "open a bonus prompt" path
  * every unnamed/future interactable already gets today.
  */
-export type InteractionId =
-  | 'mira'
-  | 'crop-bonus'
-  | 'practice-slime'
-  | 'sprout-1'
-  | 'sprout-2'
-  | 'sprout-3'
+export const INTERACTION_IDS = [
+  'mira',
+  'crop-bonus',
+  'practice-slime',
+  'sprout-1',
+  'sprout-2',
+  'sprout-3',
   // Wildbloom Woods (quest-free flavor interactables; see data/maps.ts).
-  | 'whispering-flower'
-  | 'mossy-stone'
+  'whispering-flower',
+  'mossy-stone',
   // Eldoria Village.
-  | 'baker-pell'
-  | 'village-notice-board'
-  | 'village-well'
-  | 'generic-bonus';
+  'baker-pell',
+  'village-notice-board',
+  'village-well',
+  'generic-bonus'
+] as const;
+
+export type InteractionId = (typeof INTERACTION_IDS)[number];
+
+const INTERACTION_ID_SET: ReadonlySet<string> = new Set(INTERACTION_IDS);
+
+/**
+ * Runtime guard for untrusted id candidates — a Tiled `interactionId`
+ * custom property is an arbitrary string until checked. The committed-map
+ * unit validator rejects invalid ids at authoring time (see maps.ts); this
+ * guard is the runtime backstop so a hand-authored mistake degrades to the
+ * name-based fallback instead of crashing interaction dispatch on tap.
+ */
+export function isInteractionId(candidate: unknown): candidate is InteractionId {
+  return typeof candidate === 'string' && INTERACTION_ID_SET.has(candidate);
+}
 
 const DEFAULT_INTERACTION_ID: InteractionId = 'generic-bonus';
 
