@@ -4,6 +4,14 @@ This file keeps recent, high-value change summaries. Full historical entries thr
 
 Entries should remain concise: date/author, branch or PR, scope, compatibility impact, verification, and remaining risk. Detailed implementation narratives belong in the PR description and commits.
 
+## 2026-07-21 — Farm terrain transitions from the approved blend families
+
+- Author/branch: Claude Code (repo agent), `claude/farm-terrain-transitions`. User-authorized bounded relaxation of the "complete Batch A–F kit before map recomposition" gate, in response to the owner's Stardew-caliber visual reference: the farm path and pond now meet the grass with the approved blended edges instead of hard tile boundaries.
+- Scope: `scripts/compose-terrain-proof-tileset.mjs` refactored into exported pure functions (import-safe entry guard) and extended from 5 to 29 composed cells — the 24 transition cells (12 dirt-blend + 12 shoreline) slice deterministically from the packed family sheets on `main`, whose generated cells are all APPROVED RUNTIME MASTERS. A new pure neighborhood resolver assigns edge/outer-corner/inner-corner cells to every dirt/water Ground tile touching grass (cell-name orientation verified empirically: a name locates the terrain inside the tile). No-art cases keep approved centres: dirt-vs-water seams, 1-wide necks, multi-notch diagonals, and map borders. First run repainted 72 Ground cells; re-runs repaint 0 (idempotent). Collision (own layer), Decor, objects, exits, spawns, and saves untouched.
+- Verification: new `scripts/test-terrain-transitions.mjs` (packed-sheet orientation self-check, resolver unit coverage of every neighbourhood class, synthetic-map repaint with exact-cell/border/idempotency assertions, committed farm.json consistency) wired into `npm run test:terrain-blend`; `npm run check` exit 0 (the generated-surface diff gate now regenerates and verifies the extended sheet + repainted map); `npm run test:unit` 150/150; full smoke result recorded on the PR. Browser evidence: `docs/playtests/2026-07-21-terrain-transitions/`.
+- Compatibility: no save, quest, curriculum, profile-ID, dependency, or code-runtime changes; Ground-layer gids only. Woods and village maps intentionally unchanged (farm-only bounded pass).
+- Remaining risk: transition cells embed grass_a-derived pixels beside grass_b/c field tiles (approved family composition; micro-variant seam judged acceptable at runtime scale — flag in the next visual audit); the final Wangset/Tiled-native pass remains deferred; village/woods still use hard edges.
+
 ## 2026-07-21 — Batch 1: Game feel & readability pass
 
 - Author/branch: Kimi K3 (repo agent), `kimi/game-feel-batch1`.
