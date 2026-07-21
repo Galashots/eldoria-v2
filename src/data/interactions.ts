@@ -17,6 +17,13 @@ export type InteractionId =
   | 'sprout-1'
   | 'sprout-2'
   | 'sprout-3'
+  // Wildbloom Woods (quest-free flavor interactables; see data/maps.ts).
+  | 'whispering-flower'
+  | 'mossy-stone'
+  // Eldoria Village.
+  | 'baker-pell'
+  | 'village-notice-board'
+  | 'village-well'
   | 'generic-bonus';
 
 const DEFAULT_INTERACTION_ID: InteractionId = 'generic-bonus';
@@ -29,6 +36,32 @@ const INTERACTION_ID_BY_TARGET_NAME: Readonly<Record<string, InteractionId>> = {
 
 export function resolveInteractionId(targetName: string): InteractionId {
   return INTERACTION_ID_BY_TARGET_NAME[targetName] ?? DEFAULT_INTERACTION_ID;
+}
+
+/**
+ * Kid-friendly display names for interaction targets, keyed by the stable
+ * InteractionId so the raw Tiled object names (which double as save/quest
+ * keys) never have to change. Dev-style Tiled names like "CropBonus" stay
+ * out of the player's view; undefined falls back to the target's own label
+ * (today only the 'generic-bonus' fallback, which has no canonical target).
+ */
+const INTERACTION_DISPLAY_NAME: Readonly<Record<InteractionId, string | undefined>> = {
+  mira: 'Mira',
+  'crop-bonus': 'Crop Patch',
+  'practice-slime': 'Practice Slime',
+  'sprout-1': 'Sleepy Sprout',
+  'sprout-2': 'Sleepy Sprout',
+  'sprout-3': 'Sleepy Sprout',
+  'whispering-flower': 'Whispering Flower',
+  'mossy-stone': 'Mossy Stone',
+  'baker-pell': 'Baker Pell',
+  'village-notice-board': 'Notice Board',
+  'village-well': 'Village Well',
+  'generic-bonus': undefined
+};
+
+export function interactionDisplayName(id: InteractionId, fallback: string): string {
+  return INTERACTION_DISPLAY_NAME[id] ?? fallback;
 }
 
 // Tiled's exported "custom properties" shape is genuinely polymorphic

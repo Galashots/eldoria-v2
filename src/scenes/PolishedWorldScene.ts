@@ -1,9 +1,11 @@
 import Phaser from 'phaser';
 import type { BonusContext } from '../data/curriculum';
 import type { InteractionId } from '../data/interactions';
+import type { MapId } from '../data/maps';
 import type { ProfileId } from '../data/profiles';
 import { fpx, GAME_HEIGHT, GAME_SCALE, GAME_WIDTH, sscale, sx, sy } from '../gameDimensions';
 import type { HeroPresentationController } from '../presentation/HeroPresentationController';
+import { drawMarkerGlyph } from '../presentation/markerGlyphs';
 import {
   PracticeSlimeEncounterController,
   type PracticeSlimeEncounterSnapshot
@@ -18,6 +20,8 @@ import { WorldScene } from './WorldScene';
 type PolishedSceneInitData = {
   profileId?: ProfileId;
   fromOpening?: boolean;
+  mapId?: MapId;
+  spawnId?: string;
 };
 
 type WorldSceneTarget = {
@@ -49,6 +53,7 @@ type WorldScenePresentationInternals = {
     completeSlimeInteraction: () => FarmQuestOutcome;
   };
   applyQuestOutcome: (outcome: FarmQuestOutcome, persist: boolean) => void;
+  handlePracticeSlimeDefeat: () => void;
   resetJoystick: () => void;
   updateHint: () => void;
   hintLabel: (target: WorldSceneTarget) => string;
@@ -71,6 +76,7 @@ type WorldScenePresentationInternals = {
 export class PolishedWorldScene extends WorldScene {
   private arrivedFromOpening = false;
   private playerShadow?: Phaser.GameObjects.Ellipse;
+  private slimeGroundShadow?: Phaser.GameObjects.Ellipse;
   private miraPulse?: Phaser.GameObjects.Arc;
   private presentationHint?: Phaser.GameObjects.Text;
   private presentationObjective?: Phaser.GameObjects.Text;
@@ -91,7 +97,12 @@ export class PolishedWorldScene extends WorldScene {
     this.addPlayerShadow();
     this.addInteractiveObjectShadows();
     this.addMiraGuidance();
-    this.installWildbloomDiscovery();
+    // The Wildbloom secret spots are defined at fixed farm world positions,
+    // so the discovery layer only installs on the farm map. Other maps get
+    // no controller (its optional chaining below no-ops).
+    if (this.mapId === 'farm') {
+      this.installWildbloomDiscovery();
+    }
     this.createPolishedHudText();
 
     if (this.arrivedFromOpening) {
@@ -183,6 +194,9 @@ export class PolishedWorldScene extends WorldScene {
       onComplete: () => this.openPracticeSlimePrompt(target)
     });
     this.practiceSlimeEncounter.create();
+    // While the encounter has input locked (mid-strike), the slime marker
+    // skips its proximity pop so it cannot fight the strike animation.
+    this.setAffordancePopGuard('practice-slime', () => this.practiceSlimeEncounter?.snapshot().inputLocked === false);
 
     const originalHintLabel = internals.hintLabel.bind(this);
     internals.hintLabel = (candidate) => candidate.id === 'practice-slime'
@@ -237,10 +251,17 @@ export class PolishedWorldScene extends WorldScene {
 
   private openPracticeSlimePrompt(target: WorldSceneTarget): void {
     const internals = this.presentationInternals;
+    // Defeat is permanent (2026-07 game-feel milestone): record + persist the
+    // quest flag and remove the slime from the world before the first-defeat
+    // combat prompt opens, so even an abandoned prompt leaves the defeat
+    // saved. The old prompt-close reset() made the encounter an infinite,
+    // purposeless loop; reset() is now a test-only hook.
+    internals.handlePracticeSlimeDefeat();
+    this.practiceSlimeEncounter?.retire();
+    this.slimeGroundShadow?.setVisible(false);
     internals.openBonusPrompt(target.kind, target.label, () => {
       const outcome = internals.farmQuest.completeSlimeInteraction();
       internals.applyQuestOutcome(outcome, false);
-      this.practiceSlimeEncounter?.reset();
       internals.updateHint();
       return outcome.message;
     });
@@ -334,7 +355,8 @@ export class PolishedWorldScene extends WorldScene {
 
     if (practiceSlimeSprite) {
       // Slime sprite origin is bottom-center, so its base sits at the sprite y.
-      this.add.ellipse(practiceSlimeSprite.x, practiceSlimeSprite.y - sy(1), sx(20), sx(7), 0x06110d, 0.32)
+      // Kept in a field so the defeat path can retire the shadow with the slime.
+      this.slimeGroundShadow = this.add.ellipse(practiceSlimeSprite.x, practiceSlimeSprite.y - sy(1), sx(20), sx(7), 0x06110d, 0.32)
         .setDepth(1);
     }
 
@@ -384,11 +406,7 @@ export class PolishedWorldScene extends WorldScene {
     this.miraPulse = glow;
 
     const marker = this.add.graphics().setPosition(mira.x, markerY).setScale(GAME_SCALE).setDepth(5);
-    marker.fillStyle(0xfff2ad, 1);
-    marker.fillTriangle(0, -7, 3.5, 0, 0, 7);
-    marker.fillTriangle(0, -7, -3.5, 0, 0, 7);
-    marker.fillTriangle(-7, 0, 0, -3.5, 7, 0);
-    marker.fillTriangle(-7, 0, 0, 3.5, 7, 0);
+    drawMarkerGlyph(marker, 'mira', 0xffd666);
 
     this.tweens.add({
       targets: [glow, marker],

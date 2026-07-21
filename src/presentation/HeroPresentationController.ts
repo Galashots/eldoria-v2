@@ -73,7 +73,10 @@ export const HERO_PRESENTATION_CONFIGS: Partial<Record<ProfileId, HeroPresentati
         textureKey: 'grade2-mage-walk-v001',
         animations: mageAnimations('walk'),
         framesPerDirection: 6,
-        frameRate: 8,
+        // 10 (was 8) alongside the 250 -> 350 world px/sec speed raise
+        // (MOVEMENT_TUNING.maxSpeed): stride distance per animation frame
+        // stays ~31-35 world px, so the faster hero doesn't foot-slide.
+        frameRate: 10,
         repeat: -1
       },
       action: {

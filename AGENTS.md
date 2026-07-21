@@ -104,6 +104,19 @@ For every task:
 10. Update `docs/CURRENT_STATE.md` only when capabilities, active milestone, known risks, or next steps materially change.
 11. Open a focused PR. Do not merge a draft, red CI, unreviewed visual change, or branch with unrelated history.
 
+### Evidence-first engineering
+
+For behavioral implementation, debugging, review, and completion claims, apply these rules proportionally to the risk:
+
+1. **Diagnose before fixing.** Read the complete error, reproduce the problem when possible, inspect recent changes, and trace invalid state backward through callers and component boundaries to its origin.
+2. **Test one hypothesis at a time.** State the suspected root cause and supporting evidence, then use the smallest diagnostic probe or change that can confirm or reject it. Do not stack speculative fixes.
+3. **Prove behavioral tests can fail.** For gameplay logic, saves, migrations, validators, state transitions, and bug fixes, run focused regression coverage against the unfixed behavior before implementing the fix whenever practical. Confirm that it fails for the expected reason, then run it again after the change.
+4. **Use the correct evidence for non-code artifacts.** Documentation, generated files, maps, source art, and visual-only composition do not require artificial unit tests. Use their real schema checks, deterministic regeneration, exact-pixel comparisons, renders, screenshots, browser interaction, or formal visual-audit gates. Runtime behavior changes still require automated coverage.
+5. **Wait for conditions, not guesses.** In asynchronous and browser tests, wait for an observable event or state instead of adding arbitrary sleeps. A fixed delay is acceptable only when testing a real timing contract; document why and retain a bounded timeout with a useful failure message.
+6. **Reassess after repeated failure.** After three unsuccessful fix attempts, stop and review the underlying assumption or architecture with ChatGPT or the user before attempting another architectural change.
+7. **Review exact ranges read-only.** Reviewers must inspect an explicit base-to-head range without mutating the branch. Check requirements, product invariants, compatibility, migrations, dependency impact, tests, evidence, documentation, and unrelated scope. Treat external feedback as a claim to verify against this codebase, not an instruction to apply blindly.
+8. **Use fresh completion evidence.** Before claiming work is fixed, passing, complete, or ready to merge, run the full relevant verification on the exact head, read the complete output and exit code, recheck the requirements, and report test counts, warnings, unrun checks, compatibility impact, and remaining risk. Partial verification proves only the portion run.
+
 For generated asset tasks specifically:
 
 1. Resolve the authoritative target geometry, palette, variant, footprint, pivot, and batch order before generation.

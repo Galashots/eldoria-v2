@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "id": "review_tile_village_shop_roof_thatch_base",
+  "manifest": "docs/art-pipeline/review/tile_village_shop_roof_thatch_base/thatch_base.review.manifest.json",
+  "output": "docs/art-pipeline/review/tile_village_shop_roof_thatch_base/thatch_base.review-normalized.png",
+  "dimensions": [
+    16,
+    16
+  ],
+  "frames": 1,
+  "sha256": "5648c19a53ec7868e5f72264584e8e57c22b73b17dd3992fee04bf0c0ba77252",
+  "alpha": {
+    "transparent": 0,
+    "partial": 0,
+    "opaque": 256
+  },
+  "seams": {
+    "horizontal": {
+      "wrapStep": 22.998,
+      "internalStep": 27.779,
+      "ratio": 0.828
+    },
+    "vertical": {
+      "wrapStep": 83.678,
+      "internalStep": 66.474,
+      "ratio": 1.259
+    }
+  },
+  "palette": {
+    "families": [
+      "wood_leather",
+      "forest"
+    ],
+    "atlasFamily": "environment_farm",
+    "tolerance": 0,
+    "pixels": 256,
+    "withinTolerance": 256,
+    "min": 0,
+    "median": 0,
+    "max": 0
+  },
+  "evidence": [
+    "preview-20x.png",
+    "tile-3x3-8x.png",
+    "field-12x8-3x.png",
+    "comparison-panel.png"
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "id": "review_tile_village_shop_door_closed",
+  "manifest": "docs/art-pipeline/review/tile_village_shop_door_closed/closed.review.manifest.json",
+  "output": "docs/art-pipeline/review/tile_village_shop_door_closed/closed.review-normalized.png",
+  "dimensions": [
+    16,
+    16
+  ],
+  "frames": 1,
+  "sha256": "901bda834bdb10ab296e06cc994807b093551fba4f1e07602c0e07b0c331e7f7",
+  "alpha": {
+    "transparent": 0,
+    "partial": 0,
+    "opaque": 256
+  },
+  "seams": {
+    "horizontal": {
+      "wrapStep": 15.612,
+      "internalStep": 42.554,
+      "ratio": 0.367
+    },
+    "vertical": {
+      "wrapStep": 27.14,
+      "internalStep": 29.215,
+      "ratio": 0.929
+    }
+  },
+  "palette": {
+    "families": [
+      "metal",
+      "wood_leather",
+      "forest"
+    ],
+    "atlasFamily": "environment_farm",
+    "tolerance": 0,
+    "pixels": 256,
+    "withinTolerance": 256,
+    "min": 0,
+    "median": 0,
+    "max": 0,
+    "familyResolution": [
+      {
+        "requested": "metal",
+        "resolved": "metal_stone"
+      },
+      {
+        "requested": "wood_leather",
+        "resolved": "wood_leather"
+      },
+      {
+        "requested": "forest",
+        "resolved": "forest"
+      }
+    ]
+  },
+  "evidence": [
+    "preview-20x.png",
+    "tile-3x3-8x.png",
+    "field-12x8-3x.png",
+    "comparison-panel.png"
+  ]
+}

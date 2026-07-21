@@ -1,0 +1,9 @@
+# 2026-07-19 — Playwright-only Canvas renderer
+
+- Author/branch: ChatGPT, `chatgpt/e2e-canvas-renderer` (PR #105).
+- Scope: `src/main.ts` now shallow-copies the existing `gameConfig` and changes only `type` to `Phaser.CANVAS` when `window.__ELDORIA_E2E__ === true`. Ordinary development and production boots continue to pass the unchanged configuration using `Phaser.AUTO`; this is not a production renderer change.
+- Root cause: the reload-heavy browser suite repeatedly created software WebGL contexts under Chromium/SwiftShader. The E2E-only Canvas path removes that unnecessary resource pressure while retaining production WebGL capability.
+- Regression coverage: `tests/e2e-renderer.spec.ts` pins Canvas renderer type during E2E and rejects observed `WebGL Context lost` console warnings. Existing fixed-duration movement round trips now allow one `32px` map tile of renderer-frame cadence variance while still proving the reverse input substantially cancels the forward movement; game physics and production movement are unchanged.
+- Verification: exact-head standard CI passed repository check/build, visual-target tests, asset pipeline, dirt and shoreline compositor tests, unit tests, and the full Playwright suite. A same-runner base/candidate benchmark completed green: baseline 55 tests in 224 seconds; candidate 56 tests in 194 seconds; improvement 30 seconds (13.4%); zero `WebGL Context lost` warnings in either log.
+- Compatibility: no scene, map, save, quest, curriculum, mastery, reward, dependency, asset, profile, or production-PWA behavior change. The separate offline-PWA/iPad-emulation milestone must restack additively and retain both this E2E Canvas gate and its production-only service-worker registration.
+- Remaining risk: the benchmark is one hosted-runner comparison, not a broad performance study. Physical iPad behavior is unaffected by this E2E-only path and remains separately unvalidated.

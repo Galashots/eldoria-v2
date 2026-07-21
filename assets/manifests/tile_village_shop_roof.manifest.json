@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "id": "tile_village_shop_roof",
+  "_note": "Approved source/review packed family for warm thatch roof and ridge pieces; not runtime/map integrated. Fixed 3x1 row-major order: thatch_base, thatch_moss, ridge.",
+  "target": {
+    "outputPath": "../tilesets/tile_village_shop_roof.png",
+    "cellPx": [
+      16,
+      16
+    ],
+    "cols": 3,
+    "rows": 1
+  },
+  "sources": {
+    "thatch_base": {
+      "path": "../source/generated/tile_village_shop_roof/thatch_base.png",
+      "background": {
+        "mode": "alpha"
+      }
+    },
+    "thatch_moss": {
+      "path": "../source/generated/tile_village_shop_roof/thatch_moss.png",
+      "background": {
+        "mode": "alpha"
+      }
+    },
+    "ridge": {
+      "path": "../source/generated/tile_village_shop_roof/ridge.png",
+      "background": {
+        "mode": "alpha"
+      }
+    }
+  },
+  "frames": [
+    {
+      "sourceRef": "thatch_base",
+      "destCell": [
+        0,
+        0
+      ],
+      "trim": "none",
+      "fit": "fill",
+      "anchor": "top_left"
+    },
+    {
+      "sourceRef": "thatch_moss",
+      "destCell": [
+        1,
+        0
+      ],
+      "trim": "none",
+      "fit": "fill",
+      "anchor": "top_left"
+    },
+    {
+      "sourceRef": "ridge",
+      "destCell": [
+        2,
+        0
+      ],
+      "trim": "none",
+      "fit": "fill",
+      "anchor": "top_left"
+    }
+  ]
+}

@@ -17,7 +17,7 @@
     "normalize:asset": "node scripts/normalize-asset-sheet.mjs",
     "validate:asset": "node scripts/validate-asset-sheet.mjs",
     "compose:terrain-blend": "node scripts/compose-terrain-blend-family.mjs",
-    "test:terrain-blend": "node scripts/test-terrain-blend-compositor.mjs && node scripts/test-shoreline-terrain-blend.mjs",
+    "test:terrain-blend": "node scripts/test-terrain-blend-compositor.mjs && node scripts/test-shoreline-terrain-blend.mjs && node scripts/test-terrain-transitions.mjs",
     "compose:terrain-proof": "node scripts/compose-terrain-proof-tileset.mjs",
     "test:asset-pipeline": "node scripts/test-asset-pipeline.mjs",
     "review:asset": "node scripts/review-asset.mjs",
@@ -27,7 +27,9 @@
     "test:visual-targets": "node scripts/test-visual-targets.mjs",
     "generate:pwa-icons": "node scripts/generate-pwa-icons.mjs",
     "test:pwa": "node scripts/test-pwa-manifest.mjs",
-    "test:generated-surfaces": "npm run generate:pwa-icons && npm run compose:terrain-proof && git diff --exit-code -- public/icons public/assets/tilesets/farm-terrain-proof.png public/maps/farm.json",
+    "build:village-art": "node scripts/build-village-art-top-gaps.mjs",
+    "test:village-art": "node scripts/test-village-art-top-gaps.mjs",
+    "test:generated-surfaces": "npm run generate:pwa-icons && npm run compose:terrain-proof && npm run build:village-art && npm run test:village-art && git diff --exit-code -- public/icons public/assets/tilesets/farm-terrain-proof.png public/maps/farm.json assets/source/generated/tile_village_shop_wall assets/source/generated/tile_village_shop_door assets/source/generated/tile_village_shop_roof assets/manifests/tile_village_shop_wall.manifest.json assets/manifests/tile_village_shop_door.manifest.json assets/manifests/tile_village_shop_roof.manifest.json assets/tilesets/tile_village_shop_wall.png assets/tilesets/tile_village_shop_door.png assets/tilesets/tile_village_shop_roof.png docs/art-pipeline/review/tile_village_shop_wall_stone_base docs/art-pipeline/review/tile_village_shop_wall_wood_trim docs/art-pipeline/review/tile_village_shop_wall_window_lit docs/art-pipeline/review/tile_village_shop_door_closed docs/art-pipeline/review/tile_village_shop_door_highlighted docs/art-pipeline/review/tile_village_shop_door_open_optional docs/art-pipeline/review/tile_village_shop_roof_thatch_base docs/art-pipeline/review/tile_village_shop_roof_thatch_moss docs/art-pipeline/review/tile_village_shop_roof_ridge docs/art-pipeline/review/village_top_gaps docs/visual-targets/farm_village_tile_targets.json",
     "test:unit": "vitest run"
   },
   "dependencies": {

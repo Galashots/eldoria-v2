@@ -102,6 +102,13 @@ export class PracticeSlimeEncounterController {
     return true;
   }
 
+  /**
+   * Test/e2e hook ONLY. Restores the slime and encounter to its pristine
+   * pre-defeat state. Normal play never calls this after a defeat: the
+   * 2026-07 game-feel milestone made defeat permanent (WorldScene records a
+   * persisted practiceSlimeDefeated quest flag and this controller is
+   * retire()d instead), replacing the old prompt-close reset loop.
+   */
   reset(): void {
     this.clearDelayedCalls();
     this.hitCount = 0;
@@ -113,6 +120,21 @@ export class PracticeSlimeEncounterController {
     this.pips.forEach((pip) => pip.setVisible(true).setAlpha(1).setScale(1));
     this.update();
     this.refreshPips();
+  }
+
+  /**
+   * Permanently removes the encounter's presentation after the slime's
+   * final defeat: slime sprite and health pips hidden, input unlocked,
+   * completed state kept. The interaction target and the persisted defeat
+   * flag are WorldScene's responsibility (handlePracticeSlimeDefeat).
+   */
+  retire(): void {
+    this.clearDelayedCalls();
+    this.completed = true;
+    this.bufferedStrike = false;
+    this.setLocked(false);
+    this.slime.setVisible(false);
+    this.pips.forEach((pip) => pip.setVisible(false));
   }
 
   snapshot(): PracticeSlimeEncounterSnapshot {

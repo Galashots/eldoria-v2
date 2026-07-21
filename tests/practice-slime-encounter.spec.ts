@@ -162,11 +162,25 @@ test('Mage buffers one rapid Practice Slime tap without auto-completing the enco
   expect(await hasCanvasText(page, 'READ ALOUD')).toBe(true);
   await clickGame(page, 480, 508);
   await expect.poll(async () => (await worldState(page)).questStep).toBe('return-to-mira');
+
+  // Defeat is permanent (game-feel milestone): the encounter no longer resets
+  // after the prompt closes — the slime leaves the world and its interaction
+  // target is removed.
   await expect.poll(async () => snapshot(page)).toMatchObject({
-    completed: false,
-    hitCount: 0,
-    remainingHits: 3
+    completed: true,
+    hitCount: 3,
+    remainingHits: 0
   });
+  await expect.poll(async () => page.evaluate(() => {
+    const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
+      practiceSlimeSprite?: { visible: boolean };
+      targets: Array<{ id: string }>;
+    };
+    return {
+      slimeVisible: scene.practiceSlimeSprite?.visible ?? false,
+      hasSlimeTarget: scene.targets.some((target) => target.id === 'practice-slime')
+    };
+  })).toEqual({ slimeVisible: false, hasSlimeTarget: false });
 });
 
 test('Ranger tracking shots remain reader-mode and preserve state before prompt resolution', async ({ page }) => {

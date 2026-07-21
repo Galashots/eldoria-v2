@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "sourceContract": "docs/VISUAL_ASSET_CONTRACT.md",
+  "tileSet": {
+    "id": "tiles_village_shop_roof",
+    "displayName": "Village Shop Roof Targets",
+    "status": "target_only",
+    "tileSizePx": [16, 16],
+    "atlasFamily": "environment_farm"
+  },
+  "targets": [
+    {
+      "id": "tile_village_shop_roof",
+      "displayName": "Village Shop Thatch Roof",
+      "status": "target_only",
+      "category": "tile",
+      "canvasPx": [16, 16],
+      "footprintPx": [16, 16],
+      "pivotPx": [8, 15],
+      "ppu": 16,
+      "view": "top_down",
+      "directions": [],
+      "paletteFamilies": ["wood_leather", "forest"],
+      "lightDirection": "upper_left",
+      "renderLayer": "terrain",
+      "variants": ["thatch_base", "thatch_moss", "ridge"],
+      "collision": { "solid": true, "body": [0, 0, 16, 16], "hurtbox": null, "hitboxes": [], "interaction": null },
+      "interactionKind": null,
+      "runtimeExport": "png",
+      "preferredSource": "aseprite",
+      "atlasFamily": "environment_farm",
+      "visualRule": "Warm modular thatch roof cells for the Eldoria Village shop. Base and moss variants must repeat without hard seams; ridge is a deliberate feature cell. All variants share the farm environment's upper-left light and weathered wood material language.",
+      "notes": ["Specification only; no art is included by this target document.", "No runtime behavior is added.", "Source/review approval does not authorize map or Phaser integration."]
+    }
+  ]
+}
