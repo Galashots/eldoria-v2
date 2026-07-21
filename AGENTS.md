@@ -177,6 +177,8 @@ Every meaningful change should add a concise entry to `docs/CHATGPT_CHANGELOG.md
 
 Do not use a hard-coded model identity. Historical entries may retain the identity recorded when they were created.
 
+**Archival cadence:** when the live changelog exceeds 25 entries or a major milestone lands (whichever comes first), archive older entries into `docs/changelog/` and keep the newest records in the live file. Detailed narratives always remain available in PRs and Git history.
+
 ## Merge policy
 
 Eldoria merges every PR with a **merge commit — never squash, never rebase-merge**. Merge commits preserve the branch's individual commits and review history, which this repository's multi-agent workflow depends on.

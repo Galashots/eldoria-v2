@@ -100,10 +100,12 @@
       "runtimeExport": "png",
       "preferredSource": "aseprite",
       "atlasFamily": "environment_farm",
+      "productionClass": "anchor",
       "visualRule": "Sparse, non-repeating detail scattered over tile_farm_grass_base to break up grid monotony; must remain quieter than actors and crop overlays and must not obstruct walkability or interaction reads.",
       "notes": [
         "Specification only; no art is included.",
-        "No runtime behavior is added."
+        "No runtime behavior is added.",
+        "productionClass is anchor because tuft_a, flower_a, and pebble_a are independently approved anchors; only tuft_b may be produced as a deterministic derived sibling of tuft_a (PR #123 adjudication, 2026-07-21)."
       ]
     },
     {

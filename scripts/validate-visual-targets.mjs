@@ -19,6 +19,12 @@ const targetFields = [
 ];
 const idPattern = /^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$/;
 const hexPattern = HEX_COLOR_PATTERN;
+// Derive-over-generate production classes (PR #123 adjudication): anchor =
+// genuinely new identity/silhouette/material; derived = deterministic
+// recombination of locked approved inputs; procedural = runtime presentation
+// without an independent generated source-art family. Optional per target;
+// absent means unclassified legacy and remains valid.
+const productionClasses = new Set(['anchor', 'derived', 'procedural']);
 
 function fileLabel(filePath) {
   return relative(process.cwd(), filePath).replaceAll('\\', '/');
@@ -116,6 +122,11 @@ export function validateTarget(ctx, filePath, target, index) {
   }
   if (hasOwn(target, 'atlasFamily') && (typeof target.atlasFamily !== 'string' || target.atlasFamily.length === 0)) {
     addError(ctx, filePath, targetId, 'atlasFamily must be a non-empty string');
+  }
+
+  if (hasOwn(target, 'productionClass')
+    && (typeof target.productionClass !== 'string' || !productionClasses.has(target.productionClass))) {
+    addError(ctx, filePath, targetId, 'productionClass must equal one of anchor, derived, procedural');
   }
 
   if (hasOwn(target, 'notes')) {

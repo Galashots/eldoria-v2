@@ -1,7 +1,6 @@
 # Eldoria-V2 Current State
 
-**Last verified `main`:** `c04114b03baceb7efe74690e1a4ad223b42f414d` (PR #122 merged, 2026-07-21)  
-**Active planning branch:** `chatgpt/eldoria-master-plan-v2` / PR #123  
+**Last verified `main`:** `a4f90d3509946f876410e05ca514d59ab769f1e8` (PR #123 merged, 2026-07-21)  
 **Stable product direction:** [`ELDORIA_MASTER_PLAN.md`](ELDORIA_MASTER_PLAN.md)  
 **Repository rules:** [`../AGENTS.md`](../AGENTS.md)
 
@@ -63,15 +62,17 @@ The primitive is **not scene-integrated** and causes no runtime visual change. I
 
 The active visual target is painterly, layered fantasy pixel art with an elevated three-quarter camera, authored landmarks, quiet ground, rich Decor/structure/canopy layers, coherent materials, and restrained atmosphere.
 
-PR #123 introduces:
+The governing visual authorities (merged in PR #123) are:
 
-- `docs/ELDORIA_MASTER_PLAN.md` as the stable product/world authority;
-- a current visual-transformation subplan;
-- `docs/visual-targets/CHARACTER_PERSPECTIVE_LOCK_V1.md`.
+- `docs/ELDORIA_MASTER_PLAN.md` — stable product/world authority;
+- `docs/beautification/ELDORIA_BEAUTIFICATION_EXECUTION_PLAN.md` — current visual-transformation subplan;
+- `docs/visual-targets/CHARACTER_PERSPECTIVE_LOCK_V1.md` — binding elevated three-quarter projection.
 
 The current direct-to-camera downward hero facings are transitional. Production Mage, Ranger, Mira, NPC, creature, equipment, and armor families must be rebuilt or re-authored where necessary to share the environments' elevated projection.
 
 Do not begin substantial armor or outfit production until base perspective, proportions, pivots, sockets, and clip timing are approved and frozen.
+
+Asset production now follows the **derive-over-generate production classes** (owner-adjudicated 2026-07-21, `CLOSED_LOOP_ASSET_GENERATION_WORKFLOW.md`): `anchor` (full ceremony), `derived` (recipe-level approval from locked inputs), and `procedural` (runtime presentation, judged in-game), declared per target as `productionClass`. Declared values are enum-validated by the visual-target validator; unclassified legacy targets are classified when they enter their next production batch.
 
 ## Active milestone
 
@@ -81,22 +82,20 @@ The immediate goal is to establish the missing visual layers that create the ref
 
 ### Next work
 
-1. **Complete PR #123**
-   - independent Kimi review;
-   - repair findings;
-   - fresh exact-head `build` and `emulation` CI;
-   - merge by a non-implementing provider under the new cross-model policy.
-
-2. **Approve the first grass-scatter art family**
-   - `tuft_a`, `tuft_b`, `pebble_a`, `flower_a`;
-   - exact runtime audit and family contact sheet;
+1. **Approve the first grass-scatter art family (first mixed anchor/derived recipe pilot)**
+   - the family remains anchor-gated: `tuft_a`, `flower_a`, `pebble_a` as independently approved anchors; `tuft_b` as a deterministic derived sibling of `tuft_a`;
+   - the `tuft_b` recipe is the first exercise of the derived recipe-level gate: recipe-level approval with applicable machine gates, full-family contact sheet, one family verdict;
    - no scene integration until the family passes.
 
-3. **Run the first character perspective trial**
+2. **Run the first character perspective trial** — in parallel, not gated on environment completion
    - one identity, four idle directions, neutral outfit;
    - compare same-sheet versus direction-anchored generation when practical;
    - judge exact runtime pixels on bright Farm and darker Woods backgrounds;
    - choose size/prompt strategy before commissioning complete animation families.
+
+3. **Wire the decor-scatter primitive into the Farm scene** (config-only swap once the scatter family passes)
+   - density, weighting, and invalid-config handling resolved in the wiring PR;
+   - in-game density and spacing evidence required.
 
 ## Known risks and deferred work
 

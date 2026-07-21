@@ -33,6 +33,36 @@ Then load only what is needed:
 
 Use `docs/README.md` as the router. Never infer current status from an old chat, embedded prompt, or historical snapshot.
 
+## Production classes (derive-over-generate)
+
+Evidence and ceremony scale with creative risk. Every visual target may declare `productionClass` in its target JSON (validator-enforced values; absent means unclassified legacy until the target's next production batch):
+
+- **`anchor`** — genuinely new identity, silhouette, material, anatomy, construction logic, or readable gameplay identity. Full per-asset ceremony: generation through the closed loop, source + exact-runtime audit, formal verdict, contact sheet.
+- **`derived`** — deterministic transformation or recombination of locked approved inputs (compositor recipes, palette-locked siblinging, cropping/recombination). Recipe-level approval, below.
+- **`procedural`** — runtime presentation that requires no independent generated source-art family: code-drawn effects, runtime transforms of approved art, deterministic overlays, or shaders. Judged in-game on bright and dark backgrounds with reduced-motion and performance evidence.
+
+Classification rules (owner-adjudicated, 2026-07-21):
+
+1. Classify by actual creative novelty, not broad asset category. Any target introducing a new silhouette, material, anatomy, construction logic, or readable gameplay identity is an anchor even inside a usually-derived family. A family containing any anchor variant is gated as anchor; derived siblings within it are named in the target's notes.
+2. Derived does not mean recolouring an unrelated input. A recipe may transform or recombine only suitable locked approved inputs and locked palette data; it may not invent missing subject geometry.
+3. Every family output is visually inspected in the family contact sheet. The audit *narrative* may be family-level, but no output hides behind sampling; hard cases receive enlarged individual evidence.
+4. Water decals (lilies, flowers) require their own approved anchor silhouettes; variants may be derived afterward, never from water pixels alone.
+5. Tilled soil requires an approved authored furrow/groove mask or anchor before the family may be classified derived, even when approved dirt supplies material and palette.
+6. Crop intermediate stages may be derived only when the recipe preserves a believable growth progression and passes the complete-family visual gate; each crop's sprout and harvest identities remain anchors.
+7. Expected efficiency gains are measured after the first mixed anchor/derived recipe pilot, not promised in advance.
+
+### Recipe-level approval gate (derived families)
+
+A derived family is approved once, at the recipe level:
+
+1. **Committed deterministic recipe** — seeded, tested red-first like any other deterministic tooling (precedent: `compose-terrain-blend-family.mjs`).
+2. **Locked inputs** — approved masters by SHA-256 plus the locked palette; outputs recombine only what those inputs contain.
+3. **Full applicable machine validation for every output** — each recipe declares its applicable invariants and thresholds, with non-applicable gates explicitly recorded as `N/A`. Universal for every recipe: deterministic regeneration, locked-input verification, and exact output validation. Type-specific gates are declared per asset type — for example histogram/palette preservation, border/buffer integrity, seam/adjacency, occupancy, zero-drift round trip, and frame-continuity — never a mandatory all-of-the-above list.
+4. **Representative hard-case audit** — ChatGPT audits the hardest outputs (inner corners, densest cells), not every cell individually.
+5. **One contact sheet containing every family output + one family-level verdict** — the report is machine-generated from the family report data, not hand-written per cell.
+
+ChatGPT retains visual veto over any derived output. Owner gates (art direction, palette, geometry, production order) are unchanged.
+
 ## Closed loop
 
 ### 1. Resolve the target
