@@ -4,6 +4,14 @@ This file keeps recent, high-value change summaries. Full historical entries thr
 
 Entries should remain concise: date/author, branch or PR, scope, compatibility impact, verification, and remaining risk. Detailed implementation narratives belong in the PR description and commits.
 
+## 2026-07-21 — Protected-path PreToolUse enforcement hook (owner-gated)
+
+- Author/branch: Claude Code (repo agent, local desktop session), `claude/protected-path-hooks`. Executes work-queue item (a) from the reconciliation handoff — the deliberate separate enforcement PR called out in the v1.1 adoption entry below and in guide section 11.
+- Scope: `.claude/settings.json` registers a PreToolUse hook (`Edit|Write|NotebookEdit`) running `scripts/hooks/protectedPaths.mjs` (Node, cross-platform, no dependencies). Blocks writes to `.github/workflows/**` and `src/systems/SaveSystem*` (exit 2) unless the pattern is unlocked in a gitignored `.owner-approval` marker at the repo root. Policy + marker protocol + limitations documented in `scripts/hooks/README.md`.
+- Verification: red-first — `tests/unit/protectedPaths.test.ts` (12 tests) written and failing before the module existed, then 12/12 green on Node 22. CLI boundary verified end-to-end: block=2, allow=0, marker-unlock=0, marker-scope-isolation=2, malformed-input=0 (fails open, never bricks a session).
+- Compatibility: no runtime, save, curriculum, quest, asset, or dependency change; no `.github/workflows/**` modification. Enforcement config only.
+- Remaining risk / known limitation (documented, not hidden): shell tools (`Bash`/`PowerShell`) are not intercepted — deterministic backstop for those remains branch protection, CI, and owner review. Hook is one enforcement layer per guide section 11, not the only one. Owner-merged by definition of the surface it governs.
+
 ## 2026-07-21 — Governance: multi-model operating guide v1.1 adopted into the repo
 
 - Author/branch: Claude Code (repo agent, implementer), `docs/multi-model-operating-guide-v1-1`. Docs/governance only. Source documents: ChatGPT-ratified Operating Guide v1.1 and verified research errata (three-provider review round: Claude and Kimi independent reviews → Claude consolidation → ChatGPT adjudication, all APPROVE WITH AMENDMENTS/RATIFIED).
