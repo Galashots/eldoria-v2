@@ -1,4 +1,4 @@
-import Phaser from 'phaser';
+import type Phaser from 'phaser';
 import { sx, sy } from '../gameDimensions';
 
 /**
@@ -142,19 +142,26 @@ export class InteractableAffordanceController {
         continue;
       }
 
-      const dSquared = Phaser.Math.Distance.Squared(this.player.x, this.player.y, target.x, target.y);
-      const nowInRange = dSquared < rangeSquared;
+      // Inline distance math (not Phaser.Math.Distance) keeps this module
+      // free of runtime Phaser imports, so the proximity/latch logic stays
+      // unit-testable in Node with a structural scene stub.
+      const dx = this.player.x - target.x;
+      const dy = this.player.y - target.y;
+      const nowInRange = dx * dx + dy * dy < rangeSquared;
       if (nowInRange === target.inRange) continue;
-      target.inRange = nowInRange;
 
       if (nowInRange) {
         if (target.canPop && !target.canPop()) {
-          // The target's own presentation is mid-beat (e.g. a strike squash);
-          // stay un-popped so this frame's state still counts as handled.
+          // The target's own presentation is mid-beat (e.g. a strike squash).
+          // Do NOT latch in-range: leaving it false retries the pop on later
+          // frames while the player waits in range, and if the player leaves
+          // first there is simply nothing to un-pop.
           continue;
         }
+        target.inRange = true;
         this.popIn(target);
       } else {
+        target.inRange = false;
         this.popOut(target);
       }
     }
