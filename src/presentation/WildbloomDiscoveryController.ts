@@ -3,62 +3,16 @@ import { GAME_SCALE, GAME_WIDTH, sscale, sx, sy } from '../gameDimensions';
 import type { ProfileId } from '../data/profiles';
 import { drawRoundedPanelBackground } from './uiHelpers';
 import type { HeroPresentationController } from './HeroPresentationController';
+// Spot positions/types live in the Phaser-free data module so Node-side decor
+// tooling and unit tests can read them without importing Phaser (issue #120,
+// audit Q7 — see the module header in data/wildbloomSpots.ts).
+import { WILDBLOOM_SPOTS, type WildbloomSpotDefinition, type WildbloomSpotId } from '../data/wildbloomSpots';
 
 const WILDBLOOM_SPRIG_KEY = 'wildbloomSprig';
 const SENSE_RADIUS = sx(112);
 const REVEAL_RADIUS = sx(48);
 const IMPACT_DELAY_MS = 300;
 const REVEAL_LOCK_MS = 760;
-
-export type WildbloomSpotId = 'root-star' | 'moonwell-echo' | 'foxfire-seed';
-
-type WildbloomSpotDefinition = {
-  id: WildbloomSpotId;
-  name: string;
-  inventoryKey: string;
-  x: number;
-  y: number;
-  accent: number;
-  secondary: number;
-  lore: string;
-  rune: 'star' | 'waves' | 'flame';
-};
-
-const WILDBLOOM_SPOTS: readonly WildbloomSpotDefinition[] = [
-  {
-    id: 'root-star',
-    name: 'Root-Star Sigil',
-    inventoryKey: 'wildbloomSecretRootStar',
-    x: sx(560),
-    y: sy(144),
-    accent: 0xffd666,
-    secondary: 0x8fd14f,
-    lore: 'A tiny star was carved beneath the oldest roots.',
-    rune: 'star'
-  },
-  {
-    id: 'moonwell-echo',
-    name: 'Moonwell Echo',
-    inventoryKey: 'wildbloomSecretMoonwellEcho',
-    x: sx(336),
-    y: sy(480),
-    accent: 0x9fd7ff,
-    secondary: 0x8f63ff,
-    lore: 'Silver ripples answer the Sprig from below the soil.',
-    rune: 'waves'
-  },
-  {
-    id: 'foxfire-seed',
-    name: 'Foxfire Seed',
-    inventoryKey: 'wildbloomSecretFoxfireSeed',
-    x: sx(800),
-    y: sy(464),
-    accent: 0xa9e783,
-    secondary: 0x72b95c,
-    lore: 'A sleeping green flame remembers the first garden.',
-    rune: 'flame'
-  }
-] as const;
 
 type SpotRuntime = {
   definition: WildbloomSpotDefinition;

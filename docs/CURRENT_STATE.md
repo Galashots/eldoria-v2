@@ -78,6 +78,10 @@ The farm map's Ground layer now draws grass (`grass_b`/`grass_c`), water (`water
 
 In addition to the five reviewed centre cells, all 24 approved dirt-blend and shoreline transition cells are now integrated (PR #114, user-authorized 2026-07-21 as a bounded relaxation of the complete-kit gate), assigned by a pure tested neighborhood resolver (`resolveTransitionCell` in `scripts/compose-terrain-proof-tileset.mjs`) so the path and pond blend into the surrounding grass. Farm only — woods and village keep hard edges. Collision, Decor/structure tiles, object coordinates, saves, and gameplay semantics remain unchanged. This user-approved proof is intentionally ahead of the complete-environment-kit gate; it may remain as a bounded visual upgrade, but it does not authorize broader piecemeal map integration, and the final Wangset-aware/Tiled-native authoring pass remains deferred.
 
+### Decor-scatter placement primitive (Batch 2, D6-A2)
+
+The deterministic Decor-scatter placement primitive (council #115 D6-A2, execution #120, PR #122) is implemented and unit-verified but **not scene-integrated**: `src/systems/decorScatter.ts` (pure seeded placement) + `src/systems/decorExclusions.ts` (static exclusion derivation from the committed map's Collision/Decor/Objects layers, registry spawns/`collisionGids`, and `src/data/wildbloomSpots.ts` constants — full object footprints + 1-cell ring, grass-only allowlist resolved by tileset name) place placeholder decals (`tuft_a`/`tuft_b`/`pebble_a`/`flower_a`, config-driven) at 38 farm cells under seed `farm-v1`, pinned by `tests/unit/decorPlacementProof.test.ts` as the diff gate. Runtime wiring waits on the `tile_farm_grass_scatter` masters (A1, owner-gated art track); the art swap is then a config change.
+
 ### Pending production replacement
 
 - Dedicated Ranger Explorer sprite sheets.
