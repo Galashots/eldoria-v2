@@ -13,13 +13,36 @@ function normalizeSlashes(p) {
 }
 
 /**
- * Returns the repo-relative path (forward slashes) or null when the file
- * is outside the repository root. Comparison is case-insensitive because
- * Windows paths are.
+ * Canonicalize a path: forward slashes, no "." segments, ".." resolved
+ * against preceding segments. Pure string logic (no filesystem) so the
+ * decision function stays testable and platform-independent. A ".." that
+ * would climb past the first segment simply pops it — the result then
+ * fails the root-prefix check and is treated as outside the repo.
+ */
+function canonicalize(p) {
+  const segments = normalizeSlashes(p).split('/');
+  const out = [];
+  for (const segment of segments) {
+    if (segment === '.' || (segment === '' && out.length > 0)) {
+      continue;
+    }
+    if (segment === '..') {
+      out.pop();
+      continue;
+    }
+    out.push(segment);
+  }
+  return out.join('/');
+}
+
+/**
+ * Returns the repo-relative path (forward slashes, "."/".."-resolved) or
+ * null when the file is outside the repository root. The root-prefix
+ * comparison is case-insensitive because Windows paths are.
  */
 function toRepoRelative(filePath, repoRoot) {
-  const file = normalizeSlashes(filePath);
-  const root = normalizeSlashes(repoRoot).replace(/\/+$/, '');
+  const file = canonicalize(filePath);
+  const root = canonicalize(repoRoot).replace(/\/+$/, '');
   if (!file.toLowerCase().startsWith(`${root.toLowerCase()}/`)) {
     return null;
   }
@@ -29,17 +52,23 @@ function toRepoRelative(filePath, repoRoot) {
 /**
  * Minimal glob support for exactly the two pattern shapes this policy uses:
  * a directory subtree ("dir/**") and a same-directory name prefix ("dir/Name*").
+ *
+ * Matching is case-insensitive everywhere: required for Windows filesystem
+ * semantics, and on case-sensitive filesystems it only over-blocks unusual
+ * spellings (fails closed), never under-blocks the protected files.
  */
 function matchesPattern(relativePath, pattern) {
-  if (pattern.endsWith('/**')) {
-    const base = pattern.slice(0, -3);
-    return relativePath === base || relativePath.startsWith(`${base}/`);
+  const rel = relativePath.toLowerCase();
+  const pat = pattern.toLowerCase();
+  if (pat.endsWith('/**')) {
+    const base = pat.slice(0, -3);
+    return rel === base || rel.startsWith(`${base}/`);
   }
-  if (pattern.endsWith('*')) {
-    const prefix = pattern.slice(0, -1);
-    return relativePath.startsWith(prefix) && !relativePath.slice(prefix.length).includes('/');
+  if (pat.endsWith('*')) {
+    const prefix = pat.slice(0, -1);
+    return rel.startsWith(prefix) && !rel.slice(prefix.length).includes('/');
   }
-  return relativePath === pattern;
+  return rel === pat;
 }
 
 /**
@@ -94,7 +123,11 @@ if (isMain) {
   try {
     input = JSON.parse(readFileSync(0, 'utf8'));
   } catch {
-    process.exit(0); // Malformed input: never brick the session over the hook itself.
+    // Malformed or missing hook input is permitted to continue (this guardrail
+    // is not the merge authority), but never silently: a protocol change that
+    // stops parseable input arriving must be visible in hook logs.
+    console.error('protectedPaths hook: unparseable stdin; allowing tool call (guardrail inactive for this call)');
+    process.exit(0);
   }
 
   const repoRoot = process.env.CLAUDE_PROJECT_DIR ?? input.cwd;

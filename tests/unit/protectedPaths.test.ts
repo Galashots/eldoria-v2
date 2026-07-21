@@ -97,6 +97,55 @@ describe('evaluateWrite', () => {
     });
     expect(verdict.allowed).toBe(true);
   });
+
+  // Review amendments (PR #121, ChatGPT APPROVE WITH AMENDMENTS): traversal
+  // and case-variant spellings must not bypass the protected patterns.
+  it('blocks dot-dot traversal that resolves into a protected path', () => {
+    const verdict = evaluateWrite({
+      filePath: `${repoRoot}/src/../.github/workflows/ci.yml`,
+      repoRoot,
+      approvedPatterns: [],
+    });
+    expect(verdict.allowed).toBe(false);
+    expect(verdict.protectedPattern).toBe('.github/workflows/**');
+  });
+
+  it('blocks single-dot segments that resolve into a protected path', () => {
+    const verdict = evaluateWrite({
+      filePath: `${repoRoot}/./.github/./workflows/ci.yml`,
+      repoRoot,
+      approvedPatterns: [],
+    });
+    expect(verdict.allowed).toBe(false);
+  });
+
+  it('blocks uppercase spellings of protected paths (Windows case-insensitivity)', () => {
+    const verdict = evaluateWrite({
+      filePath: `${repoRoot}/.GITHUB/WORKFLOWS/ci.yml`,
+      repoRoot,
+      approvedPatterns: [],
+    });
+    expect(verdict.allowed).toBe(false);
+  });
+
+  it('blocks mixed-case SaveSystem spellings', () => {
+    const verdict = evaluateWrite({
+      filePath: `${repoRoot}/SRC/SYSTEMS/SAVESYSTEM.ts`,
+      repoRoot,
+      approvedPatterns: [],
+    });
+    expect(verdict.allowed).toBe(false);
+    expect(verdict.protectedPattern).toBe('src/systems/SaveSystem*');
+  });
+
+  it('treats traversal escaping the repo root as outside (allowed)', () => {
+    const verdict = evaluateWrite({
+      filePath: `${repoRoot}/../elsewhere/.github/workflows/ci.yml`,
+      repoRoot,
+      approvedPatterns: [],
+    });
+    expect(verdict.allowed).toBe(true);
+  });
 });
 
 describe('parseApprovalFile', () => {
