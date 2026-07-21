@@ -310,7 +310,10 @@ export class WorldScene extends Phaser.Scene {
     this.dialogueBox = new DialogueBox(this, {
       speech: this.speech,
       speechHooks: this.speechHooks,
-      onSpeechUnavailable: () => this.showToast('Read aloud is not available here.')
+      onSpeechUnavailable: () => this.showToast('Read aloud is not available here.'),
+      // Routed through playSfx so the blip key gets its own anti-buzz cooldown
+      // bucket and the global mute pref applies (Council #115 D5 conditions 1-2).
+      playBlip: () => this.playSfx('sfx-text-blip', 0.18)
     });
 
     // Arriving on a map by explicit request (a transition or scripted boot)

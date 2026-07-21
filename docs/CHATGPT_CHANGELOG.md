@@ -4,6 +4,14 @@ This file keeps recent, high-value change summaries. Full historical entries thr
 
 Entries should remain concise: date/author, branch or PR, scope, compatibility impact, verification, and remaining risk. Detailed implementation narratives belong in the PR description and commits.
 
+## 2026-07-21 — Read-aloud dialogue blips (Model Council Batch 2, D5)
+
+- Author/branch: Claude Code (repo agent), `claude/read-aloud-blips`. Executes Model Council decision D5 (issue #115): the reserved Batch-1 per-character typewriter seam now voices dialogue with a soft tick for the pre-reader.
+- Scope: new pure policy `src/systems/textBlips.ts` (`computeBlipIndices` skips whitespace + terminal punctuation and blips every 2nd voiced glyph; `blipShouldPlay` suppresses when the line is TTS-voiced — no RNG, no Phaser); `DialogueBox` activates its previously no-op `onTypewriterCharacter` seam to fire an injected, cooldown-and-mute-gated `playBlip`; `WorldScene` routes that through `playSfx('sfx-text-blip')` (dedicated per-key 90 ms cooldown + global mute); `PreloadScene` loads the new sound; original `text-blip.wav` synthesized by the committed `scripts/generate-blip-sfx.mjs`. Council's four binding conditions all honored: original/generated audio (provenance), dedicated anti-buzz cooldown + persisted mute gate, suppress-blips-when-TTS-active (one voice per line — Ranger/manual get blips, Mage `autoRead` lets TTS be the voice), and a blips-only scope freeze (no `TYPEWRITER_MS_PER_CHAR` or TTS retuning).
+- Verification: `npm run typecheck` exit 0; `npm run test:unit` 158/158 (150 baseline + 8 new `textBlips` cases: exact emit-index sets, custom throttle, all-silent input, and full TTS-active suppression); full smoke result recorded on the PR. Blips are zero under `__ELDORIA_E2E__` by construction — that path completes typing instantly, so no per-char reveal fires.
+- Compatibility: additive presentation only — no save, quest, curriculum, mastery, profile-ID, map, dependency, or gameplay-authority change; the per-char emit set is deterministic (invariant #4, no variable-reward pressure, safe).
+- Remaining risk: `text-blip.wav` is a placeholder synthesized tick pending the licensed-audio pass; the exact cadence/volume is browser-verified, not physical-iPad or child-validated.
+
 ## 2026-07-21 — Farm terrain transitions from the approved blend families
 
 - Author/branch: Claude Code (repo agent), `claude/farm-terrain-transitions`. User-authorized bounded relaxation of the "complete Batch A–F kit before map recomposition" gate, in response to the owner's Stardew-caliber visual reference: the farm path and pond now meet the grass with the approved blended edges instead of hard tile boundaries.

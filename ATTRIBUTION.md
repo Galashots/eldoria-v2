@@ -16,14 +16,18 @@ No Stardew Valley assets are included.
 
 ## Audio (placeholder, not final)
 
-`public/assets/audio/music/farm-theme-loop.wav` and the five files under
-`public/assets/audio/sfx/` are **synthesized locally with a small Node
-script** (simple sine/triangle tones and filtered noise, no samples or
-external audio) — not licensed third-party assets, and not attributed to
-anyone because there is no source to attribute. They exist only so the
-audio plumbing (preload, looping BGM, mute toggle, SFX triggers, read-aloud
-ducking) is real and testable; they are not meant to ship as the final
-sound of the game.
+`public/assets/audio/music/farm-theme-loop.wav` and the six files under
+`public/assets/audio/sfx/` are **synthesized locally** (simple sine/triangle
+tones and filtered noise, no samples or external audio) — not licensed
+third-party assets, and not attributed to anyone because there is no source
+to attribute. They exist only so the audio plumbing (preload, looping BGM,
+mute toggle, SFX triggers, read-aloud ducking, dialogue blips) is real and
+testable; they are not meant to ship as the final sound of the game.
+
+`public/assets/audio/sfx/text-blip.wav` (the per-character dialogue tick) is
+regenerated deterministically by the committed `scripts/generate-blip-sfx.mjs`
+(a 55 ms 720 Hz triangle blip with an exponential decay) — original audio,
+same license bar as the art, re-runnable byte-identically.
 
 Before shipping to the boys, swap these for real licensed audio. Concrete
 options (checked directly on their license pages, not just "royalty-free"
