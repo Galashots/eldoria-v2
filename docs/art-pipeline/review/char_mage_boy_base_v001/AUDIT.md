@@ -11,11 +11,17 @@ expiry.
 - **Engineering status:** NORMALIZED RUNTIME ASSET, RUNTIME-INTEGRATED
   (loaded by `PreloadScene`, verified by the full 73/73 browser suite and
   four-direction in-game captures).
-- **Visual approval status:** ChatGPT visual re-audit **PENDING**. This
-  record does not claim art approval; exact runtime pixels changed, which
-  re-opens the routine visual-audit gate per
-  `docs/art-pipeline/CLOSED_LOOP_ASSET_GENERATION_WORKFLOW.md`.
-- **Physical iPad:** re-check **PENDING** (honestly not performed).
+- **Visual approval status:** **APPROVED at the runtime-integrated browser
+  visual gate** — Kimi K3 independent re-review of exact head `6e6999d`
+  (PR #113, 2026-07-21), comparing exact-head CI captures against the
+  PR #111/main captures at matching farm, slime, opening, and iPad-like
+  viewports. Verdict for `idle`, `walk`, `cast`, and `hurt`: the
+  directional size jump is materially corrected, side-facing hair is no
+  longer clipped, no floating dots at target scale, and the detached
+  cast/hurt marks read as intentional effects. The brief cast/hurt
+  body-size deviation is not visually distracting.
+- **Physical iPad:** re-check **PENDING** (honestly not performed; not part
+  of the browser-gate approval above).
 
 ## Why regenerated
 
@@ -66,9 +72,16 @@ idle/walk clips (cast/hurt limit-capped; see measurements).
 
 ## Measured runtime results (per 32×48 cell, alpha>0 bounds)
 
-Isolated-stray counts exclude nothing — remaining "strays" in cast are the
-intentional spell-orb sparkles (source components ≥33px, preserved by
-design), and hurt retains its pain stars (≥392px).
+"Isolated stray px" counts opaque pixels with ≤1 opaque 8-neighbour. This
+is a silhouette-tightness metric, not a residue count: because `cleanup`
+removes every connected component under 30px, any surviving pixel belongs
+to a ≥30px component. The remaining low-neighbour pixels on the character
+body (e.g. `walk right` 0–2, `idle right` 1) are thin extremities of the
+real silhouette — a hair wisp or fingertip tip — not detached dots. In
+`cast`/`hurt` they are the intentional spell-orb sparkles (source
+components ≥33px) and pain stars (≥392px). This is the authoritative
+measurement; the PR/changelog "0–2 stray pixels" figure is this table's
+`walk right` maximum.
 
 | Sheet / row | Trimmed sizes per frame | Isolated stray px per frame |
 | --- | --- | --- |
@@ -104,10 +117,10 @@ from the idle/walk baseline appears only during those brief animations.
 
 | Sheet | Engineering verdict | Visual gate |
 | --- | --- | --- |
-| idle | PASS — uniform direction sizes, bleed excluded, residue removed | ChatGPT re-audit pending |
-| walk | PASS — uniform direction sizes, bleed excluded, residue removed | ChatGPT re-audit pending |
-| cast | PASS — uniform within clip; sparkles preserved; body limit-capped ~10% under baseline | ChatGPT re-audit pending |
-| hurt | PASS — uniform within clip; pain stars preserved | ChatGPT re-audit pending |
+| idle | PASS — uniform direction sizes, bleed excluded, residue removed | APPROVED (browser gate, Kimi K3 @ `6e6999d`); physical iPad pending |
+| walk | PASS — uniform direction sizes, bleed excluded, residue removed | APPROVED (browser gate, Kimi K3 @ `6e6999d`); physical iPad pending |
+| cast | PASS — uniform within clip; sparkles preserved; body limit-capped ~10% under baseline | APPROVED (browser gate, Kimi K3 @ `6e6999d`); physical iPad pending |
+| hurt | PASS — uniform within clip; pain stars preserved | APPROVED (browser gate, Kimi K3 @ `6e6999d`); physical iPad pending |
 
 ## Evidence
 
