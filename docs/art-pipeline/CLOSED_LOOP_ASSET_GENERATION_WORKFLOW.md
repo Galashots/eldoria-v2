@@ -1,676 +1,224 @@
-# Eldoria-V2 Closed-Loop Asset Generation Workflow
+# Closed-Loop Asset Generation Workflow
 
-**Status:** Durable project operating protocol  
-**Applies to:** ChatGPT-led image generation, visual auditing, corrective prompting, runtime-master rescue, and repo handoff  
-**Default owner:** ChatGPT for generation, visual judgment, routine asset approval, and advancement; user for strategic direction and material escalations; repo-capable agent for deterministic ingestion when needed
+**Status:** Durable AI-led generation, audit, approval, and handoff protocol  
+**Current asset status:** [`../CURRENT_STATE.md`](../CURRENT_STATE.md)
 
----
+This workflow lets ChatGPT own routine source-art iteration from an approved target through a documented visual verdict, while keeping deterministic repository ingestion and runtime integration as separate evidence stages.
 
-## 1. Purpose
+## Authority boundary
 
-This workflow makes asset production AI-led while preserving the user's authority over overall creative direction and material specification changes.
+- The owner approves material art direction, target geometry/size, palette changes, production-order changes, and major scope decisions.
+- ChatGPT owns routine prompting, measured visual QA, corrective iteration, and per-asset approval after all applicable gates pass.
+- Engineering agents own deterministic ingestion, normalization, validation, integration, and repository evidence for their assigned branch.
+- A different provider independently reviews consequential PRs under `AGENTS.md`.
+- No provider's generated output is privileged. Exact normalized runtime pixels and in-game evidence decide.
 
-The intended operating pattern is:
+## Task-routed startup
 
-```text
-user sets target and direction
-→ ChatGPT generates candidate batch
-→ ChatGPT audits exact runtime result
-→ ChatGPT writes its own corrective prompt
-→ ChatGPT regenerates as needed
-→ ChatGPT records a passing approval package
-→ ChatGPT advances the approved asset into the deterministic repo pipeline
-→ user is involved only for a material direction/specification escalation or an optional review request
-```
+Do not load every art document for every task.
 
-The user should not need to diagnose magenta contamination, palette drift, seam problems, runtime occupancy, modularity, pivot placement, or normalization failures. Those are pipeline responsibilities.
+Always resolve:
 
----
+1. repository and exact branch/head;
+2. target JSON and palette authority;
+3. current status from `CURRENT_STATE.md` when status matters;
+4. applicable visual contract.
 
-## 2. Important interface limitation
+Then load only what is needed:
 
-The current ChatGPT image-generation interface ends the assistant turn when an image batch is generated. It does not reliably permit an invisible multi-generation loop to continue in the background without another user turn.
+- generation/prompting: this workflow plus the relevant part of `IMAGE_PROMPTING_GUIDE.md`;
+- approved-source ingestion: `SPRITE_ASSET_PIPELINE.md` plus the audit record;
+- character/creature/equipment work: `CHARACTER_PERSPECTIVE_LOCK_V1.md` and the target JSON;
+- map/runtime integration: the visual contract, evidence policy, affected scene/map/tests, and active visual subplan.
 
-Therefore, the default workflow is **minimal-touch closed loop**, not unattended background generation:
+Use `docs/README.md` as the router. Never infer current status from an old chat, embedded prompt, or historical snapshot.
 
-1. ChatGPT generates a batch.
-2. The user sends a neutral continuation signal such as `continue`.
-3. ChatGPT audits the batch without asking the user to diagnose it.
-4. If nothing passes, ChatGPT generates the next corrected batch.
-5. The user again sends `continue`.
-6. This repeats until ChatGPT records a passing approval package and advances the asset, or escalates a material decision.
+## Closed loop
 
-The user's continuation signal is permission to proceed, not a request to rewrite or improve the prompt. ChatGPT owns the correction logic.
+### 1. Resolve the target
 
-Where the interface allows multiple candidates in one generation, generate **four candidates per batch** to reduce the number of continuation turns.
+Confirm:
 
----
+- target ID and variant;
+- source and runtime dimensions;
+- grid layout when applicable;
+- footprint and pivot;
+- palette family;
+- perspective and light;
+- required variants/states;
+- production family and dependency order;
+- forbidden content;
+- expected evidence and stopping condition.
 
-## 3. Standing authority
+Escalate before generation only when a material target, direction, or scope decision is unresolved.
 
-Unless the user overrides the workflow for a specific asset, ChatGPT is authorized to:
+### 2. Write the production prompt
 
-- generate multiple candidates;
-- reject its own weak candidates;
-- revise prompts based on measured failures;
-- normalize or simulate the declared runtime dimensions;
-- create nearest-neighbour inspection previews;
-- create tiled repetition previews where applicable;
-- measure palette distance, alpha, bounds, occupancy, edge contact, and seam indicators;
-- perform narrow deterministic runtime-pixel corrections;
-- assign **APPROVED SOURCE CANDIDATE** or **APPROVED RUNTIME MASTER** when all applicable gates pass;
-- initiate deterministic repo ingestion and merge a focused visual PR when repository evidence and exact-head CI satisfy the merge policy;
-- stop and escalate when the target specification itself appears unsuitable.
+Use the target contract, not generic art language. State the runtime reading goal, source geometry, approved palette/perspective, background/padding rules, exact state/direction layout, and known failure modes.
 
-ChatGPT is **not** authorized by this workflow alone to:
+### 3. Generate a bounded batch
 
-- change the target geometry, pivot, collision, required variants, palette families, or production order;
-- integrate assets into runtime maps;
-- change gameplay, curriculum, quests, saves, economy, or interactions;
-- merge a visual PR without the required evidence and exact-head green CI;
-- claim physical-iPad or child validation.
+Use the smallest batch that can answer the current question. Do not commission a complete family before the identity, projection, material, or geometry anchor has passed.
 
-Those actions require the applicable repo rules and user authorization.
+### 4. Audit the source
 
----
+Inspect:
 
-## 4. Roles
-
-### User — strategic creative director
-
-The user:
-
-- sets or changes the overall art direction;
-- decides among materially different directions when ChatGPT escalates;
-- may request review or one focused aesthetic change at any time;
-- decides whether to abandon, resize, or respecify a target after escalation.
-
-Routine passing candidates do not wait for per-asset user approval. When the user requests an update, provide the compact approval record rather than raw failed iterations unless requested.
-
-### ChatGPT — generation and visual QA owner
-
-ChatGPT:
-
-- reads the authoritative target and palette documents;
-- constructs the production prompt;
-- generates candidate batches;
-- audits source and exact runtime pixels;
-- identifies failure causes;
-- writes corrective prompts;
-- selects or corrects the strongest candidate;
-- assigns the formal verdict;
-- prepares and records the final approval package;
-- approves and advances passing routine assets without waiting for a user response;
-- writes the repo-ingestion brief or performs repo work when tools permit.
-
-### Repo-capable engineering agent
-
-Claude, Codex, ChatGPT with GitHub access, or another repo-capable agent:
-
-- verifies file identity and hashes;
-- creates canonical production sources;
-- creates review-only manifests and evidence;
-- proves block exactness and round-trip identity;
-- runs repository checks;
-- opens a focused draft PR;
-- does not reinterpret the approved artwork.
-
----
-
-## 5. Authoritative inputs
-
-Before generating, resolve the following from repository sources of truth:
-
-1. target ID and variant;
-2. runtime canvas;
-3. gameplay footprint;
-4. pivot;
-5. collision and interaction metadata, if declared;
-6. render layer;
-7. palette families and exact locked swatches;
-8. perspective and lighting;
-9. required family variants;
-10. current batch order;
-11. production source, manifest, and review paths;
-12. whether the target is isolated, seamless, modular, animated, or packed.
-
-Do not improvise missing geometry or metadata. Escalate material ambiguity before generation.
-
----
-
-## 6. Verdict vocabulary
-
-Every audited candidate receives exactly one of these formal verdicts:
-
-### APPROVED SOURCE CANDIDATE
-
-The high-resolution source itself is clean and suitable as canonical manifest input.
-
-Use when:
-
-- source composition is correct;
-- background or alpha is clean enough for deterministic normalization;
-- palette, perspective, lighting, silhouette, and occupancy pass;
-- no forbidden source-level motif or artifact remains.
-
-### APPROVED RUNTIME MASTER
-
-The exact runtime pixels pass, but the high-resolution generated source is not suitable as the canonical source.
-
-Use when:
-
-- the runtime result is visually strong;
-- remaining corrections are narrow and deterministic;
-- the result can be frozen as exact pixel data;
-- nearest-neighbour upscaling and zero-drift round-trip proof are appropriate.
-
-### HOLD
-
-The candidate is promising and may be salvageable, but it is not yet approved.
-
-A HOLD must state the next deterministic test or correction. Do not leave HOLD as an indefinite status.
-
-### REGENERATE
-
-The candidate fails important production requirements and would require material redrawing or recomposition.
-
-### CHANGE TARGET SIZE
-
-The artwork is viable, but the declared runtime canvas cannot preserve required readability or identity.
-
-This is a specification decision and must be escalated to the user.
-
-### STYLE REFERENCE ONLY
-
-The candidate is useful for visual direction but not suitable for normalization or runtime-master extraction.
-
----
-
-## 7. Closed-loop algorithm
-
-### Step 1 — Build the target card
-
-Record:
-
-```text
-ID:
-Variant:
-Runtime canvas:
-Footprint:
-Pivot:
-Collision:
-Render layer:
-Palette families:
-Asset type:
-Required visual read at 1×:
-Forbidden structures:
-Source format:
-Current batch position:
-```
-
-### Step 2 — Choose the generation strategy
-
-Use **source-first** when the high-resolution source must preserve important shapes, silhouettes, or family identity.
-
-Examples:
-
-- characters;
-- creatures;
-- buildings;
-- large props;
-- trees;
-- animated sheets.
-
-Use **runtime-first** when the runtime pixels are the true design object and high-resolution detail is likely to create noise.
-
-Examples:
-
-- 16×16 terrain;
-- quiet base water;
-- small modular props;
-- tiny decals;
-- compact VFX cells.
-
-### Step 3 — Generate a candidate batch
-
-Default:
-
-- four candidates when supported;
-- one asset variant only;
-- no presentation board;
-- no mixed-size sheet;
-- exact background instructions;
-- runtime-read statement near the top of the prompt;
-- explicit anti-pattern list based on known failures.
-
-### Step 4 — Audit source scale
-
-Check:
-
-- correct subject and variant;
-- source occupancy and padding;
-- exact or usable background treatment;
-- no text, UI, border, checkerboard, watermark, or unrelated scenery;
-- perspective;
-- upper-left lighting;
-- palette direction;
-- modular construction;
-- edge contact;
-- obvious repeated motif;
+- subject and variant;
+- dimensions, aspect ratio, and grid;
+- padding and background;
+- text/UI/border/checkerboard/watermark contamination;
+- edge contact and cell bleed;
+- identity, silhouette, perspective, lighting, palette, and material language;
+- family consistency;
 - source suitability as canonical input.
 
-### Step 5 — Audit exact runtime pixels
+### 5. Produce and audit exact runtime pixels
 
-Create the declared normalized result using nearest-neighbour behavior.
+Normalize or create the declared runtime result using nearest-neighbour behavior. Inspect:
 
-Check:
+- exact dimensions and alpha;
+- visible bounding box and occupancy;
+- footprint, pivot, and baseline;
+- silhouette and major colour clusters at `1×`;
+- palette distance and contamination;
+- modularity, repeatability, adjacency, or frame continuity as applicable;
+- gameplay readability in required backgrounds.
 
-- exact dimensions;
-- alpha state;
-- visible bounding box;
-- opaque-pixel count;
-- footprint and pivot;
-- top, bottom, left, and right edge contacts;
-- silhouette at 1×;
-- major color clusters;
-- palette-distance metrics;
-- contamination;
-- gameplay readability;
-- family compatibility.
+The high-resolution source cannot override a failing runtime result.
 
-### Step 6 — Run type-specific checks
+### 6. Run type-specific evidence
 
-Apply the relevant audit below.
+#### Seamless terrain
 
-### Step 7 — Decide
-
-- If source and runtime pass: **APPROVED SOURCE CANDIDATE**.
-- If runtime passes but source fails: test **APPROVED RUNTIME MASTER**.
-- If the correction is narrow and deterministic: correct, re-audit, and classify.
-- If material redrawing is needed: **REGENERATE**.
-- If target dimensions are the blocker: **CHANGE TARGET SIZE**.
-
-### Step 8 — Correct automatically
-
-ChatGPT writes the next prompt from the measured failure. The user is not asked to diagnose the candidate.
-
-### Step 9 — Stop at the approval threshold
-
-Do not show the user a final approval package until one candidate passes ChatGPT's own audit.
-
----
-
-## 8. Type-specific audit gates
-
-### A. Seamless terrain
-
-Required evidence:
-
-- exact runtime cell;
-- enlarged nearest-neighbour preview;
+- exact cell and enlarged preview;
 - 3×3 repeat;
-- large-field repeat, normally 12×8;
-- horizontal and vertical wrap-step indicators;
-- directional luminance check;
-- palette-distance metrics;
-- motif scan tailored to the material.
-
-Reject:
-
-- hard seams;
-- stripes;
-- lattices;
-- checkerboards;
-- crosses;
-- rosettes;
-- scales;
-- ripple rows;
-- periodic highlight spacing;
-- decorative borders;
-- baked objects;
-- excessive visual noise.
-
-Base terrain must remain quieter than actors, props, shore decoration, flora, and VFX.
-
-### B. Trees and tall Y-sorted props
-
-Required evidence:
-
-- exact runtime canvas;
-- enlarged transparent/checkerboard preview;
-- visible bounding box;
-- footprint overlay;
-- pivot marker;
-- edge-contact list;
-- palette metrics;
-- 1× silhouette review.
-
-Reject:
-
-- full-width canopy without breathing room;
-- insufficient vertical use;
-- frontal concept-art perspective;
-- baked ground shadow;
-- uncontrolled roots;
-- foliage confetti;
-- magenta fringe;
-- fragile branches that vanish;
-- canopy that collapses into a circle, slab, or mushroom.
-
-### C. Modular fences, walls, and rails
-
-Required evidence:
-
-- exact runtime canvas;
-- one-tile preview;
-- repeated horizontal or vertical strip;
-- connection-edge inspection;
-- footprint and pivot overlay;
-- open-background connectivity check;
+- large-field repeat;
+- horizontal/vertical wrap evidence;
+- directional-gradient and motif checks;
 - palette metrics.
 
-Reject:
+Reject seams, stripes, lattices, checkerboards, crosses, rosettes, scales, ripple rows, periodic clusters, decorative borders, baked objects, and excessive noise.
 
-- complete self-contained panel when a repeatable cell is required;
-- doubled posts at joins;
-- decorative endcaps blocking repetition;
-- enclosed key-colour regions that edge-flood cleanup cannot reach;
-- rails that fail to meet connection boundaries;
-- wrong orientation;
-- mirrored lighting;
-- ladder, gate, sign, or wall misread.
+#### Padded decals and scatter
 
-### D. Characters and creatures
-
-Required evidence:
-
-- exact cell sheet;
-- row/column divisibility;
-- baseline and pivot consistency;
-- contact sheet;
-- 1× and enlarged previews;
-- direction/state identity;
-- animation timing and loop review when frames exist;
-- no cell bleed.
-
-Reject:
-
-- scale drift;
-- pose drift;
-- inconsistent identity;
-- missing silhouette cues;
-- misaligned feet;
-- different light direction between frames;
-- unrequested accessories;
-- effects or shadows outside cells.
-
-### E. Buildings and large props
-
-Required evidence:
-
-- exact normalized size;
-- entrance and interaction readability;
-- footprint and pivot;
-- perspective compatibility;
-- material hierarchy;
-- runtime screenshot or map mock-up before integration approval.
-
-Use **CHANGE TARGET SIZE** rather than forcing important detail into an undersized canvas.
-
-### F. VFX
-
-Required evidence:
-
-- exact cell size;
-- frame sequence;
-- alpha cleanliness;
-- core shape readability;
-- no rectangular background;
-- intensity hierarchy;
-- reduced-motion compatibility when applicable.
-
----
-
-## 9. Automatic correction playbook
-
-When a candidate fails, use the smallest correction category that addresses the measured problem.
-
-### Occupancy failure
-
-Prompt with explicit source-bounding-box percentages and desired normalized dimensions.
-
-Example:
-
-```text
-Visible subject occupies 70–75% of source width and 84–88% of source height.
-After normalization it should occupy approximately 28×45 pixels inside 32×48.
-```
-
-### Background failure
-
-Strengthen:
-
-- exact `#FF00FF`;
-- every background pixel identical;
-- no gradient;
-- no texture;
-- no antialiasing;
-- no edge blending.
-
-If the runtime result is strong, prefer deterministic alpha cleanup over indefinite regeneration.
-
-### Palette failure
-
-First measure the actual runtime pixels.
-
-- Minor isolated outliers: deterministic nearest-swatch remap may be eligible for runtime-master correction.
-- Broad hue drift or wrong material story: regenerate.
-
-### Perspective failure
-
-Replace vague wording with visible-surface requirements.
-
-Example:
-
-```text
-Show narrow upper planes and front planes from a slightly elevated 3/4 view.
-Do not use straight frontal elevation, side view, true isometric, or true top-down.
-```
-
-### Over-detail failure
-
-Specify:
-
-- exact number of major masses;
-- maximum number of accents;
-- more empty area than texture;
-- explicit anti-patterns.
-
-### Modularity failure
-
-Describe the repeating cell, not the complete object.
-
-State which edges must connect and which elements belong to separate variants.
-
-### Seam or repetition failure
-
-Do not merely repeat “seamless.”
-
-Specify:
-
-- opposite edges statistically similar to interior;
-- no directional gradient;
-- no periodic spacing;
-- no repeated highlight clusters;
-- clean 3×3 and large-field appearance.
-
-### Runtime-size failure
-
-If the concept is sound but cannot survive the declared canvas, classify **CHANGE TARGET SIZE**. Do not hide the problem with filtered scaling.
-
----
-
-## 10. Runtime-master rescue rules
-
-A runtime-master correction is allowed only when all of the following are true:
-
-1. The exact runtime result already has the correct identity and composition.
-2. The correction does not require creative redrawing.
-3. Corrections are narrow and auditable, such as:
-   - removing isolated edge-contact pixels;
-   - clearing background-fringe pixels;
-   - remapping isolated palette outliers;
-   - preserving or correcting exact alpha;
-   - fixing one-pixel cleanup defects.
-4. The corrected runtime cell is re-audited from scratch.
-5. Every correction is recorded.
-6. The canonical high-resolution source is created only by deterministic nearest-neighbour block replication.
-7. The real normalization pipeline reproduces the runtime master with zero pixel differences.
-
-Do not use runtime-master rescue to hide:
-
-- wrong perspective;
-- wrong silhouette;
-- missing modular structure;
-- major proportion failure;
-- wrong object identity;
-- severe internal-detail collapse.
-
-Those require regeneration or target-size change.
-
----
-
-## 11. Iteration limits and escalation
-
-Default maximum before escalation:
-
-- up to **three generated batches** for one target direction;
-- up to **one deterministic runtime-master correction** after a promising runtime result;
-- one target-size reassessment if all failures are caused by the declared canvas.
-
-After three failed batches, stop and present:
-
-- the best candidate;
-- the common repeated failure;
-- whether the prompt, target geometry, palette restriction, or model capability is the bottleneck;
-- a recommended decision.
-
-Do not burn unlimited generation attempts.
-
----
-
-## 12. AI approval record and optional user package
-
-Once a candidate passes, present only:
-
-### Candidate
-
-The strongest source or approved runtime master.
-
-### Exact runtime preview
-
-Always show exact 1× plus an enlarged nearest-neighbour inspection view.
-
-### Context evidence
-
-Use only what applies:
-
-- terrain repeat;
-- modular repetition strip;
-- footprint/pivot overlay;
-- transparency preview;
+- transparent/keyed preview;
+- occupancy and outer-margin measurement;
 - family contact sheet;
-- in-game mock-up.
+- repetition/grid-risk review;
+- in-game density and spacing evidence before integration.
 
-### Verdict
+#### Tall props and structures
 
-Exactly one:
+- exact canvas, footprint, pivot, and grounding;
+- silhouette at `1×`;
+- modular connection or entrance evidence where applicable;
+- upper-left lighting and projection consistency;
+- no baked shadow unless explicitly allowed.
 
-- **APPROVED SOURCE CANDIDATE**
-- **APPROVED RUNTIME MASTER**
+#### Characters, NPCs, creatures, armor, and weapons
 
-### Residual limitations
+Apply `docs/visual-targets/CHARACTER_PERSPECTIVE_LOCK_V1.md`.
 
-State any acceptable known limitation, such as visible single-tile periodicity pending later variants.
+Require four-direction/state contact sheets as applicable, exact runtime backgrounds, baseline/pivot overlays, apparent-height comparison, identity/equipment consistency, timing review, and no direct-frontal down facing or pure-profile side facing.
 
-### Advancement or escalation
+Do not begin substantial armor/customization production until the base family passes and its geometry/timing are frozen.
 
-- If all applicable gates pass, ChatGPT records the verdict and advances to repo ingestion without waiting for per-asset user approval.
-- If a material art-direction, target-size, geometry, palette, production-order, or model-capability decision is required, stop and present that decision to the user.
-- If the user requests a review, present the same compact package and accept a focused change or direction override.
+#### UI and VFX
 
-Never ask the user to troubleshoot technical pipeline issues.
+Use real state matrices, long/short text, touch dimensions, readability, reduced-motion behavior, and performance evidence. Decorative polish must not obscure interaction state or actors.
 
----
+### 7. Decide
 
-## 13. Repo handoff after ChatGPT approval
+Use one formal verdict:
 
-After ChatGPT records a passing verdict:
+- **APPROVED SOURCE CANDIDATE**;
+- **APPROVED RUNTIME MASTER**;
+- **STYLE REFERENCE ONLY**;
+- **HOLD**;
+- **REGENERATE**;
+- **CHANGE TARGET SIZE**.
 
-1. Verify input format, dimensions, mode, and SHA-256.
-2. Preserve the approved file byte-for-byte.
-3. Create the canonical source.
-4. Create a clearly review-only manifest.
-5. Normalize through the real pipeline.
-6. Prove exact round trip.
-7. Run the target-specific audit.
-8. Generate concise evidence.
-9. Update `docs/CHATGPT_CHANGELOG.md`.
-10. Update `docs/CURRENT_STATE.md` only if milestone status or next steps materially changed.
-11. Run canonical checks.
-12. Open a focused draft PR.
-13. Do not integrate into runtime until the production family and integration milestone permit it.
+A passing verdict records the evidence and residual limitation. A failing verdict names the measured cause and next correction.
 
-For an incomplete family:
+### 8. Correct autonomously
 
-- do not create a fake complete packed sheet;
-- do not duplicate placeholders into missing cells;
-- do not mark the asset runtime-integrated;
-- do not modify the map.
+ChatGPT writes the next prompt or applies one permitted deterministic runtime correction. Do not ask the owner to diagnose seams, palette drift, key-colour contamination, occupancy, pivot fit, modularity, or similar pipeline defects.
 
----
+### 9. Stop at the approval threshold
 
-## 14. Session-recovery protocol
+Advance a routine passing candidate without waiting for per-asset owner approval. Escalate only a material direction/geometry/size/palette/order decision, repeated model failure, privacy/licensing concern, or scope expansion.
 
-At the start of a new ChatGPT, Claude, or Codex session:
+### 10. Hand off to the repository
 
-1. Confirm the repository is `Galashots/eldoria-v2`.
-2. Read:
-   - `AGENTS.md`;
-   - `docs/README.md`;
-   - `docs/CURRENT_STATE.md`;
-   - the target JSON;
-   - `FARM_ENVIRONMENT_GENERATION_HANDOFF_V1.md`;
-   - this workflow;
-   - `IMAGE_PROMPTING_GUIDE.md`;
-   - `SPRITE_ASSET_PIPELINE.md`.
-3. List current open PRs.
-4. Confirm current `main`.
-5. Identify:
-   - last approved asset;
-   - current candidate;
-   - next canonical asset;
-   - whether generation, ingestion, or integration is the active step.
-6. Do not infer status from chat history alone.
+After approval:
 
----
+1. preserve approved bytes and provenance;
+2. verify format, dimensions, and SHA-256;
+3. create or update the canonical source and manifest;
+4. normalize through the real pipeline;
+5. validate exact output and deterministic regeneration;
+6. prove zero-drift round trip for runtime masters;
+7. retain concise durable evidence;
+8. update the changelog;
+9. update `CURRENT_STATE.md` only for material status changes;
+10. open a focused PR;
+11. keep source approval separate from runtime integration and in-game verification.
 
-## 15. Current Eldoria application
+For an incomplete family, do not create a fake packed sheet, duplicate placeholders, modify the map, or mark it runtime-integrated.
 
-At the time this protocol was created:
+## Runtime-master rescue
 
-- grass `grass_a`, dirt `center`, and water `water_a` were approved individually;
-- oak reached an externally approved corrected `32×48` runtime master but still required deterministic repo ingestion;
-- the first horizontal-fence attempt was rejected for geometry and modularity;
-- the next fence generation must use a one-post repeatable modular cell rather than a complete two-post panel;
-- no Phase 2 farm assets had yet been integrated into the runtime map.
+A deterministic correction is allowed only when:
 
-Repository status remains authoritative over this snapshot.
+1. identity, silhouette, perspective, and composition already pass;
+2. the remaining defect is narrow and auditable;
+3. correction does not require creative redrawing;
+4. corrected runtime pixels are fully re-audited;
+5. every edit is recorded;
+6. the canonical source is nearest-neighbour block replication;
+7. the production pipeline reproduces the master with zero differences.
 
----
+Permitted examples include clearing isolated fringe pixels, exact alpha cleanup, isolated palette remapping, or removal of stray edge pixels.
 
-## 16. Default instruction for ChatGPT
+Wrong perspective, wrong identity, major proportion failure, missing modular construction, or severe detail collapse require regeneration or target-size change.
 
-When this file is attached to the Eldoria-V2 ChatGPT Project, interpret asset-generation requests as follows:
+## Iteration limits
 
-> Own the production loop. Read the repository target and palette. Generate a candidate batch, audit the exact runtime result, write the corrective prompt yourself, and continue through minimal-touch continuation turns until a candidate passes. Approve and advance passing routine assets without waiting for per-asset user approval. Do not ask the user to diagnose technical failures. Escalate only material target-size, specification, art-direction, repeated-failure, or scope decisions.
+Default before escalation:
+
+- up to three bounded generated batches for one target direction;
+- up to one deterministic runtime-master correction;
+- one explicit target-size reassessment when the canvas is the repeated blocker.
+
+After repeated failure, report the best candidate, recurring defect, likely bottleneck, evidence, and recommended decision. Do not burn unlimited attempts.
+
+## Approval record
+
+A passing record contains:
+
+- target and variant;
+- approved source or exact runtime master;
+- exact `1×` and enlarged preview;
+- applicable repeat, modular, pivot, family, or in-game evidence;
+- formal verdict;
+- residual limitations;
+- provenance and hashes when handed to the repo.
+
+## Evidence boundaries
+
+These stages are distinct:
+
+1. source/runtime-art approval;
+2. deterministic ingestion and normalization;
+3. runtime integration;
+4. in-game visual verification;
+5. browser iPad-like verification;
+6. physical-iPad verification;
+7. child playtesting.
+
+Passing one stage does not prove the next. Record physical-device and child evidence honestly.
+
+## Current-status rule
+
+This workflow contains no current asset queue. The authoritative completed assets, active candidate, next target, open PRs, and integration status are in `CURRENT_STATE.md`, committed manifests/audits, and GitHub—not in this durable protocol.
