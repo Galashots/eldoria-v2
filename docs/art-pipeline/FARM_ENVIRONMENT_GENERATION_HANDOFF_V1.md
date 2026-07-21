@@ -79,7 +79,7 @@ Approve representative grass, dirt, water, tree, fence, rock, and Wildbloom land
 
 ### Batch B — variation and scatter
 
-Produce the grass base variants and the configured grass-scatter family — the first derived-family pilot under the production-class policy. The scatter family is gated as **anchor** because `tuft_a`, `flower_a`, and `pebble_a` are independently approved anchors; only `tuft_b` may be produced as a deterministic derived sibling of `tuft_a`. Flowers and pebbles are never derived from grass texture. Review the scatter assets as one family before runtime wiring.
+Produce the grass base variants and the configured grass-scatter family — the first mixed anchor/derived recipe pilot under the production-class policy. The scatter family remains gated as **anchor** because `tuft_a`, `flower_a`, and `pebble_a` are independently approved anchors; only `tuft_b` may be produced as a deterministic derived sibling of `tuft_a`, and the `tuft_b` recipe is the first exercise of the derived recipe-level gate. Flowers and pebbles are never derived from grass texture. Review the scatter assets as one family before runtime wiring.
 
 ### Batch C — terrain families
 

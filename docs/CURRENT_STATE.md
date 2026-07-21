@@ -72,7 +72,7 @@ The current direct-to-camera downward hero facings are transitional. Production 
 
 Do not begin substantial armor or outfit production until base perspective, proportions, pivots, sockets, and clip timing are approved and frozen.
 
-Asset production now follows the **derive-over-generate production classes** (owner-adjudicated 2026-07-21, `CLOSED_LOOP_ASSET_GENERATION_WORKFLOW.md`): `anchor` (full ceremony), `derived` (recipe-level approval from locked inputs), and `procedural` (runtime presentation, judged in-game), declared per target as `productionClass` and enforced by the visual-target validator.
+Asset production now follows the **derive-over-generate production classes** (owner-adjudicated 2026-07-21, `CLOSED_LOOP_ASSET_GENERATION_WORKFLOW.md`): `anchor` (full ceremony), `derived` (recipe-level approval from locked inputs), and `procedural` (runtime presentation, judged in-game), declared per target as `productionClass`. Declared values are enum-validated by the visual-target validator; unclassified legacy targets are classified when they enter their next production batch.
 
 ## Active milestone
 
@@ -82,9 +82,9 @@ The immediate goal is to establish the missing visual layers that create the ref
 
 ### Next work
 
-1. **Approve the first grass-scatter art family (first derived-family pilot)**
-   - `tuft_a`, `flower_a`, `pebble_a` as independently approved anchors; `tuft_b` as a deterministic derived sibling of `tuft_a`;
-   - recipe-level approval with machine gates, full-family contact sheet, one family verdict;
+1. **Approve the first grass-scatter art family (first mixed anchor/derived recipe pilot)**
+   - the family remains anchor-gated: `tuft_a`, `flower_a`, `pebble_a` as independently approved anchors; `tuft_b` as a deterministic derived sibling of `tuft_a`;
+   - the `tuft_b` recipe is the first exercise of the derived recipe-level gate: recipe-level approval with applicable machine gates, full-family contact sheet, one family verdict;
    - no scene integration until the family passes.
 
 2. **Run the first character perspective trial** — in parallel, not gated on environment completion

@@ -49,7 +49,7 @@ Classification rules (owner-adjudicated, 2026-07-21):
 4. Water decals (lilies, flowers) require their own approved anchor silhouettes; variants may be derived afterward, never from water pixels alone.
 5. Tilled soil requires an approved authored furrow/groove mask or anchor before the family may be classified derived, even when approved dirt supplies material and palette.
 6. Crop intermediate stages may be derived only when the recipe preserves a believable growth progression and passes the complete-family visual gate; each crop's sprout and harvest identities remain anchors.
-7. Expected efficiency gains are measured after the first derived-family pilot, not promised in advance.
+7. Expected efficiency gains are measured after the first mixed anchor/derived recipe pilot, not promised in advance.
 
 ### Recipe-level approval gate (derived families)
 
@@ -57,7 +57,7 @@ A derived family is approved once, at the recipe level:
 
 1. **Committed deterministic recipe** — seeded, tested red-first like any other deterministic tooling (precedent: `compose-terrain-blend-family.mjs`).
 2. **Locked inputs** — approved masters by SHA-256 plus the locked palette; outputs recombine only what those inputs contain.
-3. **Full machine validation for every output** — histogram/palette preservation, border/buffer integrity, seam/adjacency, occupancy, zero-drift round trip, deterministic regeneration.
+3. **Full applicable machine validation for every output** — each recipe declares its applicable invariants and thresholds, with non-applicable gates explicitly recorded as `N/A`. Universal for every recipe: deterministic regeneration, locked-input verification, and exact output validation. Type-specific gates are declared per asset type — for example histogram/palette preservation, border/buffer integrity, seam/adjacency, occupancy, zero-drift round trip, and frame-continuity — never a mandatory all-of-the-above list.
 4. **Representative hard-case audit** — ChatGPT audits the hardest outputs (inner corners, densest cells), not every cell individually.
 5. **One contact sheet containing every family output + one family-level verdict** — the report is machine-generated from the family report data, not hand-written per cell.
 
