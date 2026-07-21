@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import type { DialogueLine } from '../data/questDefs';
 import { fpx, GAME_HEIGHT, GAME_SCALE, GAME_WIDTH, sx, sy } from '../gameDimensions';
 import type { SpeechHooks, SpeechSupport } from '../systems/speech';
+import { createBlipEmitter, TYPEWRITER_MS_PER_CHAR, type BlipEmitter } from '../systems/textBlips';
 import { drawRoundedButton, drawRoundedPanelBackground, popInContainer } from './uiHelpers';
 
 type DialogueOptions = {
@@ -13,11 +14,15 @@ type DialogueBoxDependencies = {
   speech: SpeechSupport;
   speechHooks?: SpeechHooks;
   onSpeechUnavailable?: () => void;
+  /**
+   * Plays one soft dialogue tick. Injected (not called directly) so the owning
+   * scene routes it through its per-key SFX cooldown + global mute. Absent =
+   * blips disabled. See Council #115 D5.
+   */
+  playBlip?: () => void;
 };
 
 const DIALOGUE_BOX_NAME = 'dialogue-box';
-/** Pokemon/Zelda-convention reveal pacing (~24ms per character). */
-const TYPEWRITER_MS_PER_CHAR = 24;
 
 /** Reusable, scene-owned dialogue presentation with no gameplay authority. */
 export class DialogueBox {
@@ -25,6 +30,9 @@ export class DialogueBox {
   private readonly speech: SpeechSupport;
   private readonly speechHooks?: SpeechHooks;
   private readonly onSpeechUnavailable?: () => void;
+  private readonly playBlip?: () => void;
+  /** Per-line blip sequencer; absent when blips are disabled or TTS-voiced. */
+  private blipEmitter?: BlipEmitter;
   private container?: Phaser.GameObjects.Container;
   private speakerText?: Phaser.GameObjects.Text;
   private bodyText?: Phaser.GameObjects.Text;
@@ -44,6 +52,7 @@ export class DialogueBox {
     this.speech = dependencies.speech;
     this.speechHooks = dependencies.speechHooks;
     this.onSpeechUnavailable = dependencies.onSpeechUnavailable;
+    this.playBlip = dependencies.playBlip;
     this.scene.events.once(Phaser.Scenes.Events.SHUTDOWN, this.handleSceneShutdown);
   }
 
@@ -222,6 +231,15 @@ export class DialogueBox {
     // reveal.
     if (this.autoRead) this.speakCurrentLine();
 
+    // Council #115 D5 coexistence: one voice per line. When the synthesizer is
+    // actually voicing this line (Mage autoRead + speech available) the blips
+    // suppress and the TTS is the voice; otherwise (Ranger reader-mode, or
+    // autoRead with speech unavailable) the per-char blips carry the texture.
+    const lineVoiced = this.autoRead && this.speech.supported();
+    this.blipEmitter = this.playBlip
+      ? createBlipEmitter(line.text, { voiced: lineVoiced, play: this.playBlip })
+      : undefined;
+
     this.typingFullText = line.text;
     this.typingIndex = 0;
     // e2e specs assert dialogue text through the canvas-text recorder /
@@ -293,12 +311,15 @@ export class DialogueBox {
   }
 
   /**
-   * Per-character reveal hook, kept for the planned read-aloud blip pass:
-   * a future change plays a soft tick here as each glyph lands. Internal
-   * only for now — deliberately unused outside this class.
+   * Per-character reveal hook: plays a soft "voiced text" tick as each glyph
+   * lands, unless the line is TTS-voiced (Council #115 D5). The emit set and
+   * suppression are pure (`src/systems/textBlips.ts`); this only fires the
+   * injected, cooldown-and-mute-gated player. Never reached under
+   * `__ELDORIA_E2E__` — that path completes typing instantly, so no per-char
+   * reveal (and no blip) occurs, keeping specs deterministic.
    */
-  protected onTypewriterCharacter(_char: string, _index: number): void {
-    // Future read-aloud blip hook (intentionally a no-op today).
+  protected onTypewriterCharacter(_char: string, index: number): void {
+    this.blipEmitter?.onReveal(index);
   }
 
   private speakCurrentLine(): void {
@@ -331,6 +352,7 @@ export class DialogueBox {
     this.lines = [];
     this.lineIndex = 0;
     this.autoRead = false;
+    this.blipEmitter = undefined;
     callback?.();
   }
 
