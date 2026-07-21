@@ -52,17 +52,19 @@ Because the repository is public:
 
 ## Documentation source of truth
 
-Start with [`docs/README.md`](docs/README.md), which identifies the canonical document for each topic.
+Start with [`docs/README.md`](docs/README.md), which identifies the canonical document for each topic and the minimum task-specific reading set.
 
 Key rules:
 
+- [`docs/ELDORIA_MASTER_PLAN.md`](docs/ELDORIA_MASTER_PLAN.md) owns stable product mission, hero promises, healthy engagement, world-building, progression, visual north star, and strategic sequence.
 - [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) owns volatile implementation status, the active milestone, known risks, and the next checkpoint.
 - [`docs/VISUAL_ASSET_CONTRACT.md`](docs/VISUAL_ASSET_CONTRACT.md) owns durable visual rules.
 - Machine-readable files under `docs/visual-targets/` are authoritative for target geometry, variants, pivots, palettes, and metadata.
-- [`docs/art-pipeline/FARM_ENVIRONMENT_GENERATION_HANDOFF_V1.md`](docs/art-pipeline/FARM_ENVIRONMENT_GENERATION_HANDOFF_V1.md) owns the current farm-art generation order while that milestone is active.
+- [`docs/visual-targets/CHARACTER_PERSPECTIVE_LOCK_V1.md`](docs/visual-targets/CHARACTER_PERSPECTIVE_LOCK_V1.md) owns the elevated three-quarter projection for production characters, NPCs, creatures, equipment, and armor.
+- [`docs/art-pipeline/FARM_ENVIRONMENT_GENERATION_HANDOFF_V1.md`](docs/art-pipeline/FARM_ENVIRONMENT_GENERATION_HANDOFF_V1.md) owns farm-art production order and specifications, not current progress.
 - [`docs/art-pipeline/CLOSED_LOOP_ASSET_GENERATION_WORKFLOW.md`](docs/art-pipeline/CLOSED_LOOP_ASSET_GENERATION_WORKFLOW.md) owns the minimal-touch ChatGPT generate → audit → correct → approve protocol and the boundary between visual approval and deterministic repo ingestion.
 - Completed milestone plans are historical records. Do not re-execute them without a new approved scope.
-- Keep volatile status out of this file.
+- Keep volatile status out of this file and all durable contracts.
 
 ## Agent responsibilities
 
@@ -94,7 +96,7 @@ For every task:
 
 1. Start from current `main` unless an explicit branch or stacked-PR base is provided.
 2. Confirm the repository, branch, base, and exact head before editing.
-3. Read the relevant source-of-truth documents and inspect the affected code/assets first.
+3. Read only the relevant source-of-truth documents and inspect the affected code/assets first.
 4. State any material ambiguity or risk before implementation.
 5. Keep the change narrowly scoped; do not modify unrelated files or systems.
 6. Preserve the product rules, profile IDs, save compatibility, curriculum, quests, and interaction semantics unless the task explicitly changes them.
@@ -119,12 +121,13 @@ For behavioral implementation, debugging, review, and completion claims, apply t
 
 For generated asset tasks specifically:
 
-1. Resolve the authoritative target geometry, palette, variant, footprint, pivot, and batch order before generation.
+1. Resolve the authoritative target geometry, palette, variant, footprint, pivot, perspective, and batch order before generation.
 2. Audit the high-resolution source and the exact runtime pixels.
 3. Use only the formal verdict vocabulary in the asset guides.
 4. Prefer a deterministic Approved Runtime Master correction only when the runtime composition is already correct and the remaining fixes are narrow and auditable.
 5. Treat ChatGPT's documented passing visual audit as the routine final art gate before repo ingestion. User approval is required only for a material change in art direction, target size/geometry, palette, production order, or other escalated scope decision.
 6. Do not create fake-complete packed sheets or start runtime/map integration for incomplete families.
+7. For characters, equipment, armor, NPCs, and creatures, apply the character-perspective lock before approving new production families.
 
 ## Verification
 
@@ -135,11 +138,18 @@ npm ci
 npm run check
 npm run test:visual-targets
 npm run test:asset-pipeline
+npm run test:terrain-blend
 npm run test:unit
 npm run smoke
 ```
 
-`npm run check` validates the actual committed visual-target documents (`docs/visual-targets/*.json`) against the schema, type checks, and builds. `npm run test:visual-targets` is a separate regression suite that exercises the validator itself with positive and negative in-memory cases (a well-formed future swatch group, an invalid hex, a malformed non-array swatch, etc.) — it does not touch the committed documents. Use `npm install` only when intentionally changing dependencies or the lockfile.
+Run the separate production-build iPad-emulation surface when the change can affect PWA, production loading, touch, performance, layout, or device behavior:
+
+```bash
+npm run test:emulation
+```
+
+`npm run check` validates the committed visual-target documents, type checks, builds, verifies PWA/generated surfaces, and requires deterministic generated files to remain clean. `npm run test:visual-targets` exercises the validator itself rather than revalidating the same fixtures. Use `npm install` only when intentionally changing dependencies or the lockfile.
 
 Additional expectations:
 
@@ -169,19 +179,38 @@ Do not use a hard-coded model identity. Historical entries may retain the identi
 
 ## Merge policy
 
-Eldoria merges every PR with a **merge commit — never squash, never rebase-merge** (owner decision, 2026-07-21, superseding earlier guidance in this section that permitted routine squash merges). Merge commits preserve the branch's individual commits and review history, which this repository's multi-agent workflow depends on.
+Eldoria merges every PR with a **merge commit — never squash, never rebase-merge**. Merge commits preserve the branch's individual commits and review history, which this repository's multi-agent workflow depends on.
 
-Merge authority follows explicit owner delegation and repository policy. Governance changes, protected-path changes, and anything under `.github/workflows/**` remain owner-merged unless explicitly delegated.
+### Cross-model merge authority
 
-A routine PR may be merged without another product-design review only when:
+The owner explicitly authorizes routine approved work to be merged by an agent while he is unavailable when all of the following are true:
 
-- it remains inside a previously approved objective;
-- the exact final head is green;
-- gameplay/UI/visual changes have reviewable browser evidence;
-- no save, curriculum, quest, economy, kid-UX, story, asset-direction, dependency, or architecture decision expanded the scope;
-- the final diff contains no unrelated work.
+- the objective and material product/design direction were already approved;
+- one accountable provider implemented the final changes;
+- a **different provider** independently reviewed the exact final base-to-head range;
+- all review findings were repaired or explicitly accepted by the appropriate authority;
+- fresh required CI is green on the exact final head after every repair, restack, or conflict resolution;
+- visual/gameplay changes include the required visual and browser evidence;
+- compatibility, migration impact, remaining risk, and physical-device status are stated honestly;
+- the final diff contains no unrelated work or unapproved scope expansion;
+- the merging provider is not the implementing provider and is not treating self-authored approval as independent review.
 
-Stop for user or ChatGPT review when those conditions are not met. Preserve draft status while evidence or design approval is incomplete.
+When those gates pass, the independent reviewer or another non-implementing provider may perform the merge commit without waiting for a separate owner confirmation.
+
+### Reserved approvals
+
+The following remain owner-gated unless the owner explicitly delegates the specific action or scope:
+
+- `.github/workflows/**` changes;
+- save schema or migration changes;
+- stable profile-ID changes;
+- privacy, analytics, account, monetization, or external-data changes;
+- deployment cutovers and origin/save-transfer decisions;
+- secrets and credentials;
+- destructive history operations;
+- unresolved material product, curriculum, kid-UX, story, economy, architecture, art-direction, or target-geometry decisions.
+
+Preserve draft status while evidence or independent review is incomplete. Do not merge based on implementer confidence, test counts alone, or a green run on an earlier head.
 
 ## Change control and multi-agent coordination
 
@@ -192,10 +221,11 @@ Standing repository rules for multi-agent work. Cross-provider role allocation, 
 3. **A merged branch is never reused** for follow-up work; restart the branch from the latest default branch.
 4. **Owner-gated surfaces:** `.github/workflows/**`, save schema and migrations, stable profile IDs, privacy/analytics/accounts/monetization, deployment cutovers, and secrets remain owner-gated unless explicitly delegated.
 5. **Declared minimum supported playtest viewport: 1194×834** (iPad Pro 11" landscape, owner decision 2026-07-21). Touch-target guarantees (≥44 CSS px) are asserted at this scale; smaller viewports are explicitly outside the supported set.
-6. **One coordination surface:** for material cross-agent decisions with overlapping scope, at most one coordination or council surface may be active — a named GitHub issue with a chair and decision log, never local files or side channels. Unrelated, explicitly registered work may continue in parallel.
+6. **One coordination surface:** for material cross-agent decisions with overlapping scope, at most one coordination or council surface may be active — a named GitHub issue or draft PR with an accountable owner and decision record, never local files or private side channels. Unrelated, explicitly registered work may continue in parallel.
 7. **Session registry:** parallel agent sessions declare their branch/sandbox and owned files, systems, or questions before starting. One branch has one accountable owner; ownership transfers whole and explicitly.
-8. **Environment ceilings are part of task design:** when the active environment cannot reliably run a long test/e2e suite (command timeouts, no background shell), pre-chunk it into targeted specs or delegate to CI as the authoritative long-run evidence surface.
-9. **Changelog conflicts:** concurrent branches routinely produce add/add conflicts at the top of `docs/CHATGPT_CHANGELOG.md`; the accepted resolution is keep-both (preserve both entries, newest first).
+8. **Environment ceilings are part of task design:** when the active environment cannot reliably run a long test/e2e suite, pre-chunk it into targeted specs or delegate to CI as the authoritative long-run evidence surface.
+9. **Changelog conflicts:** concurrent branches routinely produce add/add conflicts at the top of `docs/CHATGPT_CHANGELOG.md`; the accepted resolution is keep-both, newest first.
+10. **Review and merge separation:** consequential work requires a different-provider review. Routine delegated work may then be merged by that reviewer or another non-implementing provider after every gate in the Merge policy passes.
 
 ## Completion report
 
@@ -208,4 +238,4 @@ Report:
 5. gameplay or visual evidence reviewed;
 6. compatibility and migration impact;
 7. remaining risks and unverified device behavior;
-8. the correct next owner: engineering agent, ChatGPT, or user playtest.
+8. the correct next owner: engineering agent, independent reviewer, art-generation trial, or user playtest.

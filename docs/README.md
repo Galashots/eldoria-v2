@@ -1,6 +1,6 @@
 # Eldoria-V2 Documentation Map
 
-Use this page to find the current source of truth. Do not infer project status from whichever planning file appears newest.
+Use this page to find the current source of truth and the smallest reading set needed for the task. Do not infer project status from whichever planning file appears newest.
 
 ## Source-of-truth hierarchy
 
@@ -8,36 +8,61 @@ When documents disagree, use this order:
 
 1. Runtime code, map data, tests, and committed asset manifests for what the game actually does.
 2. Machine-readable target JSON under `docs/visual-targets/` for asset geometry, variants, pivots, palettes, and metadata.
-3. `docs/CURRENT_STATE.md` for volatile implementation status, the active milestone, known risks, and next steps.
-4. Durable contracts and pipeline guides for rules and process.
-5. Execution plans and research documents for approved direction and historical rationale.
+3. [`ELDORIA_MASTER_PLAN.md`](ELDORIA_MASTER_PLAN.md) for stable product, world, engagement, progression, and visual-north-star direction.
+4. [`CURRENT_STATE.md`](CURRENT_STATE.md) for volatile implementation status, the active milestone, known risks, and next steps.
+5. Durable contracts and pipeline guides for rules and process.
+6. Execution plans and research documents for approved implementation direction and historical rationale.
 
-A planning document does not prove implementation. A browser-emulated iPad viewport does not prove physical-iPad behavior. Generated concept art does not become production source art until it receives an explicit source-audit verdict.
+A planning document does not prove implementation. A browser-emulated iPad viewport does not prove physical-iPad behavior. Generated concept art does not become production source art until it receives an explicit audit verdict.
 
-## Start here
+## Core entry points
 
-- [`../AGENTS.md`](../AGENTS.md) — durable product rules, workflow, testing, visual evidence, merge policy, and change control.
-- [`MULTI_MODEL_OPERATING_GUIDE.md`](MULTI_MODEL_OPERATING_GUIDE.md) — stable cross-provider role allocation, coordination, review separation, and evidence rules for ChatGPT, Claude Code, Kimi, and the human owner.
+`AGENTS.md` is always required. Load the other entry points only when the task needs their subject matter.
+
+- [`../AGENTS.md`](../AGENTS.md) — binding product rules, workflow, evidence, merge authority, protected surfaces, and change control.
+- [`ELDORIA_MASTER_PLAN.md`](ELDORIA_MASTER_PLAN.md) — stable product mission, hero promises, healthy-return model, world-building framework, visual north star, progression, and strategic sequence.
 - [`CURRENT_STATE.md`](CURRENT_STATE.md) — current playable capabilities, active milestone, near-term work, and known risks.
 - [`../README.md`](../README.md) — live-build link, controls, setup, and verification commands.
-- [`CHATGPT_CHANGELOG.md`](CHATGPT_CHANGELOG.md) — chronological record of meaningful repository changes.
 
-## Active beautification milestone
+Read [`MULTI_MODEL_OPERATING_GUIDE.md`](MULTI_MODEL_OPERATING_GUIDE.md) only when work involves multiple providers, branch ownership, independent review, governance, protected paths, or delegated merging.
 
-- [`beautification/README.md`](beautification/README.md) — current phase status and the correct starting point for new beautification work.
-- [`beautification/ELDORIA_BEAUTIFICATION_EXECUTION_PLAN.md`](beautification/ELDORIA_BEAUTIFICATION_EXECUTION_PLAN.md) — approved multi-phase direction and acceptance criteria. Its completed Phase 0/1 command is historical.
-- [`beautification/BEAUTIFICATION_BASELINE_2026-07.md`](beautification/BEAUTIFICATION_BASELINE_2026-07.md) — pre-migration visual and renderer baseline.
-- [`art-pipeline/FARM_ENVIRONMENT_GENERATION_HANDOFF_V1.md`](art-pipeline/FARM_ENVIRONMENT_GENERATION_HANDOFF_V1.md) — current authoritative Batch A–F farm source-art generation order and acceptance gates.
-- [`visual-targets/FARM_ENVIRONMENT_PALETTE_V1.md`](visual-targets/FARM_ENVIRONMENT_PALETTE_V1.md) and [`visual-targets/farm_environment_palette_v1.json`](visual-targets/farm_environment_palette_v1.json) — approved farm palette lock.
+## Task-routed reading
+
+Load only what the task requires after `AGENTS.md`.
+
+| Task | Required authorities |
+| --- | --- |
+| Product priority, world, engagement, progression, or new-zone decision | `ELDORIA_MASTER_PLAN.md`, `CURRENT_STATE.md`, relevant code/tests |
+| Routine scoped implementation | `CURRENT_STATE.md`, affected code/tests, the relevant subsystem contract |
+| Cross-provider implementation or review | `MULTI_MODEL_OPERATING_GUIDE.md`, PR/issue coordination surface, exact diff |
+| Generate environment source art | target JSON, palette JSON, `CLOSED_LOOP_ASSET_GENERATION_WORKFLOW.md`, relevant section of `IMAGE_PROMPTING_GUIDE.md` |
+| Ingest an approved asset | target JSON, `SPRITE_ASSET_PIPELINE.md`, the approved audit record |
+| Character, NPC, creature, armor, or weapon art | target JSON, `CHARACTER_PERSPECTIVE_LOCK_V1.md`, `SPRITE_ASSET_PIPELINE.md`, applicable armor/animation contract |
+| Integrate visual assets into a map or scene | `VISUAL_ASSET_CONTRACT.md`, `VISUAL_EVIDENCE_RETENTION_POLICY.md`, current beautification subplan, affected map/scene/tests |
+| Review a visual PR | exact base-to-head diff, applicable target/contract, required screenshots/contact sheets, exact runtime pixels |
+| Save or migration work | `AGENTS.md` owner gates, save code/tests, explicit owner-approved migration scope |
+| Curriculum or question work | curriculum engine docs, prompt templates, mastery code/tests, product invariants |
+| Physical-iPad or child playtest | `REAL_CHILD_PLAYTEST_GUIDE.md`, clarity checklist, current build URL and known risks |
+
+Do not load every art-pipeline guide for ordinary gameplay work or the full coordination guide for a single-owner routine branch.
+
+## Active visual transformation
+
+- [`beautification/README.md`](beautification/README.md) — current visual-program entry point and relationship to the master plan.
+- [`beautification/ELDORIA_BEAUTIFICATION_EXECUTION_PLAN.md`](beautification/ELDORIA_BEAUTIFICATION_EXECUTION_PLAN.md) — visual-production subplan and acceptance gates; not the overall product roadmap.
+- [`beautification/BEAUTIFICATION_BASELINE_2026-07.md`](beautification/BEAUTIFICATION_BASELINE_2026-07.md) — historical pre-migration visual and renderer baseline.
+- [`art-pipeline/FARM_ENVIRONMENT_GENERATION_HANDOFF_V1.md`](art-pipeline/FARM_ENVIRONMENT_GENERATION_HANDOFF_V1.md) — authoritative Farm source-art order and specifications; current completion status remains in `CURRENT_STATE.md`.
+- [`visual-targets/FARM_ENVIRONMENT_PALETTE_V1.md`](visual-targets/FARM_ENVIRONMENT_PALETTE_V1.md) and [`visual-targets/farm_environment_palette_v1.json`](visual-targets/farm_environment_palette_v1.json) — approved Farm palette lock.
 
 ## Visual and asset production
 
 - [`VISUAL_ASSET_CONTRACT.md`](VISUAL_ASSET_CONTRACT.md) — durable style, perspective, palette, naming, metadata, layering, terrain-blending, and grounding rules.
-- [`ARMOR_AND_BATTLE_ANIMATION_CONTRACT.md`](ARMOR_AND_BATTLE_ANIMATION_CONTRACT.md) — locked hybrid armor runtime model, actor-timing authority, battle clip scope, production order, and acceptance gates.
-- [`art-pipeline/CLOSED_LOOP_ASSET_GENERATION_WORKFLOW.md`](art-pipeline/CLOSED_LOOP_ASSET_GENERATION_WORKFLOW.md) — AI-led ChatGPT generation, self-audit, routine art approval, runtime-master rescue, escalation, and repo handoff protocol.
-- [`art-pipeline/VISUAL_EVIDENCE_RETENTION_POLICY.md`](art-pipeline/VISUAL_EVIDENCE_RETENTION_POLICY.md) — required visual proof by change type, game-level audit cadence, and retention rules for temporary versus durable evidence.
+- [`visual-targets/CHARACTER_PERSPECTIVE_LOCK_V1.md`](visual-targets/CHARACTER_PERSPECTIVE_LOCK_V1.md) — binding elevated three-quarter projection and sprite-rebuild rules for characters, NPCs, creatures, equipment, and armor.
+- [`ARMOR_AND_BATTLE_ANIMATION_CONTRACT.md`](ARMOR_AND_BATTLE_ANIMATION_CONTRACT.md) — hybrid armor runtime model, timing authority, battle clips, production order, and acceptance gates. Apply it only after the perspective-locked base family is approved.
+- [`art-pipeline/CLOSED_LOOP_ASSET_GENERATION_WORKFLOW.md`](art-pipeline/CLOSED_LOOP_ASSET_GENERATION_WORKFLOW.md) — AI-led generation, self-audit, routine approval, runtime-master rescue, escalation, and repo handoff.
+- [`art-pipeline/VISUAL_EVIDENCE_RETENTION_POLICY.md`](art-pipeline/VISUAL_EVIDENCE_RETENTION_POLICY.md) — required visual proof by change type and retention rules.
 - [`art-pipeline/SPRITE_ASSET_PIPELINE.md`](art-pipeline/SPRITE_ASSET_PIPELINE.md) — manifest-driven source-to-runtime normalization and validation.
-- [`art-pipeline/IMAGE_PROMPTING_GUIDE.md`](art-pipeline/IMAGE_PROMPTING_GUIDE.md) — source-art prompting, audit verdicts, background cleanup, and production lessons.
+- [`art-pipeline/IMAGE_PROMPTING_GUIDE.md`](art-pipeline/IMAGE_PROMPTING_GUIDE.md) — source-art prompting, audit verdicts, cleanup, and production lessons.
 - `visual-targets/*.json` — authoritative machine-readable target specifications.
 - `visual-targets/*.md` — human-readable explanations of those targets.
 
@@ -52,12 +77,13 @@ Use these terms precisely:
 - **RUNTIME-INTEGRATED ASSET** — normalized asset loaded and verified in the game.
 - **HOLD** — promising but not approved; must name the next deterministic test or correction.
 - **REGENERATE** — generation failed important production constraints.
-- **CHANGE TARGET SIZE** — the artwork is viable but the declared runtime target is too small or otherwise unsuitable.
+- **CHANGE TARGET SIZE** — the artwork is viable but the declared runtime target is unsuitable.
 
 ## Product, curriculum, and gameplay
 
 - [`ATTENTION_FIRST_OPENING_PLAN_2026-07.md`](ATTENTION_FIRST_OPENING_PLAN_2026-07.md) — implemented historical record for the first-minute fantasy hook.
 - [`WILDBLOOM_DISCOVERY_LOOP_2026-07.md`](WILDBLOOM_DISCOVERY_LOOP_2026-07.md) — implemented historical record for the optional Sprig discovery loop.
+- [`CURRICULUM_QUESTION_ENGINE.md`](CURRICULUM_QUESTION_ENGINE.md) — current curriculum-question architecture, bonus-only learning rules, and future opportunities.
 - Current quest, curriculum, save, mastery, and interaction behavior must be confirmed in code/tests and summarized in `CURRENT_STATE.md`.
 
 ## Playtesting and device validation
@@ -65,19 +91,20 @@ Use these terms precisely:
 - [`REAL_CHILD_PLAYTEST_GUIDE.md`](REAL_CHILD_PLAYTEST_GUIDE.md) — supervised physical-iPad/child session procedure.
 - [`playtests/CHILD_CLARITY_CHECKLIST.md`](playtests/CHILD_CLARITY_CHECKLIST.md) — short observation sheet.
 - Automated Playwright screenshots and iPad-like viewport evidence are browser validation, not physical-device certification.
-- The dedicated physical-iPad certification scope remains in Phase 7 of the beautification plan.
+- The dedicated physical-iPad certification scope remains part of the active visual subplan.
 
-## Research and reference material
+## Research and historical material
 
-Research reports under `docs/research/` explain why decisions were made. They are not volatile status documents and should not be rewritten merely because implementation progresses. When later findings supersede an earlier recommendation, record the updated decision in a durable contract or current execution plan and preserve the research as historical evidence.
+Research reports under `docs/research/` explain why decisions were made. They are not daily operating authorities and should not be loaded routinely. When later findings supersede a recommendation, record the updated rule in a durable contract or current plan and preserve the research as historical evidence.
 
-- [`research/2026-07-21_FRONTIER_MODEL_STACK_RESEARCH.md`](research/2026-07-21_FRONTIER_MODEL_STACK_RESEARCH.md) — dated snapshot of the three-provider model/subscription landscape behind the operating guide. Non-authoritative; volatile facts (model names, prices, quotas) go stale.
-- [`research/2026-07-21_FRONTIER_MODEL_STACK_RESEARCH_ERRATA.md`](research/2026-07-21_FRONTIER_MODEL_STACK_RESEARCH_ERRATA.md) — verified corrections from the independent Claude and Kimi provider reviews and the final ChatGPT adjudication, including the ratified governance rulings.
+Completed execution plans should identify themselves as historical. Do not re-run their embedded prompts without a new approved scope.
 
 ## Updating documentation
 
 - Update `CURRENT_STATE.md` only for material capability, milestone, next-step, or risk changes.
-- Update `CHATGPT_CHANGELOG.md` for meaningful repository changes.
+- Update `CHATGPT_CHANGELOG.md` for meaningful repository changes and keep entries concise.
+- Update `ELDORIA_MASTER_PLAN.md` only when stable product or strategic direction changes.
 - Update durable contracts only when a durable rule changes.
-- Mark completed execution plans as implemented history rather than leaving runnable prompts at the top level.
+- Keep current branches, exact heads, “next asset,” and temporary milestone snapshots out of durable contracts.
+- Mark completed execution plans as implemented history or replace them with a current subplan.
 - Avoid copying the same volatile roadmap list into multiple documents.

@@ -1,41 +1,40 @@
-# Beautification Milestone Status
+# Eldoria-V2 Visual Transformation
 
-This directory contains the approved visual-improvement program for Eldoria-V2.
+This directory contains the visual-production program that supports the overall Eldoria product and world direction.
 
-## Current phase status
+## Authorities
 
-| Phase | Status | Record |
-| --- | --- | --- |
-| Phase 0 — Baseline audit and screenshot lock | Complete | PR #65; `BEAUTIFICATION_BASELINE_2026-07.md` |
-| Phase 1 — Canvas migration to 960×640 | Complete | PR #66 |
-| Phase 2A — Environment targets, palette, and generation handoff | Complete in the current specification branch | PR #70; `../art-pipeline/FARM_ENVIRONMENT_GENERATION_HANDOFF_V1.md` |
-| Phase 2B — Production source-art generation and farm kit | Active next work | Batch A–F handoff |
-| Phase 3 — Farm map recomposition | Not started | Must wait for the complete approved kit |
-| Phase 4 — Production characters and NPCs | Not started | Mira and Ranger remain priorities |
-| Phase 5 — UI skin and typography | Not started |  |
-| Phase 6 — Lighting, atmosphere, and juice | Not started |  |
-| Phase 7 — Physical iPad certification | Not started | Requires actual iPad Safari testing |
+- [`../ELDORIA_MASTER_PLAN.md`](../ELDORIA_MASTER_PLAN.md) — overall product mission, hero promises, healthy engagement, world-building, progression, visual north star, and strategic sequence.
+- [`ELDORIA_BEAUTIFICATION_EXECUTION_PLAN.md`](ELDORIA_BEAUTIFICATION_EXECUTION_PLAN.md) — active visual-transformation subplan and acceptance gates.
+- [`../CURRENT_STATE.md`](../CURRENT_STATE.md) — the only authority for current completion status, active visual work, next task, branches, and known risks.
+- [`BEAUTIFICATION_BASELINE_2026-07.md`](BEAUTIFICATION_BASELINE_2026-07.md) — historical pre-migration screenshot and renderer baseline.
 
-## How to use the execution plan
+Do not copy live phase status into this directory index. Do not restart completed canvas or baseline work from historical prompts.
 
-`ELDORIA_BEAUTIFICATION_EXECUTION_PLAN.md` remains the approved full sequence and acceptance criteria.
+## Visual direction
 
-Its Phase 0/1 instructions and final “First Claude Code Command” are historical because those phases have already shipped. Do not run them again. Start from the active phase identified in `docs/CURRENT_STATE.md` and use the current handoff document for the next narrow task.
+The owner-approved reference image defines the target for:
 
-## Current gate
+- elevated three-quarter perspective;
+- painterly layered pixel-art composition;
+- quiet ground plus rich Decor/structure/canopy layers;
+- readable paths and landmarks;
+- coherent palette, material, light, and shadow;
+- characters embedded in the same camera as the environment;
+- restrained fantasy UI and atmosphere.
 
-The next production gate is **Batch A foundational environment source candidates**:
+Ground-transition cells remain necessary infrastructure, but Decor, vegetation, canopy, props, landmarks, character perspective, atmosphere, and authored composition create the intended look.
 
-- seamless grass centre;
-- seamless dirt centre;
-- seamless water centre;
-- oak tree;
-- horizontal fence segment;
-- medium landmark rock;
-- revealed Root-Star landmark.
+## Character rebuild
 
-Every result must receive an explicit source-audit verdict and a 1x/3x preview before later batches begin. The map must not be recomposed until the complete environment kit passes its contact-sheet acceptance gate.
+Production character, NPC, creature, equipment, and armor work must follow:
 
-## Device validation
+[`../visual-targets/CHARACTER_PERSPECTIVE_LOCK_V1.md`](../visual-targets/CHARACTER_PERSPECTIVE_LOCK_V1.md)
 
-Automated iPad-like viewport screenshots remain required for visual PRs, but they do not replace physical-iPad Safari testing. A quick physical smoke test is recommended after Phase 3 farm recomposition; formal certification remains Phase 7.
+The current direct-to-camera down facings are transitional. Lock the elevated projection and base clip geometry before producing substantial armor or outfit families.
+
+## Evidence
+
+Use [`../art-pipeline/VISUAL_EVIDENCE_RETENTION_POLICY.md`](../art-pipeline/VISUAL_EVIDENCE_RETENTION_POLICY.md) and the applicable target/pipeline documents.
+
+Automated iPad-like screenshots are required regression evidence for runtime visual changes but do not replace physical-iPad Safari testing or child playtesting.
