@@ -59,6 +59,7 @@ export const OCCUPANCY_PCT_RANGE = [1, 40]; // gated as (1, 40] - exclusive low
 export const KEY_COLOR = '#FF00FF';
 const KEY_RGB = [255, 0, 255];
 export const KEYED_SCALE = 16; // 16x16 runtime -> 256x256 exact-key source
+export const KEYED_SIZE = CELL * KEYED_SCALE; // exact decoded keyed-source contract size (256)
 
 // --- deterministic RNG (mulberry32; integer math only) ----------------------
 
@@ -340,6 +341,30 @@ export function hexOfRgb(r, g, b) {
 // written file - never the authoring grid. The palette argument is the
 // variant's declared locked family.
 export function analyzeRuntime(img, palette) {
+  const width = img.width;
+  const height = img.height;
+  if (width !== CELL || height !== CELL) {
+    // Fail safe before any fixed-canvas indexing: a decoded buffer that is
+    // not exactly CELLxCELL cannot be scanned with CELL-strided row/col
+    // indexing without misreading or overrunning its real layout. Report the
+    // actual decoded dimensions so the runtime_dimensions gate fails by name
+    // instead of silently passing or scanning a mismatched stride.
+    return {
+      runtime_dimensions: [width, height],
+      visible_bbox_exclusive: null,
+      visible_width: 0,
+      visible_height: 0,
+      occupied_pixels: 0,
+      occupied_percent: 0,
+      edge_contact_count: 0,
+      lowest_occupied_row: null,
+      horizontal_offset_from_pivot: null,
+      palette_colors_used: [],
+      off_palette_visible_pixels: 0,
+      transparent_pixels: 0,
+      partial_alpha_pixels: 0,
+    };
+  }
   const allowed = new Set(palette.map(([r, g, b]) => hexOfRgb(r, g, b)));
   let minX = CELL; let minY = CELL; let maxX = -1; let maxY = -1;
   let occupied = 0; let transparent = 0; let partial = 0; let offPalette = 0; let edgeContacts = 0;
@@ -362,7 +387,7 @@ export function analyzeRuntime(img, palette) {
     }
   }
   return {
-    runtime_dimensions: [CELL, CELL],
+    runtime_dimensions: [width, height],
     visible_bbox_exclusive: occupied > 0 ? [minX, minY, maxX + 1, maxY + 1] : null,
     visible_width: occupied > 0 ? maxX - minX + 1 : 0,
     visible_height: occupied > 0 ? maxY - minY + 1 : 0,
@@ -379,8 +404,10 @@ export function analyzeRuntime(img, palette) {
 }
 
 // Named boolean gates (canonical contract). keyedDiff of null omits the keyed
-// gate (non-keyed lanes); a number gates the round trip (0 differences).
-export function gatesOfMetrics(m, expected, { keyedDiff = null } = {}) {
+// round-trip gate (non-keyed lanes); a number gates the round trip (0
+// differences). keyedDimensionsOk of null omits the keyed-dimensions gate;
+// a boolean gates the decoded keyed source against its exact contract size.
+export function gatesOfMetrics(m, expected, { keyedDiff = null, keyedDimensionsOk = null } = {}) {
   const gates = {
     runtime_dimensions: m.runtime_dimensions[0] === CELL && m.runtime_dimensions[1] === CELL,
     visible_width: m.visible_width >= expected.width[0] && m.visible_width <= expected.width[1],
@@ -392,7 +419,15 @@ export function gatesOfMetrics(m, expected, { keyedDiff = null } = {}) {
     palette: m.off_palette_visible_pixels === 0,
     nonempty: m.occupied_pixels > 0,
   };
-  if (keyedDiff !== null) gates.keyed_roundtrip = keyedDiff === 0;
+  if (keyedDimensionsOk !== null) gates.keyed_dimensions = keyedDimensionsOk;
+  if (keyedDiff !== null) {
+    gates.keyed_roundtrip = keyedDiff === 0;
+  } else if (keyedDimensionsOk !== null) {
+    // The round trip did not run - either the keyed source itself is the
+    // wrong size, or the runtime it would be checked against is malformed.
+    // Either way it must not be reported as passing.
+    gates.keyed_roundtrip = false;
+  }
   return gates;
 }
 
@@ -595,7 +630,16 @@ export function readBackVariant(dir, name, palettes) {
   const runtime = readPng(path.join(dir, `${name}.16.png`));
   const keyed = readPng(path.join(dir, `${name}.keyed.png`));
   const metrics = analyzeRuntime(runtime, palettes[VARIANT_FAMILY[name]]);
-  const keyedDiff = keyedRoundtripDiff(keyed, runtime);
+  const runtimeDimensionsOk = metrics.runtime_dimensions[0] === CELL && metrics.runtime_dimensions[1] === CELL;
+  const keyedDimensionsOk = keyed.width === KEYED_SIZE && keyed.height === KEYED_SIZE;
+  metrics.keyed_dimensions = [keyed.width, keyed.height];
+  // Fail safe: only run the fixed-CELL-stride round trip when both the
+  // decoded runtime and the decoded keyed source are exactly their declared
+  // contract sizes. A larger keyed file whose top-left region happens to
+  // match can otherwise "accidentally" round-trip correctly (real stride,
+  // real pixels) while still violating the exact 256x256 keyed-source
+  // contract - gate that explicitly rather than trusting an incidental match.
+  const keyedDiff = (runtimeDimensionsOk && keyedDimensionsOk) ? keyedRoundtripDiff(keyed, runtime) : null;
   metrics.keyed_roundtrip_difference_pixels = keyedDiff;
   let keyPixels = 0;
   for (let i = 0; i < keyed.data.length; i += 4) {
@@ -618,7 +662,7 @@ export function readBackVariant(dir, name, palettes) {
   // instead. The test suite asserts parity === true on the canonical inputs,
   // which keeps the zero-art-change claim machine-verifiable.
   metrics.approved_master_parity = masterParity;
-  const gates = gatesOfMetrics(metrics, EXPECTED_SIZE[name], { keyedDiff });
+  const gates = gatesOfMetrics(metrics, EXPECTED_SIZE[name], { keyedDiff, keyedDimensionsOk });
   return { name, runtime, keyed, metrics, gates };
 }
 
@@ -720,11 +764,13 @@ export function paintFamily({ palettePath, grassPath, outDir, variants = FAMILY_
     deterministic_regeneration: { runs: 2, written_files_byte_identical: true, files_compared: filesCompared },
     measurement_basis: 'all metrics computed on artifacts decoded back from the written files, never on in-memory authoring buffers',
     applicable_invariants: {
+      runtime_dimensions: 'gated (decoded runtime must equal the declared 16x16 runtime canvas; fails safe on mismatch before any fixed-canvas scan)',
       palette_conformance: 'gated (off-palette == 0 against the variant declared locked family, on decoded written pixels)',
       occupancy_bbox: 'gated per variant (declared expected ranges)',
       edge_contact: 'gated (fail on contact)',
       pivot_fit_lowest_row: 'gated (declared allowed rows 13-15)',
       binary_alpha: 'gated (partial alpha == 0)',
+      keyed_dimensions: 'gated (decoded keyed source must equal the exact 256x256 contract size; a larger file with a valid top-left region still fails)',
       keyed_roundtrip: 'gated (0 diff; decoded 256x256 exact-#FF00FF source re-normalizes to decoded runtime)',
       approved_master_parity: 'reported when a committed approved runtime master exists (exact decoded-pixel equality; asserted true on canonical inputs by the test suite, not hard-gated so intentional grammar changes can take the visual gate)',
       seam_adjacency: 'N/A (decals, non-tiling)',

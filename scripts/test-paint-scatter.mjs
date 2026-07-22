@@ -11,7 +11,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import {
-  CELL, FAMILY_VARIANTS, PAINTERS, SEED_SIBLING_OF, VARIANT_FAMILY, EXPECTED_SIZE,
+  CELL, KEYED_SIZE, FAMILY_VARIANTS, PAINTERS, SEED_SIBLING_OF, VARIANT_FAMILY, EXPECTED_SIZE,
   REPORT_SCHEMA, LANE, PIVOT, KEY_COLOR,
   seedFromName, makeRng, createGrid, setPx, rgbaOfGrid,
   loadForest, loadStone, paintVariant, analyzeRuntime, gatesOfMetrics, assertGatesPass,
@@ -309,6 +309,72 @@ test('locked-input verification covers metal_stone: a stone edit changes pebble 
     'a metal_stone edit must change the painted pebble');
   assert.equal(sha256File(path.join(tamp, 'tuft_a.16.png')), sha256File(path.join(base, 'tuft_a.16.png')),
     'a metal_stone edit must not touch forest-painted variants');
+});
+
+// --- decoded-dimension gates (post-write malformed-file regressions) --------
+
+test('analyzeRuntime reports the decoded image\'s actual dimensions, not a hardcoded constant', () => {
+  const forest = loadForest(PALETTE);
+  const wrong = { width: 20, height: 20, colorType: 6, data: new Uint8Array(20 * 20 * 4) };
+  const metrics = analyzeRuntime(wrong, forest);
+  assert.deepEqual(metrics.runtime_dimensions, [20, 20]);
+});
+
+test('runtime dimension gate is loud: a wrong-size decoded runtime cannot pass runtime_dimensions or the overall verdict', () => {
+  const out = path.join(tmp, 'wrong-runtime-dims');
+  paintFamily({ palettePath: PALETTE, grassPath: GRASS, outDir: out });
+  const palettes = loadPalettes();
+  // Overwrite the written runtime PNG with a validly-encoded but wrong-size image.
+  const wrongSize = { width: 20, height: 20, colorType: 6, data: new Uint8Array(20 * 20 * 4) };
+  writePng(path.join(out, 'tuft_a.16.png'), wrongSize);
+  const entry = readBackVariant(out, 'tuft_a', palettes);
+  assert.deepEqual(entry.metrics.runtime_dimensions, [20, 20]);
+  assert.equal(entry.gates.runtime_dimensions, false, 'wrong-size runtime must fail runtime_dimensions by name');
+  const passed = Object.values(entry.gates).every(Boolean);
+  assert.equal(passed, false, 'a wrong-size runtime must not achieve an overall passing (machine_passed) verdict');
+  assert.throws(() => assertGatesPass([{ id: 'tuft_a', gates: entry.gates }]), /tuft_a: runtime_dimensions/);
+});
+
+test('keyed dimension gate is loud: an undersized keyed source cannot pass', () => {
+  const out = path.join(tmp, 'keyed-undersize');
+  paintFamily({ palettePath: PALETTE, grassPath: GRASS, outDir: out });
+  const palettes = loadPalettes();
+  const small = 200;
+  const data = new Uint8Array(small * small * 4);
+  for (let i = 0; i < data.length; i += 4) { data[i] = 255; data[i + 2] = 255; data[i + 3] = 255; }
+  writePng(path.join(out, 'tuft_a.keyed.png'), { width: small, height: small, colorType: 6, data });
+  const entry = readBackVariant(out, 'tuft_a', palettes);
+  assert.deepEqual(entry.metrics.keyed_dimensions, [small, small]);
+  assert.equal(entry.gates.keyed_dimensions, false, 'undersized keyed source must fail keyed_dimensions by name');
+  assert.equal(Object.values(entry.gates).every(Boolean), false);
+});
+
+test('keyed dimension gate is loud: an oversized keyed source with a valid top-left region still cannot pass', () => {
+  const out = path.join(tmp, 'keyed-oversize');
+  paintFamily({ palettePath: PALETTE, grassPath: GRASS, outDir: out });
+  const palettes = loadPalettes();
+  const validKeyed = readPng(path.join(out, 'tuft_a.keyed.png'));
+  assert.equal(validKeyed.width, KEYED_SIZE);
+  const big = KEYED_SIZE + 40;
+  const data = new Uint8Array(big * big * 4);
+  for (let i = 0; i < data.length; i += 4) { data[i] = 255; data[i + 2] = 255; data[i + 3] = 255; } // key-fill the canvas
+  // Place the real, valid 256x256 keyed image exactly at the top-left: the
+  // stride-correct round trip could otherwise "accidentally" read it as a
+  // zero-diff match even though the file violates the exact-size contract.
+  for (let y = 0; y < KEYED_SIZE; y += 1) {
+    for (let x = 0; x < KEYED_SIZE; x += 1) {
+      const s = (y * KEYED_SIZE + x) * 4;
+      const d = (y * big + x) * 4;
+      data[d] = validKeyed.data[s]; data[d + 1] = validKeyed.data[s + 1];
+      data[d + 2] = validKeyed.data[s + 2]; data[d + 3] = validKeyed.data[s + 3];
+    }
+  }
+  writePng(path.join(out, 'tuft_a.keyed.png'), { width: big, height: big, colorType: 6, data });
+  const entry = readBackVariant(out, 'tuft_a', palettes);
+  assert.deepEqual(entry.metrics.keyed_dimensions, [big, big]);
+  assert.equal(entry.gates.keyed_dimensions, false, 'oversized keyed source must fail keyed_dimensions by name');
+  assert.equal(entry.gates.keyed_roundtrip, false, 'an unmeasured round trip must not be reported as passing');
+  assert.equal(Object.values(entry.gates).every(Boolean), false);
 });
 
 console.log(`Scatter painter tests passed: ${passed}/${passed}.`);
