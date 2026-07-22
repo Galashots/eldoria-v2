@@ -4,6 +4,14 @@ This file keeps recent, high-value change summaries. Detailed historical entries
 
 Each entry should state the actual author, branch or PR, concise scope, verification, compatibility, and remaining risk. Implementation narratives belong in PR descriptions, commits, and audit records.
 
+## 2026-07-22 — Status reconciliation post-#126
+
+- Author/branch: Claude Code, `claude/status-reconciliation`. Executes the owner/ChatGPT day-plan Deliverable 1.
+- Scope: `CURRENT_STATE.md` — verified `main` advanced to `21e0316`; scatter family recorded as approved runtime masters (owner-confirmed delegated gate; `pebble_a` in `metal_stone`) with ChatGPT final confirmation requested before wiring; next sequence reset to visual confirmation → Farm scatter wiring → perspective proof (harness in PR #127); stale Vercel wording replaced (PR #112 is closed; GitHub Pages remains the origin); provider-roster risk note added; open-PR list recorded. Closes stale coordination surfaces #77, #115, #120 on merge.
+- Verification: documentation-only; statements cross-checked against `main` history, PR/issue states, and the committed review evidence.
+- Compatibility: no runtime, map, asset, save, or tooling change.
+- Remaining risk: none beyond the recorded items.
+
 ## 2026-07-22 — Grass-scatter family approved: grammar unheld, pebble palette-family amendment
 
 - Author/branch: Kimi K3 (repo agent), `kimi/scatter-paint-recipe`, PR #126. Visual-audit gate explicitly owner-delegated to the repo agent for the overnight session; verdict recorded for morning confirmation in `docs/art-pipeline/review/tile_farm_grass_scatter_family/AUDIT.md`.
