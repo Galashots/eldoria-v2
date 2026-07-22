@@ -80,7 +80,8 @@
       "view": "top_down",
       "directions": [],
       "paletteFamilies": [
-        "forest"
+        "forest",
+        "metal_stone"
       ],
       "lightDirection": "upper_left",
       "renderLayer": "decals_low",
@@ -101,11 +102,12 @@
       "preferredSource": "aseprite",
       "atlasFamily": "environment_farm",
       "productionClass": "anchor",
-      "visualRule": "Sparse, non-repeating detail scattered over tile_farm_grass_base to break up grid monotony; must remain quieter than actors and crop overlays and must not obstruct walkability or interaction reads.",
+      "visualRule": "Sparse, non-repeating detail scattered over tile_farm_grass_base to break up grid monotony; must remain quieter than actors and crop overlays and must not obstruct walkability or interaction reads. tuft_a/tuft_b/flower_a paint in forest; pebble_a paints in metal_stone.",
       "notes": [
         "Specification only; no art is included.",
         "No runtime behavior is added.",
-        "productionClass is anchor because tuft_a, flower_a, and pebble_a are independently approved anchors; only tuft_b may be produced as a deterministic derived sibling of tuft_a (PR #123 adjudication, 2026-07-21)."
+        "productionClass is anchor because tuft_a, flower_a, and pebble_a are independently approved anchors; only tuft_b may be produced as a deterministic derived sibling of tuft_a (PR #123 adjudication, 2026-07-21).",
+        "paletteFamilies amended 2026-07-22 to add metal_stone for pebble_a: overnight visual audit (owner-delegated gate) found a forest-green pebble reads as a dark hole, not a stone, on grass. The locked palette JSON itself is unchanged; metal_stone is the same family the approved env_farm_rock_medium/rock_a uses. Flagged for owner confirmation."
       ]
     },
     {
