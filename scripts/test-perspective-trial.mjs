@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { readPng, writePng } from './normalize-asset-sheet.mjs';
@@ -12,6 +13,12 @@ const DIRECTIONS = ['front', 'back', 'left', 'right'];
 const REPO_ROOT = path.resolve('.');
 const FARM_TILE = path.join(REPO_ROOT, 'docs', 'art-pipeline', 'review', 'tile_farm_grass_base_grass_a', 'grass_a.review-normalized.png');
 const WOODS_TILESET = path.join(REPO_ROOT, 'public', 'assets', 'tilesets', 'eldoria-placeholder.png');
+const CANONICAL_TARGETS_PATH = path.join(REPO_ROOT, 'docs', 'visual-targets', 'hero_actor_targets.json');
+const COMPOSE_SCRIPT_PATH = path.join(REPO_ROOT, 'scripts', 'compose-perspective-trial-evidence.mjs');
+
+function sha256File(p) {
+  return crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
+}
 
 function image(width, height, color = [0, 0, 0, 0]) {
   const data = new Uint8Array(width * height * 4);
@@ -462,6 +469,31 @@ let passed = 0;
 }
 
 {
+  // 13b. Shared provenance (trial manifest, hero_actor_targets.json, and the
+  // compose script itself) is present and matches the actual files, on both
+  // the per-candidate report and the top-level trial report - not merely
+  // present in some regex-matching shape, but byte-for-byte correct.
+  const dir = path.join(ROOT, 'provenance');
+  makeIdleSheet(path.join(dir, 'candidate-a.png'));
+  const { manifestPath, manifest } = makeManifest(dir);
+  const result = composePerspectiveTrialEvidence(manifestPath);
+  const expected = {
+    trialManifest: sha256File(manifestPath),
+    canonicalTargets: sha256File(CANONICAL_TARGETS_PATH),
+    composeScript: sha256File(COMPOSE_SCRIPT_PATH),
+  };
+  for (const [key, expectedHash] of Object.entries(expected)) {
+    assert.match(result.provenance[key].sha256, /^[0-9a-f]{64}$/, `provenance.${key}.sha256 must be present`);
+    assert.equal(result.provenance[key].sha256, expectedHash, `provenance.${key} must match the actual file`);
+  }
+  const report = readReport(manifest.outDir, 'cand_a');
+  assert.deepEqual(report.provenance, result.provenance, 'candidate report provenance must match the run provenance');
+  const index = JSON.parse(fs.readFileSync(path.join(manifest.outDir, 'trial_report.json'), 'utf8'));
+  assert.deepEqual(index.provenance, result.provenance, 'trial_report.json provenance must match the run provenance');
+  passed += 1;
+}
+
+{
   // 14. Multi-candidate comparison: both candidates appear in the trial index
   // and the comparison sheet is tall enough for two rows.
   const dir = path.join(ROOT, 'multi');
@@ -498,4 +530,4 @@ let passed = 0;
   passed += 1;
 }
 
-console.log(`Perspective trial test passed (${passed}/22).`);
+console.log(`Perspective trial test passed (${passed}/23).`);

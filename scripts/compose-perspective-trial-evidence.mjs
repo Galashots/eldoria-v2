@@ -118,6 +118,23 @@ function sha256(filePath) {
   return crypto.createHash('sha256').update(fs.readFileSync(filePath)).digest('hex');
 }
 
+function fileProvenance(filePath) {
+  return { path: filePath.replace(/\\/g, '/'), sha256: sha256(filePath) };
+}
+
+// Shared provenance for one trial run: the exact trial manifest, the
+// canonical hero_actor_targets.json this run bound its target against, and
+// this compose script itself. Identical across every candidate report and
+// the top-level trial report for a single composePerspectiveTrialEvidence()
+// call - it describes the run, not the candidate.
+function trialProvenance(manifestPath) {
+  return {
+    trialManifest: fileProvenance(manifestPath),
+    canonicalTargets: fileProvenance(CANONICAL_TARGETS_PATH),
+    composeScript: fileProvenance(fileURLToPath(import.meta.url)),
+  };
+}
+
 function loadManifest(manifestPath) {
   const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
   if (manifest.version !== 1) fail('manifest version must be 1');
@@ -471,6 +488,7 @@ function writeFullArtifactTree(dir, manifest, target) {
 export function composePerspectiveTrialEvidence(manifestPath) {
   const manifest = loadManifest(manifestPath);
   const { target, outDir } = manifest;
+  const provenance = trialProvenance(manifestPath);
 
   // Deterministic-regeneration gate: two complete, independent write passes
   // covering every generated evidence file (previews, enlarged sheets,
@@ -503,6 +521,7 @@ export function composePerspectiveTrialEvidence(manifestPath) {
       target: { cellPx: target.cellPx, directions: target.directions, pivotPx: target.pivotPx },
       plates: { woods_bridge_label: 'bridge terrain (current Wildbloom placeholder tiles)' },
       inputs,
+      provenance,
       gates,
       machinePassed,
       deterministicRegeneration,
@@ -523,10 +542,11 @@ export function composePerspectiveTrialEvidence(manifestPath) {
     candidates: candidateSummaries,
     machinePassed: overallOk,
     deterministicRegeneration,
+    provenance,
     reviewProtocol: REVIEW_PROTOCOL
   });
 
-  return { ok: overallOk, failures, outDir, deterministicRegeneration };
+  return { ok: overallOk, failures, outDir, deterministicRegeneration, provenance };
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
