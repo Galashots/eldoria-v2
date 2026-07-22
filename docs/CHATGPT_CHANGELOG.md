@@ -4,6 +4,14 @@ This file keeps recent, high-value change summaries. Detailed historical entries
 
 Each entry should state the actual author, branch or PR, concise scope, verification, compatibility, and remaining risk. Implementation narratives belong in PR descriptions, commits, and audit records.
 
+## 2026-07-22 — Provider roster update: Kimi retired, two-provider operating model
+
+- Author/branch: Claude Code, `claude/provider-roster-update`. Owner decision 2026-07-22 (recorded on PR #126): Kimi K3 is retired from the provider roster (subscription ended); active providers are Claude Code and ChatGPT.
+- Scope: `MULTI_MODEL_OPERATING_GUIDE.md` v1.2 → v1.3 — adds the active-roster section (Claude Code: engineering implementation, deterministic asset recipes/machine gates, browser evidence, review of ChatGPT work; ChatGPT: source-art generation and visual QA, product/visual authority, review of Claude work) and notes that with two providers the independent reviewer will typically also merge, which satisfies the required separation. `CHARACTER_PERSPECTIVE_LOCK_V1.md` §8 provider-comparison line genericized. Historical records (changelog, audits, research, handoffs) retain Kimi authorship per the existing rule; Kimi's local Python skill copy of the scatter painter no longer exists — the committed JS recipe was already canonical.
+- Verification: documentation-only; link and contradiction pass against `AGENTS.md` and `docs/README.md`.
+- Compatibility: no runtime, tooling, target, or asset change.
+- Remaining risk: two-provider review reduces reviewer diversity; owner spot-checks remain the backstop.
+
 ## 2026-07-22 — Grass-scatter family approved: grammar unheld, pebble palette-family amendment
 
 - Author/branch: Kimi K3 (repo agent), `kimi/scatter-paint-recipe`, PR #126. Visual-audit gate explicitly owner-delegated to the repo agent for the overnight session; verdict recorded for morning confirmation in `docs/art-pipeline/review/tile_farm_grass_scatter_family/AUDIT.md`.
