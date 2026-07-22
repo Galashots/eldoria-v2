@@ -1,6 +1,6 @@
 # Eldoria-V2 Current State
 
-**Last verified `main`:** `21e03166973d992f8eefd2da39e77f4025db3233` (PR #126 merged, 2026-07-22)  
+**Last verified `main`:** `f5b6b2ef4d0c4b33ce06e6753bd433829b10c3e0` (PR #127 merged, 2026-07-22)  
 **Stable product direction:** [`ELDORIA_MASTER_PLAN.md`](ELDORIA_MASTER_PLAN.md)  
 **Repository rules:** [`../AGENTS.md`](../AGENTS.md)
 
@@ -44,7 +44,7 @@ This file is the only authority for volatile capability status, the active miles
 | water | `water_a`, `water_b` plus complete 13-cell shoreline family approved; transition cells integrated on Farm |
 | Farm anchors | oak, horizontal fence segment, medium rock, revealed Root-Star approved |
 | Batch A family gate | seven-anchor contact sheet approved |
-| grass scatter | `tuft_a`, `tuft_b` (derived seed sibling), `flower_a`, `pebble_a` approved as runtime masters (PR #126; overnight owner-delegated visual gate, owner-confirmed 2026-07-22; `pebble_a` paints in `metal_stone`); final ChatGPT visual confirmation requested before wiring |
+| grass scatter | all four variants — `tuft_a`, `tuft_b` (derived seed sibling), `flower_a`, `pebble_a` — approved runtime masters (PR #126; overnight owner-delegated visual gate, owner-confirmed 2026-07-22; `pebble_a` paints in `metal_stone`); ChatGPT's final visual confirmation is complete, no further visual confirmation is pending |
 
 Detailed asset audit records remain under `docs/art-pipeline/review/`.
 
@@ -57,7 +57,7 @@ PR #122 is merged. The repository now contains:
 - `src/data/wildbloomSpots.ts` — Phaser-free spot source of truth;
 - a full 38-placement farm plan pinned by unit tests.
 
-The primitive is **not scene-integrated** and causes no runtime visual change. The `tile_farm_grass_scatter` masters are now approved (PR #126); integration waits for ChatGPT's final family confirmation and a wiring PR with in-game density evidence.
+The primitive is **not scene-integrated** and causes no runtime visual change. The `tile_farm_grass_scatter` masters are approved and ChatGPT's final family confirmation is complete (PR #126); integration now waits only on the D3 wiring PR with deterministic packing/configuration and comparable in-game density evidence.
 
 ## Visual direction and character status
 
@@ -83,19 +83,16 @@ The immediate goal is to establish the missing visual layers that create the ref
 
 ### Next work
 
-1. **ChatGPT final visual confirmation of the approved scatter family**
-   - review the committed evidence under `docs/art-pipeline/review/tile_farm_grass_scatter_family/` (montage, four runtime masters, four grass composites);
-   - expected outcome: retain `metal_stone` for `pebble_a`; confirm `flower_a`, issue one bounded deterministic correction, or HOLD it; one family verdict suitable for the integration PR.
-
-2. **Wire the decor-scatter primitive into the Farm scene** (after item 1)
-   - deterministically pack the four cells in the declared §5.1 order (`tuft_a, tuft_b, pebble_a, flower_a`); preload; Farm-only presentation-layer decals through the existing exclusion/placement systems;
+1. **D3 — Wire the decor-scatter primitive into the Farm scene** (immediate engineering task; unblocked — scatter family confirmation is complete)
+   - deterministically pack the four cells in the declared §5.1 order (`tuft_a, tuft_b, pebble_a, flower_a`) with deterministic packing/configuration; preload; Farm-only presentation-layer decals through the existing exclusion/placement systems;
    - deliberate weighting (first hypothesis ~4:1 tufts over flowers; screenshots decide), loud failure on invalid density/missing assets/bad mappings;
    - preserve map JSON, collision, quests, saves, and interaction IDs;
-   - Mage and Ranger evidence at 1194×834 showing routes, gates, objectives, crop area, and Wildbloom locations remain clear; full suite + emulation on the exact final head.
+   - comparable in-game density evidence required: Mage and Ranger captures at 1194×834 showing routes, gates, objectives, crop area, and Wildbloom locations remain clear; full suite + emulation on the exact final head.
 
-3. **Run the first character perspective trial** — parallel lane, not gated on items 1–2
+2. **D4 — Run the first character perspective trial** — parallel lane, not gated on item 1
    - one neutral Mage identity, four idle directions only; same-sheet versus direction-anchored generation;
-   - judged on exact runtime pixels on bright Farm and darker Woods plates via the evidence harness (PR #127);
+   - the evidence harness is merged (PR #127) and ready; this task now awaits the exact candidate-PNG handoff for processing through the merged harness;
+   - judged on exact runtime pixels on bright Farm and darker Woods plates;
    - choose size/prompt strategy before commissioning complete animation families.
 
 ## Known risks and deferred work
@@ -108,7 +105,9 @@ The immediate goal is to establish the missing visual layers that create the ref
 - Production fantasy UI, final licensed audio, broader world restoration, codex/customization loops, and additional zones remain future milestones.
 - The Vercel migration proposal (PR #112) is closed; GitHub Pages remains the deployment and child-playtest origin. Any future hosting cutover is a new owner decision with its own save-origin plan.
 - Provider roster reduced to Claude Code + ChatGPT (owner decision 2026-07-22; operating guide v1.3). Reduced reviewer diversity; owner spot-checks are the backstop.
-- Open PRs awaiting independent review: #127 (perspective-trial evidence harness), #128 (lane-contract restack), #129 (provider roster docs).
+- Open PRs awaiting independent review: none. #127 (perspective-trial evidence harness), #128 (lane-contract restack), and #129 (provider roster docs) are merged; #130 (this status reconciliation) is open for its own review.
+- Foundry GPT (ChatGPT's private pixel-art configuration/package) and its Preview tests are an external authoring tool for candidate source art only. They are not a repository blocker and not repository authority — repository status is governed solely by `main`, the documents in this repository, and owner/ChatGPT decisions recorded here and in the changelog.
+- The Creative Bible reconciliation (narrative/world-document alignment) is tracked as a separate future documentation-only lane, not part of this PR or any current engineering task. It will not change current IDs, saves, quests, runtime behavior, or deployment names when it lands.
 
 ## Verification baseline
 
