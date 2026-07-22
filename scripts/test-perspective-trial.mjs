@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { readPng, writePng } from './normalize-asset-sheet.mjs';
-import { composePerspectiveTrialEvidence } from './compose-perspective-trial-evidence.mjs';
+import {
+  composePerspectiveTrialEvidence, compareArtifactTrees, composePreview, buildOverlay,
+} from './compose-perspective-trial-evidence.mjs';
 
 const ROOT = path.resolve('.tmp/perspective-trial');
 const DIRECTIONS = ['front', 'back', 'left', 'right'];
@@ -67,7 +69,7 @@ function makeManifest(dir, options = {}) {
   const manifest = {
     version: 1,
     id: options.id ?? 'test_perspective_trial',
-    target: options.target ?? { cellPx: [32, 48], directions: DIRECTIONS, pivotRow: 47 },
+    target: options.target ?? { cellPx: [32, 48], directions: DIRECTIONS, pivotPx: [16, 47] },
     plates: options.plates ?? {
       farm_bright: { mode: 'tile', tilePath: FARM_TILE, tilePx: [16, 16] },
       woods_bridge: { mode: 'tileset_cells', tilesetPath: WOODS_TILESET, tilePx: [16, 16], cells: options.woodsCells ?? [[0, 0]] }
@@ -262,15 +264,20 @@ let passed = 0;
 
 {
   // 9c. The manifest cannot redefine the authoritative target: wrong canvas,
-  // wrong pivot, and wrong direction order each fail against the canonical
-  // char_mage_boy_base entry in hero_actor_targets.json.
+  // wrong pivot Y, wrong pivot X, and wrong direction order each fail against
+  // the canonical char_mage_boy_base entry in hero_actor_targets.json.
   const dir = path.join(ROOT, 'target-substitute');
   makeIdleSheet(path.join(dir, 'candidate-a.png'));
-  const wrongSize = makeManifest(dir, { target: { cellPx: [32, 64], directions: DIRECTIONS, pivotRow: 47 } });
+  const wrongSize = makeManifest(dir, { target: { cellPx: [32, 64], directions: DIRECTIONS, pivotPx: [16, 47] } });
   assert.throws(() => composePerspectiveTrialEvidence(wrongSize.manifestPath), /canonical char_mage_boy_base canvas/);
-  const wrongPivot = makeManifest(dir, { target: { cellPx: [32, 48], directions: DIRECTIONS, pivotRow: 40 } });
-  assert.throws(() => composePerspectiveTrialEvidence(wrongPivot.manifestPath), /canonical pivot row 47/);
-  const wrongOrder = makeManifest(dir, { target: { cellPx: [32, 48], directions: ['back', 'front', 'left', 'right'], pivotRow: 47 } });
+  const wrongPivotY = makeManifest(dir, { target: { cellPx: [32, 48], directions: DIRECTIONS, pivotPx: [16, 40] } });
+  assert.throws(() => composePerspectiveTrialEvidence(wrongPivotY.manifestPath), /must match canonical pivot/);
+  // 9c-2. Wrong pivot X alone (correct Y, correct canvas) must also be
+  // rejected: a manifest cannot pass by only matching the contact row while
+  // silently substituting the horizontal pivot.
+  const wrongPivotX = makeManifest(dir, { target: { cellPx: [32, 48], directions: DIRECTIONS, pivotPx: [10, 47] } });
+  assert.throws(() => composePerspectiveTrialEvidence(wrongPivotX.manifestPath), /must match canonical pivot/);
+  const wrongOrder = makeManifest(dir, { target: { cellPx: [32, 48], directions: ['back', 'front', 'left', 'right'], pivotPx: [16, 47] } });
   assert.throws(() => composePerspectiveTrialEvidence(wrongOrder.manifestPath), /canonical order/);
   passed += 1;
 }
@@ -328,11 +335,30 @@ let passed = 0;
 }
 
 {
-  // 12. Two-run byte-identical regeneration over every artifact.
+  // 12. The PRODUCTION run itself gates two-run byte-identical regeneration
+  // (not merely a test-level snapshot comparison across two separate calls):
+  // both the per-candidate report and the trial index must record and pass
+  // the determinism result, and no leftover verify tree should remain.
   const dir = path.join(ROOT, 'determinism');
   makeIdleSheet(path.join(dir, 'candidate-a.png'));
   const { manifestPath, manifest } = makeManifest(dir);
-  composePerspectiveTrialEvidence(manifestPath);
+  const result = composePerspectiveTrialEvidence(manifestPath);
+  assert.equal(result.deterministicRegeneration.runs, 2);
+  assert.equal(result.deterministicRegeneration.written_files_byte_identical, true);
+  // 8 per-candidate artifacts (2 previews, enlarged sheet, 4 overlays,
+  // contact sheet) + 1 top-level comparison sheet; report.json/trial_report.json
+  // are excluded (written only after this gate).
+  assert.ok(result.deterministicRegeneration.files_compared >= 9, 'expected a full artifact set to have been compared');
+  const report = readReport(manifest.outDir, 'cand_a');
+  assert.deepEqual(report.deterministicRegeneration, result.deterministicRegeneration);
+  const index = JSON.parse(fs.readFileSync(path.join(manifest.outDir, 'trial_report.json'), 'utf8'));
+  assert.deepEqual(index.deterministicRegeneration, result.deterministicRegeneration);
+  assert.equal(index.machinePassed, true);
+  assert.ok(!fs.existsSync(`${manifest.outDir}.regen-verify`), 'the throwaway verify tree must not be left behind');
+
+  // A second independent call remains byte-identical to the first, over the
+  // full written artifact set (previews, sheets, overlays, contact sheet,
+  // comparison sheet, and both reports).
   const snapshot = new Map();
   const walk = (p) => {
     for (const entry of fs.readdirSync(p, { withFileTypes: true })) {
@@ -342,11 +368,84 @@ let passed = 0;
     }
   };
   walk(manifest.outDir);
-  assert.ok(snapshot.size >= 10, 'expected a full artifact set to compare');
   composePerspectiveTrialEvidence(manifestPath);
   for (const [file, bytes] of snapshot) {
     assert.ok(fs.readFileSync(file).equals(bytes), `artifact must be byte-identical across runs: ${file}`);
   }
+  passed += 1;
+}
+
+{
+  // 12b. compareArtifactTrees is the production determinism gate itself, not
+  // just an implementation detail: it must fail loudly, by name, on a
+  // differing file list between two written trees.
+  const a = path.join(ROOT, 'tree-list-a');
+  const b = path.join(ROOT, 'tree-list-b');
+  fs.mkdirSync(a, { recursive: true });
+  fs.mkdirSync(b, { recursive: true });
+  fs.writeFileSync(path.join(a, 'one.png'), Buffer.from([1, 2, 3]));
+  fs.writeFileSync(path.join(b, 'one.png'), Buffer.from([1, 2, 3]));
+  fs.writeFileSync(path.join(b, 'extra.png'), Buffer.from([9]));
+  assert.throws(() => compareArtifactTrees(a, b), /file lists differ/);
+  passed += 1;
+}
+
+{
+  // 12c. compareArtifactTrees must fail loudly, by name, on a byte
+  // difference between two written trees that share the same file list.
+  const a = path.join(ROOT, 'tree-bytes-a');
+  const b = path.join(ROOT, 'tree-bytes-b');
+  fs.mkdirSync(path.join(a, 'nested'), { recursive: true });
+  fs.mkdirSync(path.join(b, 'nested'), { recursive: true });
+  fs.writeFileSync(path.join(a, 'nested', 'sheet.png'), Buffer.from([1, 2, 3]));
+  fs.writeFileSync(path.join(b, 'nested', 'sheet.png'), Buffer.from([1, 2, 4]));
+  assert.throws(() => compareArtifactTrees(a, b), /nested\/sheet\.png differs/);
+  passed += 1;
+}
+
+{
+  // 12d. A non-centred pivot flows correctly through placement and overlay
+  // logic: it must NOT be derived from canvas centre. Use a synthetic target
+  // wider than its pivot doubled, so a centre-derived X (cellW/2) would land
+  // in a visibly different column than the declared pivotPx[0].
+  const cellW = 40; const cellH = 48;
+  const pivotX = 10; // canvas centre would be 20 - deliberately off-centre
+  const pivotY = 47;
+  const target = { cellPx: [cellW, cellH], directions: DIRECTIONS, pivotPx: [pivotX, pivotY] };
+  const sheet = image(cellW * 4, cellH);
+  const markerColor = [200, 40, 40, 255];
+  for (let d = 0; d < 4; d += 1) {
+    // One marker pixel at each direction's declared pivot column/row.
+    const i = (pivotY * sheet.width + d * cellW + pivotX) * 4;
+    sheet.data[i] = markerColor[0]; sheet.data[i + 1] = markerColor[1];
+    sheet.data[i + 2] = markerColor[2]; sheet.data[i + 3] = markerColor[3];
+  }
+  const plateTilePx = [16, 16];
+  const plate = image(3 * 4 * plateTilePx[0], 8 * plateTilePx[1], [30, 30, 30, 255]);
+  const { preview, layout } = composePreview(plate, sheet, target, plateTilePx);
+  const slotWidth = layout.slotWidth;
+  const pivotOffsetX = layout.pivotOffsetX;
+  for (let d = 0; d < 4; d += 1) {
+    // The marker must land at the slot's centre column (pivot-aligned), not
+    // at a centre-derived column (which would be offset by 20 - 10 = 10px).
+    const expectedX = d * slotWidth + pivotOffsetX;
+    assert.deepEqual(pixel(preview, expectedX, layout.baselineRow), markerColor,
+      `direction ${DIRECTIONS[d]}: pivot marker must land on the slot centre using the declared pivotPx[0], not canvas centre`);
+  }
+  // buildOverlay draws its own magenta pivot/baseline marker lines directly
+  // over the art, so check where the vertical marker LINE lands, sampled
+  // above the baseline (away from the full-width baseline line): it must sit
+  // at the declared pivotPx[0] column, not a canvas-centre-derived column.
+  const overlay = buildOverlay(sheet, target, 0);
+  const overlayPivotX = pivotX * 8; // NN_SCALE = 8
+  const centreDerivedX = Math.floor(cellW / 2) * 8;
+  assert.notEqual(overlayPivotX, centreDerivedX, 'test fixture sanity: pivot must be genuinely off-centre');
+  const sampleY = pivotY * 8 - 8; // one NN cell above the baseline
+  const MARKER = [255, 0, 255, 255];
+  assert.deepEqual(pixel(overlay, overlayPivotX, sampleY), MARKER,
+    'overlay pivot marker column must use the declared pivotPx[0], not canvas centre');
+  assert.notDeepEqual(pixel(overlay, centreDerivedX, sampleY), MARKER,
+    'overlay must not also mark a canvas-centre-derived column');
   passed += 1;
 }
 
@@ -399,4 +498,4 @@ let passed = 0;
   passed += 1;
 }
 
-console.log(`Perspective trial test passed (${passed}/19).`);
+console.log(`Perspective trial test passed (${passed}/22).`);

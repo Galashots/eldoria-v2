@@ -1,6 +1,6 @@
 # Character Perspective Trial — Evidence Harness Plan (2026-07)
 
-**Status:** Implemented (PR #127); this document is the approved design record. The manifest is bound to the canonical `char_mage_boy_base` target and the exact repo plate assets; occupancy bounds are mandatory.
+**Status:** Implemented (PR #127); this document is the approved design record. The manifest is bound to the canonical `char_mage_boy_base` target — full pivot `(16,47)`, not just the contact row — and the exact repo plate assets; occupancy bounds are mandatory. Two-run byte-identical regeneration is a production gate: every write pass is compared, file list and bytes, against an independent second pass before either report is written.
 **Authorities:** [`visual-targets/CHARACTER_PERSPECTIVE_LOCK_V1.md`](visual-targets/CHARACTER_PERSPECTIVE_LOCK_V1.md) §8–§9, [`visual-targets/hero_actor_targets.json`](visual-targets/hero_actor_targets.json) (`char_mage_boy_base`), [`CURRENT_STATE.md`](CURRENT_STATE.md) active-milestone item 2, [`../AGENTS.md`](../AGENTS.md).
 
 ## Purpose
@@ -9,7 +9,7 @@ Give the first character perspective trial (Mage, four idle facings, neutral out
 
 ## Owner decisions folded in
 
-- Trial identity: **Mage** (`char_mage_boy_base`), existing 32×48 canvas, pivot (16,47); CHANGE TARGET SIZE remains the escape hatch.
+- Trial identity: **Mage** (`char_mage_boy_base`), existing 32×48 canvas, full pivot `(16,47)`; CHANGE TARGET SIZE remains the escape hatch.
 - Branch deliverable: **evidence harness only.** Generation brief and per-candidate visual verdicts remain with ChatGPT per `AGENTS.md`.
 - Backgrounds: **offline deterministic composition** from committed tiles; no live capture, no scene integration.
 - Review protocol amendment (owner, 2026-07-21): **any reviewer (AI or human) issuing perspective verdicts must first consult external reference imagery** for the elevated three-quarter idiom rather than critiquing from memory. Machine gates measure pixels; judgment gates require referenced comparison.
@@ -45,7 +45,7 @@ New `scripts/compose-perspective-trial-evidence.mjs` (+ `scripts/test-perspectiv
 
 ## Gates
 
-**Machine (fail-closed):** cell geometry exactly 32×48 ×4; binary alpha (partial alpha rejected by name); no cell bleed; per-direction opaque bounding boxes with apparent-height parity **±1 px across all four directions**; bottom contact row = pivot row 47; occupancy within declared bounds; two-run byte-identical regeneration.
+**Machine (fail-closed):** cell geometry exactly 32×48 ×4; binary alpha (partial alpha rejected by name); no cell bleed; per-direction opaque bounding boxes with apparent-height parity **±1 px across all four directions**; bottom contact row = pivot row 47; occupancy within declared bounds; two-run byte-identical regeneration over every generated artifact (previews, enlarged sheets, overlays, contact sheet, and the cross-candidate comparison sheet), compared exact file list and bytes before either report is written, and recorded in both the per-candidate report and the trial index.
 
 **Judgment (named, not machine-passed):** foreshortened-not-frontal down view; visible top planes in all facings; single camera pitch matching the approved oak; one upper-left key light; identity/face readability; embedded-not-pasted on both plates. Emitted in `report.json` as named open gates with the reference-consultation requirement stated.
 

@@ -6,7 +6,7 @@
 // Manifest shape (version 1):
 // {
 //   version: 1, id, outDir,
-//   target: { cellPx: [32, 48], directions: [...4], pivotRow },
+//   target: { cellPx: [32, 48], directions: [...4], pivotPx: [x, y] },
 //   plates: {
 //     farm_bright:  { mode: "tile", tilePath, tilePx },
 //     woods_bridge: { mode: "tileset_cells", tilesetPath, tilePx, cells: [[c,r],...] }
@@ -41,7 +41,11 @@ export function canonicalTarget() {
   const list = Array.isArray(doc) ? doc : (doc.targets ?? []);
   const target = list.find((t) => t.id === CANONICAL_TARGET_ID);
   if (!target) fail(`canonical target ${CANONICAL_TARGET_ID} not found in hero_actor_targets.json`);
-  return { cellPx: target.canvasPx, directions: target.directions, pivotRow: target.pivotPx[1] };
+  if (!Array.isArray(target.pivotPx) || target.pivotPx.length !== 2
+    || !Number.isInteger(target.pivotPx[0]) || !Number.isInteger(target.pivotPx[1])) {
+    fail(`canonical target ${CANONICAL_TARGET_ID} must declare an integer pivotPx [x, y]`);
+  }
+  return { cellPx: target.canvasPx, directions: target.directions, pivotPx: [target.pivotPx[0], target.pivotPx[1]] };
 }
 
 const REPORT_ID = 'eldoria-perspective-trial-report/v1';
@@ -123,9 +127,15 @@ function loadManifest(manifestPath) {
   const { target, plates, candidates } = manifest;
   if (!Array.isArray(target.cellPx) || target.cellPx.length !== 2) fail('target.cellPx must be [w, h]');
   if (!Array.isArray(target.directions) || target.directions.length !== 4) fail('target.directions must list 4 directions');
-  if (!Number.isInteger(target.pivotRow)) fail('target.pivotRow must be an integer row');
+  if (!Array.isArray(target.pivotPx) || target.pivotPx.length !== 2
+    || !Number.isInteger(target.pivotPx[0]) || !Number.isInteger(target.pivotPx[1])) {
+    fail('target.pivotPx must be an integer [x, y] pair');
+  }
 
   // Bind the manifest to the canonical target: any substitute geometry fails.
+  // The full pivot (both X and Y, not just the contact row) must match
+  // exactly - an asymmetric future character with a non-centred pivot must
+  // not be silently coerced to canvas-centre by a manifest that only checks Y.
   const canon = canonicalTarget();
   if (target.cellPx[0] !== canon.cellPx[0] || target.cellPx[1] !== canon.cellPx[1]) {
     fail(`target.cellPx [${target.cellPx}] must match canonical ${CANONICAL_TARGET_ID} canvas [${canon.cellPx}]`);
@@ -133,8 +143,8 @@ function loadManifest(manifestPath) {
   if (target.directions.join(',') !== canon.directions.join(',')) {
     fail(`target.directions must match canonical order [${canon.directions}]`);
   }
-  if (target.pivotRow !== canon.pivotRow) {
-    fail(`target.pivotRow ${target.pivotRow} must match canonical pivot row ${canon.pivotRow}`);
+  if (target.pivotPx[0] !== canon.pivotPx[0] || target.pivotPx[1] !== canon.pivotPx[1]) {
+    fail(`target.pivotPx [${target.pivotPx}] must match canonical pivot [${canon.pivotPx}]`);
   }
 
   // Bind the evidence plates to the exact repo assets from the approved plan.
@@ -270,8 +280,8 @@ function runMachineGates(sheet, target, candidate) {
 
   gates.push({
     name: 'pivot_contact',
-    passed: metrics.every((m) => m.contactRow === target.pivotRow),
-    measured: { contactRows: metrics.map((m) => m.contactRow), pivotRow: target.pivotRow }
+    passed: metrics.every((m) => m.contactRow === target.pivotPx[1]),
+    measured: { contactRows: metrics.map((m) => m.contactRow), pivotRow: target.pivotPx[1] }
   });
 
   // Occupancy bounds are guaranteed by loadManifest; the gate always evaluates
@@ -291,8 +301,14 @@ function runMachineGates(sheet, target, candidate) {
   return { gates, metrics };
 }
 
-function composePreview(plateImage, sheet, target, plateTilePx) {
+// Grounds each direction cell at the manifest's authoritative pivot: the
+// pivot column (not the cell's geometric centre) lands on the slot's centre,
+// and the pivot row (not an assumed baseline offset) lands on the plate's
+// baseline. A non-centred pivot therefore places art off-centre within its
+// slot exactly as declared, rather than being silently recentred.
+export function composePreview(plateImage, sheet, target, plateTilePx) {
   const [cellW, cellH] = target.cellPx;
+  const [pivotX, pivotY] = target.pivotPx;
   const slotWidth = SLOT_TILES * plateTilePx[0];
   const baselineRow = BASELINE_TILE_ROW * plateTilePx[1] - 1;
   const preview = image(plateImage.width, plateImage.height);
@@ -300,27 +316,28 @@ function composePreview(plateImage, sheet, target, plateTilePx) {
   const pivotOffsetX = Math.floor(slotWidth / 2);
   for (let d = 0; d < 4; d += 1) {
     const cell = { width: cellW, height: cellH, colorType: 6, data: cropData(sheet, d * cellW, 0, cellW, cellH) };
-    const dx = d * slotWidth + pivotOffsetX - Math.floor(cellW / 2);
-    const dy = baselineRow - target.pivotRow;
+    const dx = d * slotWidth + pivotOffsetX - pivotX;
+    const dy = baselineRow - pivotY;
     blit(preview, cell, dx, dy);
   }
   return { preview, layout: { baselineRow, slotWidth, pivotOffsetX } };
 }
 
-function buildOverlay(sheet, target, index) {
+export function buildOverlay(sheet, target, index) {
   const [cellW, cellH] = target.cellPx;
+  const [pivotX, pivotY] = target.pivotPx;
   const cell = { width: cellW, height: cellH, colorType: 6, data: cropData(sheet, index * cellW, 0, cellW, cellH) };
   const up = upscaleNearestNeighborRgba(cell, NN_SCALE);
   const overlay = image(up.width, up.height, [40, 40, 46, 255]);
   blit(overlay, up, 0, 0);
-  const baselineY = target.pivotRow * NN_SCALE;
+  const baselineY = pivotY * NN_SCALE;
   for (let x = 0; x < overlay.width; x += 1) {
     const i = (baselineY * overlay.width + x) * 4;
     overlay.data[i] = MARKER[0]; overlay.data[i + 1] = MARKER[1]; overlay.data[i + 2] = MARKER[2]; overlay.data[i + 3] = MARKER[3];
   }
-  const pivotX = Math.floor(cellW / 2) * NN_SCALE;
+  const pivotXpx = pivotX * NN_SCALE;
   for (let y = Math.max(0, baselineY - 3 * NN_SCALE); y < overlay.height; y += 1) {
-    const i = (y * overlay.width + pivotX) * 4;
+    const i = (y * overlay.width + pivotXpx) * 4;
     overlay.data[i] = MARKER[0]; overlay.data[i + 1] = MARKER[1]; overlay.data[i + 2] = MARKER[2]; overlay.data[i + 3] = MARKER[3];
   }
   return overlay;
@@ -367,66 +384,149 @@ function writeJson(filePath, value) {
   fs.writeFileSync(filePath, `${JSON.stringify(JSON.parse(stableStringify(value)), null, 2)}\n`);
 }
 
+// --- deterministic regeneration (production gate) -----------------------------
+// The two per-run reports (candidate report.json and the top-level
+// trial_report.json) are written only after the tree comparison below, so
+// they never exist at comparison time. Their names are also excluded here as
+// a belt-and-suspenders guard against a future ordering change accidentally
+// making a report self-hash or self-compare its own written bytes.
+const POST_GATE_REPORT_NAMES = new Set(['report.json', 'trial_report.json']);
+
+function listFilesRecursive(root) {
+  const out = [];
+  const walk = (dir, rel) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const abs = path.join(dir, entry.name);
+      const relPath = rel ? `${rel}/${entry.name}` : entry.name;
+      if (entry.isDirectory()) { walk(abs, relPath); continue; }
+      if (POST_GATE_REPORT_NAMES.has(entry.name)) continue;
+      out.push(relPath);
+    }
+  };
+  walk(root, '');
+  return out.sort();
+}
+
+// Compare every generated evidence file between two independently written
+// trees: exact relative file list, then exact encoded bytes. Throws loudly on
+// either a list or a byte mismatch; returns the number of files compared.
+// This is the production determinism gate - not a test-only snapshot check.
+export function compareArtifactTrees(dirA, dirB) {
+  const a = listFilesRecursive(dirA);
+  const b = listFilesRecursive(dirB);
+  if (a.join('\n') !== b.join('\n')) {
+    fail(`deterministic regeneration gate: artifact file lists differ (${a.length} vs ${b.length})`);
+  }
+  for (const rel of a) {
+    const bytesA = fs.readFileSync(path.join(dirA, rel));
+    const bytesB = fs.readFileSync(path.join(dirB, rel));
+    if (!bytesA.equals(bytesB)) {
+      fail(`deterministic regeneration gate: ${rel} differs between the two written runs`);
+    }
+  }
+  return a.length;
+}
+
+// Writes every generated evidence artifact for one candidate - both plate
+// previews, the enlarged sheet, one overlay per direction, and the contact
+// sheet - but never the per-candidate report (written later, once, after the
+// determinism gate). Returns everything needed to assemble that report.
+function composeCandidateEvidence(dir, manifest, target, farm, woods, candidate) {
+  const sheet = readPng(candidate.sheetPath);
+  const candidateDir = path.join(dir, candidate.id);
+  fs.mkdirSync(candidateDir, { recursive: true });
+  const { gates, metrics } = runMachineGates(sheet, target, candidate);
+  const machinePassed = gates.every((g) => g.passed);
+
+  const farmPreview = composePreview(farm.plate, sheet, target, manifest.plates.farm_bright.tilePx);
+  const woodsPreview = composePreview(woods.plate, sheet, target, manifest.plates.woods_bridge.tilePx);
+  writePng(path.join(candidateDir, 'preview_1x_farm_bright.png'), farmPreview.preview);
+  writePng(path.join(candidateDir, 'preview_1x_woods_bridge.png'), woodsPreview.preview);
+  writePng(path.join(candidateDir, 'sheet_nn8x.png'), upscaleNearestNeighborRgba(sheet, NN_SCALE));
+  target.directions.forEach((direction, d) => {
+    writePng(path.join(candidateDir, `overlay_${direction}.png`), buildOverlay(sheet, target, d));
+  });
+  writePng(path.join(candidateDir, 'contact_sheet.png'), buildContactSheet(sheet, target));
+
+  const inputs = [candidate.sheetPath, ...farm.inputPaths, ...woods.inputPaths]
+    .map((p) => ({ path: p.replace(/\\/g, '/'), sha256: sha256(p) }));
+
+  return { candidate, sheet, gates, metrics, machinePassed, inputs, previewLayout: farmPreview.layout };
+}
+
+// One complete, independent pass: rebuilds both plates from their source
+// files and every candidate's full evidence set, including the cross-
+// candidate comparison sheet. Called twice (real output, then a throwaway
+// verify tree) so the determinism gate exercises the whole pipeline, not a
+// reused in-memory buffer.
+function writeFullArtifactTree(dir, manifest, target) {
+  const farm = buildPlate(manifest.plates.farm_bright);
+  const woods = buildPlate(manifest.plates.woods_bridge);
+  const results = manifest.candidates.map((candidate) => composeCandidateEvidence(dir, manifest, target, farm, woods, candidate));
+  writePng(path.join(dir, 'comparison_by_direction.png'),
+    buildComparisonSheet(results.map((r) => ({ id: r.candidate.id, sheet: r.sheet })), target));
+  return results;
+}
+
 export function composePerspectiveTrialEvidence(manifestPath) {
   const manifest = loadManifest(manifestPath);
-  const { target, plates, outDir } = manifest;
-  const farm = buildPlate(plates.farm_bright);
-  const woods = buildPlate(plates.woods_bridge);
+  const { target, outDir } = manifest;
+
+  // Deterministic-regeneration gate: two complete, independent write passes
+  // covering every generated evidence file (previews, enlarged sheets,
+  // overlays, contact sheets, and the cross-candidate comparison sheet).
+  // Fails loudly on any file-list or byte difference before either report is
+  // written. The verify tree is a SIBLING of outDir, never nested inside it -
+  // listFilesRecursive walks every subdirectory, so a verify tree nested
+  // inside outDir would recurse into itself and double-count outDir's files.
+  const verifyDir = `${outDir}.regen-verify`;
+  fs.rmSync(verifyDir, { recursive: true, force: true });
+  const results = writeFullArtifactTree(outDir, manifest, target);
+  writeFullArtifactTree(verifyDir, manifest, target);
+  const filesCompared = compareArtifactTrees(outDir, verifyDir);
+  fs.rmSync(verifyDir, { recursive: true, force: true });
+  // written_files_byte_identical is literally true here: compareArtifactTrees
+  // throws above on any mismatch, so this line is unreachable otherwise.
+  const deterministicRegeneration = { runs: 2, files_compared: filesCompared, written_files_byte_identical: true };
+
   const failures = [];
   const candidateSummaries = [];
-  const candidateSheets = [];
-
-  for (const candidate of manifest.candidates) {
-    const sheet = readPng(candidate.sheetPath);
-    const candidateDir = path.join(outDir, candidate.id);
-    fs.mkdirSync(candidateDir, { recursive: true });
-    const { gates, metrics } = runMachineGates(sheet, target, candidate);
-    const machinePassed = gates.every((g) => g.passed);
+  for (const r of results) {
+    const { candidate, gates, metrics, machinePassed, inputs, previewLayout } = r;
     if (!machinePassed) {
       failures.push({ candidate: candidate.id, gates: gates.filter((g) => !g.passed).map((g) => g.name) });
     }
-
-    const farmPreview = composePreview(farm.plate, sheet, target, plates.farm_bright.tilePx);
-    const woodsPreview = composePreview(woods.plate, sheet, target, plates.woods_bridge.tilePx);
-    writePng(path.join(candidateDir, 'preview_1x_farm_bright.png'), farmPreview.preview);
-    writePng(path.join(candidateDir, 'preview_1x_woods_bridge.png'), woodsPreview.preview);
-    writePng(path.join(candidateDir, 'sheet_nn8x.png'), upscaleNearestNeighborRgba(sheet, NN_SCALE));
-    target.directions.forEach((direction, d) => {
-      writePng(path.join(candidateDir, `overlay_${direction}.png`), buildOverlay(sheet, target, d));
-    });
-    writePng(path.join(candidateDir, 'contact_sheet.png'), buildContactSheet(sheet, target));
-
-    const inputs = [candidate.sheetPath, ...farm.inputPaths, ...woods.inputPaths]
-      .map((p) => ({ path: p.replace(/\\/g, '/'), sha256: sha256(p) }));
     const report = {
       reportId: REPORT_ID,
       trialId: manifest.id,
       candidate: { id: candidate.id, provider: candidate.provider, approach: candidate.approach },
-      target: { cellPx: target.cellPx, directions: target.directions, pivotRow: target.pivotRow },
+      target: { cellPx: target.cellPx, directions: target.directions, pivotPx: target.pivotPx },
       plates: { woods_bridge_label: 'bridge terrain (current Wildbloom placeholder tiles)' },
       inputs,
       gates,
       machinePassed,
+      deterministicRegeneration,
       metricsByDirection: Object.fromEntries(target.directions.map((direction, d) => [direction, metrics[d] ?? null])),
       judgmentGates: JUDGMENT_GATES.map((g) => ({ ...g, status: 'open' })),
       reviewProtocol: REVIEW_PROTOCOL,
-      previewLayout: farmPreview.layout,
+      previewLayout,
       producer: { tool: 'scripts/compose-perspective-trial-evidence.mjs' }
     };
-    writeJson(path.join(candidateDir, 'report.json'), report);
+    writeJson(path.join(outDir, candidate.id, 'report.json'), report);
     candidateSummaries.push({ id: candidate.id, approach: candidate.approach, machinePassed, failedGates: gates.filter((g) => !g.passed).map((g) => g.name) });
-    candidateSheets.push({ id: candidate.id, sheet });
   }
 
-  writePng(path.join(outDir, 'comparison_by_direction.png'), buildComparisonSheet(candidateSheets, target));
+  const overallOk = failures.length === 0;
   writeJson(path.join(outDir, 'trial_report.json'), {
     reportId: REPORT_ID,
     trialId: manifest.id,
     candidates: candidateSummaries,
+    machinePassed: overallOk,
+    deterministicRegeneration,
     reviewProtocol: REVIEW_PROTOCOL
   });
 
-  return { ok: failures.length === 0, failures, outDir };
+  return { ok: overallOk, failures, outDir, deterministicRegeneration };
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
