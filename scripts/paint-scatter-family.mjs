@@ -18,10 +18,14 @@
 // Non-applicable invariants (seam/adjacency, histogram preservation,
 // frame-continuity) are recorded as explicit "N/A" in the report.
 //
-// GRAMMAR CONSTANTS ARE HELD pending ChatGPT's visual audit of the family
-// contact sheet (relayed 2026-07-21); fold any tweak into this file and the
-// Python skill copy (scripts/paint_scatter.py in the eldoria-asset-pipeline
-// skill) in one pass, then flip GRAMMAR_VERSION to v1.
+// GRAMMAR UNHELD 2026-07-22: overnight visual audit (owner-delegated gate)
+// passed tuft_a/tuft_b/flower_a and returned one spec finding - pebble_a
+// cannot read as stone inside the forest family (rendered as a dark hole on
+// grass). The target's paletteFamilies was amended to include metal_stone
+// (already locked; same family the approved rock_a uses) and the pebble
+// grammar now paints in metal_stone. Grammar tweaks land in this file and
+// the Python skill copy (scripts/paint_scatter.py in the
+// eldoria-asset-pipeline skill) in one pass.
 //
 // Usage:
 //   node scripts/paint-scatter-family.mjs --palette <palette.json> --grass <grass.png> --out <dir> [--variants tuft_a,tuft_b]
@@ -36,7 +40,7 @@ import { readPng, writePng } from './normalize-asset-sheet.mjs';
 
 export const CELL = 16;
 export const BOTTOM = 14;
-export const GRAMMAR_VERSION = 'scatter-grammar/v1-held';
+export const GRAMMAR_VERSION = 'scatter-grammar/v1';
 export const FAMILY_ID = 'tile_farm_grass_scatter';
 
 // --- deterministic RNG (mulberry32; integer math only) ----------------------
@@ -208,6 +212,9 @@ export function paintFlower(rng) {
 }
 
 // Matte low-wide stone: jittered ellipse, upper-left lit band, dark lower rim.
+// Paints in metal_stone (5 swatches, 0 darkest .. 4 palest): cream/tan top
+// highlight, light-tan upper-left, mid-tan body, dark olive rim, near-black
+// crevices - the same family and lighting story as the approved rock_a.
 export function paintPebble(rng) {
   const g = createGrid();
   const w = rng.choice(PEBBLE.wChoices);
@@ -254,18 +261,36 @@ export const FAMILY_VARIANTS = ['tuft_a', 'tuft_b', 'flower_a', 'pebble_a'];
 
 // --- locked palette -----------------------------------------------------------
 
-export function loadForest(palettePath) {
+export function loadPaletteFamily(palettePath, familyName, expectedCount) {
   const data = JSON.parse(fs.readFileSync(palettePath, 'utf8'));
   if (data.status !== 'locked') throw new Error(`palette ${palettePath} is not status=locked`);
-  const fam = data?.families?.forest;
-  if (!Array.isArray(fam) || fam.length !== 6) {
-    throw new Error(`palette ${palettePath}: forest family must have exactly 6 swatches`);
+  const fam = data?.families?.[familyName];
+  if (!Array.isArray(fam) || fam.length !== expectedCount) {
+    throw new Error(`palette ${palettePath}: ${familyName} family must have exactly ${expectedCount} swatches`);
   }
   return fam.map((h) => {
     if (typeof h !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(h)) throw new Error(`palette ${palettePath}: invalid hex ${h}`);
     return [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
   });
 }
+
+export function loadForest(palettePath) {
+  return loadPaletteFamily(palettePath, 'forest', 6);
+}
+
+export function loadStone(palettePath) {
+  return loadPaletteFamily(palettePath, 'metal_stone', 5);
+}
+
+// Which locked palette family each variant paints in. tuft/flower stay in
+// forest; pebble_a paints in metal_stone (spec finding 2026-07-22: a stone
+// cannot read inside forest greens - it rendered as a dark hole on grass).
+export const VARIANT_FAMILY = {
+  tuft_a: 'forest',
+  tuft_b: 'forest',
+  flower_a: 'forest',
+  pebble_a: 'metal_stone',
+};
 
 // --- render + gates -----------------------------------------------------------
 
@@ -312,10 +337,13 @@ export function assertGatesPass(variantReports) {
   if (failures.length > 0) throw new Error(`scatter gate failures:\n  ${failures.join('\n  ')}`);
 }
 
-export function paintVariant(name, forest) {
+export function paintVariant(name, palettes) {
   const painter = PAINTERS[name];
   if (!painter) throw new Error(`unknown scatter variant ${name}`);
-  return rgbaOfGrid(painter(makeRng(seedFromName(name))), forest);
+  const familyName = VARIANT_FAMILY[name];
+  const palette = palettes[familyName];
+  if (!Array.isArray(palette)) throw new Error(`no palette loaded for family ${familyName}`);
+  return rgbaOfGrid(painter(makeRng(seedFromName(name))), palette);
 }
 
 // --- evidence helpers ---------------------------------------------------------
@@ -424,7 +452,7 @@ function sha256File(p) {
 }
 
 export function paintFamily({ palettePath, grassPath, outDir, variants = FAMILY_VARIANTS }) {
-  const forest = loadForest(palettePath);
+  const palettes = { forest: loadForest(palettePath), metal_stone: loadStone(palettePath) };
   const grass = readPng(grassPath);
   if (grass.width !== CELL || grass.height !== CELL) throw new Error(`grass base must be exact 16x16, got ${grass.width}x${grass.height}`);
   const grassRgb = new Uint8Array(CELL * CELL * 3);
@@ -433,8 +461,8 @@ export function paintFamily({ palettePath, grassPath, outDir, variants = FAMILY_
   }
 
   // Gate: deterministic regeneration - paint twice, output bytes must match.
-  const run1 = variants.map((n) => ({ name: n, img: paintVariant(n, forest) }));
-  const run2 = variants.map((n) => ({ name: n, img: paintVariant(n, forest) }));
+  const run1 = variants.map((n) => ({ name: n, img: paintVariant(n, palettes) }));
+  const run2 = variants.map((n) => ({ name: n, img: paintVariant(n, palettes) }));
   for (let i = 0; i < variants.length; i += 1) {
     if (!Buffer.from(run1[i].img.data).equals(Buffer.from(run2[i].img.data))) {
       throw new Error(`deterministic regeneration gate: ${variants[i]} diverged across two runs`);
@@ -444,7 +472,7 @@ export function paintFamily({ palettePath, grassPath, outDir, variants = FAMILY_
   const gridReports = run1.map(({ name }) => {
     const painter = PAINTERS[name];
     const g = painter(makeRng(seedFromName(name)));
-    const rep = { variant: name, seed: `eldoria-scatter/${name}/v1 (sha256[0:4] LE)`, ...gatesOfGrid(g) };
+    const rep = { variant: name, seed: `eldoria-scatter/${name}/v1 (sha256[0:4] LE)`, palette_family: VARIANT_FAMILY[name], ...gatesOfGrid(g) };
     if (SEED_SIBLING_OF[name]) {
       rep.seed_sibling_of = SEED_SIBLING_OF[name];
       rep.derivation = 'identical grammar, seed-only change';
@@ -471,7 +499,7 @@ export function paintFamily({ palettePath, grassPath, outDir, variants = FAMILY_
     grammar_version: GRAMMAR_VERSION,
     production_class: 'anchor (family gated as anchor); tuft_b = derived seed sibling',
     locked_inputs: {
-      palette: { path: palettePath, sha256: sha256File(palettePath), family: 'forest', status: 'locked' },
+      palette: { path: palettePath, sha256: sha256File(palettePath), families: ['forest', 'metal_stone'], status: 'locked' },
       grass_base: { path: grassPath, sha256: sha256File(grassPath) },
     },
     deterministic_regeneration: { runs: 2, output_byte_identical: true },

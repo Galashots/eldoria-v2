@@ -10,9 +10,9 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import {
-  CELL, BOTTOM, FAMILY_VARIANTS, PAINTERS, SEED_SIBLING_OF,
+  CELL, BOTTOM, FAMILY_VARIANTS, PAINTERS, SEED_SIBLING_OF, VARIANT_FAMILY,
   seedFromName, makeRng, createGrid, setPx,
-  loadForest, paintVariant, gatesOfGrid, assertGatesPass, paintFamily,
+  loadForest, loadStone, paintVariant, gatesOfGrid, assertGatesPass, paintFamily,
 } from './paint-scatter-family.mjs';
 import { readPng } from './normalize-asset-sheet.mjs';
 
@@ -118,12 +118,16 @@ test('deterministic regeneration: two runs emit byte-identical files', () => {
   for (const f of files) assert.equal(sha256File(path.join(a, f)), sha256File(path.join(b, f)), f);
 });
 
-test('every subject pixel is exactly one of the six locked swatches', () => {
+test('every subject pixel is exactly one locked swatch of its declared family', () => {
   const out = path.join(tmp, 'palette-check');
   const report = paintFamily({ palettePath: PALETTE, grassPath: GRASS, outDir: out });
-  const forest = loadForest(PALETTE);
-  const allowed = new Set(forest.map(([r, g, b]) => `${r},${g},${b}`));
+  const palettes = { forest: loadForest(PALETTE), metal_stone: loadStone(PALETTE) };
+  const allowedByFamily = Object.fromEntries(Object.entries(palettes)
+    .map(([k, sw]) => [k, new Set(sw.map(([r, g, b]) => `${r},${g},${b}`))]));
   for (const v of report.variants) {
+    assert.ok(VARIANT_FAMILY[v.variant], `${v.variant} has no declared palette family`);
+    assert.equal(v.palette_family, VARIANT_FAMILY[v.variant], `${v.variant} report family mismatch`);
+    const allowed = allowedByFamily[VARIANT_FAMILY[v.variant]];
     const img = readPngCompat(path.join(out, `${v.variant}.16.png`));
     let subject = 0;
     for (let i = 0; i < img.data.length; i += 4) {
@@ -144,6 +148,17 @@ test('every subject pixel is exactly one of the six locked swatches', () => {
     }
     assert.ok(swatchPixels > 0, `${v.variant}: 8x evidence contains no subject pixels`);
   }
+  // pebble_a must paint in metal_stone, not forest (spec finding 2026-07-22).
+  const pebble = readPngCompat(path.join(out, 'pebble_a.16.png'));
+  const stone = allowedByFamily.metal_stone;
+  let pebbleSubject = 0;
+  for (let i = 0; i < pebble.data.length; i += 4) {
+    if (pebble.data[i + 3] === 0) continue;
+    pebbleSubject += 1;
+    assert.ok(stone.has(`${pebble.data[i]},${pebble.data[i + 1]},${pebble.data[i + 2]}`),
+      `pebble_a non-metal_stone pixel at ${i / 4}`);
+  }
+  assert.ok(pebbleSubject > 0, 'pebble_a has no subject pixels');
 });
 
 test('locked-input verification is loud: a palette edit changes hash and output bytes', () => {
@@ -159,6 +174,22 @@ test('locked-input verification is loud: a palette edit changes hash and output 
   assert.notEqual(report.locked_inputs.palette.sha256, sha256File(PALETTE));
   assert.notEqual(sha256File(path.join(tamp, 'flower_a.16.png')), sha256File(path.join(base, 'flower_a.16.png')),
     'a locked-palette edit must change the painted output');
+});
+
+test('locked-input verification covers metal_stone: a stone edit changes pebble bytes', () => {
+  const tampered = path.join(tmp, 'palette-tampered-stone.json');
+  const original = JSON.parse(fs.readFileSync(PALETTE, 'utf8'));
+  original.families.metal_stone[4] = '#ECE0B2'; // one step off the locked palest stone swatch
+  fs.writeFileSync(tampered, JSON.stringify(original, null, 2));
+  assert.notEqual(sha256File(tampered), sha256File(PALETTE));
+  const base = path.join(tmp, 'tamper-stone-base');
+  const tamp = path.join(tmp, 'tamper-stone-out');
+  paintFamily({ palettePath: PALETTE, grassPath: GRASS, outDir: base });
+  paintFamily({ palettePath: tampered, grassPath: GRASS, outDir: tamp });
+  assert.notEqual(sha256File(path.join(tamp, 'pebble_a.16.png')), sha256File(path.join(base, 'pebble_a.16.png')),
+    'a metal_stone edit must change the painted pebble');
+  assert.equal(sha256File(path.join(tamp, 'tuft_a.16.png')), sha256File(path.join(base, 'tuft_a.16.png')),
+    'a metal_stone edit must not touch forest-painted variants');
 });
 
 function readPngCompat(p) {

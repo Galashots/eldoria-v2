@@ -4,6 +4,14 @@ This file keeps recent, high-value change summaries. Detailed historical entries
 
 Each entry should state the actual author, branch or PR, concise scope, verification, compatibility, and remaining risk. Implementation narratives belong in PR descriptions, commits, and audit records.
 
+## 2026-07-22 — Grass-scatter family approved: grammar unheld, pebble palette-family amendment
+
+- Author/branch: Kimi K3 (repo agent), `kimi/scatter-paint-recipe`, PR #126. Visual-audit gate explicitly owner-delegated to the repo agent for the overnight session; verdict recorded for morning confirmation in `docs/art-pipeline/review/tile_farm_grass_scatter_family/AUDIT.md`.
+- Scope: overnight visual audit of the first mixed anchor/derived recipe pilot. Round 1: `tuft_a`/`tuft_b`/`flower_a` passed; `pebble_a` **failed the identity read** — a forest-green stone renders as a dark hole on grass. Spec finding resolved by amending `tile_farm_grass_scatter.paletteFamilies` to `["forest", "metal_stone"]` (locked palette JSON unchanged; `metal_stone` is the approved `rock_a` family) and routing `pebble_a` to it in both the JS recipe and the Python skill copy in one pass. `GRAMMAR_VERSION` unheld to `scatter-grammar/v1`. All four variants recorded as APPROVED RUNTIME MASTERS with the committed recipe as canonical source; evidence (montage, 8×, grass composites, runtime masters, machine family report) committed under `docs/art-pipeline/review/tile_farm_grass_scatter_family/`. Tests extended to 13/13: per-family palette exactness, `pebble_a` 100% metal_stone, dual-family tamper loudness.
+- Verification: `test:paint-scatter` 13/13; full gate suite re-run on the exact committed head (`check`, `test:visual-targets`, `test:asset-pipeline`, `test:terrain-blend`, `test:unit`); Python skill copy re-run green on the same locked inputs.
+- Compatibility: tooling, target metadata (one paletteFamilies amendment), and committed review evidence. No runtime, map, save, curriculum, quest, dependency, workflow, or scene change; no packed sheet or scene integration yet (belongs to the decor-scatter wiring PR).
+- Remaining risk: the metal_stone amendment and the delegated verdict await owner morning confirmation (one-line target edit + one recipe constant to revert); scene wiring with in-game density evidence is still required before any visual change reaches players.
+
 ## 2026-07-21 — Scatter-decal painter recipe scaffold (grammar constants held)
 
 - Author/branch: Kimi K3 (repo agent), `kimi/scatter-paint-recipe`. Owner-approved commit path (a): in-repo Node recipe per the `compose-terrain-blend-family.mjs` precedent; scaffold directed by Claude Code on the owner's behalf.
