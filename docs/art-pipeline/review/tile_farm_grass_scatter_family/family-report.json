@@ -1,0 +1,99 @@
+{
+  "schema": "scatter-paint-family-report/v1",
+  "family": "tile_farm_grass_scatter",
+  "grammar_version": "scatter-grammar/v1",
+  "production_class": "anchor (family gated as anchor); tuft_b = derived seed sibling",
+  "locked_inputs": {
+    "palette": {
+      "path": "docs/visual-targets/farm_environment_palette_v1.json",
+      "sha256": "de74674744793ec456a2d747dfc22233605a62e57f50df551bd8b70d94155387",
+      "families": [
+        "forest",
+        "metal_stone"
+      ],
+      "status": "locked"
+    },
+    "grass_base": {
+      "path": "docs/art-pipeline/review/tile_farm_grass_base_grass_a/grass_a.review-normalized.png",
+      "sha256": "40655a11051d5afaf61f5972b471c82419fda0f7e31793b3a2976498e6b5fddb"
+    }
+  },
+  "deterministic_regeneration": {
+    "runs": 2,
+    "output_byte_identical": true
+  },
+  "applicable_invariants": {
+    "palette_conformance": "exact by construction",
+    "occupancy_bbox": "gated per variant",
+    "edge_contact": "gated (fail on contact)",
+    "pivot_fit_bottom_row": "gated (expect 13-15)",
+    "seam_adjacency": "N/A (decals, non-tiling)",
+    "histogram_preservation": "N/A (no input bitmap; direct grid paint)",
+    "frame_continuity": "N/A (static decals)"
+  },
+  "variants": [
+    {
+      "variant": "tuft_a",
+      "seed": "eldoria-scatter/tuft_a/v1 (sha256[0:4] LE)",
+      "palette_family": "forest",
+      "runtime_bbox": {
+        "x": 4,
+        "y": 10,
+        "w": 11,
+        "h": 5
+      },
+      "occupancy_pct": 10.5,
+      "edge_contact": false,
+      "bottom_row": 14,
+      "palette": "exact by construction (read from locked palette JSON)"
+    },
+    {
+      "variant": "tuft_b",
+      "seed": "eldoria-scatter/tuft_b/v1 (sha256[0:4] LE)",
+      "palette_family": "forest",
+      "runtime_bbox": {
+        "x": 2,
+        "y": 10,
+        "w": 12,
+        "h": 5
+      },
+      "occupancy_pct": 10.9,
+      "edge_contact": false,
+      "bottom_row": 14,
+      "palette": "exact by construction (read from locked palette JSON)",
+      "seed_sibling_of": "tuft_a",
+      "derivation": "identical grammar, seed-only change"
+    },
+    {
+      "variant": "flower_a",
+      "seed": "eldoria-scatter/flower_a/v1 (sha256[0:4] LE)",
+      "palette_family": "forest",
+      "runtime_bbox": {
+        "x": 5,
+        "y": 11,
+        "w": 3,
+        "h": 4
+      },
+      "occupancy_pct": 3.1,
+      "edge_contact": false,
+      "bottom_row": 14,
+      "palette": "exact by construction (read from locked palette JSON)"
+    },
+    {
+      "variant": "pebble_a",
+      "seed": "eldoria-scatter/pebble_a/v1 (sha256[0:4] LE)",
+      "palette_family": "metal_stone",
+      "runtime_bbox": {
+        "x": 4,
+        "y": 10,
+        "w": 8,
+        "h": 5
+      },
+      "occupancy_pct": 12.9,
+      "edge_contact": false,
+      "bottom_row": 14,
+      "palette": "exact by construction (read from locked palette JSON)"
+    }
+  ],
+  "family_verdict_draft": "HOLD - all machine gates pass; named next gate: ChatGPT visual audit (routine final art gate). Candidates + machine evidence only; not an approval."
+}
