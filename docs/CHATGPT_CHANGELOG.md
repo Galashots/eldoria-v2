@@ -4,6 +4,14 @@ This file keeps recent, high-value change summaries. Detailed historical entries
 
 Each entry should state the actual author, branch or PR, concise scope, verification, compatibility, and remaining risk. Implementation narratives belong in PR descriptions, commits, and audit records.
 
+## 2026-07-22 — Character perspective-trial evidence harness
+
+- Author/branch: Claude Code, `claude/perspective-trial-evidence-harness` (no PR yet).
+- Scope: approved plan doc `docs/visual-targets/CHARACTER_PERSPECTIVE_TRIAL_EVIDENCE_PLAN_2026-07.md`; `scripts/compose-perspective-trial-evidence.mjs` — manifest-driven, deterministic evidence composer for Mage four-direction idle candidates with fail-closed machine gates (geometry, `binary_alpha`, `cell_bleed`, apparent-height parity ±1px, pivot contact row 47, occupancy bounds) measured on the read pixels; offline `farm_bright` and `woods_bridge` plates (bridge terrain labeled as such in the report); per-candidate 1× previews on both plates, 8× nearest-neighbour sheet, pivot/baseline overlays, contact sheet, and `eldoria-perspective-trial-report/v1` report with sha256-locked inputs and named open judgment gates; cross-candidate comparison sheet and trial index. `scripts/test-perspective-trial.mjs` — red-first suite (15 cases) exposed as `test:perspective-trial` and chained into `test:asset-pipeline`, so existing CI gates it with no `.github/workflows/` change.
+- Verification: fresh on head `e1273ee` after `npm ci` — `npm run check` green; `test:visual-targets`, `test:asset-pipeline` (including perspective-trial 15/15), `test:terrain-blend` (14 + 16 groups + transitions), and `test:unit` 231/231 all green. `smoke` and `emulation` not run locally; required CI covers them on the PR head.
+- Compatibility: tooling, docs, and `package.json` script chaining only — no runtime, map, save, curriculum, quest, dependency, workflow-file, or asset-pixel change.
+- Remaining risk: the harness has not yet processed real generated candidate sheets; machine gates bound geometry only — the perspective/size/prompt-strategy verdict remains a ChatGPT visual judgment against both plates.
+
 ## 2026-07-21 — Derive-over-generate production classes + governance follow-ups
 
 - Author/branch: Kimi K3 (repo agent), `kimi/production-classes-policy`. Implements ChatGPT's APPROVE-WITH-AMENDMENTS adjudication of the derive-over-generate proposal (PR #123 comment), all nine amendments encoded; plus the three follow-ups accepted from Kimi's #123 review.
