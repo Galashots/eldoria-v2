@@ -7,25 +7,31 @@
 // byte-reproducible, and the recipe PROVES it: the full family is painted twice
 // in-process and output bytes must be identical, else the run fails.
 //
-// Recipe-level gates enforced here (universal per the workflow):
+// Recipe-level gates enforced here (universal per the workflow, report shape
+// per the canonical lane contract eldoria-lane-report/v1):
 //   * locked-input verification - palette hexes are READ from the repo palette
-//     JSON (status must be "locked", exactly 6 forest swatches); SHA-256 of the
-//     palette JSON and grass base PNG are recorded in family-report.json.
-//   * deterministic regeneration - two in-process runs, byte-identical outputs.
-//   * exact output validation    - per-variant gates: bbox, occupancy, edge
-//     contact (fail), bottom row (pivot band 13-15), palette exact by
-//     construction; assertGatesPass() throws, naming every failure.
+//     JSON (status must be "locked"; forest 6 swatches, metal_stone 5); SHA-256
+//     of the palette JSON and grass base PNG are recorded in family-report.json.
+//   * deterministic regeneration - two COMPLETE write passes; the encoded
+//     files are compared byte-for-byte (SHA-256) before any report is emitted.
+//   * exact output validation    - per-variant gates measured on artifacts
+//     DECODED BACK FROM THE WRITTEN FILES (never in-memory buffers):
+//     dimensions, declared expected width/height ranges, occupancy, edge
+//     contact (fail), lowest row (pivot band 13-15), binary alpha, palette
+//     exact against the variant's declared locked family (off-palette == 0),
+//     nonempty, keyed round trip (decoded 256x256 exact-#FF00FF source
+//     re-normalizes to the decoded runtime with zero differences), and exact
+//     pixel parity with the committed approved runtime master when one
+//     exists; assertGatesPass() throws, naming every failed gate.
 // Non-applicable invariants (seam/adjacency, histogram preservation,
 // frame-continuity) are recorded as explicit "N/A" in the report.
 //
-// GRAMMAR UNHELD 2026-07-22: overnight visual audit (owner-delegated gate)
-// passed tuft_a/tuft_b/flower_a and returned one spec finding - pebble_a
-// cannot read as stone inside the forest family (rendered as a dark hole on
-// grass). The target's paletteFamilies was amended to include metal_stone
-// (already locked; same family the approved rock_a uses) and the pebble
-// grammar now paints in metal_stone. Grammar tweaks land in this file and
-// the Python skill copy (scripts/paint_scatter.py in the
-// eldoria-asset-pipeline skill) in one pass.
+// GRAMMAR UNHELD 2026-07-22: overnight visual audit (owner-delegated gate,
+// owner-confirmed 2026-07-22 morning) passed tuft_a/tuft_b/flower_a and
+// returned one spec finding - pebble_a cannot read as stone inside the forest
+// family (rendered as a dark hole on grass). The target's paletteFamilies was
+// amended to include metal_stone (already locked; same family the approved
+// rock_a uses) and the pebble grammar now paints in metal_stone.
 //
 // Usage:
 //   node scripts/paint-scatter-family.mjs --palette <palette.json> --grass <grass.png> --out <dir> [--variants tuft_a,tuft_b]
@@ -35,13 +41,25 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { pathToFileURL } from 'node:url';
+import { pathToFileURL, fileURLToPath } from 'node:url';
 import { readPng, writePng } from './normalize-asset-sheet.mjs';
 
 export const CELL = 16;
 export const BOTTOM = 14;
 export const GRAMMAR_VERSION = 'scatter-grammar/v1';
 export const FAMILY_ID = 'tile_farm_grass_scatter';
+
+// --- canonical lane contract (eldoria-lane-report/v1) -------------------------
+
+export const REPORT_SCHEMA = 'eldoria-lane-report/v1';
+export const LANE = 'code-first-seeded';
+export const PIVOT = [8, 15];
+export const ALLOWED_LOWEST_ROWS = [13, 14, 15];
+export const OCCUPANCY_PCT_RANGE = [1, 40]; // gated as (1, 40] - exclusive low
+export const KEY_COLOR = '#FF00FF';
+const KEY_RGB = [255, 0, 255];
+export const KEYED_SCALE = 16; // 16x16 runtime -> 256x256 exact-key source
+export const KEYED_SIZE = CELL * KEYED_SCALE; // exact decoded keyed-source contract size (256)
 
 // --- deterministic RNG (mulberry32; integer math only) ----------------------
 
@@ -110,7 +128,7 @@ export function destray(g) {
   for (const [x, y] of drop) g[y * CELL + x] = -1;
 }
 
-// --- grammar constants (HELD pending ChatGPT visual verdict, 2026-07-21) ----
+// --- grammar constants (approved scatter-grammar/v1, 2026-07-22) -------------
 
 export const TUFT = {
   cxChoices: [7, 8, 9],
@@ -259,6 +277,16 @@ export const PAINTERS = {
 export const SEED_SIBLING_OF = { tuft_b: 'tuft_a' };
 export const FAMILY_VARIANTS = ['tuft_a', 'tuft_b', 'flower_a', 'pebble_a'];
 
+// Declared expected visible-size ranges per variant (gated against the written
+// image; siblings share their grammar's range). Gate declarations, not grammar
+// constants - changing the art direction still requires the visual gate.
+export const EXPECTED_SIZE = {
+  tuft_a: { width: [8, 13], height: [4, 7] },
+  tuft_b: { width: [8, 13], height: [4, 7] },
+  flower_a: { width: [3, 7], height: [4, 6] },
+  pebble_a: { width: [7, 10], height: [3, 5] },
+};
+
 // --- locked palette -----------------------------------------------------------
 
 export function loadPaletteFamily(palettePath, familyName, expectedCount) {
@@ -304,37 +332,161 @@ export function rgbaOfGrid(g, forest) {
   return { width: CELL, height: CELL, colorType: 6, data };
 }
 
-export function gatesOfGrid(g) {
-  let minX = CELL; let minY = CELL; let maxX = -1; let maxY = -1; let count = 0;
-  let edge = false;
+export function hexOfRgb(r, g, b) {
+  return `#${[r, g, b].map((v) => v.toString(16).padStart(2, '0').toUpperCase()).join('')}`;
+}
+
+// Canonical per-variant metrics for a decoded RGBA image. Production reads
+// arrive through readBackVariant, so the measured object is the decoded
+// written file - never the authoring grid. The palette argument is the
+// variant's declared locked family.
+export function analyzeRuntime(img, palette) {
+  const width = img.width;
+  const height = img.height;
+  if (width !== CELL || height !== CELL) {
+    // Fail safe before any fixed-canvas indexing: a decoded buffer that is
+    // not exactly CELLxCELL cannot be scanned with CELL-strided row/col
+    // indexing without misreading or overrunning its real layout. Report the
+    // actual decoded dimensions so the runtime_dimensions gate fails by name
+    // instead of silently passing or scanning a mismatched stride.
+    return {
+      runtime_dimensions: [width, height],
+      visible_bbox_exclusive: null,
+      visible_width: 0,
+      visible_height: 0,
+      occupied_pixels: 0,
+      occupied_percent: 0,
+      edge_contact_count: 0,
+      lowest_occupied_row: null,
+      horizontal_offset_from_pivot: null,
+      palette_colors_used: [],
+      off_palette_visible_pixels: 0,
+      transparent_pixels: 0,
+      partial_alpha_pixels: 0,
+    };
+  }
+  const allowed = new Set(palette.map(([r, g, b]) => hexOfRgb(r, g, b)));
+  let minX = CELL; let minY = CELL; let maxX = -1; let maxY = -1;
+  let occupied = 0; let transparent = 0; let partial = 0; let offPalette = 0; let edgeContacts = 0;
+  const used = new Set();
   for (let y = 0; y < CELL; y += 1) {
     for (let x = 0; x < CELL; x += 1) {
-      if (g[y * CELL + x] < 0) continue;
-      count += 1;
+      const s = (y * CELL + x) * 4;
+      const a = img.data[s + 3];
+      if (a === 0) { transparent += 1; continue; }
+      if (a !== 255) { partial += 1; continue; } // partial alpha is not valid subject
+      occupied += 1;
+      const hex = hexOfRgb(img.data[s], img.data[s + 1], img.data[s + 2]);
+      used.add(hex);
+      if (!allowed.has(hex)) offPalette += 1;
       if (x < minX) minX = x;
       if (x > maxX) maxX = x;
       if (y < minY) minY = y;
       if (y > maxY) maxY = y;
-      if (x === 0 || x === CELL - 1 || y === 0 || y === CELL - 1) edge = true;
+      if (x === 0 || x === CELL - 1 || y === 0 || y === CELL - 1) edgeContacts += 1;
     }
   }
   return {
-    runtime_bbox: { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 },
-    occupancy_pct: Math.round((1000 * count) / (CELL * CELL)) / 10,
-    edge_contact: edge,
-    bottom_row: maxY,
-    palette: 'exact by construction (read from locked palette JSON)',
+    runtime_dimensions: [width, height],
+    visible_bbox_exclusive: occupied > 0 ? [minX, minY, maxX + 1, maxY + 1] : null,
+    visible_width: occupied > 0 ? maxX - minX + 1 : 0,
+    visible_height: occupied > 0 ? maxY - minY + 1 : 0,
+    occupied_pixels: occupied,
+    occupied_percent: Math.round((1000 * occupied) / (CELL * CELL)) / 10,
+    edge_contact_count: edgeContacts,
+    lowest_occupied_row: occupied > 0 ? maxY : null,
+    horizontal_offset_from_pivot: occupied > 0 ? (minX + maxX) / 2 - PIVOT[0] : null,
+    palette_colors_used: [...used].sort(),
+    off_palette_visible_pixels: offPalette,
+    transparent_pixels: transparent,
+    partial_alpha_pixels: partial,
   };
 }
 
-export function assertGatesPass(variantReports) {
+// Named boolean gates (canonical contract). keyedDiff of null omits the keyed
+// round-trip gate (non-keyed lanes); a number gates the round trip (0
+// differences). keyedDimensionsOk of null omits the keyed-dimensions gate;
+// a boolean gates the decoded keyed source against its exact contract size.
+export function gatesOfMetrics(m, expected, { keyedDiff = null, keyedDimensionsOk = null } = {}) {
+  const gates = {
+    runtime_dimensions: m.runtime_dimensions[0] === CELL && m.runtime_dimensions[1] === CELL,
+    visible_width: m.visible_width >= expected.width[0] && m.visible_width <= expected.width[1],
+    visible_height: m.visible_height >= expected.height[0] && m.visible_height <= expected.height[1],
+    occupancy: m.occupied_percent > OCCUPANCY_PCT_RANGE[0] && m.occupied_percent <= OCCUPANCY_PCT_RANGE[1],
+    edge_contacts: m.edge_contact_count === 0,
+    lowest_row: m.lowest_occupied_row !== null && ALLOWED_LOWEST_ROWS.includes(m.lowest_occupied_row),
+    binary_alpha: m.partial_alpha_pixels === 0,
+    palette: m.off_palette_visible_pixels === 0,
+    nonempty: m.occupied_pixels > 0,
+  };
+  if (keyedDimensionsOk !== null) gates.keyed_dimensions = keyedDimensionsOk;
+  if (keyedDiff !== null) {
+    gates.keyed_roundtrip = keyedDiff === 0;
+  } else if (keyedDimensionsOk !== null) {
+    // The round trip did not run - either the keyed source itself is the
+    // wrong size, or the runtime it would be checked against is malformed.
+    // Either way it must not be reported as passing.
+    gates.keyed_roundtrip = false;
+  }
+  return gates;
+}
+
+export function assertGatesPass(variantEntries) {
   const failures = [];
-  for (const v of variantReports) {
-    if (v.edge_contact) failures.push(`${v.variant}: edge contact`);
-    if (!(v.bottom_row >= 13 && v.bottom_row <= 15)) failures.push(`${v.variant}: bottom row ${v.bottom_row} outside 13-15`);
-    if (!(v.occupancy_pct > 1 && v.occupancy_pct <= 40)) failures.push(`${v.variant}: occupancy ${v.occupancy_pct}% outside (1, 40]`);
+  for (const v of variantEntries) {
+    for (const [gate, ok] of Object.entries(v.gates)) {
+      if (!ok) failures.push(`${v.id}: ${gate}`);
+    }
   }
   if (failures.length > 0) throw new Error(`scatter gate failures:\n  ${failures.join('\n  ')}`);
+}
+
+// 256x256 exact-#FF00FF keyed source (nearest-neighbour upscale): proves the
+// asset survives the repo's real exact-key ingestion path.
+export function makeKeyedSource(img, scale = KEYED_SCALE) {
+  const size = CELL * scale;
+  const data = new Uint8Array(size * size * 4);
+  let keyPixels = 0;
+  for (let y = 0; y < size; y += 1) {
+    for (let x = 0; x < size; x += 1) {
+      const s = (Math.floor(y / scale) * CELL + Math.floor(x / scale)) * 4;
+      const d = (y * size + x) * 4;
+      if (img.data[s + 3] === 255) {
+        data[d] = img.data[s]; data[d + 1] = img.data[s + 1]; data[d + 2] = img.data[s + 2];
+      } else {
+        data[d] = KEY_RGB[0]; data[d + 1] = KEY_RGB[1]; data[d + 2] = KEY_RGB[2];
+        keyPixels += 1;
+      }
+      data[d + 3] = 255;
+    }
+  }
+  return { img: { width: size, height: size, colorType: 6, data }, keyPixels };
+}
+
+// Fail-closed round trip: every scale x scale cell must be uniform - all key
+// (transparent) or all one subject colour - and must reproduce the runtime
+// pixel exactly. A mixed cell counts as a difference; nothing is sampled away.
+export function keyedRoundtripDiff(keyed, runtime, scale = KEYED_SCALE) {
+  let diff = 0;
+  for (let y = 0; y < CELL; y += 1) {
+    for (let x = 0; x < CELL; x += 1) {
+      let r = -1; let g = -1; let b = -1; let mixed = false;
+      for (let yy = 0; yy < scale && !mixed; yy += 1) {
+        for (let xx = 0; xx < scale; xx += 1) {
+          const s = ((y * scale + yy) * keyed.width + x * scale + xx) * 4;
+          const pr = keyed.data[s]; const pg = keyed.data[s + 1]; const pb = keyed.data[s + 2];
+          if (r < 0) { r = pr; g = pg; b = pb; } else if (pr !== r || pg !== g || pb !== b) { mixed = true; break; }
+        }
+      }
+      if (mixed) { diff += 1; continue; }
+      const rs = (y * CELL + x) * 4;
+      const runtimeTransparent = runtime.data[rs + 3] === 0;
+      const isKey = r === KEY_RGB[0] && g === KEY_RGB[1] && b === KEY_RGB[2];
+      if (isKey !== runtimeTransparent) { diff += 1; continue; }
+      if (!isKey && (r !== runtime.data[rs] || g !== runtime.data[rs + 1] || b !== runtime.data[rs + 2])) diff += 1;
+    }
+  }
+  return diff;
 }
 
 export function paintVariant(name, palettes) {
@@ -451,6 +603,91 @@ function sha256File(p) {
   return crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
 }
 
+// Compare every regular file in two output trees byte-for-byte via SHA-256.
+// family-report.json is excluded: it is written only after this gate passes.
+// Throws on any list or byte difference; returns the number of files compared.
+export function compareTrees(dirA, dirB) {
+  const list = (d) => fs.readdirSync(d)
+    .filter((f) => f !== 'family-report.json' && fs.statSync(path.join(d, f)).isFile())
+    .sort();
+  const a = list(dirA); const b = list(dirB);
+  if (a.join('\n') !== b.join('\n')) {
+    throw new Error(`deterministic regeneration gate: file lists differ (${a.length} vs ${b.length})`);
+  }
+  for (const f of a) {
+    if (sha256File(path.join(dirA, f)) !== sha256File(path.join(dirB, f))) {
+      throw new Error(`deterministic regeneration gate: ${f} differs between the two written runs`);
+    }
+  }
+  return a.length;
+}
+
+// Read back one variant's WRITTEN artifacts through the repository decoder,
+// measure, and gate them. Every metric comes from the decoded files, never
+// from the in-memory authoring buffers. When a committed approved runtime
+// master exists for the variant, exact decoded-pixel parity is gated too.
+export function readBackVariant(dir, name, palettes) {
+  const runtime = readPng(path.join(dir, `${name}.16.png`));
+  const keyed = readPng(path.join(dir, `${name}.keyed.png`));
+  const metrics = analyzeRuntime(runtime, palettes[VARIANT_FAMILY[name]]);
+  const runtimeDimensionsOk = metrics.runtime_dimensions[0] === CELL && metrics.runtime_dimensions[1] === CELL;
+  const keyedDimensionsOk = keyed.width === KEYED_SIZE && keyed.height === KEYED_SIZE;
+  metrics.keyed_dimensions = [keyed.width, keyed.height];
+  // Fail safe: only run the fixed-CELL-stride round trip when both the
+  // decoded runtime and the decoded keyed source are exactly their declared
+  // contract sizes. A larger keyed file whose top-left region happens to
+  // match can otherwise "accidentally" round-trip correctly (real stride,
+  // real pixels) while still violating the exact 256x256 keyed-source
+  // contract - gate that explicitly rather than trusting an incidental match.
+  const keyedDiff = (runtimeDimensionsOk && keyedDimensionsOk) ? keyedRoundtripDiff(keyed, runtime) : null;
+  metrics.keyed_roundtrip_difference_pixels = keyedDiff;
+  let keyPixels = 0;
+  for (let i = 0; i < keyed.data.length; i += 4) {
+    if (keyed.data[i] === 255 && keyed.data[i + 1] === 0 && keyed.data[i + 2] === 255) keyPixels += 1;
+  }
+  metrics.exact_key_background_pixels = keyPixels;
+  const masterPath = path.join(
+    path.dirname(fileURLToPath(import.meta.url)), '..',
+    'docs', 'art-pipeline', 'review', 'tile_farm_grass_scatter_family',
+    `${name}.approved-runtime-master.png`,
+  );
+  let masterParity = null;
+  if (fs.existsSync(masterPath)) {
+    const master = readPng(masterPath);
+    masterParity = master.width === runtime.width && master.height === runtime.height
+      && Buffer.from(runtime.data).equals(Buffer.from(master.data));
+  }
+  // Parity is reported, not hard-gated: intentional grammar or palette changes
+  // legitimately diverge from the committed masters and take the visual gate
+  // instead. The test suite asserts parity === true on the canonical inputs,
+  // which keeps the zero-art-change claim machine-verifiable.
+  metrics.approved_master_parity = masterParity;
+  const gates = gatesOfMetrics(metrics, EXPECTED_SIZE[name], { keyedDiff, keyedDimensionsOk });
+  return { name, runtime, keyed, metrics, gates };
+}
+
+function writeVariantArtifacts(dir, variants, palettes) {
+  fs.mkdirSync(dir, { recursive: true });
+  for (const name of variants) {
+    const img = paintVariant(name, palettes);
+    const { img: keyed } = makeKeyedSource(img);
+    writePng(path.join(dir, `${name}.16.png`), img);
+    writePng(path.join(dir, `${name}.keyed.png`), keyed);
+  }
+}
+
+function writeEvidence(dir, entries, grassRgb) {
+  const rows = [];
+  for (const e of entries) {
+    const iso = isolated8x(e.runtime);
+    writePng(path.join(dir, `${e.name}.x8.png`), iso);
+    const comp = grassComposite(e.runtime, grassRgb);
+    writePng(path.join(dir, `${e.name}.grass-x4.png`), comp);
+    rows.push(hstack([iso, resizeNearest(comp, iso.width)]));
+  }
+  writePng(path.join(dir, 'montage.png'), vstack(rows));
+}
+
 export function paintFamily({ palettePath, grassPath, outDir, variants = FAMILY_VARIANTS }) {
   const palettes = { forest: loadForest(palettePath), metal_stone: loadStone(palettePath) };
   const grass = readPng(grassPath);
@@ -460,60 +697,98 @@ export function paintFamily({ palettePath, grassPath, outDir, variants = FAMILY_
     grassRgb[i * 3] = grass.data[i * 4]; grassRgb[i * 3 + 1] = grass.data[i * 4 + 1]; grassRgb[i * 3 + 2] = grass.data[i * 4 + 2];
   }
 
-  // Gate: deterministic regeneration - paint twice, output bytes must match.
-  const run1 = variants.map((n) => ({ name: n, img: paintVariant(n, palettes) }));
-  const run2 = variants.map((n) => ({ name: n, img: paintVariant(n, palettes) }));
-  for (let i = 0; i < variants.length; i += 1) {
-    if (!Buffer.from(run1[i].img.data).equals(Buffer.from(run2[i].img.data))) {
-      throw new Error(`deterministic regeneration gate: ${variants[i]} diverged across two runs`);
-    }
-  }
+  // Gate: deterministic regeneration - two COMPLETE write passes; the encoded
+  // files (runtime, keyed, and all evidence) are compared byte-for-byte before
+  // any report is emitted. The verify tree is removed after the comparison.
+  const verifyDir = path.join(outDir, '.regen-verify');
+  fs.rmSync(verifyDir, { recursive: true, force: true });
+  writeVariantArtifacts(outDir, variants, palettes);
+  writeVariantArtifacts(verifyDir, variants, palettes);
 
-  const gridReports = run1.map(({ name }) => {
-    const painter = PAINTERS[name];
-    const g = painter(makeRng(seedFromName(name)));
-    const rep = { variant: name, seed: `eldoria-scatter/${name}/v1 (sha256[0:4] LE)`, palette_family: VARIANT_FAMILY[name], ...gatesOfGrid(g) };
-    if (SEED_SIBLING_OF[name]) {
-      rep.seed_sibling_of = SEED_SIBLING_OF[name];
+  // Read back the WRITTEN artifacts through the repo decoder and gate on the
+  // decoded pixels, including committed approved-runtime-master parity.
+  const entries = variants.map((n) => readBackVariant(outDir, n, palettes));
+  writeEvidence(outDir, entries, grassRgb);
+  const verifyEntries = variants.map((n) => readBackVariant(verifyDir, n, palettes));
+  writeEvidence(verifyDir, verifyEntries, grassRgb);
+  const filesCompared = compareTrees(outDir, verifyDir);
+  fs.rmSync(verifyDir, { recursive: true, force: true });
+
+  assertGatesPass(entries.map((e) => ({ id: e.name, gates: e.gates })));
+
+  const variantReports = [];
+  for (const e of entries) {
+    const runtimeFile = `${e.name}.16.png`;
+    const keyedFile = `${e.name}.keyed.png`;
+    const rep = {
+      id: e.name,
+      production_class: SEED_SIBLING_OF[e.name] ? 'derived' : 'anchor',
+      palette_family: VARIANT_FAMILY[e.name],
+      seed: `eldoria-scatter/${e.name}/v1 (sha256[0:4] LE)`,
+      expected_visible_width: EXPECTED_SIZE[e.name].width,
+      expected_visible_height: EXPECTED_SIZE[e.name].height,
+      runtime_file: runtimeFile,
+      runtime_sha256: sha256File(path.join(outDir, runtimeFile)),
+      keyed_file: keyedFile,
+      keyed_sha256: sha256File(path.join(outDir, keyedFile)),
+      metrics: e.metrics,
+      gates: e.gates,
+      passed: Object.values(e.gates).every(Boolean),
+    };
+    if (SEED_SIBLING_OF[e.name]) {
       rep.derivation = 'identical grammar, seed-only change';
+      rep.seed_sibling_of = SEED_SIBLING_OF[e.name];
     }
-    return rep;
-  });
-  assertGatesPass(gridReports);
-
-  fs.mkdirSync(outDir, { recursive: true });
-  const rows = [];
-  for (const { name, img } of run1) {
-    writePng(path.join(outDir, `${name}.16.png`), img);
-    const iso = isolated8x(img);
-    writePng(path.join(outDir, `${name}.x8.png`), iso);
-    const comp = grassComposite(img, grassRgb);
-    writePng(path.join(outDir, `${name}.grass-x4.png`), comp);
-    rows.push(hstack([iso, resizeNearest(comp, iso.width)]));
+    variantReports.push(rep);
   }
-  writePng(path.join(outDir, 'montage.png'), vstack(rows));
 
+  const recipePath = fileURLToPath(import.meta.url);
+  const recipeSha = sha256File(recipePath);
   const report = {
-    schema: 'scatter-paint-family-report/v1',
+    report_schema: REPORT_SCHEMA,
     family: FAMILY_ID,
+    lane: LANE,
     grammar_version: GRAMMAR_VERSION,
-    production_class: 'anchor (family gated as anchor); tuft_b = derived seed sibling',
+    producer: {
+      tool: path.basename(recipePath),
+      tool_sha256: recipeSha,
+      spec_or_recipe_path: 'scripts/paint-scatter-family.mjs',
+      spec_or_recipe_sha256: recipeSha,
+    },
     locked_inputs: {
       palette: { path: palettePath, sha256: sha256File(palettePath), families: ['forest', 'metal_stone'], status: 'locked' },
-      grass_base: { path: grassPath, sha256: sha256File(grassPath) },
+      context_base: { path: grassPath, sha256: sha256File(grassPath) },
+      key_color: KEY_COLOR,
     },
-    deterministic_regeneration: { runs: 2, output_byte_identical: true },
+    palette_authority: 'read-from-locked-file',
+    deterministic_regeneration: { runs: 2, written_files_byte_identical: true, files_compared: filesCompared },
+    measurement_basis: 'all metrics computed on artifacts decoded back from the written files, never on in-memory authoring buffers',
     applicable_invariants: {
-      palette_conformance: 'exact by construction',
-      occupancy_bbox: 'gated per variant',
+      runtime_dimensions: 'gated (decoded runtime must equal the declared 16x16 runtime canvas; fails safe on mismatch before any fixed-canvas scan)',
+      palette_conformance: 'gated (off-palette == 0 against the variant declared locked family, on decoded written pixels)',
+      occupancy_bbox: 'gated per variant (declared expected ranges)',
       edge_contact: 'gated (fail on contact)',
-      pivot_fit_bottom_row: 'gated (expect 13-15)',
+      pivot_fit_lowest_row: 'gated (declared allowed rows 13-15)',
+      binary_alpha: 'gated (partial alpha == 0)',
+      keyed_dimensions: 'gated (decoded keyed source must equal the exact 256x256 contract size; a larger file with a valid top-left region still fails)',
+      keyed_roundtrip: 'gated (0 diff; decoded 256x256 exact-#FF00FF source re-normalizes to decoded runtime)',
+      approved_master_parity: 'reported when a committed approved runtime master exists (exact decoded-pixel equality; asserted true on canonical inputs by the test suite, not hard-gated so intentional grammar changes can take the visual gate)',
       seam_adjacency: 'N/A (decals, non-tiling)',
       histogram_preservation: 'N/A (no input bitmap; direct grid paint)',
       frame_continuity: 'N/A (static decals)',
     },
-    variants: gridReports,
-    family_verdict_draft: 'HOLD - all machine gates pass; named next gate: ChatGPT visual audit (routine final art gate). Candidates + machine evidence only; not an approval.',
+    expected_geometry: {
+      runtime_canvas: [CELL, CELL],
+      pivot: PIVOT,
+      allowed_lowest_rows: ALLOWED_LOWEST_ROWS,
+      occupancy_pct_range: OCCUPANCY_PCT_RANGE,
+    },
+    variants: variantReports,
+    review_sheet: 'montage.png',
+    review_sheet_sha256: sha256File(path.join(outDir, 'montage.png')),
+    machine_passed: variantReports.every((v) => v.passed),
+    family_verdict_draft: 'HOLD',
+    named_next_gate: 'ChatGPT visual audit (routine final art gate). Candidates + machine evidence only; not an approval.',
   };
   fs.writeFileSync(path.join(outDir, 'family-report.json'), `${JSON.stringify(report, null, 2)}\n`);
   return report;
@@ -531,6 +806,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const a = args(process.argv.slice(2));
   if (!a.palette || !a.grass || !a.out) {
     console.error('Usage: node scripts/paint-scatter-family.mjs --palette <palette.json> --grass <grass.png> --out <dir> [--variants tuft_a,tuft_b]');
+    console.error('       (writes per-variant runtime + keyed sources, 8x/composite previews, montage, family-report.json)');
     process.exit(1);
   }
   try {
@@ -540,7 +816,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       outDir: a.out,
       variants: a.variants ? a.variants.split(',') : FAMILY_VARIANTS,
     });
-    console.log(JSON.stringify(report.variants, null, 2));
+    console.log(JSON.stringify(report.variants.map((v) => ({ id: v.id, passed: v.passed, gates: v.gates })), null, 2));
     console.log(`family montage + report -> ${a.out}`);
   } catch (err) {
     console.error(`FAIL: ${err.message}`);
