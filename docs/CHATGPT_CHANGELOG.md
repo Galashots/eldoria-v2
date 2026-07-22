@@ -4,6 +4,14 @@ This file keeps recent, high-value change summaries. Detailed historical entries
 
 Each entry should state the actual author, branch or PR, concise scope, verification, compatibility, and remaining risk. Implementation narratives belong in PR descriptions, commits, and audit records.
 
+## 2026-07-22 — Canonical lane contract restacked onto the approved scatter recipe
+
+- Author/branch: Claude Code, `claude/lane-contract-restack`. Restacks the stranded lane-contract work (local-only commit `665064c`, orphaned when PR #126 merged without it; owner directed the restack 2026-07-22) onto current `main`, reconciled with the dual-family palette routing from #126.
+- Scope: `scripts/paint-scatter-family.mjs` adopts `eldoria-lane-report/v1` — per-variant 256×256 exact-`#FF00FF` keyed sources with a fail-closed uniform-cell round-trip gate; explicit `binary_alpha` gate; declared per-variant expected width/height ranges; `horizontal_offset_from_pivot` metric; `producer.tool_sha256` + `lane` provenance; per-variant `production_class` and `palette_family`; `machine_passed` + `named_next_gate` verdict block; all metrics measured on the WRITTEN runtime image against the variant's declared locked family (pebble gates against `metal_stone`). `scripts/test-paint-scatter.mjs` merged suite 13 + 5 → 18/18.
+- Verification: `test:paint-scatter` 18/18; fresh-run runtime pixels proven **byte-identical** to the four committed `*.approved-runtime-master.png` files (no art-pixel change; the committed approval-time `family-report.json` remains the approval record in its original schema — future runs emit the lane schema).
+- Compatibility: tooling and tests only. No runtime, map, save, curriculum, quest, dependency, workflow-file, target-metadata, or asset-pixel change.
+- Remaining risk: the lane contract is exercised by one family so far; adopting it for other recipe lanes is future work.
+
 ## 2026-07-22 — Grass-scatter family approved: grammar unheld, pebble palette-family amendment
 
 - Author/branch: Kimi K3 (repo agent), `kimi/scatter-paint-recipe`, PR #126. Visual-audit gate explicitly owner-delegated to the repo agent for the overnight session; verdict recorded for morning confirmation in `docs/art-pipeline/review/tile_farm_grass_scatter_family/AUDIT.md`.
