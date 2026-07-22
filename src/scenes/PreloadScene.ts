@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { MAP_REGISTRY } from '../data/maps';
+import { FARM_SCATTER_TEXTURE_KEY } from '../data/farmDecorScatterConfig';
 import grade2MageCastSheetUrl from '../../assets/sprites/char_mage_boy_base_cast_v001.png?url';
 import grade2MageHurtSheetUrl from '../../assets/sprites/char_mage_boy_base_hurt_v001.png?url';
 import grade2MageIdleSheetUrl from '../../assets/sprites/char_mage_boy_base_idle_v001.png?url';
@@ -16,6 +17,14 @@ export class PreloadScene extends Phaser.Scene {
     // Approved terrain proof tileset (grass/water/dirt masters, 2x upscaled
     // onto the map's 32px grid). See scripts/compose-terrain-proof-tileset.mjs.
     this.load.image('terrain-tiles', 'assets/tilesets/farm-terrain-proof.png');
+    // Approved Farm grass-scatter Decor family (tuft_a/tuft_b/pebble_a/
+    // flower_a, packed row-major in that order, 2x upscaled onto the map's
+    // 32px grid). See scripts/compose-farm-scatter-tileset.mjs and
+    // src/data/farmDecorScatterConfig.ts.
+    this.load.spritesheet(FARM_SCATTER_TEXTURE_KEY, 'assets/tilesets/tile_farm_grass_scatter.png', {
+      frameWidth: 32,
+      frameHeight: 32
+    });
     this.load.spritesheet('adventurer', 'assets/sprites/adventurer-placeholder.png', {
       frameWidth: 32,
       frameHeight: 32
