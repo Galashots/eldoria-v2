@@ -1,8 +1,8 @@
 # Eldoria-V2 Multi-Model Operating Guide
 
-**Version:** 1.2  
+**Version:** 1.3  
 **Status:** Active cross-provider coordination authority  
-**Owner decision:** 2026-07-21  
+**Owner decision:** 2026-07-21; roster updated 2026-07-22  
 **Product direction:** [`ELDORIA_MASTER_PLAN.md`](ELDORIA_MASTER_PLAN.md)  
 **Repository-specific rules:** [`../AGENTS.md`](../AGENTS.md)
 
@@ -46,6 +46,15 @@ The implementation provider must not be the only reviewer or final merger of con
 ## 3. Role allocation
 
 Assign work by capability and available environment, not brand loyalty.
+
+### Active provider roster (owner decision 2026-07-22)
+
+The active providers are **Claude Code** and **ChatGPT**. Kimi K3 is retired from the roster (subscription ended 2026-07-22); historical records retain its authorship. Default lanes:
+
+- **Claude Code** — engineering implementation, deterministic asset recipes and machine gates, browser evidence, and independent review of ChatGPT-implemented work.
+- **ChatGPT** — source-art generation and visual QA, product/visual authority (§ below), and independent review of Claude-implemented work.
+
+With two providers, the independent reviewer will typically also be the merger; that satisfies the required separation (implementer ≠ reviewer, implementer ≠ merger). Roster changes are owner decisions recorded here and in the changelog.
 
 ### Implementation owner
 

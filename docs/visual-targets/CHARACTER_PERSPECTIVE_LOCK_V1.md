@@ -247,7 +247,7 @@ The trial should compare at least two generation approaches when practical:
 
 Select based on identity consistency, camera consistency, runtime readability, clean normalization, and iteration cost — not high-resolution attractiveness alone.
 
-A Kimi trial may be compared against a ChatGPT-generated trial, but neither provider's output is privileged. The exact normalized runtime result and in-game evidence decide.
+Trials from different providers or generation strategies may be compared against each other, but no provider's output is privileged. The exact normalized runtime result and in-game evidence decide.
 
 ---
 
