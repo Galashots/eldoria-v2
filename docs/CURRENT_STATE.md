@@ -105,7 +105,7 @@ The immediate goal is to establish the missing visual layers that create the ref
 - Production fantasy UI, final licensed audio, broader world restoration, codex/customization loops, and additional zones remain future milestones.
 - The Vercel migration proposal (PR #112) is closed; GitHub Pages remains the deployment and child-playtest origin. Any future hosting cutover is a new owner decision with its own save-origin plan.
 - Provider roster reduced to Claude Code + ChatGPT (owner decision 2026-07-22; operating guide v1.3). Reduced reviewer diversity; owner spot-checks are the backstop.
-- Open PRs awaiting independent review: none. #127 (perspective-trial evidence harness), #128 (lane-contract restack), and #129 (provider roster docs) are merged; #130 (this status reconciliation) is open for its own review.
+- No active Claude/ChatGPT feature PR is awaiting cross-provider review; #127, #128, and #129 are merged.
 - Foundry GPT (ChatGPT's private pixel-art configuration/package) and its Preview tests are an external authoring tool for candidate source art only. They are not a repository blocker and not repository authority — repository status is governed solely by `main`, the documents in this repository, and owner/ChatGPT decisions recorded here and in the changelog.
 - The Creative Bible reconciliation (narrative/world-document alignment) is tracked as a separate future documentation-only lane, not part of this PR or any current engineering task. It will not change current IDs, saves, quests, runtime behavior, or deployment names when it lands.
 
