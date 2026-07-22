@@ -15,9 +15,9 @@ import {
   REPORT_SCHEMA, LANE, PIVOT, KEY_COLOR,
   seedFromName, makeRng, createGrid, setPx, rgbaOfGrid,
   loadForest, loadStone, paintVariant, analyzeRuntime, gatesOfMetrics, assertGatesPass,
-  makeKeyedSource, keyedRoundtripDiff, paintFamily,
+  makeKeyedSource, keyedRoundtripDiff, paintFamily, readBackVariant, compareTrees,
 } from './paint-scatter-family.mjs';
-import { readPng } from './normalize-asset-sheet.mjs';
+import { readPng, writePng } from './normalize-asset-sheet.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(here, '..');
@@ -179,10 +179,14 @@ test('paintFamily emits the canonical contract report and passes every gate', ()
   assert.equal(report.machine_passed, true);
   assert.equal(report.family_verdict_draft, 'HOLD');
   assert.ok(report.named_next_gate.length > 0);
+  assert.equal(report.deterministic_regeneration.written_files_byte_identical, true);
+  assert.ok(report.deterministic_regeneration.files_compared >= FAMILY_VARIANTS.length * 4 + 1,
+    'file-level regeneration must compare the full written tree');
   assert.equal(report.variants.length, FAMILY_VARIANTS.length);
   for (const v of report.variants) {
     assert.equal(v.passed, true, `${v.id} gates: ${JSON.stringify(v.gates)}`);
     assert.equal(v.palette_family, VARIANT_FAMILY[v.id], `${v.id} report family mismatch`);
+    assert.equal(v.metrics.approved_master_parity, true, `${v.id} must match its committed approved runtime master`);
     assert.ok(v.metrics.visible_width >= v.expected_visible_width[0] && v.metrics.visible_width <= v.expected_visible_width[1],
       `${v.id} width ${v.metrics.visible_width} outside declared range`);
     assert.equal(v.metrics.partial_alpha_pixels, 0);
@@ -262,6 +266,33 @@ test('locked-input verification is loud: a palette edit changes hash and output 
   assert.notEqual(report.locked_inputs.palette.sha256, sha256File(PALETTE));
   assert.notEqual(sha256File(path.join(tamp, 'flower_a.16.png')), sha256File(path.join(base, 'flower_a.16.png')),
     'a locked-palette edit must change the painted output');
+});
+
+test('read-back gating is loud: post-write corruption fails palette and master-parity gates', () => {
+  const out = path.join(tmp, 'corruption-check');
+  paintFamily({ palettePath: PALETTE, grassPath: GRASS, outDir: out });
+  const palettes = loadPalettes();
+  const img = readPng(path.join(out, 'tuft_a.16.png'));
+  let subj = -1;
+  for (let i = 0; i < CELL * CELL && subj < 0; i += 1) if (img.data[i * 4 + 3] === 255) subj = i;
+  img.data[subj * 4] = 0x12; img.data[subj * 4 + 1] = 0x34; img.data[subj * 4 + 2] = 0x56; // off-palette pixel
+  writePng(path.join(out, 'tuft_a.16.png'), img);
+  const entry = readBackVariant(out, 'tuft_a', palettes);
+  assert.equal(entry.gates.palette, false, 'corrupted written file must fail the palette gate on read-back');
+  assert.equal(entry.metrics.approved_master_parity, false, 'corrupted written file must lose master parity');
+  assert.throws(() => assertGatesPass([{ id: 'tuft_a', gates: entry.gates }]), /tuft_a/);
+});
+
+test('compareTrees fails loudly on a byte difference between written runs', () => {
+  const a = path.join(tmp, 'trees-a');
+  const b = path.join(tmp, 'trees-b');
+  paintFamily({ palettePath: PALETTE, grassPath: GRASS, outDir: a });
+  paintFamily({ palettePath: PALETTE, grassPath: GRASS, outDir: b });
+  assert.ok(compareTrees(a, b) > 0, 'identical trees must compare clean');
+  const f = path.join(b, 'flower_a.16.png');
+  const bytes = fs.readFileSync(f);
+  fs.writeFileSync(f, Buffer.concat([bytes, Buffer.from([0])])); // trailing-byte tamper
+  assert.throws(() => compareTrees(a, b), /flower_a\.16\.png differs/);
 });
 
 test('locked-input verification covers metal_stone: a stone edit changes pebble bytes', () => {
