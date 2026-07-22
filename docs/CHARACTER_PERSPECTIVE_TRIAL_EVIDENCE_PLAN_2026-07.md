@@ -1,8 +1,6 @@
 # Character Perspective Trial — Evidence Harness Plan (2026-07)
 
-**Status:** Approved design, implementation in progress
-**Branch:** `claude/perspective-trial-evidence-harness` (owner: Claude Code)
-**Base:** `main` @ `63e5df6` (PR #125 merge)
+**Status:** Implemented (PR #127); this document is the approved design record. The manifest is bound to the canonical `char_mage_boy_base` target and the exact repo plate assets; occupancy bounds are mandatory.
 **Authorities:** [`visual-targets/CHARACTER_PERSPECTIVE_LOCK_V1.md`](visual-targets/CHARACTER_PERSPECTIVE_LOCK_V1.md) §8–§9, [`visual-targets/hero_actor_targets.json`](visual-targets/hero_actor_targets.json) (`char_mage_boy_base`), [`CURRENT_STATE.md`](CURRENT_STATE.md) active-milestone item 2, [`../AGENTS.md`](../AGENTS.md).
 
 ## Purpose

@@ -7,6 +7,9 @@ import { composePerspectiveTrialEvidence } from './compose-perspective-trial-evi
 
 const ROOT = path.resolve('.tmp/perspective-trial');
 const DIRECTIONS = ['front', 'back', 'left', 'right'];
+const REPO_ROOT = path.resolve('.');
+const FARM_TILE = path.join(REPO_ROOT, 'docs', 'art-pipeline', 'review', 'tile_farm_grass_base_grass_a', 'grass_a.review-normalized.png');
+const WOODS_TILESET = path.join(REPO_ROOT, 'public', 'assets', 'tilesets', 'eldoria-placeholder.png');
 
 function image(width, height, color = [0, 0, 0, 0]) {
   const data = new Uint8Array(width * height * 4);
@@ -56,30 +59,18 @@ function makeIdleSheet(filePath, overrides = {}) {
   return sheet;
 }
 
-function makePlateSources(dir) {
-  const farmTile = path.join(dir, 'farm-tile.png');
-  const grass = image(16, 16, [60, 120, 50, 255]);
-  rect(grass, 3, 3, 2, 2, [90, 160, 70, 255]);
-  writePng(farmTile, grass);
-
-  const woodsTileset = path.join(dir, 'woods-tileset.png');
-  const tiles = image(32, 32, [24, 34, 30, 255]);
-  rect(tiles, 0, 0, 16, 16, [20, 30, 26, 255]);   // cell [0,0]: dark woods ground
-  rect(tiles, 16, 0, 16, 16, [200, 0, 0, 255]);   // cell [1,0]: sentinel, must not appear
-  writePng(woodsTileset, tiles);
-  return { farmTile, woodsTileset };
-}
-
+// Manifests are bound to the canonical target and the exact repo plate assets;
+// tests use the real committed grass_a master and placeholder tileset. Options
+// allow negative tests to declare noncanonical values that must be rejected.
 function makeManifest(dir, options = {}) {
   const sheetPath = options.sheetPath ?? path.join(dir, 'candidate-a.png');
-  const { farmTile, woodsTileset } = makePlateSources(dir);
   const manifest = {
     version: 1,
     id: options.id ?? 'test_perspective_trial',
-    target: { cellPx: [32, 48], directions: DIRECTIONS, pivotRow: 47 },
-    plates: {
-      farm_bright: { mode: 'tile', tilePath: farmTile, tilePx: [16, 16] },
-      woods_bridge: { mode: 'tileset_cells', tilesetPath: woodsTileset, tilePx: [16, 16], cells: [[0, 0]] }
+    target: options.target ?? { cellPx: [32, 48], directions: DIRECTIONS, pivotRow: 47 },
+    plates: options.plates ?? {
+      farm_bright: { mode: 'tile', tilePath: FARM_TILE, tilePx: [16, 16] },
+      woods_bridge: { mode: 'tileset_cells', tilesetPath: WOODS_TILESET, tilePx: [16, 16], cells: options.woodsCells ?? [[0, 0]] }
     },
     outDir: options.outDir ?? path.join(dir, 'out'),
     candidates: options.candidates ?? [
@@ -225,22 +216,83 @@ let passed = 0;
 }
 
 {
-  // 9. Farm plate is tiled from the declared tile; woods plate uses only the
-  // declared tileset cell (the red sentinel cell must never appear).
+  // 9. Plates are composed from the exact canonical repo assets: the farm
+  // preview tiles the committed grass_a master, and the woods preview strides
+  // only the declared cell of the committed placeholder tileset.
   const dir = path.join(ROOT, 'plates');
   makeIdleSheet(path.join(dir, 'candidate-a.png'));
   const { manifestPath, manifest } = makeManifest(dir);
   composePerspectiveTrialEvidence(manifestPath);
+  const grassTile = readPng(FARM_TILE);
   const farm = readPng(path.join(manifest.outDir, 'cand_a', 'preview_1x_farm_bright.png'));
   assert.equal(farm.width % 16, 0);
-  assert.deepEqual(pixel(farm, 0, 0), [60, 120, 50, 255], 'farm plate corner must be the grass tile base color');
-  assert.deepEqual(pixel(farm, 16 + 3, 3), [90, 160, 70, 255], 'farm tiling must repeat the tile detail');
+  assert.deepEqual(pixel(farm, 0, 0), pixel(grassTile, 0, 0), 'farm plate corner must be the grass_a master pixel');
+  assert.deepEqual(pixel(farm, 16 + 3, 3), pixel(grassTile, 3, 3), 'farm tiling must repeat the grass_a master');
+  const tileset = readPng(WOODS_TILESET);
   const woods = readPng(path.join(manifest.outDir, 'cand_a', 'preview_1x_woods_bridge.png'));
-  let sentinel = false;
-  for (let i = 0; i < woods.data.length; i += 4) {
-    if (woods.data[i] === 200 && woods.data[i + 1] === 0 && woods.data[i + 2] === 0) sentinel = true;
-  }
-  assert.equal(sentinel, false, 'undeclared tileset cell must not enter the woods plate');
+  assert.deepEqual(pixel(woods, 2, 2), pixel(tileset, 2, 2), 'woods plate must come from declared cell [0,0] of the committed tileset');
+  passed += 1;
+}
+
+{
+  // 9b. Substituted plate sources must be rejected before evidence exists:
+  // a manifest pointing at look-alike temp files is not the canonical context.
+  const dir = path.join(ROOT, 'plate-substitute');
+  makeIdleSheet(path.join(dir, 'candidate-a.png'));
+  const fakeTile = path.join(dir, 'fake-grass.png');
+  writePng(fakeTile, image(16, 16, [60, 120, 50, 255]));
+  const { manifestPath } = makeManifest(dir, {
+    plates: {
+      farm_bright: { mode: 'tile', tilePath: fakeTile, tilePx: [16, 16] },
+      woods_bridge: { mode: 'tileset_cells', tilesetPath: WOODS_TILESET, tilePx: [16, 16], cells: [[0, 0]] }
+    }
+  });
+  assert.throws(() => composePerspectiveTrialEvidence(manifestPath), /canonical repo asset/);
+  const fakeSet = path.join(dir, 'fake-tileset.png');
+  writePng(fakeSet, image(256, 32, [24, 34, 30, 255]));
+  const { manifestPath: mp2 } = makeManifest(dir, {
+    plates: {
+      farm_bright: { mode: 'tile', tilePath: FARM_TILE, tilePx: [16, 16] },
+      woods_bridge: { mode: 'tileset_cells', tilesetPath: fakeSet, tilePx: [16, 16], cells: [[0, 0]] }
+    }
+  });
+  assert.throws(() => composePerspectiveTrialEvidence(mp2), /canonical repo asset/);
+  passed += 1;
+}
+
+{
+  // 9c. The manifest cannot redefine the authoritative target: wrong canvas,
+  // wrong pivot, and wrong direction order each fail against the canonical
+  // char_mage_boy_base entry in hero_actor_targets.json.
+  const dir = path.join(ROOT, 'target-substitute');
+  makeIdleSheet(path.join(dir, 'candidate-a.png'));
+  const wrongSize = makeManifest(dir, { target: { cellPx: [32, 64], directions: DIRECTIONS, pivotRow: 47 } });
+  assert.throws(() => composePerspectiveTrialEvidence(wrongSize.manifestPath), /canonical char_mage_boy_base canvas/);
+  const wrongPivot = makeManifest(dir, { target: { cellPx: [32, 48], directions: DIRECTIONS, pivotRow: 40 } });
+  assert.throws(() => composePerspectiveTrialEvidence(wrongPivot.manifestPath), /canonical pivot row 47/);
+  const wrongOrder = makeManifest(dir, { target: { cellPx: [32, 48], directions: ['back', 'front', 'left', 'right'], pivotRow: 47 } });
+  assert.throws(() => composePerspectiveTrialEvidence(wrongOrder.manifestPath), /canonical order/);
+  passed += 1;
+}
+
+{
+  // 9d. Omitted occupancy bounds are a hard failure, never a skipped pass.
+  const dir = path.join(ROOT, 'occupancy-required');
+  const sheetPath = path.join(dir, 'candidate-a.png');
+  makeIdleSheet(sheetPath);
+  const { manifestPath } = makeManifest(dir, {
+    candidates: [{ id: 'cand_a', provider: 'test', approach: 'same_sheet', sheetPath }]
+  });
+  assert.throws(() => composePerspectiveTrialEvidence(manifestPath), /occupancy bounds .* required/);
+  passed += 1;
+}
+
+{
+  // 9e. Declared woods cells outside the committed tileset are rejected.
+  const dir = path.join(ROOT, 'cell-bounds');
+  makeIdleSheet(path.join(dir, 'candidate-a.png'));
+  const { manifestPath } = makeManifest(dir, { woodsCells: [[99, 0]] });
+  assert.throws(() => composePerspectiveTrialEvidence(manifestPath), /outside the .* tileset/);
   passed += 1;
 }
 
@@ -320,8 +372,8 @@ let passed = 0;
   makeIdleSheet(sheetB, { front: { width: 18, left: 7 } });
   const { manifestPath, manifest } = makeManifest(dir, {
     candidates: [
-      { id: 'cand_a', provider: 'test', approach: 'same_sheet', sheetPath: sheetA },
-      { id: 'cand_b', provider: 'test', approach: 'direction_anchored', sheetPath: sheetB }
+      { id: 'cand_a', provider: 'test', approach: 'same_sheet', sheetPath: sheetA, occupancy: { maxWidthPx: 20, heightRangePx: [36, 46] } },
+      { id: 'cand_b', provider: 'test', approach: 'direction_anchored', sheetPath: sheetB, occupancy: { maxWidthPx: 20, heightRangePx: [36, 46] } }
     ]
   });
   const result = composePerspectiveTrialEvidence(manifestPath);
@@ -347,4 +399,4 @@ let passed = 0;
   passed += 1;
 }
 
-console.log(`Perspective trial test passed (${passed}/15).`);
+console.log(`Perspective trial test passed (${passed}/19).`);

@@ -18,9 +18,31 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { pathToFileURL, fileURLToPath } from 'node:url';
 import { readPng, writePng } from './normalize-asset-sheet.mjs';
 import { upscaleNearestNeighborRgba } from './upscale-nearest-neighbor.mjs';
+
+// --- canonical bindings -------------------------------------------------------
+// The manifest cannot redefine the authoritative target or the evidence plates.
+// Target geometry is resolved from hero_actor_targets.json; the two plates are
+// pinned to the exact repo assets named in the approved plan. A manifest that
+// declares anything else fails loudly before any evidence is produced.
+
+const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+export const CANONICAL_TARGET_ID = 'char_mage_boy_base';
+const CANONICAL_TARGETS_PATH = path.join(REPO_ROOT, 'docs', 'visual-targets', 'hero_actor_targets.json');
+export const CANONICAL_PLATES = {
+  farm_bright: { mode: 'tile', relPath: 'docs/art-pipeline/review/tile_farm_grass_base_grass_a/grass_a.review-normalized.png', tilePx: [16, 16] },
+  woods_bridge: { mode: 'tileset_cells', relPath: 'public/assets/tilesets/eldoria-placeholder.png', tilePx: [16, 16] },
+};
+
+export function canonicalTarget() {
+  const doc = JSON.parse(fs.readFileSync(CANONICAL_TARGETS_PATH, 'utf8'));
+  const list = Array.isArray(doc) ? doc : (doc.targets ?? []);
+  const target = list.find((t) => t.id === CANONICAL_TARGET_ID);
+  if (!target) fail(`canonical target ${CANONICAL_TARGET_ID} not found in hero_actor_targets.json`);
+  return { cellPx: target.canvasPx, directions: target.directions, pivotRow: target.pivotPx[1] };
+}
 
 const REPORT_ID = 'eldoria-perspective-trial-report/v1';
 const NN_SCALE = 8;
@@ -102,9 +124,37 @@ function loadManifest(manifestPath) {
   if (!Array.isArray(target.cellPx) || target.cellPx.length !== 2) fail('target.cellPx must be [w, h]');
   if (!Array.isArray(target.directions) || target.directions.length !== 4) fail('target.directions must list 4 directions');
   if (!Number.isInteger(target.pivotRow)) fail('target.pivotRow must be an integer row');
-  for (const name of ['farm_bright', 'woods_bridge']) {
-    if (!plates[name]) fail(`plates missing "${name}"`);
+
+  // Bind the manifest to the canonical target: any substitute geometry fails.
+  const canon = canonicalTarget();
+  if (target.cellPx[0] !== canon.cellPx[0] || target.cellPx[1] !== canon.cellPx[1]) {
+    fail(`target.cellPx [${target.cellPx}] must match canonical ${CANONICAL_TARGET_ID} canvas [${canon.cellPx}]`);
   }
+  if (target.directions.join(',') !== canon.directions.join(',')) {
+    fail(`target.directions must match canonical order [${canon.directions}]`);
+  }
+  if (target.pivotRow !== canon.pivotRow) {
+    fail(`target.pivotRow ${target.pivotRow} must match canonical pivot row ${canon.pivotRow}`);
+  }
+
+  // Bind the evidence plates to the exact repo assets from the approved plan.
+  for (const [name, spec] of Object.entries(CANONICAL_PLATES)) {
+    const plate = plates[name];
+    if (!plate) fail(`plates missing "${name}"`);
+    if (plate.mode !== spec.mode) fail(`plate ${name}: mode must be "${spec.mode}"`);
+    const declaredPath = spec.mode === 'tile' ? plate.tilePath : plate.tilesetPath;
+    const canonicalAbs = path.join(REPO_ROOT, ...spec.relPath.split('/'));
+    if (!declaredPath || path.resolve(declaredPath) !== canonicalAbs) {
+      fail(`plate ${name}: source must be the canonical repo asset ${spec.relPath}`);
+    }
+    if (!Array.isArray(plate.tilePx) || plate.tilePx[0] !== spec.tilePx[0] || plate.tilePx[1] !== spec.tilePx[1]) {
+      fail(`plate ${name}: tilePx must be [${spec.tilePx}]`);
+    }
+  }
+  if (!Array.isArray(plates.woods_bridge.cells) || plates.woods_bridge.cells.length === 0) {
+    fail('plate woods_bridge: declared cells are required');
+  }
+
   if (!Array.isArray(candidates) || candidates.length === 0) fail('candidates must be a non-empty array');
   for (const candidate of candidates) {
     for (const key of ['id', 'provider', 'approach', 'sheetPath']) {
@@ -112,6 +162,14 @@ function loadManifest(manifestPath) {
     }
     if (!['same_sheet', 'direction_anchored'].includes(candidate.approach)) {
       fail(`candidate ${candidate.id}: approach must be same_sheet or direction_anchored`);
+    }
+    // Occupancy bounds are required, never skippable (approved plan: the
+    // machine surface is fail-closed; a missing declaration is a failure).
+    const occ = candidate.occupancy;
+    if (!occ || typeof occ.maxWidthPx !== 'number'
+      || !Array.isArray(occ.heightRangePx) || occ.heightRangePx.length !== 2
+      || !occ.heightRangePx.every((v) => typeof v === 'number')) {
+      fail(`candidate ${candidate.id}: occupancy bounds (maxWidthPx + heightRangePx [min, max]) are required`);
     }
   }
   return manifest;
@@ -132,6 +190,12 @@ function buildPlate(plate) {
   if (plate.mode === 'tileset_cells') {
     const tileset = readPng(plate.tilesetPath);
     if (!Array.isArray(plate.cells) || plate.cells.length === 0) fail('tileset_cells plate needs declared cells');
+    for (const [c, r] of plate.cells) {
+      if (!Number.isInteger(c) || !Number.isInteger(r)
+        || (c + 1) * tileW > tileset.width || (r + 1) * tileH > tileset.height || c < 0 || r < 0) {
+        fail(`tileset_cells plate: cell [${c}, ${r}] is outside the ${tileset.width}x${tileset.height} tileset`);
+      }
+    }
     const tiles = plate.cells.map(([c, r]) => crop(tileset, c * tileW, r * tileH, tileW, tileH));
     for (let r = 0; r < rows; r += 1) for (let c = 0; c < cols; c += 1) {
       // Deterministic cell pattern with no RNG: stride the declared cells.
@@ -210,20 +274,18 @@ function runMachineGates(sheet, target, candidate) {
     measured: { contactRows: metrics.map((m) => m.contactRow), pivotRow: target.pivotRow }
   });
 
-  const occupancy = candidate.occupancy ?? null;
+  // Occupancy bounds are guaranteed by loadManifest; the gate always evaluates
+  // and can never be skipped-as-passed.
+  const occupancy = candidate.occupancy;
   let occupancyPassed = true;
-  if (occupancy) {
-    for (const m of metrics) {
-      if (occupancy.maxWidthPx !== undefined && m.widthPx > occupancy.maxWidthPx) occupancyPassed = false;
-      if (occupancy.heightRangePx && (m.heightPx < occupancy.heightRangePx[0] || m.heightPx > occupancy.heightRangePx[1])) occupancyPassed = false;
-    }
+  for (const m of metrics) {
+    if (m.widthPx > occupancy.maxWidthPx) occupancyPassed = false;
+    if (m.heightPx < occupancy.heightRangePx[0] || m.heightPx > occupancy.heightRangePx[1]) occupancyPassed = false;
   }
   gates.push({
     name: 'occupancy_bounds',
     passed: occupancyPassed,
-    measured: occupancy
-      ? { declared: occupancy, widthsPx: metrics.map((m) => m.widthPx), heightsPx: heights }
-      : { declared: null, skipped: true }
+    measured: { declared: occupancy, widthsPx: metrics.map((m) => m.widthPx), heightsPx: heights }
   });
 
   return { gates, metrics };
