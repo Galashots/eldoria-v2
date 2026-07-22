@@ -21,7 +21,7 @@
     "test:paint-scatter": "node scripts/test-paint-scatter.mjs",
     "compose:terrain-proof": "node scripts/compose-terrain-proof-tileset.mjs",
     "compose:farm-scatter": "node scripts/compose-farm-scatter-tileset.mjs",
-    "test:asset-pipeline": "node scripts/test-asset-pipeline.mjs && node scripts/test-paint-scatter.mjs && node scripts/test-farm-scatter-tileset.mjs",
+    "test:asset-pipeline": "node scripts/test-asset-pipeline.mjs && node scripts/test-paint-scatter.mjs && node scripts/test-perspective-trial.mjs && node scripts/test-farm-scatter-tileset.mjs",
     "compose:perspective-trial": "node scripts/compose-perspective-trial-evidence.mjs",
     "test:perspective-trial": "node scripts/test-perspective-trial.mjs",
     "review:asset": "node scripts/review-asset.mjs",
