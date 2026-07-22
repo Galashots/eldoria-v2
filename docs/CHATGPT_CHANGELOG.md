@@ -4,6 +4,14 @@ This file keeps recent, high-value change summaries. Detailed historical entries
 
 Each entry should state the actual author, branch or PR, concise scope, verification, compatibility, and remaining risk. Implementation narratives belong in PR descriptions, commits, and audit records.
 
+## 2026-07-22 — Status reconciliation post-#127 (restacked; corrects Deliverable 1)
+
+- Author/branch: Claude Code, `claude/status-reconciliation`, PR #130. Restacks the original day-plan Deliverable 1 onto `main` through PR #127 and corrects two inaccuracies found on review.
+- Scope: `CURRENT_STATE.md` — verified-main baseline advanced to `f5b6b2e` (PR #127 merged); complete scatter-family verdict recorded (all four variants approved runtime masters, `pebble_a` in `metal_stone`, no further ChatGPT visual confirmation pending — corrects this entry's original "confirmation requested" wording, since the confirmation has since completed); perspective-trial evidence harness recorded merged through PR #127; #127/#128/#129 removed from the open-PR list (all merged); immediate engineering task set to D3 Farm scatter wiring with deterministic packing/configuration and comparable in-game density evidence; D4 Mage perspective trial tracked as a parallel lane awaiting the exact candidate-PNG handoff and processing through the merged harness; notes that Foundry GPT, its private package, and its Preview tests are not repository blockers or repository authority; Creative Bible reconciliation preserved as a separate future documentation-only lane, out of scope for this PR. Corrects this entry's original claim of closing #77, #115, and #120 on merge — all three remain open in GitHub; this documentation PR does not close them; issue-lifecycle cleanup (e.g. #115's council record already shows `Council status: CONCLUDED`) is separate, later work.
+- Verification: documentation-only; statements cross-checked against `main` history, PR/issue states (including live re-verification of #77/#115/#120), and the committed review evidence.
+- Compatibility: no runtime, map, asset, save, or tooling change.
+- Remaining risk: none beyond the recorded items.
+
 ## 2026-07-22 — Character perspective-trial evidence harness (repaired: production determinism gate + full pivot)
 
 - Author/branch: Claude Code, `claude/perspective-trial-evidence-harness`, PR #127.

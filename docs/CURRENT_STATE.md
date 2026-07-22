@@ -1,6 +1,6 @@
 # Eldoria-V2 Current State
 
-**Last verified `main`:** `a4f90d3509946f876410e05ca514d59ab769f1e8` (PR #123 merged, 2026-07-21)  
+**Last verified `main`:** `f5b6b2ef4d0c4b33ce06e6753bd433829b10c3e0` (PR #127 merged, 2026-07-22)  
 **Stable product direction:** [`ELDORIA_MASTER_PLAN.md`](ELDORIA_MASTER_PLAN.md)  
 **Repository rules:** [`../AGENTS.md`](../AGENTS.md)
 
@@ -44,6 +44,7 @@ This file is the only authority for volatile capability status, the active miles
 | water | `water_a`, `water_b` plus complete 13-cell shoreline family approved; transition cells integrated on Farm |
 | Farm anchors | oak, horizontal fence segment, medium rock, revealed Root-Star approved |
 | Batch A family gate | seven-anchor contact sheet approved |
+| grass scatter | all four variants — `tuft_a`, `tuft_b` (derived seed sibling), `flower_a`, `pebble_a` — approved runtime masters (PR #126; overnight owner-delegated visual gate, owner-confirmed 2026-07-22; `pebble_a` paints in `metal_stone`); ChatGPT's final visual confirmation is complete, no further visual confirmation is pending |
 
 Detailed asset audit records remain under `docs/art-pipeline/review/`.
 
@@ -56,7 +57,7 @@ PR #122 is merged. The repository now contains:
 - `src/data/wildbloomSpots.ts` — Phaser-free spot source of truth;
 - a full 38-placement farm plan pinned by unit tests.
 
-The primitive is **not scene-integrated** and causes no runtime visual change. Integration waits for approved `tile_farm_grass_scatter` masters and a configuration/wiring PR with in-game density evidence.
+The primitive is **not scene-integrated** and causes no runtime visual change. The `tile_farm_grass_scatter` masters are approved and ChatGPT's final family confirmation is complete (PR #126); integration now waits only on the D3 wiring PR with deterministic packing/configuration and comparable in-game density evidence.
 
 ## Visual direction and character status
 
@@ -82,20 +83,17 @@ The immediate goal is to establish the missing visual layers that create the ref
 
 ### Next work
 
-1. **Approve the first grass-scatter art family (first mixed anchor/derived recipe pilot)**
-   - the family remains anchor-gated: `tuft_a`, `flower_a`, `pebble_a` as independently approved anchors; `tuft_b` as a deterministic derived sibling of `tuft_a`;
-   - the `tuft_b` recipe is the first exercise of the derived recipe-level gate: recipe-level approval with applicable machine gates, full-family contact sheet, one family verdict;
-   - no scene integration until the family passes.
+1. **D3 — Wire the decor-scatter primitive into the Farm scene** (immediate engineering task; unblocked — scatter family confirmation is complete)
+   - deterministically pack the four cells in the declared §5.1 order (`tuft_a, tuft_b, pebble_a, flower_a`) with deterministic packing/configuration; preload; Farm-only presentation-layer decals through the existing exclusion/placement systems;
+   - deliberate weighting (first hypothesis ~4:1 tufts over flowers; screenshots decide), loud failure on invalid density/missing assets/bad mappings;
+   - preserve map JSON, collision, quests, saves, and interaction IDs;
+   - comparable in-game density evidence required: Mage and Ranger captures at 1194×834 showing routes, gates, objectives, crop area, and Wildbloom locations remain clear; full suite + emulation on the exact final head.
 
-2. **Run the first character perspective trial** — in parallel, not gated on environment completion
-   - one identity, four idle directions, neutral outfit;
-   - compare same-sheet versus direction-anchored generation when practical;
-   - judge exact runtime pixels on bright Farm and darker Woods backgrounds;
+2. **D4 — Run the first character perspective trial** — parallel lane, not gated on item 1
+   - one neutral Mage identity, four idle directions only; same-sheet versus direction-anchored generation;
+   - the evidence harness is merged (PR #127) and ready; this task now awaits the exact candidate-PNG handoff for processing through the merged harness;
+   - judged on exact runtime pixels on bright Farm and darker Woods plates;
    - choose size/prompt strategy before commissioning complete animation families.
-
-3. **Wire the decor-scatter primitive into the Farm scene** (config-only swap once the scatter family passes)
-   - density, weighting, and invalid-config handling resolved in the wiring PR;
-   - in-game density and spacing evidence required.
 
 ## Known risks and deferred work
 
@@ -105,7 +103,11 @@ The immediate goal is to establish the missing visual layers that create the ref
 - Mage sheets need re-evaluation against the new elevated perspective lock even though their scale-normalization defect was repaired.
 - Current armor targets remain pre-production and must not advance ahead of the perspective-locked bases.
 - Production fantasy UI, final licensed audio, broader world restoration, codex/customization loops, and additional zones remain future milestones.
-- PR #112 Vercel migration remains owner-gated; GitHub Pages stays the child-playtest origin until an explicit cutover/save decision.
+- The Vercel migration proposal (PR #112) is closed; GitHub Pages remains the deployment and child-playtest origin. Any future hosting cutover is a new owner decision with its own save-origin plan.
+- Provider roster reduced to Claude Code + ChatGPT (owner decision 2026-07-22; operating guide v1.3). Reduced reviewer diversity; owner spot-checks are the backstop.
+- No active Claude/ChatGPT feature PR is awaiting cross-provider review; #127, #128, and #129 are merged.
+- Foundry GPT (ChatGPT's private pixel-art configuration/package) and its Preview tests are an external authoring tool for candidate source art only. They are not a repository blocker and not repository authority — repository status is governed solely by `main`, the documents in this repository, and owner/ChatGPT decisions recorded here and in the changelog.
+- The Creative Bible reconciliation (narrative/world-document alignment) is tracked as a separate future documentation-only lane, not part of this PR or any current engineering task. It will not change current IDs, saves, quests, runtime behavior, or deployment names when it lands.
 
 ## Verification baseline
 
