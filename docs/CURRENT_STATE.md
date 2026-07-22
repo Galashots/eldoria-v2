@@ -44,7 +44,7 @@ This file is the only authority for volatile capability status, the active miles
 | water | `water_a`, `water_b` plus complete 13-cell shoreline family approved; transition cells integrated on Farm |
 | Farm anchors | oak, horizontal fence segment, medium rock, revealed Root-Star approved |
 | Batch A family gate | seven-anchor contact sheet approved |
-| grass scatter | all four variants — `tuft_a`, `tuft_b` (derived seed sibling), `flower_a`, `pebble_a` — approved runtime masters (PR #126; overnight owner-delegated visual gate, owner-confirmed 2026-07-22; `pebble_a` paints in `metal_stone`); ChatGPT's final visual confirmation is complete, no further visual confirmation is pending |
+| grass scatter | all four variants — `tuft_a`, `tuft_b` (derived seed sibling), `flower_a`, `pebble_a` — approved runtime masters (PR #126; overnight owner-delegated visual gate, owner-confirmed 2026-07-22; `pebble_a` paints in `metal_stone`); ChatGPT's final visual confirmation is complete, no further visual confirmation is pending; scatter integrated on Farm |
 
 Detailed asset audit records remain under `docs/art-pipeline/review/`.
 
