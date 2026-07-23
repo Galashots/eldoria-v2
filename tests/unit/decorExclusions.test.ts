@@ -20,14 +20,23 @@ function derive() {
 }
 
 describe('deriveDecorEligibility breakdown (vs independent Kimi audit)', () => {
-  it('finds exactly the 127 collision cells, keyed on registry gids', () => {
+  it('finds exactly the 126 collision cells, keyed on registry gids', () => {
     const { breakdown } = derive();
-    expect(breakdown.collision.length).toBe(127);
+    // Was 127 (independent Kimi audit, issue #120) before the Farm<->Village
+    // held-movement fix opened '0,11' (see below) — one fewer collision cell.
+    expect(breakdown.collision.length).toBe(126);
     expect(breakdown.collision).toContain('0,0'); // fence corner
     // Gate mouths are walkable gaps in the fence, NOT collision cells:
     for (const gate of ['0,9', '0,10', '29,9', '29,10']) {
       expect(breakdown.collision).not.toContain(gate);
     }
+    // '0,11' (just south of the west gate) and '29,11' (east gate) were
+    // opened/not opened respectively by this fix — see the PR body for the
+    // full root-cause evidence. Only the reported Farm<->Village gate pair
+    // is in scope, so the symmetric Woods-side gate at column 29 is
+    // untouched and remains a collision cell.
+    expect(breakdown.collision).not.toContain('0,11');
+    expect(breakdown.collision).toContain('29,11');
   });
 
   it('covers all six authored Decor-layer cells', () => {
