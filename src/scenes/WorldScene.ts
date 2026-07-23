@@ -37,6 +37,12 @@ import {
 import { LearningBonusSystem } from '../systems/LearningBonusSystem';
 import { MasterySystem, type LearningMastery } from '../systems/MasterySystem';
 import { FarmQuestSystem, type FarmQuestOutcome } from '../systems/FarmQuestSystem';
+import {
+  buildFarmDecorScatterPlan,
+  FARM_SCATTER_CELL_ORDER,
+  FARM_SCATTER_TEXTURE_KEY
+} from '../data/farmDecorScatterConfig';
+import type { TiledMapLike } from '../systems/decorExclusions';
 import { QuestSystem } from '../systems/QuestSystem';
 import { CURRENT_SAVE_VERSION, SaveSystem, type StarterQuestStep } from '../systems/SaveSystem';
 import { loadAudioMuted, saveAudioMuted } from '../systems/AudioPreference';
@@ -231,6 +237,10 @@ export class WorldScene extends Phaser.Scene {
     if (collisionLayer) {
       collisionLayer.setCollision([...this.mapDef.collisionGids]);
       collisionLayer.setVisible(false);
+    }
+
+    if (this.mapId === 'farm') {
+      this.renderFarmDecorScatter();
     }
 
     const objectLayer = map.getObjectLayer('Objects');
@@ -442,6 +452,39 @@ export class WorldScene extends Phaser.Scene {
 
     this.checkExitTrigger();
     this.updateHint();
+  }
+
+  /**
+   * Presentation-only ground Decor for the Farm: the deterministic D6-A2
+   * scatter primitive (src/systems/decorScatter.ts +
+   * src/systems/decorExclusions.ts) rendered against the approved
+   * tile_farm_grass_scatter family. No collision body, no save-state, no
+   * map JSON edit — purely visual, added below every actor/marker/effect
+   * added later in create() (insertion-order stacking at the shared default
+   * depth 0, the same convention the Ground/Decor/Collision tile layers use).
+   */
+  private renderFarmDecorScatter(): void {
+    if (!this.textures.exists(FARM_SCATTER_TEXTURE_KEY)) {
+      throw new Error(
+        `WorldScene: missing preloaded texture '${FARM_SCATTER_TEXTURE_KEY}' for the Farm decor scatter`
+      );
+    }
+    // Reuse the exact parsed Tiled JSON Phaser already loaded for this map
+    // (populated by PreloadScene's this.load.tilemapTiledJSON) instead of
+    // importing public/maps/farm.json into this production bundle — see
+    // farmDecorScatterConfig.ts's header comment for the boundary rationale.
+    const farmMapData = this.cache.tilemap.get(this.mapDef.tiledKey).data as TiledMapLike;
+    const worldTilePx = farmMapData.tilewidth * GAME_SCALE;
+    for (const placement of buildFarmDecorScatterPlan(farmMapData)) {
+      const frame = FARM_SCATTER_CELL_ORDER.indexOf(placement.decal as (typeof FARM_SCATTER_CELL_ORDER)[number]);
+      if (frame < 0) {
+        throw new Error(`WorldScene: unknown Farm decor scatter variant '${placement.decal}'`);
+      }
+      this.add
+        .image(placement.x * worldTilePx, placement.y * worldTilePx, FARM_SCATTER_TEXTURE_KEY, frame)
+        .setOrigin(0, 0)
+        .setScale(GAME_SCALE);
+    }
   }
 
   private makeTargets(objects: Phaser.Types.Tilemaps.TiledObject[]): InteractionTarget[] {

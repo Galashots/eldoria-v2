@@ -1,6 +1,6 @@
 # Eldoria-V2 Current State
 
-**Last verified `main`:** `f5b6b2ef4d0c4b33ce06e6753bd433829b10c3e0` (PR #127 merged, 2026-07-22)  
+**Last verified `main`:** `172686619f374d2a24eb5a95f05ab600215633cd` (PR #67 merged, 2026-07-23)  
 **Stable product direction:** [`ELDORIA_MASTER_PLAN.md`](ELDORIA_MASTER_PLAN.md)  
 **Repository rules:** [`../AGENTS.md`](../AGENTS.md)
 
@@ -44,7 +44,7 @@ This file is the only authority for volatile capability status, the active miles
 | water | `water_a`, `water_b` plus complete 13-cell shoreline family approved; transition cells integrated on Farm |
 | Farm anchors | oak, horizontal fence segment, medium rock, revealed Root-Star approved |
 | Batch A family gate | seven-anchor contact sheet approved |
-| grass scatter | all four variants — `tuft_a`, `tuft_b` (derived seed sibling), `flower_a`, `pebble_a` — approved runtime masters (PR #126; overnight owner-delegated visual gate, owner-confirmed 2026-07-22; `pebble_a` paints in `metal_stone`); ChatGPT's final visual confirmation is complete, no further visual confirmation is pending |
+| grass scatter | all four variants — `tuft_a`, `tuft_b` (derived seed sibling), `flower_a`, `pebble_a` — approved runtime masters (PR #126; overnight owner-delegated visual gate, owner-confirmed 2026-07-22; `pebble_a` paints in `metal_stone`); ChatGPT's final visual confirmation is complete, no further visual confirmation is pending; scatter integrated on Farm |
 
 Detailed asset audit records remain under `docs/art-pipeline/review/`.
 
@@ -57,7 +57,7 @@ PR #122 is merged. The repository now contains:
 - `src/data/wildbloomSpots.ts` — Phaser-free spot source of truth;
 - a full 38-placement farm plan pinned by unit tests.
 
-The primitive is **not scene-integrated** and causes no runtime visual change. The `tile_farm_grass_scatter` masters are approved and ChatGPT's final family confirmation is complete (PR #126); integration now waits only on the D3 wiring PR with deterministic packing/configuration and comparable in-game density evidence.
+PR #131, `claude/d3-farm-scatter-wiring` (D3), wires the primitive into the Farm scene against the approved `tile_farm_grass_scatter` family (`tuft_a`, `tuft_b`, `pebble_a`, `flower_a`; `docs/art-pipeline/review/tile_farm_grass_scatter_family/AUDIT.md`): `src/data/farmDecorScatterConfig.ts` composes the primitive with a `tuft_a:tuft_b:pebble_a:flower_a = 2:2:1:1` weighting (tufts combined 4:1 over flowers), and `WorldScene` renders it as Farm-only presentation Decor below every actor/marker/effect, with no collision body, no save-state, and no `farm.json` edit. This is a visible but restrained ground-texture change: direct sprite-pixel inspection of the already-approved art confirms tufts are 74% of the 38 placements (28/38) and are low-contrast dark-olive-green by design against the base grass, so the repetition-reduction effect is real and measurable but reads as subtle rather than dramatic; the pebble/flower accents (the other 26%) are clearly visible restrained accents. That subtlety is a property of the approved sprite art, not the weighting or wiring, and a future retune alone will not change it. Most Farm vegetation, props, structures, canopy, pond detail, and final composition remain incomplete (see "Known risks" below).
 
 ## Visual direction and character status
 
@@ -83,13 +83,15 @@ The immediate goal is to establish the missing visual layers that create the ref
 
 ### Next work
 
-1. **D3 — Wire the decor-scatter primitive into the Farm scene** (immediate engineering task; unblocked — scatter family confirmation is complete)
-   - deterministically pack the four cells in the declared §5.1 order (`tuft_a, tuft_b, pebble_a, flower_a`) with deterministic packing/configuration; preload; Farm-only presentation-layer decals through the existing exclusion/placement systems;
-   - deliberate weighting (first hypothesis ~4:1 tufts over flowers; screenshots decide), loud failure on invalid density/missing assets/bad mappings;
-   - preserve map JSON, collision, quests, saves, and interaction IDs;
-   - comparable in-game density evidence required: Mage and Ranger captures at 1194×834 showing routes, gates, objectives, crop area, and Wildbloom locations remain clear; full suite + emulation on the exact final head.
+1. **Reproduce and fix the Farm→Village transition failure**
+   - reproduce through normal held movement (not a synthetic teleport) first, and fix only the demonstrated cause;
+   - do not speculatively patch exit/transition logic without a confirmed repro.
 
-2. **D4 — Run the first character perspective trial** — parallel lane, not gated on item 1
+2. **Correct the confirmed Sleepy Sprout/world-label layering defect**
+   - a confirmed depth-sorting/layering issue between the Sleepy Sprout interaction and world labels; fix the confirmed defect only.
+   - Objective ghosting remains investigation-only (not yet confirmed actionable). The unproved STATS badge report is not actionable until reproduced.
+
+3. **D4 — Run the first character perspective trial** — parallel art lane, not gated on items 1–2
    - one neutral Mage identity, four idle directions only; same-sheet versus direction-anchored generation;
    - the evidence harness is merged (PR #127) and ready; this task now awaits the exact candidate-PNG handoff for processing through the merged harness;
    - judged on exact runtime pixels on bright Farm and darker Woods plates;
@@ -105,7 +107,6 @@ The immediate goal is to establish the missing visual layers that create the ref
 - Production fantasy UI, final licensed audio, broader world restoration, codex/customization loops, and additional zones remain future milestones.
 - The Vercel migration proposal (PR #112) is closed; GitHub Pages remains the deployment and child-playtest origin. Any future hosting cutover is a new owner decision with its own save-origin plan.
 - Provider roster reduced to Claude Code + ChatGPT (owner decision 2026-07-22; operating guide v1.3). Reduced reviewer diversity; owner spot-checks are the backstop.
-- No active Claude/ChatGPT feature PR is awaiting cross-provider review; #127, #128, and #129 are merged.
 - Foundry GPT (ChatGPT's private pixel-art configuration/package) and its Preview tests are an external authoring tool for candidate source art only. They are not a repository blocker and not repository authority — repository status is governed solely by `main`, the documents in this repository, and owner/ChatGPT decisions recorded here and in the changelog.
 - The Creative Bible reconciliation (narrative/world-document alignment) is tracked as a separate future documentation-only lane, not part of this PR or any current engineering task. It will not change current IDs, saves, quests, runtime behavior, or deployment names when it lands.
 

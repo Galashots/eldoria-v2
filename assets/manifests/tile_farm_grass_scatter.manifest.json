@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "id": "tile_farm_grass_scatter",
+  "_note": "Approved runtime-master packed family for the Farm grass-scatter Decor primitive. Fixed 4x1 row-major order declared by docs/visual-targets/farm_village_tile_targets.json's tile_farm_grass_scatter.variants: tuft_a, tuft_b, pebble_a, flower_a. Packed at native 16x16 (zero-drift copy of the approved runtime masters); scripts/compose-farm-scatter-tileset.mjs upscales this 2x nearest-neighbour into the Phaser-loadable public/assets/tilesets/tile_farm_grass_scatter.png. Not itself map/scene integrated by this manifest.",
+  "target": {
+    "outputPath": "../tilesets/tile_farm_grass_scatter.png",
+    "cellPx": [16, 16],
+    "cols": 4,
+    "rows": 1
+  },
+  "sources": {
+    "tuft_a": {
+      "path": "../../docs/art-pipeline/review/tile_farm_grass_scatter_family/tuft_a.approved-runtime-master.png",
+      "background": { "mode": "alpha" }
+    },
+    "tuft_b": {
+      "path": "../../docs/art-pipeline/review/tile_farm_grass_scatter_family/tuft_b.approved-runtime-master.png",
+      "background": { "mode": "alpha" }
+    },
+    "pebble_a": {
+      "path": "../../docs/art-pipeline/review/tile_farm_grass_scatter_family/pebble_a.approved-runtime-master.png",
+      "background": { "mode": "alpha" }
+    },
+    "flower_a": {
+      "path": "../../docs/art-pipeline/review/tile_farm_grass_scatter_family/flower_a.approved-runtime-master.png",
+      "background": { "mode": "alpha" }
+    }
+  },
+  "frames": [
+    { "sourceRef": "tuft_a", "destCell": [0, 0], "trim": "none", "fit": "fill", "anchor": "top_left" },
+    { "sourceRef": "tuft_b", "destCell": [1, 0], "trim": "none", "fit": "fill", "anchor": "top_left" },
+    { "sourceRef": "pebble_a", "destCell": [2, 0], "trim": "none", "fit": "fill", "anchor": "top_left" },
+    { "sourceRef": "flower_a", "destCell": [3, 0], "trim": "none", "fit": "fill", "anchor": "top_left" }
+  ]
+}
