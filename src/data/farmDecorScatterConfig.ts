@@ -5,11 +5,19 @@
 // Phaser-free and pure so it is directly unit-testable; WorldScene consumes
 // buildFarmDecorScatterPlan(), FARM_SCATTER_CELL_ORDER, and
 // FARM_SCATTER_TEXTURE_KEY only — see src/scenes/WorldScene.ts.
-import farmMapData from '../../public/maps/farm.json';
-import targetsDoc from '../../docs/visual-targets/farm_village_tile_targets.json';
+//
+// This module receives the Farm's parsed Tiled map data as a parameter
+// rather than importing public/maps/farm.json: Vite does not allow
+// production code to import files from public/, since those are served
+// as-is and never bundled. WorldScene already holds the identical parsed
+// JSON via Phaser's tilemap cache (populated by PreloadScene's
+// this.load.tilemapTiledJSON) and passes it in — see
+// WorldScene.renderFarmDecorScatter(). Repository-authority cross-validation
+// against the approved target JSON lives in
+// tests/unit/farmDecorScatterConfig.test.ts, not in this production module.
 import { MAP_REGISTRY } from './maps';
 import { WILDBLOOM_SPOTS } from './wildbloomSpots';
-import { deriveDecorEligibility } from '../systems/decorExclusions';
+import { deriveDecorEligibility, type TiledMapLike } from '../systems/decorExclusions';
 import { scatterDecor, type DecorPlacement } from '../systems/decorScatter';
 
 /** Stable Phaser cache key for the packed runtime spritesheet. See
@@ -41,10 +49,6 @@ export const FARM_SCATTER_WEIGHTS: Record<FarmScatterVariant, number> = {
 export const FARM_SCATTER_DENSITY = 0.12;
 export const FARM_SCATTER_SEED = 'farm-v1';
 export const FARM_SCATTER_MIN_SPACING = 2;
-
-/** Farm's Ground/Decor/Collision tile grid unit, read from the committed map
- * (not hardcoded) so a map regen can't silently desync world-px placement. */
-export const FARM_SCATTER_TILE_PX: number = farmMapData.tilewidth;
 
 /** Throws if `actual` (a declared cell order) does not exactly equal
  * `expected` (the approved target's ground truth) — same content, same
@@ -117,8 +121,15 @@ export interface FarmDecorScatterPlanOptions {
 
 /** Composes deriveDecorEligibility + scatterDecor into the real Farm
  * placement plan. Validated on every call (not just at module load) so a
- * bad override fails loudly at the call site, not silently downstream. */
-export function buildFarmDecorScatterPlan(options: FarmDecorScatterPlanOptions = {}): DecorPlacement[] {
+ * bad override fails loudly at the call site, not silently downstream.
+ * `farmMapData` is the Farm's parsed Tiled JSON — the caller supplies it
+ * (WorldScene reads it from Phaser's already-loaded tilemap cache; tests
+ * import public/maps/farm.json directly) rather than this module importing
+ * it itself. */
+export function buildFarmDecorScatterPlan(
+  farmMapData: TiledMapLike,
+  options: FarmDecorScatterPlanOptions = {},
+): DecorPlacement[] {
   const density = options.density ?? FARM_SCATTER_DENSITY;
   const seed = options.seed ?? FARM_SCATTER_SEED;
   const minSpacing = options.minSpacing ?? FARM_SCATTER_MIN_SPACING;
@@ -156,12 +167,12 @@ export function buildFarmDecorScatterPlan(options: FarmDecorScatterPlanOptions =
 }
 
 // --- self-validation: the real exported config must always be valid -------
-type TargetDoc = { targets: { id: string; variants?: string[] }[] };
-const SCATTER_TARGET = (targetsDoc as TargetDoc).targets.find((t) => t.id === 'tile_farm_grass_scatter');
-if (!SCATTER_TARGET?.variants) {
-  throw new Error('Farm decor scatter: tile_farm_grass_scatter target or its variants field is missing');
-}
-assertDeclaredCellOrderMatches(FARM_SCATTER_CELL_ORDER, SCATTER_TARGET.variants);
+// (constants only — no map/target JSON import needed for these three)
 assertValidFarmDecorScatterWeighting(FARM_SCATTER_WEIGHTS, FARM_SCATTER_CELL_ORDER);
 assertValidFarmDecorScatterDensity(FARM_SCATTER_DENSITY);
 assertValidFarmDecorScatterSpacing(FARM_SCATTER_MIN_SPACING);
+// Cross-validation of FARM_SCATTER_CELL_ORDER against the approved target's
+// declared variants (docs/visual-targets/farm_village_tile_targets.json)
+// runs in tests/unit/farmDecorScatterConfig.test.ts, not here — production
+// code must not import build-time/public authority files. See this file's
+// header comment.

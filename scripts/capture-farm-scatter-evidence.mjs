@@ -11,6 +11,7 @@
 import { chromium } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 import path from 'node:path';
+import { FARM_SCATTER_EVIDENCE_SPOTS } from './farm-scatter-evidence-spots.mjs';
 
 const PASS = process.argv[2];
 const OUT_ROOT = process.argv[3] ?? '/tmp/farm-scatter-evidence';
@@ -50,22 +51,13 @@ async function clickGameCoord(page, gameX, gameY) {
   await page.mouse.click(x, y);
 }
 
-// World-px camera-centre spots covering the required evidence set: arrival,
-// routes/gate mouths, Mira, crop area, Practice Slime, Wildbloom discovery
-// locations, and a wide Farm overview. HUD/objective/ACTION readability is
-// screen-space and appears in every shot, so it needs no dedicated spot.
-const SPOTS = [
-  ['wide-farm-overview', [960, 640]],
-  ['farm-spawn-arrival', null],
-  ['route-west-gate-village', [220, 640]],
-  ['route-east-gate-woods', [1700, 640]],
-  ['mira-interaction', [864, 544]],
-  ['crop-area', [480, 864]],
-  ['practice-slime-area', [1440, 672]],
-  ['wildbloom-root-star', [1120, 288]],
-  ['wildbloom-moonwell-echo', [672, 960]],
-  ['wildbloom-foxfire-seed', [1600, 928]]
-];
+// Required capture names + world-px camera-centre positions live in
+// farm-scatter-evidence-spots.mjs (shared with build-farm-scatter-contact-
+// sheet.mjs's validation). Every spot — including arrival — gets an explicit
+// position and its own scene.player.setPosition/cameras.centerOn reset
+// below, so no spot can inherit position/camera state left over from a
+// spot captured earlier in the loop.
+const SPOTS = FARM_SCATTER_EVIDENCE_SPOTS;
 
 async function captureProfile(browser, profile) {
   const page = await browser.newPage({ viewport: VIEWPORT });

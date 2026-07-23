@@ -114,11 +114,11 @@ describe('buildWeightedDecalPool', () => {
 
 describe('buildFarmDecorScatterPlan', () => {
   it('is deterministic', () => {
-    expect(buildFarmDecorScatterPlan()).toEqual(buildFarmDecorScatterPlan());
+    expect(buildFarmDecorScatterPlan(farmMap)).toEqual(buildFarmDecorScatterPlan(farmMap));
   });
 
   it('only ever assigns declared cell-order variants', () => {
-    for (const placement of buildFarmDecorScatterPlan()) {
+    for (const placement of buildFarmDecorScatterPlan(farmMap)) {
       expect(FARM_SCATTER_CELL_ORDER).toContain(placement.decal);
     }
   });
@@ -162,7 +162,7 @@ describe('buildFarmDecorScatterPlan', () => {
       minSpacing: FARM_SCATTER_MIN_SPACING,
     }).map((p) => `${p.x},${p.y}`);
 
-    const weightedCells = buildFarmDecorScatterPlan().map((p) => `${p.x},${p.y}`);
+    const weightedCells = buildFarmDecorScatterPlan(farmMap).map((p) => `${p.x},${p.y}`);
     expect(weightedCells).toEqual(placeholderCells);
     expect(weightedCells.length).toBe(38);
   });
@@ -184,7 +184,7 @@ describe('buildFarmDecorScatterPlan', () => {
       const [bx, by] = b.split(',').map(Number);
       return ay - by || ax - bx;
     });
-    const weightedCells = buildFarmDecorScatterPlan()
+    const weightedCells = buildFarmDecorScatterPlan(farmMap)
       .map((p) => `${p.x},${p.y}`)
       .sort((a, b) => {
         const [ax, ay] = a.split(',').map(Number);
@@ -195,11 +195,11 @@ describe('buildFarmDecorScatterPlan', () => {
   });
 
   it('throws on an invalid density override', () => {
-    expect(() => buildFarmDecorScatterPlan({ density: 0 })).toThrow(/density/);
+    expect(() => buildFarmDecorScatterPlan(farmMap, { density: 0 })).toThrow(/density/);
   });
 
   it('throws on an invalid weights override (unknown variant)', () => {
     const bad = { ...FARM_SCATTER_WEIGHTS, weed_a: 1 } as unknown as Record<string, number>;
-    expect(() => buildFarmDecorScatterPlan({ weights: bad })).toThrow(/unknown variant/);
+    expect(() => buildFarmDecorScatterPlan(farmMap, { weights: bad })).toThrow(/unknown variant/);
   });
 });

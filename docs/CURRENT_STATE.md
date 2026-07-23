@@ -83,12 +83,15 @@ The immediate goal is to establish the missing visual layers that create the ref
 
 ### Next work
 
-1. **Retune or extend Farm grass-scatter weighting/density if the D3 evidence review flags it** (D3 implementation complete on `claude/d3-farm-scatter-wiring`; [PR #131](https://github.com/Galashots/eldoria-v2/pull/131), awaiting independent review)
-   - `src/data/farmDecorScatterConfig.ts`'s `FARM_SCATTER_WEIGHTS`/`FARM_SCATTER_DENSITY` are the single tuning point;
-   - the shipped `2:2:1:1` weighting reads as visually subtle in-game because of low-contrast tuft sprites, not a weighting defect (see "Deterministic Decor-scatter primitive" above) — a retune alone will not fix that;
-   - otherwise move on to the next Phase A/B beautification step (vegetation, props, structures, canopy, pond detail).
+1. **Reproduce and fix the Farm→Village transition failure**
+   - reproduce through normal held movement (not a synthetic teleport) first, and fix only the demonstrated cause;
+   - do not speculatively patch exit/transition logic without a confirmed repro.
 
-2. **D4 — Run the first character perspective trial** — parallel lane, not gated on item 1
+2. **Correct the confirmed Sleepy Sprout/world-label layering defect**
+   - a confirmed depth-sorting/layering issue between the Sleepy Sprout interaction and world labels; fix the confirmed defect only.
+   - Objective ghosting remains investigation-only (not yet confirmed actionable). The unproved STATS badge report is not actionable until reproduced.
+
+3. **D4 — Run the first character perspective trial** — parallel art lane, not gated on items 1–2
    - one neutral Mage identity, four idle directions only; same-sheet versus direction-anchored generation;
    - the evidence harness is merged (PR #127) and ready; this task now awaits the exact candidate-PNG handoff for processing through the merged harness;
    - judged on exact runtime pixels on bright Farm and darker Woods plates;

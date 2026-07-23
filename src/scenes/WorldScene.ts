@@ -40,9 +40,9 @@ import { FarmQuestSystem, type FarmQuestOutcome } from '../systems/FarmQuestSyst
 import {
   buildFarmDecorScatterPlan,
   FARM_SCATTER_CELL_ORDER,
-  FARM_SCATTER_TEXTURE_KEY,
-  FARM_SCATTER_TILE_PX
+  FARM_SCATTER_TEXTURE_KEY
 } from '../data/farmDecorScatterConfig';
+import type { TiledMapLike } from '../systems/decorExclusions';
 import { QuestSystem } from '../systems/QuestSystem';
 import { CURRENT_SAVE_VERSION, SaveSystem, type StarterQuestStep } from '../systems/SaveSystem';
 import { loadAudioMuted, saveAudioMuted } from '../systems/AudioPreference';
@@ -469,8 +469,13 @@ export class WorldScene extends Phaser.Scene {
         `WorldScene: missing preloaded texture '${FARM_SCATTER_TEXTURE_KEY}' for the Farm decor scatter`
       );
     }
-    const worldTilePx = FARM_SCATTER_TILE_PX * GAME_SCALE;
-    for (const placement of buildFarmDecorScatterPlan()) {
+    // Reuse the exact parsed Tiled JSON Phaser already loaded for this map
+    // (populated by PreloadScene's this.load.tilemapTiledJSON) instead of
+    // importing public/maps/farm.json into this production bundle — see
+    // farmDecorScatterConfig.ts's header comment for the boundary rationale.
+    const farmMapData = this.cache.tilemap.get(this.mapDef.tiledKey).data as TiledMapLike;
+    const worldTilePx = farmMapData.tilewidth * GAME_SCALE;
+    for (const placement of buildFarmDecorScatterPlan(farmMapData)) {
       const frame = FARM_SCATTER_CELL_ORDER.indexOf(placement.decal as (typeof FARM_SCATTER_CELL_ORDER)[number]);
       if (frame < 0) {
         throw new Error(`WorldScene: unknown Farm decor scatter variant '${placement.decal}'`);
