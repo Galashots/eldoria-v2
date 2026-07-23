@@ -34,10 +34,12 @@ The owner-provided reference defines quality, camera, composition, depth, palett
 
 ### Required visual traits
 
-1. **Elevated three-quarter projection**
-   - environments, characters, NPCs, creatures, props, buildings, equipment, and shadows share one camera pitch;
-   - down-facing characters are foreshortened rather than direct frontal elevations;
-   - side facings remain three-quarter views rather than flat profiles.
+1. **Fixed elevated orthographic camera**
+   - environments, characters, NPCs, creatures, props, buildings, equipment, and shadows share one stationary elevated camera pitch;
+   - character camera pitch and horizontal actor heading are independent axes;
+   - four-direction actors use strict South, West, North, and East headings beneath that camera;
+   - South and North remain direct cardinal headings while visible top surfaces and vertical foreshortening prove the elevated camera;
+   - West and East are exact 90-degree cardinal rotations, not Southwest/Southeast diagonal turns; profile-like horizontal silhouettes are valid when top surfaces prove the camera remains elevated.
 
 2. **Layered world depth**
    - quiet ground plane;
@@ -177,16 +179,16 @@ Production characters must follow:
 
 Expected scope:
 
-1. bounded four-direction perspective proof;
+1. bounded four-direction camera-and-heading proof;
 2. production Mage base family;
 3. production Ranger Explorer base family;
 4. production Mira;
 5. core NPC families;
-6. Practice Slime and other creatures requiring projection correction;
+6. Practice Slime and other creatures requiring camera correction;
 7. base timing/pivot freeze;
 8. armor, clothing, weapon, and accessory production only after the bases pass.
 
-The current direct-to-camera down facings are transitional. Do not build large armor libraries against bases already scheduled for replacement.
+Current bridge facings are transitional. Do not build large armor libraries against bases already scheduled for replacement.
 
 ### Phase D — Reusable fantasy UI
 
@@ -300,9 +302,11 @@ Minimum evidence:
 - darker Woods screenshot;
 - apparent-height and identity comparison;
 - idle/walk or required action timing review;
-- no per-direction camera change;
-- no direct-frontal downward facing;
-- no pure-profile side facing;
+- one stationary elevated orthographic camera across every direction;
+- strict South, West, North, and East actor headings;
+- South and North direct cardinal facings retain visible top surfaces and vertical foreshortening;
+- West and East are exact 90-degree rotations, not Southwest/Southeast diagonal turns or eye-level side elevations;
+- profile-like West/East silhouettes are not rejected merely for being profile-like when their top surfaces prove the elevated camera;
 - no armor/customization work before base geometry freezes.
 
 ---
@@ -388,8 +392,8 @@ The visual program is complete enough for the first family release when:
 - all three maps share one elevated visual grammar and retain distinct identities;
 - first screens have authored composition and memorable landmarks;
 - ground transitions, Decor, vegetation, structures, and atmosphere work as layers;
-- Mage, Ranger Explorer, Mira, core NPCs, and creatures share the environment's projection;
-- current direct-frontal bridge facings are replaced where required;
+- Mage, Ranger Explorer, Mira, core NPCs, and creatures share the environment's fixed elevated camera and cardinal-heading grammar;
+- transitional bridge facings are replaced where required;
 - base character families are frozen before armor/customization expansion;
 - Wildbloom discoveries appear embedded in the world;
 - UI uses one readable fantasy system;
