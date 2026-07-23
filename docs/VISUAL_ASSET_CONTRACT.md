@@ -13,24 +13,32 @@ Eldoria-V2 is a fantasy-learning RPG first. This contract prevents visual drift 
 
 It does not override the product rules in `AGENTS.md`: learning never gates adventure, Grade 2 remains audio-first, stable profile IDs are preserved, and visual work must not silently alter gameplay or saves.
 
+The 2026-07-23 owner clarification separates two concepts that earlier wording conflated:
+
+- **camera pitch** — the fixed elevated vertical viewing angle;
+- **actor heading** — the character's horizontal South/West/North/East rotation.
+
+For character work, the detailed cardinal-heading rules in `CHARACTER_PERSPECTIVE_LOCK_V1.md` are binding.
+
 ## 2. Production posture
 
 - Current production remains Phaser 4, Vite, TypeScript, and Tiled.
 - These rules may inform later engine experiments, but current repository work stays in the existing stack unless explicitly approved.
 - Stable visual direction comes from `ELDORIA_MASTER_PLAN.md`; current production status belongs only in `docs/CURRENT_STATE.md`.
 - Machine-readable target JSON under `docs/visual-targets/` is authoritative for exact geometry, variants, palettes, pivots, layers, and metadata.
-- `CHARACTER_PERSPECTIVE_LOCK_V1.md` is the additional binding projection authority for characters, NPCs, creatures, equipment, and armor.
+- `CHARACTER_PERSPECTIVE_LOCK_V1.md` is the additional binding camera-and-heading authority for characters, NPCs, creatures, equipment, and armor.
 - Generated style references and concepts are not automatically production source art.
 
 ## 3. Canonical visual baseline
 
-- Style: readable painterly elevated-three-quarter family-friendly fantasy pixel art.
+- Style: readable painterly family-friendly fantasy pixel art under a fixed elevated orthographic 2.5D camera.
 - Priority: mobile readability before decoration.
 - World tile grammar: `16×16` pixels.
 - Standard human actor proof canvas: `32×48` pixels.
 - Standard actor footprint: `16×16` pixels.
 - Default pivot: centre-bottom of the footprint unless the target explicitly differs.
-- Minimum production directions for actors: down/front, up/back, left, and right.
+- Minimum production directions for actors: South/down/front, North/up/back, West/left, and East/right.
+- Four-direction actor headings are strict cardinal rotations beneath one stationary camera.
 - Eight directions require a justified later scope for combat-critical heroes, bosses, or enemies.
 - Runtime export: PNG.
 - Preferred editable source: `.aseprite` or `.ase` when available.
@@ -57,17 +65,24 @@ It does not override the product rules in `AGENTS.md`: learning never gates adve
 
 ### Shared world camera
 
-- Ground-plane tiles and floors use the established elevated top-down/three-quarter projection.
-- Anything with height—trees, fences, buildings, standing characters, rocks, creatures, and tall props—uses the same camera pitch above a grounded footprint.
-- Tall objects should read like grounded pop-up forms, not true isometric, pure frontal elevation, or true top-down tokens.
+- Ground-plane tiles and floors use the established elevated top-down 2.5D projection.
+- Anything with height—trees, fences, buildings, standing characters, rocks, creatures, and tall props—uses the same fixed elevated orthographic camera above a grounded footprint.
+- The practical character reference pitch is approximately 35 degrees downward relative to an eye-level horizontal view; approved visual exemplars govern the final visual read.
+- Tall objects should read like grounded pop-up forms, not true isometric, pure eye-level elevation, or true top-down tokens.
 - Do not mix true-isometric assets into the Farm, Woods, or Village.
 - The declared footprint remains the gameplay footprint even when the visual canvas extends upward.
 
 ### Characters and creatures
 
-- Down/front facings are foreshortened elevated views with visible top planes, not direct-to-camera frontal elevations.
-- Up/back facings preserve the same camera pitch and apparent height.
-- Left/right facings are elevated three-quarter side views, not pure profiles.
+- Camera pitch and actor heading are independent axes.
+- All directions use one stationary elevated camera; the actor rotates beneath it.
+- South/down/front is a direct South heading with visible top surfaces and vertical foreshortening, not an eye-level front elevation.
+- North/up/back is a direct North heading with top/rear surfaces under the same camera, not an eye-level rear elevation.
+- West/left is an exact 90-degree cardinal rotation from South. The actor's forward axis points exactly West with no South or North component.
+- East/right is an exact 90-degree cardinal rotation from South in the opposite direction. The actor's forward axis points exactly East with no South or North component.
+- West/East may have horizontally profile-like silhouettes; that is correct when visible crown, shoulder, body, and footwear top surfaces prove the camera remains elevated.
+- Do not rotate West/East toward the viewer to manufacture a diagonal character pose.
+- Diagonal Southwest/Northwest/Northeast/Southeast headings belong only to an explicitly approved eight-direction family.
 - All directions share one body scale, pivot, baseline, lighting direction, and equipment geometry.
 - Do not use per-frame auto-scaling that changes apparent character size.
 - Horizontal mirroring is acceptable only when lighting, handedness, identity, and asymmetric equipment remain correct.
@@ -149,7 +164,7 @@ Declare when relevant:
 
 - Use the standard actor grammar unless a target explicitly justifies a larger canvas.
 - Favour chunky readable silhouettes and stable feet alignment.
-- Reuse compatible rigs only after the projection, identity, and clip geometry pass.
+- Reuse compatible rigs only after the camera, cardinal headings, identity, and clip geometry pass.
 - Differentiate NPCs through costume, props, idle/talk/emote states, and silhouette rather than arbitrary scale drift.
 - Do not treat current bridge sprites or code-drawn silhouettes as production camera authorities.
 
@@ -164,7 +179,7 @@ Declare when relevant:
 
 - Declare sockets, view, foreground/background layer, and action timing.
 - Motion must align with the owning actor and any gameplay hit window.
-- Preserve the actor's elevated projection in every direction and action.
+- Preserve the actor's fixed elevated camera and cardinal heading in every direction and action.
 
 ### Monsters and bosses
 
