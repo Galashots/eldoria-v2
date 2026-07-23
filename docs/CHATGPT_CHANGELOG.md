@@ -4,6 +4,15 @@ This file keeps recent, high-value change summaries. Detailed historical entries
 
 Each entry should state the actual author, branch or PR, concise scope, verification, compatibility, and remaining risk. Implementation narratives belong in PR descriptions, commits, and audit records.
 
+## 2026-07-23 — Cardinal actor-heading semantics corrected
+
+- Author/branch: ChatGPT, `chatgpt/fix-cardinal-camera-semantics`, [PR #134](https://github.com/Galashots/eldoria-v2/pull/134).
+- Scope: separates the stationary elevated orthographic camera's vertical pitch from horizontal actor yaw. Four-direction characters now use strict South, West, North, and East headings; West/East are exact 90-degree rotations and may have profile-like silhouettes while visible top surfaces prove the camera remains elevated. Diagonal headings are reserved for an explicitly authorized eight-direction family. The Mage neutral base is also locked to empty hands, with no permanent staff or cape pixels; staff-on-back remains a later equipment layer.
+- Principal files: `AGENTS.md`, `docs/README.md`, `docs/VISUAL_ASSET_CONTRACT.md`, `docs/art-pipeline/IMAGE_PROMPTING_GUIDE.md`, `docs/beautification/ELDORIA_BEAUTIFICATION_EXECUTION_PLAN.md`, `docs/visual-targets/CHARACTER_PERSPECTIVE_LOCK_V1.md`, `docs/visual-targets/HERO_ACTOR_TARGETS.md`, and `docs/visual-targets/hero_actor_targets.json`.
+- Verification: exact-head CI and independent Claude Fable repair-delta review are required before merge.
+- Compatibility: documentation and target guidance only; no runtime, map, save, curriculum, dependency, workflow, target geometry, direction identifier, or asset-pixel change.
+- Remaining risk: owner-approved Mage and mannequin visual exemplars remain externally held and are not ingested or approved as runtime assets by this PR.
+
 ## 2026-07-22 — Farm grass-scatter family wired into the Farm scene (D3)
 
 - Author/branch: Claude Code, `claude/d3-farm-scatter-wiring`, [PR #131](https://github.com/Galashots/eldoria-v2/pull/131).

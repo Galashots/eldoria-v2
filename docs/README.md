@@ -56,8 +56,8 @@ Do not load every art-pipeline guide for ordinary gameplay work or the full coor
 
 ## Visual and asset production
 
-- [`VISUAL_ASSET_CONTRACT.md`](VISUAL_ASSET_CONTRACT.md) — durable style, perspective, palette, naming, metadata, layering, terrain-blending, and grounding rules.
-- [`visual-targets/CHARACTER_PERSPECTIVE_LOCK_V1.md`](visual-targets/CHARACTER_PERSPECTIVE_LOCK_V1.md) — binding elevated three-quarter projection and sprite-rebuild rules for characters, NPCs, creatures, equipment, and armor.
+- [`VISUAL_ASSET_CONTRACT.md`](VISUAL_ASSET_CONTRACT.md) — durable style, camera, cardinal-heading, palette, naming, metadata, layering, terrain-blending, and grounding rules.
+- [`visual-targets/CHARACTER_PERSPECTIVE_LOCK_V1.md`](visual-targets/CHARACTER_PERSPECTIVE_LOCK_V1.md) — binding fixed elevated orthographic camera and strict South/West/North/East actor-heading rules for characters, NPCs, creatures, equipment, and armor.
 - [`ARMOR_AND_BATTLE_ANIMATION_CONTRACT.md`](ARMOR_AND_BATTLE_ANIMATION_CONTRACT.md) — hybrid armor runtime model, timing authority, battle clips, production order, and acceptance gates. Apply it only after the perspective-locked base family is approved.
 - [`art-pipeline/CLOSED_LOOP_ASSET_GENERATION_WORKFLOW.md`](art-pipeline/CLOSED_LOOP_ASSET_GENERATION_WORKFLOW.md) — AI-led generation, self-audit, routine approval, runtime-master rescue, escalation, and repo handoff.
 - [`art-pipeline/VISUAL_EVIDENCE_RETENTION_POLICY.md`](art-pipeline/VISUAL_EVIDENCE_RETENTION_POLICY.md) — required visual proof by change type and retention rules.
