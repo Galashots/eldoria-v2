@@ -41,9 +41,9 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",
-    "typescript": "^5.8.0",
-    "vite": "^8.1.0",
-    "vitest": "^4.1.9"
+    "typescript": "^7.0.2",
+    "vite": "^8.1.5",
+    "vitest": "^4.1.10"
   },
   "engines": {
     "node": ">=20.19.0"
