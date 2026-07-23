@@ -37,7 +37,7 @@
     "test:unit": "vitest run"
   },
   "dependencies": {
-    "phaser": "^4.2.0"
+    "phaser": "^4.2.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",
