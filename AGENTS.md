@@ -60,7 +60,7 @@ Key rules:
 - [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) owns volatile implementation status, the active milestone, known risks, and the next checkpoint.
 - [`docs/VISUAL_ASSET_CONTRACT.md`](docs/VISUAL_ASSET_CONTRACT.md) owns durable visual rules.
 - Machine-readable files under `docs/visual-targets/` are authoritative for target geometry, variants, pivots, palettes, and metadata.
-- [`docs/visual-targets/CHARACTER_PERSPECTIVE_LOCK_V1.md`](docs/visual-targets/CHARACTER_PERSPECTIVE_LOCK_V1.md) owns the elevated three-quarter projection for production characters, NPCs, creatures, equipment, and armor.
+- [`docs/visual-targets/CHARACTER_PERSPECTIVE_LOCK_V1.md`](docs/visual-targets/CHARACTER_PERSPECTIVE_LOCK_V1.md) owns the fixed elevated orthographic camera and strict cardinal actor-heading rules for production characters, NPCs, creatures, equipment, and armor.
 - [`docs/art-pipeline/FARM_ENVIRONMENT_GENERATION_HANDOFF_V1.md`](docs/art-pipeline/FARM_ENVIRONMENT_GENERATION_HANDOFF_V1.md) owns farm-art production order and specifications, not current progress.
 - [`docs/art-pipeline/CLOSED_LOOP_ASSET_GENERATION_WORKFLOW.md`](docs/art-pipeline/CLOSED_LOOP_ASSET_GENERATION_WORKFLOW.md) owns the minimal-touch ChatGPT generate → audit → correct → approve protocol and the boundary between visual approval and deterministic repo ingestion.
 - Completed milestone plans are historical records. Do not re-execute them without a new approved scope.
