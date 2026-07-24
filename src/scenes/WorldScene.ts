@@ -27,6 +27,8 @@ import {
 import { DialogueBox } from '../presentation/DialogueBox';
 import { InteractableAffordanceController, type AffordanceVisual } from '../presentation/InteractableAffordance';
 import { HUD_CONTROL_SIZES } from '../presentation/hudControls';
+import { isInJoystickZone } from '../presentation/joystickZone';
+import { ACTION_BUTTON_PALETTE, resolveActionButtonState, type ActionButtonState } from '../presentation/actionButtonState';
 import { drawMarkerGlyph } from '../presentation/markerGlyphs';
 import {
   drawRoundedButton,
@@ -121,6 +123,12 @@ export class WorldScene extends Phaser.Scene {
   private joystickBase!: Phaser.GameObjects.Arc;
   private joystickKnob!: Phaser.GameObjects.Arc;
   private readonly joystickRadius = sx(42);
+  private actionButton!: Phaser.GameObjects.Arc;
+  private actionLabel!: Phaser.GameObjects.Text;
+  // Starts undefined (not one of the three real states) so the first
+  // updateActionAffordance() call in createTouchControls() always applies a
+  // palette instead of no-op'ing against a coincidentally-matching default.
+  private actionButtonState: ActionButtonState | undefined;
   private targets: InteractionTarget[] = [];
   private profileId: ProfileId = 'grade5-adventurer';
   // Multi-map state (see data/maps.ts). mapId is authoritative for the
@@ -151,7 +159,9 @@ export class WorldScene extends Phaser.Scene {
   private readonly speech = createSpeechSupport();
   private dialogueBox?: DialogueBox;
   private hudText!: Phaser.GameObjects.Text;
+  private headerPanelBg!: Phaser.GameObjects.Graphics;
   private objectiveText!: Phaser.GameObjects.Text;
+  private objectivePanelBg!: Phaser.GameObjects.Graphics;
   private hintText!: Phaser.GameObjects.Text;
   private practiceSlimeSprite?: Phaser.GameObjects.Sprite;
   // Objective direction (pre-reader friendly): a bouncing gold chevron above
@@ -213,6 +223,11 @@ export class WorldScene extends Phaser.Scene {
     this.targetMarkerVisuals = [];
     this.affordances = undefined;
     this.statsCloseGroup = undefined;
+    // Reset the ACTION affordance state too: a reused instance would otherwise
+    // keep the prior run's value, and updateActionAffordance() early-returns on
+    // an unchanged state -- so the freshly-created button could keep its raw
+    // constructor palette instead of the correct resolved one.
+    this.actionButtonState = undefined;
   }
 
   create(): void {
@@ -391,6 +406,10 @@ export class WorldScene extends Phaser.Scene {
     // Proximity pops keep running while panels are open so closing a panel
     // near a target still shows the affordance; the controller is cheap.
     this.affordances?.update();
+    // Runs before the busy gates below (and every frame regardless of them)
+    // so ACTION's disabled/busy state reflects a modal opening/closing on
+    // the very frame it happens, not just while movement is unblocked.
+    this.updateActionAffordance();
 
     if (this.busy && !this.statsPanelOpen) {
       this.player.setVelocity(0, 0);
@@ -571,7 +590,7 @@ export class WorldScene extends Phaser.Scene {
 
   private beginMapTransition(exit: ExitZone): void {
     this.transitioning = true;
-    this.busy = true;
+    this.setBusy(true);
     this.resetJoystick();
     this.player.setVelocity(0, 0);
     this.heroPresentation.setBusy();
@@ -799,7 +818,7 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private createHud(initialAudioMuted: boolean): void {
-    drawRoundedPanelBackground(this, GAME_WIDTH / 2, sy(14), GAME_WIDTH - sx(20), sy(24), 0x2a1a08, 0x6f5126, 10)
+    this.headerPanelBg = drawRoundedPanelBackground(this, GAME_WIDTH / 2, sy(14), GAME_WIDTH - sx(20), sy(24), 0x2a1a08, 0x6f5126, 10)
       .setScrollFactor(0);
 
     this.hudText = this.add.text(sx(16), sy(7), '', {
@@ -831,7 +850,7 @@ export class WorldScene extends Phaser.Scene {
 
     // A small gap below the HUD bar (rather than sitting flush against it)
     // so the two read as separate pieces of information, not one tall box.
-    drawRoundedPanelBackground(this, GAME_WIDTH / 2, sy(48), GAME_WIDTH - sx(20), sy(28), 0x162a12, 0x5e9f3a, 10)
+    this.objectivePanelBg = drawRoundedPanelBackground(this, GAME_WIDTH / 2, sy(48), GAME_WIDTH - sx(20), sy(28), 0x162a12, 0x5e9f3a, 10)
       .setScrollFactor(0);
 
     this.objectiveText = this.add.text(sx(16), sy(40), '', {
@@ -871,6 +890,40 @@ export class WorldScene extends Phaser.Scene {
       : presentation.bannerText;
     this.objectiveText.setText(`Objective: ${bannerText}`);
     this.updateObjectiveMarker(guidance);
+  }
+
+  /**
+   * Single setter for the busy flag so every call site also drives the HUD
+   * subordination hook below -- direct `this.busy = ...` assignment would
+   * silently skip it. Kept out of init() deliberately: that reset runs
+   * before createHud() has built the panel objects applyHudSubordination
+   * touches, and every scene (re)start rebuilds them at full alpha anyway.
+   */
+  private setBusy(busy: boolean): void {
+    this.busy = busy;
+    this.applyHudSubordination(busy);
+  }
+
+  /**
+   * Dims (not hides) the ambient guidance chrome -- header/objective/hint
+   * bars -- while a modal (dialogue/learning prompt/Stats) has focus, so it
+   * reads as subordinate rather than competing with the modal (playtest
+   * audit P2: "Header, objective bar, dialogue/feedback... can compete
+   * simultaneously"). Guidance stays present (never destroyed/removed) so
+   * Grade 2 support and the current objective remain available at a glance.
+   *
+   * Subclass hook: PolishedWorldScene overrides this to dim its own visible
+   * presentation text layer instead -- objectiveText/hintText are
+   * permanently alpha-0 there (see createPolishedHudText), so touching them
+   * here would do nothing useful and must not be "corrected" back to 1.
+   */
+  protected applyHudSubordination(subordinated: boolean): void {
+    const alpha = subordinated ? 0.35 : 1;
+    this.headerPanelBg.setAlpha(alpha);
+    this.hudText.setAlpha(alpha);
+    this.objectivePanelBg.setAlpha(alpha);
+    this.objectiveText.setAlpha(alpha);
+    this.hintText.setAlpha(alpha);
   }
 
   private resolveObjectivePresentation(): {
@@ -1037,31 +1090,62 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private createTouchControls(): void {
+    // The second touch pointer that lets the movement thumb (dynamic joystick,
+    // lower-left) and an ACTION tap (lower-right) be down at once is configured
+    // once, game-wide, via input.activePointers in gameConfig -- NOT here.
+    // createTouchControls() re-runs on every scene create() (a map transition
+    // restarts this scene), and Phaser's InputManager is shared across the
+    // whole game, so calling addPointer() here would grow the pointer pool on
+    // every transition.
     this.createDynamicJoystick();
 
     // Stays clickable on every device (a mouse-accessible alternative to
-    // Space/E is useful even on desktop), but only renders at full
-    // prominence on touch-capable devices — on a keyboard/mouse session it
-    // was previously showing at full opacity for no reason, cluttering the
-    // most valuable screen corner.
-    const isTouchDevice = this.sys.game.device.input.touch;
-    const actionAlpha = isTouchDevice ? 0.82 : 0.25;
-
-    const action = this.add.circle(GAME_WIDTH - sx(54), GAME_HEIGHT - sy(52), sx(34), 0x5f3d12, actionAlpha)
-      .setStrokeStyle(3, 0xffd666, actionAlpha)
+    // Space/E is useful even on desktop). ACTION_BUTTON_PALETTE below scales
+    // every state fainter on non-touch devices, matching the previous
+    // touch-vs-mouse prominence split.
+    this.actionButton = this.add.circle(GAME_WIDTH - sx(54), GAME_HEIGHT - sy(52), sx(34), 0x5f3d12, 0.82)
+      .setStrokeStyle(3, 0xffd666, 0.82)
       .setScrollFactor(0)
       .setInteractive({ useHandCursor: true });
 
-    const actionLabel = this.add.text(GAME_WIDTH - sx(54), GAME_HEIGHT - sy(52), 'ACTION', {
+    this.actionLabel = this.add.text(GAME_WIDTH - sx(54), GAME_HEIGHT - sy(52), 'ACTION', {
       fontFamily: 'system-ui',
       fontSize: fpx(10),
       color: '#ffd666'
-    }).setOrigin(0.5).setScrollFactor(0).setAlpha(isTouchDevice ? 1 : actionAlpha);
+    }).setOrigin(0.5).setScrollFactor(0);
 
-    action.on('pointerdown', () => this.handleActionInput());
+    this.actionButton.on('pointerdown', () => this.handleActionInput());
     // Same squash-and-release as the panel buttons; silent here because
-    // handleActionInput() already plays the contextual interaction sfx.
-    installButtonPressFeedback(this, action, { playTapSound: false, alsoScale: [actionLabel] });
+    // handleActionInput() already plays the contextual interaction sfx. This
+    // is the "pressed" state -- a momentary scale overlay on top of whatever
+    // base fill/alpha updateActionAffordance() has set, not a separate tint.
+    installButtonPressFeedback(this, this.actionButton, { playTapSound: false, alsoScale: [this.actionLabel] });
+
+    this.updateActionAffordance();
+  }
+
+  private updateActionAffordance(): void {
+    // 'pressed' is the separate squash/scale feedback (installButtonPressFeedback
+    // in createTouchControls) and composes on top of whichever base state this
+    // resolves; only the three base states are tracked here. Dialogue keeps
+    // ACTION live (it advances the line), so it resolves 'available' even
+    // though `busy` is true for it.
+    const nextState = resolveActionButtonState({
+      busy: this.busy,
+      dialogueOpen: this.dialogueBox?.isOpen() ?? false,
+      hasNearbyTarget: this.nearestTarget() !== null
+    });
+    if (nextState === this.actionButtonState) return;
+    this.actionButtonState = nextState;
+
+    const isTouchDevice = this.sys.game.device.input.touch;
+    const palette = ACTION_BUTTON_PALETTE[nextState];
+    const alpha = isTouchDevice ? palette.touchAlpha : palette.mouseAlpha;
+    this.actionButton.setFillStyle(palette.fill, alpha).setStrokeStyle(3, palette.stroke, alpha);
+    // The label stays a little more legible than the circle chrome itself
+    // (matches the original touch-device treatment of a fully-opaque label
+    // over a translucent circle) while still tracking the same state dims.
+    this.actionLabel.setAlpha(isTouchDevice ? Math.max(alpha, 0.55) : alpha);
   }
 
   private createDynamicJoystick(): void {
@@ -1081,7 +1165,15 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private startJoystick(pointer: Phaser.Input.Pointer): void {
-    if (this.busy || this.joystickPointer !== null || !this.isLowerLeftTouch(pointer)) {
+    if (
+      this.busy
+      || this.joystickPointer !== null
+      || !this.isJoystickActivationZone(pointer)
+      // Any interactive object under this touch (ACTION, STATS, mute,
+      // dialogue/prompt buttons, Stats CLOSE) takes the input instead of
+      // engaging the joystick, even if it happens to sit inside the zone.
+      || this.input.hitTestPointer(pointer).length > 0
+    ) {
       return;
     }
 
@@ -1132,8 +1224,8 @@ export class WorldScene extends Phaser.Scene {
     this.joystickKnob?.setVisible(false).setScale(1).setAlpha(0.82);
   }
 
-  private isLowerLeftTouch(pointer: Phaser.Input.Pointer): boolean {
-    return pointer.x <= GAME_WIDTH / 2 && pointer.y >= GAME_HEIGHT / 2;
+  private isJoystickActivationZone(pointer: Phaser.Input.Pointer): boolean {
+    return isInJoystickZone(pointer.x, pointer.y);
   }
 
   private nearestTarget(): InteractionTarget | null {
@@ -1346,7 +1438,7 @@ export class WorldScene extends Phaser.Scene {
 
   private openDialogue(lines: DialogueLine[], onClose?: () => void): void {
     if (!this.dialogueBox || this.dialogueBox.isOpen()) return;
-    this.busy = true;
+    this.setBusy(true);
     this.resetJoystick();
     this.player.setVelocity(0, 0);
     this.dialogueBox.open(lines, {
@@ -1358,7 +1450,7 @@ export class WorldScene extends Phaser.Scene {
         // intact so a held key cannot become a fresh press on key-repeat.
         Phaser.Input.Keyboard.JustDown(this.keys.SPACE);
         Phaser.Input.Keyboard.JustDown(this.keys.E);
-        this.busy = false;
+        this.setBusy(false);
         onClose?.();
       }
     });
@@ -1366,7 +1458,7 @@ export class WorldScene extends Phaser.Scene {
 
   private handleCropBonusInteraction(target: InteractionTarget): void {
     if (!this.farmQuest.cropPurposeFulfilled()) {
-      this.busy = true;
+      this.setBusy(true);
       this.resetJoystick();
       this.player.setVelocity(0, 0);
       this.playCropBonusFeedback(target, () => {
@@ -1397,7 +1489,7 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private handleSlimeInteraction(target: InteractionTarget): void {
-    this.busy = true;
+    this.setBusy(true);
     this.resetJoystick();
     this.player.setVelocity(0, 0);
     this.playPracticeSlimeFeedback('hop', () => {
@@ -1441,7 +1533,7 @@ export class WorldScene extends Phaser.Scene {
       return;
     }
 
-    this.busy = true;
+    this.setBusy(true);
     this.resetJoystick();
     this.player.setVelocity(0, 0);
     this.playCropBonusFeedback(target, () => {
@@ -1526,7 +1618,7 @@ export class WorldScene extends Phaser.Scene {
     onClose?: PromptCloseHandler,
     previewPrompt?: LearningPrompt
   ): void {
-    this.busy = true;
+    this.setBusy(true);
     this.resetJoystick();
     this.player.setVelocity(0, 0);
 
@@ -1620,7 +1712,7 @@ export class WorldScene extends Phaser.Scene {
         destroyPrompt();
 
         if (isPreview) {
-          this.busy = false;
+          this.setBusy(false);
           return;
         }
 
@@ -1634,7 +1726,7 @@ export class WorldScene extends Phaser.Scene {
           result.correct ? 'correct' : 'wrong'
         );
 
-        this.busy = false;
+        this.setBusy(false);
         const progressMessage = onClose?.({ answered: true, correct: result.correct });
         // quick only on a correct answer: that message is always one of the
         // short, fixed rewardMessage() strings. A wrong answer's message
@@ -1656,7 +1748,7 @@ export class WorldScene extends Phaser.Scene {
     skipButton.on('pointerdown', () => {
       this.stopPromptReadAloud();
       destroyPrompt();
-      this.busy = false;
+      this.setBusy(false);
       if (isPreview) return;
 
       this.mastery = MasterySystem.recordOutcome(this.mastery, prompt, 'skipped');
@@ -1777,7 +1869,7 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private openStatsPanel(): void {
-    this.busy = true;
+    this.setBusy(true);
     this.statsPanelOpen = true;
     this.resetJoystick();
     this.player.setVelocity(0, 0);
@@ -1985,7 +2077,7 @@ export class WorldScene extends Phaser.Scene {
     this.statsCloseGroup?.destroy();
     this.statsCloseGroup = undefined;
     this.statsPanelOpen = false;
-    this.busy = false;
+    this.setBusy(false);
   }
 
   /**

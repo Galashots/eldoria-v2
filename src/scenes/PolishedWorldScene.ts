@@ -446,6 +446,28 @@ export class PolishedWorldScene extends WorldScene {
     }).setOrigin(0.5).setScrollFactor(0).setDepth(21);
   }
 
+  /**
+   * Overrides WorldScene's default: the base objectiveText/hintText are
+   * permanently alpha-0 here (createPolishedHudText), so dimming/restoring
+   * them would do nothing while a restore (subordinated=false) would
+   * actually un-hide them, breaking the authority/presentation split. Dims
+   * the visible presentationObjective/presentationHint layer instead, plus
+   * the shared header/objective panel backgrounds WorldScene itself owns.
+   */
+  protected applyHudSubordination(subordinated: boolean): void {
+    const alpha = subordinated ? 0.35 : 1;
+    const internals = this.presentationInternals as unknown as {
+      headerPanelBg: Phaser.GameObjects.Graphics;
+      objectivePanelBg: Phaser.GameObjects.Graphics;
+      hudText: Phaser.GameObjects.Text;
+    };
+    internals.headerPanelBg.setAlpha(alpha);
+    internals.hudText.setAlpha(alpha);
+    internals.objectivePanelBg.setAlpha(alpha);
+    this.presentationObjective?.setAlpha(alpha);
+    this.presentationHint?.setAlpha(alpha);
+  }
+
   private formatObjective(objective: string): string {
     return objective === 'Objective: Talk to Mira near the path.'
       ? "The gate's magic flew toward Mira—find her by the path."

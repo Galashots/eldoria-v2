@@ -38,5 +38,13 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
       debug: false
     }
   },
+  // Two active touch pointers so the movement thumb (lower-left joystick) and
+  // an ACTION tap (lower-right) can be down at the same time on a tablet.
+  // Configured once here rather than via addPointer() in a scene, because the
+  // InputManager is game-wide and a per-scene-create addPointer() would leak
+  // pointers across map transitions (which restart WorldScene).
+  input: {
+    activePointers: 2
+  },
   scene: [PreloadScene, TitleScene, OpeningScene, PolishedWorldScene]
 };
