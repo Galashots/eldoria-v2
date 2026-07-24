@@ -100,6 +100,15 @@ const PRACTICE_SLIME_HOP_ANIMATION = 'practice-slime-hop';
 const CROP_BONUS_FEEDBACK_NAME = 'crop-bonus-feedback';
 const STATS_CLOSE_BUTTON_NAME = 'stats-close-button';
 const MAP_ENTRY_BANNER_NAME = 'map-entry-banner';
+const MAP_ENTRY_BANNER_FADE_IN_MS = 300;
+const MAP_ENTRY_BANNER_HOLD_MS = 900;
+const MAP_ENTRY_BANNER_FADE_OUT_MS = 300;
+// Exported so PolishedWorldScene can stage its gate-arrival toast to start
+// only after the banner has fully cleared (see playGateArrival) — the two
+// screen-fixed overlays share the same on-screen region and must not
+// compete for it at once.
+export const MAP_ENTRY_BANNER_TOTAL_MS =
+  MAP_ENTRY_BANNER_FADE_IN_MS + MAP_ENTRY_BANNER_HOLD_MS + MAP_ENTRY_BANNER_FADE_OUT_MS;
 const BERRY_ORDER_ID = 'pell-berry-order';
 const BERRY_ORDER = getQuestDefinition(BERRY_ORDER_ID);
 export class WorldScene extends Phaser.Scene {
@@ -616,10 +625,14 @@ export class WorldScene extends Phaser.Scene {
       // is only redundant coding on top, never the sole signal. Drawn in
       // design px inside a GAME_SCALE-scaled Graphics — the same convention
       // as the Mira marker — instead of doubling every pixel by hand.
+      // Depth 22 (above the screen-fixed hint/objective HUD bars at 21, still
+      // well below toasts/dialogue/prompts at 35+): a world-space marker or
+      // label that scrolls behind the bottom hint bar is otherwise cut off
+      // and unreadable — confirmed layering defect, see PLAYTHROUGH_UI_AUDIT.
       const glyph = this.add.graphics()
         .setPosition(target.x, target.y - sy(12))
         .setScale(GAME_SCALE)
-        .setDepth(3);
+        .setDepth(22);
       drawMarkerGlyph(glyph, target.id, ringColor);
       this.add.text(target.x, target.y - sy(34), this.targetDisplayName(target), {
         fontFamily: 'system-ui',
@@ -627,7 +640,7 @@ export class WorldScene extends Phaser.Scene {
         color: '#ffffff',
         stroke: '#1a1208',
         strokeThickness: 3
-      }).setOrigin(0.5).setDepth(3);
+      }).setOrigin(0.5).setDepth(22);
       this.targetMarkerVisuals.push({ target, marker: glyph, idleBob: true });
     }
   }
@@ -1623,7 +1636,16 @@ export class WorldScene extends Phaser.Scene {
 
         this.busy = false;
         const progressMessage = onClose?.({ answered: true, correct: result.correct });
-        this.showToast(progressMessage ? `${result.message} ${progressMessage}` : result.message);
+        // quick only on a correct answer: that message is always one of the
+        // short, fixed rewardMessage() strings. A wrong answer's message
+        // carries the prompt's (possibly long) hint text instead — see
+        // LearningBonusSystem.resolve() — which the independent review on
+        // PR #136 flagged as not established as readable at the quick
+        // duration, so it keeps the default timing.
+        this.showToast(
+          progressMessage ? `${result.message} ${progressMessage}` : result.message,
+          { quick: result.correct }
+        );
         this.save();
       });
 
@@ -1639,7 +1661,12 @@ export class WorldScene extends Phaser.Scene {
 
       this.mastery = MasterySystem.recordOutcome(this.mastery, prompt, 'skipped');
       const progressMessage = onClose?.({ answered: false, correct: false });
-      this.showToast(progressMessage ? `Skipped. ${progressMessage}` : 'Skipped. Adventure continues.');
+      // quick: a skip never carries prompt hint text, only this fixed
+      // dismissal line plus a short, pre-authored quest-progress line.
+      this.showToast(
+        progressMessage ? `Skipped. ${progressMessage}` : 'Skipped. Adventure continues.',
+        { quick: true }
+      );
       this.save();
     });
   }
@@ -1961,7 +1988,16 @@ export class WorldScene extends Phaser.Scene {
     this.busy = false;
   }
 
-  private showToast(message: string): void {
+  /**
+   * Subclass hook: PolishedWorldScene fires one-shot flavor toasts of its own
+   * (e.g. gate-arrival). `quick` shortens the hold+fade for the narrow
+   * prompt-outcome handoff only (see call sites in openBonusPrompt) — every
+   * other toast (flavor lines, quest/reward outcomes, the practice-offer CTA
+   * with its own PRACTICE_OFFER_WINDOW_MS) keeps the original, longer timing
+   * so this doesn't regress readability for content never confirmed safe at
+   * the shorter duration (independent review on PR #136).
+   */
+  protected showToast(message: string, options: { quick?: boolean } = {}): void {
     const text = this.add.text(0, 0, message, {
       fontFamily: 'system-ui',
       // Local design-space literal (not fpx()): this text lives inside
@@ -2002,12 +2038,22 @@ export class WorldScene extends Phaser.Scene {
       ease: 'Back.easeOut'
     });
 
+    // Quick path (~1.4s: 200ms hold + 1200ms fade) is scoped to the
+    // prompt-outcome handoff, where busy clears (movement resumes) before
+    // this tween even starts, so the old 260ms + 2000ms (~2.3s) default
+    // visibly lingered as a stale panel over already-resumed gameplay.
+    // Default path keeps that original ~2.3s timing for everything else,
+    // since it's the only duration ever confirmed to cover longer content
+    // (wrong-answer hints, quest/reward feedback) or a fixed window (the
+    // practice-offer CTA's PRACTICE_OFFER_WINDOW_MS).
+    const holdMs = options.quick ? 200 : 260;
+    const fadeMs = options.quick ? 1200 : 2000;
     this.tweens.add({
       targets: toast,
       y: sy(70),
       alpha: 0,
-      delay: 260,
-      duration: 2000,
+      delay: holdMs,
+      duration: fadeMs,
       ease: 'Sine.easeInOut',
       onComplete: () => toast.destroy()
     });
@@ -2037,14 +2083,14 @@ export class WorldScene extends Phaser.Scene {
     this.tweens.add({
       targets: banner,
       alpha: 1,
-      duration: 300,
+      duration: MAP_ENTRY_BANNER_FADE_IN_MS,
       ease: 'Sine.easeOut',
       onComplete: () => {
         this.tweens.add({
           targets: banner,
           alpha: 0,
-          delay: 900,
-          duration: 300,
+          delay: MAP_ENTRY_BANNER_HOLD_MS,
+          duration: MAP_ENTRY_BANNER_FADE_OUT_MS,
           ease: 'Sine.easeIn',
           onComplete: () => banner.setVisible(false)
         });
