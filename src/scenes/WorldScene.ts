@@ -616,10 +616,14 @@ export class WorldScene extends Phaser.Scene {
       // is only redundant coding on top, never the sole signal. Drawn in
       // design px inside a GAME_SCALE-scaled Graphics — the same convention
       // as the Mira marker — instead of doubling every pixel by hand.
+      // Depth 22 (above the screen-fixed hint/objective HUD bars at 21, still
+      // well below toasts/dialogue/prompts at 35+): a world-space marker or
+      // label that scrolls behind the bottom hint bar is otherwise cut off
+      // and unreadable — confirmed layering defect, see PLAYTHROUGH_UI_AUDIT.
       const glyph = this.add.graphics()
         .setPosition(target.x, target.y - sy(12))
         .setScale(GAME_SCALE)
-        .setDepth(3);
+        .setDepth(22);
       drawMarkerGlyph(glyph, target.id, ringColor);
       this.add.text(target.x, target.y - sy(34), this.targetDisplayName(target), {
         fontFamily: 'system-ui',
@@ -627,7 +631,7 @@ export class WorldScene extends Phaser.Scene {
         color: '#ffffff',
         stroke: '#1a1208',
         strokeThickness: 3
-      }).setOrigin(0.5).setDepth(3);
+      }).setOrigin(0.5).setDepth(22);
       this.targetMarkerVisuals.push({ target, marker: glyph, idleBob: true });
     }
   }
@@ -1961,7 +1965,8 @@ export class WorldScene extends Phaser.Scene {
     this.busy = false;
   }
 
-  private showToast(message: string): void {
+  /** Subclass hook: PolishedWorldScene fires one-shot flavor toasts of its own (e.g. gate-arrival). */
+  protected showToast(message: string): void {
     const text = this.add.text(0, 0, message, {
       fontFamily: 'system-ui',
       // Local design-space literal (not fpx()): this text lives inside
@@ -2002,12 +2007,18 @@ export class WorldScene extends Phaser.Scene {
       ease: 'Back.easeOut'
     });
 
+    // Shortened from a 260ms hold + 2000ms fade (~2.3s total): confirmed by
+    // playthrough that a full-width toast lingering that long visibly
+    // competes with already-resumed movement and the next objective once a
+    // prompt/interaction closes — the player is a screen away by the time it
+    // clears. ~1.4s still gives a short message time to register without
+    // reading as a stuck leftover panel once play has moved on.
     this.tweens.add({
       targets: toast,
       y: sy(70),
       alpha: 0,
-      delay: 260,
-      duration: 2000,
+      delay: 200,
+      duration: 1200,
       ease: 'Sine.easeInOut',
       onComplete: () => toast.destroy()
     });
