@@ -1124,7 +1124,8 @@ test('interactive Stats & Mastery UI panel toggles open/closed and shows correct
   await expect.poll(async () => hasCanvasText(page, 'STATS & MASTERY')).toBe(false);
 });
 
-test('gate-arrival flavor line is a transient toast, not a permanent hint-bar override', async ({ page }) => {
+test('gate-arrival flavor line is a transient toast staged after the map-entry banner, never overlapping it', async ({ page }) => {
+  test.setTimeout(30000);
   // TitleScene always skips OpeningScene under window.__ELDORIA_E2E__, so no
   // existing test ever passes fromOpening: true. Starting WorldScene
   // directly (the same call OpeningScene.completeOpening() makes) is the
@@ -1135,17 +1136,58 @@ test('gate-arrival flavor line is a transient toast, not a permanent hint-bar ov
   });
   await page.waitForFunction(() => window.__ELDORIA_GAME__?.scene.isActive('WorldScene'));
 
-  // showToast()'s text lives inside a Phaser Container, so the non-recursive
-  // canvasTextSeen() rAF collector (direct scene children only) can't see
-  // it — hasCanvasText() recurses into containers and does.
-  await expect.poll(async () => hasCanvasText(page, 'Old magic is stirring nearby.')).toBe(true);
+  // Both showMapEntryBanner() and playGateArrival() fire within the same
+  // create() call, and the toast is now staged to start only ~60ms after the
+  // banner's own ~1.5s lifecycle ends (MAP_ENTRY_BANNER_TOTAL_MS) — too fine
+  // a margin for sequential round-trip polls (each ~100ms+) to observe
+  // reliably. Sample every animation frame in-page instead, over the whole
+  // transition window, and assert neither text was ever visible at the same
+  // instant as the other — the independent review on PR #136 found the
+  // toast drawn directly over the still-visible "The Farm" banner text when
+  // both fired together.
+  const { bannerSeen, toastSeen, overlapped } = await page.evaluate(() => {
+    return new Promise<{ bannerSeen: boolean; toastSeen: boolean; overlapped: boolean }>((resolve) => {
+      const hasText = (item: { active?: boolean; visible?: boolean; text?: unknown; list?: unknown[] }, expected: string): boolean => {
+        if (item.active === false || item.visible === false) return false;
+        if (String(item.text ?? '').includes(expected)) return true;
+        return Array.isArray(item.list) && item.list.some((child) => hasText(child as typeof item, expected));
+      };
+      const isVisible = (text: string): boolean => {
+        const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
+          children: { list: Array<{ active?: boolean; visible?: boolean; text?: unknown; list?: unknown[] }> };
+        };
+        return scene.children.list.some((child) => hasText(child, text));
+      };
+
+      let bannerSeen = false;
+      let toastSeen = false;
+      let overlapped = false;
+      const start = performance.now();
+      const tick = (): void => {
+        const bannerVisible = isVisible('The Farm');
+        const toastVisible = isVisible('Old magic is stirring nearby.');
+        if (bannerVisible) bannerSeen = true;
+        if (toastVisible) toastSeen = true;
+        if (bannerVisible && toastVisible) overlapped = true;
+        if (performance.now() - start < 4200) {
+          requestAnimationFrame(tick);
+        } else {
+          resolve({ bannerSeen, toastSeen, overlapped });
+        }
+      };
+      requestAnimationFrame(tick);
+    });
+  });
+
+  expect(bannerSeen).toBe(true);
+  expect(toastSeen).toBe(true);
+  expect(overlapped).toBe(false);
 
   // The original defect: formatHint() substituted this line for the ambient
   // idle hint every frame, so it never expired (the base hint returns to the
   // same idle string constantly during ordinary play). It must behave like
   // every other toast and be gone well after its own fade completes.
-  await page.waitForTimeout(3000);
-  expect(await hasCanvasText(page, 'Old magic is stirring nearby.')).toBe(false);
+  await expect.poll(async () => hasCanvasText(page, 'Old magic is stirring nearby.'), { timeout: 2000 }).toBe(false);
 });
 
 test('world target markers/labels render above the fixed hint/objective HUD bars', async ({ page }) => {
@@ -1178,11 +1220,16 @@ test('world target markers/labels render above the fixed hint/objective HUD bars
   expect(cropPatchLabel!.depth).toBeGreaterThan(hudHint!.depth);
 });
 
-test('prompt-outcome toast fades well before the old ~2.3s lingering window', async ({ page }) => {
+test('correct-answer prompt-outcome toast fades well before the old ~2.3s lingering window', async ({ page }) => {
   test.setTimeout(30000);
   await boot(page);
   await startProfile(page, 240);
 
+  // Deterministic so this test always exercises the correct-answer branch:
+  // real adaptive prompts shuffle choice order, and the quick/default toast
+  // duration now depends on result.correct (see WorldScene's answer-button
+  // handler), so a random click could silently flip which path this covers.
+  await useDeterministicCorrectPrompt(page);
   await openQuestPrompt(page, 'farm', 'CropBonus', 'find-slime', 'Objective updated: find the Practice Slime.');
   await resetCanvasTextRecorder(page);
   await clickGame(page, 260, 388);
@@ -1194,4 +1241,77 @@ test('prompt-outcome toast fades well before the old ~2.3s lingering window', as
   await expect.poll(async () => hasCanvasText(page, 'Objective updated: find the Practice Slime.')).toBe(true);
   await page.waitForTimeout(1800);
   expect(await hasCanvasText(page, 'Objective updated: find the Practice Slime.')).toBe(false);
+});
+
+test('wrong-answer prompt feedback (a real long Grade 2 hint) keeps the default toast timing, not the quick one', async ({ page }) => {
+  test.setTimeout(30000);
+  await boot(page);
+  await startProfile(page, 240);
+
+  // The longest authored Grade 2 hint (questionTemplates.ts's berries
+  // subtraction template), not invented filler text — the independent
+  // review on PR #136 flagged that a wrong-answer hint was never confirmed
+  // readable at the quick (~1.4s) duration the correct-answer path uses.
+  await page.evaluate(() => {
+    const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
+      learning: { makePrompt: () => unknown };
+    };
+    scene.learning.makePrompt = () => ({
+      id: 'e2e-grade2-hint-regression',
+      band: 'grade2',
+      subject: 'math',
+      skill: 'subtraction',
+      context: 'farm',
+      text: 'You picked 10 berries and used 4. How many are left?',
+      answer: 6,
+      choices: [6, 7, 5],
+      rewardKind: 'bonus-harvest',
+      hint: 'Start with the berries picked, then count backward by the berries used.'
+    });
+  });
+
+  await openQuestPrompt(page, 'farm', 'CropBonus', 'find-slime', 'Objective updated: find the Practice Slime.');
+  await resetCanvasTextRecorder(page);
+  // Choice index 2 ("5"), rendered unshuffled from the mocked array above — wrong.
+  await clickGame(page, 480, 388);
+
+  const expectedHint = 'No bonus this time. Hint: Start with the berries picked, then count backward by the berries used.';
+  await expect.poll(async () => hasCanvasText(page, expectedHint)).toBe(true);
+
+  // The quick prompt-outcome duration (200ms hold + 1200ms fade) would
+  // already be gone well before 1800ms. This message must still be visible
+  // at 1800ms, proving it kept the original, longer default timing.
+  await page.waitForTimeout(1800);
+  expect(await hasCanvasText(page, expectedHint)).toBe(true);
+});
+
+test('post-purpose flavor toast with a practice-offer CTA stays visible for its full 2s window', async ({ page }) => {
+  test.setTimeout(30000);
+  await boot(page);
+  await startProfile(page, 240);
+
+  // Exercises the real call site (showFlavorWithPracticeOffer), not just
+  // showToast() directly, so a future `quick: true` added there would fail
+  // this test. PRACTICE_OFFER_WINDOW_MS is 2000ms: a player who glances back
+  // partway through that window must still see the CTA telling them they
+  // can still act — the exact regression the independent review on PR #136
+  // flagged when the shared toast duration was shortened for every call.
+  await page.evaluate(() => {
+    const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
+      showFlavorWithPracticeOffer: (
+        target: { id: string; kind: string; x: number; y: number; label: string },
+        flavorKey: string,
+        context: string
+      ) => void;
+    };
+    scene.showFlavorWithPracticeOffer(
+      { id: 'crop-bonus', kind: 'farm', x: 0, y: 0, label: 'Crop Patch' },
+      'crop',
+      'farm'
+    );
+  });
+
+  await expect.poll(async () => hasCanvasText(page, 'ACTION again to practice!')).toBe(true);
+  await page.waitForTimeout(1900);
+  expect(await hasCanvasText(page, 'ACTION again to practice!')).toBe(true);
 });
