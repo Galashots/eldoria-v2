@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Eldoria Mage — Three.js Camera Lab</title>
+  <style>
+    :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100svh; background: #10151d; color: #e8eef5; }
+    .app { display: grid; grid-template-columns: minmax(0, 1fr) 320px; min-height: 100svh; }
+    .stage { position: relative; min-height: 70svh; background: radial-gradient(circle at 50% 35%, #313b45, #161c24 65%); overflow: hidden; }
+    #main { width: 100%; height: 100%; display: block; touch-action: none; }
+    .badge { position: absolute; left: 14px; top: 14px; max-width: min(520px, calc(100% - 28px)); padding: 9px 12px; border-radius: 10px; background: rgb(12 17 24 / 82%); font-size: 12px; line-height: 1.35; backdrop-filter: blur(8px); }
+    .pixel-wrap { position: absolute; right: 14px; bottom: 14px; padding: 10px; border-radius: 12px; background: rgb(12 17 24 / 88%); box-shadow: 0 8px 30px rgb(0 0 0 / 35%); }
+    #pixel { width: 192px; height: 288px; display: block; image-rendering: pixelated; background: #ff00ff; border: 1px solid #586271; }
+    .pixel-label { margin-top: 7px; font-size: 11px; color: #b7c1cd; text-align: center; }
+    aside { padding: 18px; background: #171e28; border-left: 1px solid #2c3745; overflow: auto; }
+    h1 { font-size: 20px; margin: 0 0 6px; }
+    h2 { margin: 20px 0 8px; font-size: 13px; color: #8ed8cd; text-transform: uppercase; letter-spacing: .08em; }
+    p { margin: 6px 0; font-size: 13px; line-height: 1.45; color: #c3ccd6; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    button, select, input { font: inherit; }
+    button, select { min-height: 42px; border: 1px solid #435064; border-radius: 9px; background: #232e3c; color: #edf3f8; padding: 8px 10px; }
+    button { cursor: pointer; }
+    button:hover, button[aria-pressed="true"] { background: #315a59; border-color: #66b9ad; }
+    label { display: grid; gap: 6px; margin: 10px 0; font-size: 12px; color: #c4ced9; }
+    input[type="range"] { width: 100%; }
+    .value { color: #8ed8cd; font-variant-numeric: tabular-nums; }
+    .note { padding: 10px; border-left: 3px solid #d7a95f; background: #28241e; color: #e2d4bc; font-size: 12px; line-height: 1.4; }
+    .links { display: grid; gap: 8px; }
+    a { color: #8ed8cd; }
+    @media (max-width: 860px) {
+      .app { grid-template-columns: 1fr; }
+      aside { border-left: 0; border-top: 1px solid #2c3745; }
+      .stage { min-height: 68svh; }
+      #pixel { width: 128px; height: 192px; }
+    }
+  </style>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.179.1/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+<div class="app">
+  <main class="stage">
+    <canvas id="main" aria-label="Interactive 3D Mage model"></canvas>
+    <div class="badge"><strong>Fixed-camera rule:</strong> the production camera stays stationary; only the actor rotates to South, West, North, or East.</div>
+    <div class="pixel-wrap">
+      <canvas id="pixel" width="32" height="48" aria-label="32 by 48 pixel capture preview"></canvas>
+      <div class="pixel-label">32×48 direct render · nearest-neighbour display</div>
+    </div>
+  </main>
+  <aside>
+    <h1>Mage 3D camera lab</h1>
+    <p>Low-poly identity proxy based on the approved Mage source art. This tests camera repeatability and capture workflow, not final character quality.</p>
+
+    <h2>Viewing mode</h2>
+    <div class="grid">
+      <button id="production" aria-pressed="true">Production camera</button>
+      <button id="orbit" aria-pressed="false">Free orbit</button>
+    </div>
+
+    <h2>Actor heading</h2>
+    <div class="grid" id="headings">
+      <button data-heading="south" aria-pressed="true">South</button>
+      <button data-heading="west" aria-pressed="false">West</button>
+      <button data-heading="north" aria-pressed="false">North</button>
+      <button data-heading="east" aria-pressed="false">East</button>
+    </div>
+
+    <h2>Camera</h2>
+    <label>Elevation above horizontal: <span class="value" id="pitchValue">35°</span>
+      <input id="pitch" type="range" min="25" max="45" step="1" value="35">
+    </label>
+    <label>Orthographic framing: <span class="value" id="zoomValue">1.00×</span>
+      <input id="zoom" type="range" min="0.8" max="1.25" step="0.01" value="1">
+    </label>
+
+    <h2>Diagnostics</h2>
+    <div class="grid">
+      <button id="wire" aria-pressed="false">Wireframe</button>
+      <button id="silhouette" aria-pressed="false">Silhouette</button>
+      <button id="ground" aria-pressed="true">Ground marker</button>
+      <button id="autorotate" aria-pressed="false">Slow turntable</button>
+    </div>
+
+    <h2>Capture</h2>
+    <div class="links">
+      <button id="capture">Download main PNG</button>
+      <button id="capturePixel">Download 32×48 PNG</button>
+      <button id="exportGlb">Export current model GLB</button>
+    </div>
+
+    <h2>Identity boundary</h2>
+    <div class="note">Dark tousled hair, friendly young face, navy clothing, teal accents, warm brown boots, no hat, no cape, empty hands, and no permanent staff. Geometry remains a rough proxy.</div>
+  </aside>
+</div>
+
+<script type="module">
+  import * as THREE from 'three';
+  import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+  import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+
+const MODEL_SPEC = Object.freeze({
+  assetId: 'char_mage_boy_base_3d_proof_v001',
+  purpose: 'Camera and sprite-capture feasibility proof; not approved source or runtime art.',
+  identityAuthority: 'assets/source/generated/char_mage_boy_base_idle_v001/source_sheet.png',
+  cameraAuthority: 'docs/visual-targets/CHARACTER_PERSPECTIVE_LOCK_V1.md',
+  forwardAxis: '+Z is South',
+  upAxis: '+Y',
+  pivot: [0, 0, 0],
+  cameraElevationDegrees: 35,
+  runtimeCell: [32, 48],
+  neutralBase: { hands: 'empty', staff: false, cape: false, hat: false },
+});
+
+const HEADING_ROTATIONS = Object.freeze({ south: 0, west: -Math.PI / 2, north: Math.PI, east: Math.PI / 2 });
+const COLORS = Object.freeze({ skin: 0xe4b186, skinShadow: 0xc98963, hair: 0x27232f, hairHighlight: 0x403747, navy: 0x273b63, navyDark: 0x1a2948, teal: 0x4fa69e, tealLight: 0x78d2c5, brown: 0x70452d, brownDark: 0x4e2e20, eye: 0x171a22, mouth: 0x713f3d });
+
+function material(name, color) {
+  const result = new THREE.MeshStandardMaterial({ name, color, roughness: 0.86, metalness: 0, flatShading: true });
+  result.userData.baseColor = color;
+  return result;
+}
+function mesh(name, geometry, mat, position, scale = [1, 1, 1], rotation = [0, 0, 0]) {
+  const result = new THREE.Mesh(geometry, mat);
+  result.name = name;
+  result.position.set(...position);
+  result.scale.set(...scale);
+  result.rotation.set(...rotation);
+  result.castShadow = true;
+  result.receiveShadow = true;
+  return result;
+}
+function cylinderBetween(name, start, end, radius, mat, radialSegments = 8) {
+  const a = new THREE.Vector3(...start);
+  const b = new THREE.Vector3(...end);
+  const direction = new THREE.Vector3().subVectors(b, a);
+  const geometry = new THREE.CylinderGeometry(radius, radius, direction.length(), radialSegments, 1, false);
+  const result = new THREE.Mesh(geometry, mat);
+  result.name = name;
+  result.position.copy(a).add(b).multiplyScalar(0.5);
+  result.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction.normalize());
+  result.castShadow = true;
+  result.receiveShadow = true;
+  return result;
+}
+function createMageModel() {
+  const root = new THREE.Group();
+  root.name = MODEL_SPEC.assetId;
+  root.userData = structuredClone(MODEL_SPEC);
+  const mats = {
+    skin: material('skin', COLORS.skin), skinShadow: material('skin-shadow', COLORS.skinShadow),
+    hair: material('hair', COLORS.hair), hairHighlight: material('hair-highlight', COLORS.hairHighlight),
+    navy: material('navy', COLORS.navy), navyDark: material('navy-dark', COLORS.navyDark),
+    teal: material('teal', COLORS.teal), tealLight: material('teal-light', COLORS.tealLight),
+    brown: material('brown', COLORS.brown), brownDark: material('brown-dark', COLORS.brownDark),
+    eye: material('eye', COLORS.eye), mouth: material('mouth', COLORS.mouth),
+  };
+  const add = (part) => { root.add(part); return part; };
+  const box = (name, size, position, mat, rotation = [0, 0, 0]) => add(mesh(name, new THREE.BoxGeometry(...size), mat, position, [1, 1, 1], rotation));
+  const sphere = (name, radius, position, scale, mat, detail = 1) => add(mesh(name, new THREE.IcosahedronGeometry(radius, detail), mat, position, scale));
+
+  box('boot-left', [0.34, 0.34, 0.56], [-0.23, 0.17, 0.1], mats.brown, [0.06, 0, 0]);
+  box('boot-right', [0.34, 0.34, 0.56], [0.23, 0.17, 0.1], mats.brown, [0.06, 0, 0]);
+  box('boot-cuff-left', [0.38, 0.15, 0.38], [-0.23, 0.43, -0.02], mats.brownDark);
+  box('boot-cuff-right', [0.38, 0.15, 0.38], [0.23, 0.43, -0.02], mats.brownDark);
+  box('leg-left', [0.28, 0.82, 0.28], [-0.22, 0.84, -0.02], mats.navyDark);
+  box('leg-right', [0.28, 0.82, 0.28], [0.22, 0.84, -0.02], mats.navyDark);
+  add(mesh('tunic', new THREE.CylinderGeometry(0.38, 0.52, 1.05, 8, 1, false), mats.navy, [0, 1.55, 0]));
+  box('belt', [0.98, 0.15, 0.66], [0, 1.23, 0], mats.brownDark);
+  box('belt-buckle', [0.17, 0.16, 0.05], [0, 1.23, 0.355], mats.tealLight);
+  box('collar-left', [0.3, 0.14, 0.08], [-0.18, 1.96, 0.31], mats.teal, [0, 0, -0.35]);
+  box('collar-right', [0.3, 0.14, 0.08], [0.18, 1.96, 0.31], mats.teal, [0, 0, 0.35]);
+  sphere('arcane-brooch', 0.09, [0, 1.86, 0.39], [1, 1, 1], mats.tealLight, 1);
+  add(cylinderBetween('arm-left', [-0.38, 1.82, 0.02], [-0.58, 1.13, 0.1], 0.16, mats.navy));
+  add(cylinderBetween('arm-right', [0.38, 1.82, 0.02], [0.58, 1.13, 0.1], 0.16, mats.navy));
+  sphere('hand-left', 0.17, [-0.59, 1.01, 0.13], [0.9, 1.1, 0.8], mats.skin, 1);
+  sphere('hand-right', 0.17, [0.59, 1.01, 0.13], [0.9, 1.1, 0.8], mats.skin, 1);
+  sphere('head', 0.52, [0, 2.48, 0], [0.95, 1.02, 0.9], mats.skin, 2);
+  sphere('ear-left', 0.11, [-0.49, 2.48, 0.02], [0.7, 1, 0.55], mats.skinShadow, 1);
+  sphere('ear-right', 0.11, [0.49, 2.48, 0.02], [0.7, 1, 0.55], mats.skinShadow, 1);
+  sphere('eye-left', 0.055, [-0.17, 2.53, 0.455], [1, 1.15, 0.6], mats.eye, 1);
+  sphere('eye-right', 0.055, [0.17, 2.53, 0.455], [1, 1.15, 0.6], mats.eye, 1);
+  sphere('nose', 0.055, [0, 2.39, 0.49], [0.8, 0.8, 0.7], mats.skinShadow, 1);
+  box('smile', [0.18, 0.025, 0.03], [0, 2.27, 0.465], mats.mouth);
+  const hairPoints = [
+    [-0.36, 2.83, -0.03, 0.28, 0.3, 0.27], [-0.13, 2.95, -0.02, 0.3, 0.31, 0.28],
+    [0.14, 2.94, -0.01, 0.31, 0.32, 0.29], [0.37, 2.82, -0.02, 0.27, 0.29, 0.26],
+    [-0.43, 2.67, -0.07, 0.23, 0.29, 0.24], [0.43, 2.67, -0.07, 0.23, 0.29, 0.24],
+    [-0.24, 2.82, 0.28, 0.2, 0.23, 0.18], [0.04, 2.87, 0.31, 0.23, 0.25, 0.18],
+    [0.27, 2.78, 0.29, 0.2, 0.23, 0.17],
+  ];
+  hairPoints.forEach(([x, y, z, sx, sy, sz], index) => sphere(`hair-${String(index).padStart(2, '0')}`, 1, [x, y, z], [sx, sy, sz], index % 3 === 0 ? mats.hairHighlight : mats.hair, 1));
+  return root;
+}
+
+  const canvas = document.querySelector('#main');
+  const pixelCanvas = document.querySelector('#pixel');
+  const stage = document.querySelector('.stage');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  const pixelRenderer = new THREE.WebGLRenderer({ canvas: pixelCanvas, antialias: false, alpha: true, preserveDrawingBuffer: true });
+  pixelRenderer.setPixelRatio(1);
+  pixelRenderer.setSize(32, 48, false);
+  pixelRenderer.outputColorSpace = THREE.SRGBColorSpace;
+  pixelRenderer.setClearColor(0xff00ff, 1);
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x252e38);
+  const actorPivot = new THREE.Group();
+  actorPivot.name = 'actor-heading-pivot';
+  const mage = createMageModel();
+  actorPivot.add(mage);
+  scene.add(actorPivot);
+  const ground = new THREE.Mesh(new THREE.CircleGeometry(0.82, 40), new THREE.MeshStandardMaterial({ color: 0x59635c, roughness: 1, transparent: true, opacity: 0.72 }));
+  ground.rotation.x = -Math.PI / 2;
+  ground.position.y = -0.012;
+  ground.receiveShadow = true;
+  scene.add(ground);
+  const pivotMarker = new THREE.Mesh(new THREE.RingGeometry(0.045, 0.07, 20), new THREE.MeshBasicMaterial({ color: 0x7ad2c6, side: THREE.DoubleSide }));
+  pivotMarker.rotation.x = -Math.PI / 2;
+  pivotMarker.position.y = 0.002;
+  scene.add(pivotMarker);
+  scene.add(new THREE.HemisphereLight(0xdbe8ef, 0x26322f, 1.25));
+  const key = new THREE.DirectionalLight(0xfff3dc, 3.3);
+  key.position.set(-4.5, 7.5, 5.5);
+  key.castShadow = true;
+  key.shadow.mapSize.set(1024, 1024);
+  scene.add(key);
+  const orthographic = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.05, 100);
+  const perspective = new THREE.PerspectiveCamera(38, 1, 0.05, 100);
+  const controls = new OrbitControls(perspective, renderer.domElement);
+  controls.enabled = false;
+  controls.enableDamping = true;
+  controls.target.set(0, 1.45, 0);
+  let activeCamera = orthographic;
+  let productionMode = true;
+  let pitch = MODEL_SPEC.cameraElevationDegrees;
+  let framing = 1;
+  let autoRotate = false;
+  let heading = 'south';
+  const normalColors = new Map();
+  mage.traverse((object) => { if (object.isMesh) normalColors.set(object.uuid, object.material.color.clone()); });
+
+  function setHeading(next) {
+    heading = next;
+    actorPivot.rotation.y = HEADING_ROTATIONS[next];
+    document.querySelectorAll('[data-heading]').forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.heading === next)));
+  }
+  function updateCameras() {
+    const rect = stage.getBoundingClientRect();
+    const aspect = Math.max(rect.width / Math.max(rect.height, 1), 0.1);
+    const halfHeight = 2.05 / framing;
+    orthographic.left = -halfHeight * aspect;
+    orthographic.right = halfHeight * aspect;
+    orthographic.top = halfHeight;
+    orthographic.bottom = -halfHeight;
+    const radians = THREE.MathUtils.degToRad(pitch);
+    const distance = 5.4;
+    const target = new THREE.Vector3(0, 1.45, 0);
+    const position = new THREE.Vector3(0, target.y + Math.sin(radians) * distance, Math.cos(radians) * distance);
+    orthographic.position.copy(position);
+    orthographic.lookAt(target);
+    orthographic.updateProjectionMatrix();
+    perspective.aspect = aspect;
+    if (productionMode) { perspective.position.copy(position); controls.target.copy(target); }
+    perspective.updateProjectionMatrix();
+  }
+  function setProductionMode(value) {
+    productionMode = value;
+    activeCamera = value ? orthographic : perspective;
+    controls.enabled = !value;
+    document.querySelector('#production').setAttribute('aria-pressed', String(value));
+    document.querySelector('#orbit').setAttribute('aria-pressed', String(!value));
+    updateCameras();
+  }
+  function setWireframe(value) {
+    mage.traverse((object) => { if (object.isMesh) object.material.wireframe = value; });
+    document.querySelector('#wire').setAttribute('aria-pressed', String(value));
+  }
+  function setSilhouette(value) {
+    mage.traverse((object) => {
+      if (!object.isMesh) return;
+      object.material.color.copy(value ? new THREE.Color(0x191e26) : normalColors.get(object.uuid));
+    });
+    document.querySelector('#silhouette').setAttribute('aria-pressed', String(value));
+  }
+  function resize() {
+    const rect = stage.getBoundingClientRect();
+    renderer.setSize(Math.max(1, Math.floor(rect.width)), Math.max(1, Math.floor(rect.height)), false);
+    updateCameras();
+  }
+  function downloadCanvas(source, filename) {
+    const link = document.createElement('a');
+    link.download = filename;
+    link.href = source.toDataURL('image/png');
+    link.click();
+  }
+
+  document.querySelector('#production').addEventListener('click', () => setProductionMode(true));
+  document.querySelector('#orbit').addEventListener('click', () => setProductionMode(false));
+  document.querySelectorAll('[data-heading]').forEach((button) => button.addEventListener('click', () => setHeading(button.dataset.heading)));
+  document.querySelector('#pitch').addEventListener('input', (event) => { pitch = Number(event.target.value); document.querySelector('#pitchValue').textContent = `${pitch}°`; updateCameras(); });
+  document.querySelector('#zoom').addEventListener('input', (event) => { framing = Number(event.target.value); document.querySelector('#zoomValue').textContent = `${framing.toFixed(2)}×`; updateCameras(); });
+  document.querySelector('#wire').addEventListener('click', (event) => setWireframe(event.currentTarget.getAttribute('aria-pressed') !== 'true'));
+  document.querySelector('#silhouette').addEventListener('click', (event) => setSilhouette(event.currentTarget.getAttribute('aria-pressed') !== 'true'));
+  document.querySelector('#ground').addEventListener('click', (event) => { ground.visible = !ground.visible; pivotMarker.visible = ground.visible; event.currentTarget.setAttribute('aria-pressed', String(ground.visible)); });
+  document.querySelector('#autorotate').addEventListener('click', (event) => { autoRotate = !autoRotate; event.currentTarget.setAttribute('aria-pressed', String(autoRotate)); });
+  document.querySelector('#capture').addEventListener('click', () => downloadCanvas(renderer.domElement, `mage-${heading}-${pitch}deg.png`));
+  document.querySelector('#capturePixel').addEventListener('click', () => downloadCanvas(pixelRenderer.domElement, `mage-${heading}-${pitch}deg-32x48.png`));
+  document.querySelector('#exportGlb').addEventListener('click', () => {
+    const exporter = new GLTFExporter();
+    exporter.parse(mage, (result) => {
+      const blob = new Blob([result], { type: 'model/gltf-binary' });
+      const link = document.createElement('a');
+      link.download = 'mage-boy-proof-current.glb';
+      link.href = URL.createObjectURL(blob);
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+    }, (error) => console.error(error), { binary: true, onlyVisible: true });
+  });
+  const clock = new THREE.Clock();
+  function frame() {
+    const delta = Math.min(clock.getDelta(), 0.05);
+    if (autoRotate) actorPivot.rotation.y += delta * 0.45;
+    if (!productionMode) controls.update();
+    renderer.render(scene, activeCamera);
+    pixelRenderer.render(scene, orthographic);
+    requestAnimationFrame(frame);
+  }
+  new ResizeObserver(resize).observe(stage);
+  setHeading('south');
+  setProductionMode(true);
+  resize();
+  frame();
+</script>
+</body>
+</html>
