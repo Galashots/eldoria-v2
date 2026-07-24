@@ -46,7 +46,7 @@ Every production prompt should state:
 - required source dimensions or grid layout;
 - intended player-readable result at runtime size;
 - approved palette family and upper-left light;
-- approved perspective, footprint, pivot, and scale language;
+- approved camera, footprint, pivot, and scale language;
 - stable identity and proportions across related frames;
 - no text, labels, arrows, captions, UI, decorative frame, watermark, checkerboard, or unrelated scenery;
 - no cell bleed or content touching the image edge;
@@ -54,6 +54,13 @@ Every production prompt should state:
 - true alpha or a flat clean key background as specified by the target.
 
 The prompt should describe what must remain simple, not only what to add. Explicit anti-patterns are often more reliable than words such as “beautiful,” “natural,” or “seamless.”
+
+For character work, explicitly separate:
+
+- **vertical camera pitch** — the stationary elevated viewing angle;
+- **horizontal actor heading** — South, West, North, East, or an explicitly authorized diagonal.
+
+Do not use “three-quarter side view” to describe West or East in a four-direction set.
 
 ## Design for runtime size
 
@@ -74,7 +81,7 @@ A sheet is acceptable only when every cell shares:
 - source and runtime geometry;
 - scale and pivot logic;
 - background treatment;
-- palette and perspective;
+- palette and camera;
 - a declared row/column layout.
 
 Use:
@@ -84,6 +91,8 @@ strict invisible grid
 ```
 
 and state that no lines, borders, dividers, or framing may be drawn. Never generate a mixed-size production sheet.
+
+For directional characters, generate one direction at a time when a sheet causes heading drift. Assemble externally accepted directions deterministically afterward.
 
 ## Background and padding
 
@@ -126,7 +135,7 @@ Use the approved centre material and change only the declared boundary topology.
 - use a canvas taller than the gameplay footprint;
 - ground the base in the lower footprint band;
 - leave clean empty space above and around the silhouette;
-- use the shared elevated three-quarter “pop-up” projection, not true isometric or pure top-down;
+- use the shared fixed elevated orthographic “pop-up” projection, not true isometric or pure top-down;
 - no baked shadow when the object Y-sorts or receives an engine shadow;
 - prioritize broad silhouette and material clusters over foliage or surface confetti.
 
@@ -138,18 +147,54 @@ Use variable-size targets rather than squeezing important detail into an arbitra
 
 Follow [`../visual-targets/CHARACTER_PERSPECTIVE_LOCK_V1.md`](../visual-targets/CHARACTER_PERSPECTIVE_LOCK_V1.md).
 
-Every character prompt must state:
+Every four-direction character prompt must state:
 
-- one elevated three-quarter camera across all directions;
-- visible top planes in down/front, up/back, and side facings;
-- down/front is foreshortened, not direct frontal elevation;
-- left/right are three-quarter side views, not pure profiles;
+- one stationary elevated orthographic camera across all directions;
+- approximately 35 degrees downward pitch relative to an eye-level horizontal view, with the approved visual exemplar governing the final read;
+- the actor rotates beneath the camera rather than the camera moving;
+- strict cardinal South, West, North, and East headings;
+- South and North remain direct front/rear headings while visible top surfaces and vertical foreshortening prove the elevated camera;
+- West and East are exact 90-degree cardinal rotations, not Southwest or Southeast turns;
+- West/East may read as horizontal profiles, but must retain visible crown, shoulder, body, and footwear top surfaces from the fixed elevated camera;
 - one apparent height, body scale, ground-contact line, and bottom-centre pivot;
 - stable identity, equipment placement, handedness, and upper-left lighting;
 - no per-frame automatic scaling;
 - no armor/outfit family before the base geometry and timing are approved.
 
-The first experiment is a bounded four-idle-direction perspective proof, not a complete animation library. Compare a same-sheet approach with direction-anchored generation when practical, and judge exact runtime previews on both Farm and Woods backgrounds.
+Do not prompt West/East with only “left-side view,” “right-side view,” “profile,” or “three-quarter side view.” Those phrases are individually ambiguous.
+
+Use this safer construction:
+
+```text
+Rotate the actor exactly 90 degrees around its vertical axis beneath the same stationary elevated camera. Its forward axis points exactly West/East with no South or North component. Preserve the visible top surfaces caused by the fixed camera; do not rotate the actor diagonally toward the viewer and do not flatten the camera to eye level.
+```
+
+For South:
+
+```text
+The actor's forward axis points exactly South. Keep the body square to South beneath the fixed elevated camera. Show crown and shoulder top surfaces and vertical foreshortening without rotating the actor toward Southwest or Southeast.
+```
+
+For North:
+
+```text
+The actor's forward axis points exactly North. Keep the body square to North beneath the fixed elevated camera. Show top and rear surfaces without rotating the actor toward Northwest or Northeast.
+```
+
+Diagonal Southwest, Northwest, Northeast, and Southeast headings belong only to an explicitly authorized eight-direction set.
+
+The first experiment is a bounded four-idle-direction camera-and-heading proof, not a complete animation library. Direction-anchored generation is preferred when exact cardinal heading is difficult to preserve. Judge exact runtime previews on both Farm and Woods backgrounds.
+
+## Reference conditioning for character prompts
+
+Before attaching visual references, identify each reference's authority scope.
+
+- A full rendered character image remains identity-bearing even when described as “camera only.”
+- Do not attach a rejected character render as a camera-only reference when its face, costume, proportions, palette, or equipment conflict with the target.
+- Prefer an identity-neutral mannequin or geometric camera strip for cardinal rotation and fixed-camera explanation.
+- Use the owner-approved character strip as positive identity and camera evidence only for the named character it depicts.
+- For other characters, a Mage strip may explain camera pitch and directional organization but must not transfer Mage identity, proportions, costume, or palette.
+- Never infer equipment that is absent from the authoritative source or prohibited by the target.
 
 ## Runtime-master rescue
 
@@ -161,7 +206,7 @@ Use an **APPROVED RUNTIME MASTER** only when:
 - the canonical source is deterministic nearest-neighbour replication;
 - the real pipeline reproduces the runtime master with zero pixel differences.
 
-Do not use rescue to hide wrong perspective, identity drift, major proportion errors, missing modular geometry, or detail collapse. Those require regeneration or target-size change.
+Do not use rescue to hide wrong camera, wrong heading, identity drift, major proportion errors, missing modular geometry, or detail collapse. Those require regeneration or target-size change.
 
 ## Required audit
 
@@ -171,7 +216,7 @@ Record as applicable:
 - source dimensions and grid divisibility;
 - key colour/alpha and edge contact;
 - text, border, UI, checkerboard, watermark, or scenery contamination;
-- perspective, light, palette, silhouette, identity, and family consistency;
+- camera pitch, cardinal heading, light, palette, silhouette, identity, and family consistency;
 - exact normalized dimensions and alpha state;
 - visible bounding box, occupancy, footprint, and pivot;
 - `1×` and enlarged nearest-neighbour readability;

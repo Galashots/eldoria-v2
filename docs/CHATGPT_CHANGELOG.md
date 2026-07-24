@@ -4,6 +4,16 @@ This file keeps recent, high-value change summaries. Detailed historical entries
 
 Each entry should state the actual author, branch or PR, concise scope, verification, compatibility, and remaining risk. Implementation narratives belong in PR descriptions, commits, and audit records.
 
+## 2026-07-23 — Cardinal actor-heading semantics corrected
+
+- Author/branch: ChatGPT, `chatgpt/fix-cardinal-camera-semantics`, [PR #134](https://github.com/Galashots/eldoria-v2/pull/134).
+- Scope: separates the stationary elevated orthographic camera's vertical pitch from horizontal actor yaw. Four-direction characters now use strict South, West, North, and East headings; West/East are exact 90-degree rotations and may have profile-like silhouettes while visible top surfaces prove the camera remains elevated. Diagonal headings are reserved for an explicitly authorized eight-direction family. The Mage neutral base is also locked to empty hands, with no permanent staff or cape pixels; staff-on-back remains a later equipment layer.
+- Principal files: `AGENTS.md`, `docs/README.md`, `docs/VISUAL_ASSET_CONTRACT.md`, `docs/art-pipeline/IMAGE_PROMPTING_GUIDE.md`, `docs/beautification/ELDORIA_BEAUTIFICATION_EXECUTION_PLAN.md`, `docs/visual-targets/CHARACTER_PERSPECTIVE_LOCK_V1.md`, `docs/visual-targets/HERO_ACTOR_TARGETS.md`, and `docs/visual-targets/hero_actor_targets.json`.
+- Verification: exact-head CI and independent Claude Fable repair-delta review are required before merge.
+- Compatibility: documentation and target guidance only; no runtime, map, save, curriculum, dependency, workflow, target geometry, direction identifier, or asset-pixel change.
+- Remaining risk: owner-approved Mage and mannequin visual exemplars remain externally held and are not ingested or approved as runtime assets by this PR.
+
+
 ## 2026-07-23 — Farm↔Village transition fixed for ordinary held movement
 
 - Author/branch: Claude Code, `claude/farm-village-held-movement-fix`, [PR #133](https://github.com/Galashots/eldoria-v2/pull/133). Executes [issue #132](https://github.com/Galashots/eldoria-v2/issues/132)'s "Claude execution handoff" ([comment 5060315450](https://github.com/Galashots/eldoria-v2/issues/132#issuecomment-5060315450)): the first-priority post-D3 engineering item, reproduce the Farm→Village transition failure through normal held movement and fix only the demonstrated cause.
@@ -17,7 +27,6 @@ Each entry should state the actual author, branch or PR, concise scope, verifica
 - Verification: `npm ci`; `npm run check`; `npm run test:visual-targets`; `npm run test:asset-pipeline`; `npm run test:terrain-blend`; `npm run test:unit`; `npm run smoke` (including the 4 held-movement specs and the full existing `village.spec.ts`/`multi-map.spec.ts` suites, re-run green after the fix to confirm no regression to the teleport-based round-trip, save/reload, quest-state, and objective-marker coverage on this same gate pair); `npm run test:emulation`. Browser evidence: held-movement arrival-plus-control screenshots for both profiles and both directions, attached directly to the PR.
 - Compatibility: two single-cell `Collision`-layer edits and one `exit`-object width/x edit across `public/maps/farm.json` and `public/maps/eldoria-village.json`; no Ground/Decor visual, save-schema, profile-ID, quest, curriculum, interaction-ID, dependency, or `.github/workflows/**` change. `WorldScene`'s transition/movement/save code is unchanged — the defect and the fix are both map-collision-data only.
 - Remaining risk: the identical 2-tile-opening/asymmetric-body-offset pattern is a geometry-based suspicion for the Farm↔Woods gate pair too (same template) but was not reproduced end-to-end there (only the vertical-clipping half, on the Farm side only) — explicitly out of scope for this PR per the issue's stop instruction; flagged here for a future, separately-scoped investigation. Physical-iPad and child validation remain outstanding and unclaimed.
-
 ## 2026-07-22 — Farm grass-scatter family wired into the Farm scene (D3)
 
 - Author/branch: Claude Code, `claude/d3-farm-scatter-wiring`, [PR #131](https://github.com/Galashots/eldoria-v2/pull/131).
