@@ -1,6 +1,6 @@
 # Eldoria-V2 Current State
 
-**Last verified `main`:** `172686619f374d2a24eb5a95f05ab600215633cd` (PR #67 merged, 2026-07-23)  
+**Last verified `main`:** `82b7f192e830922d0d1bf03fda833c0108c38ad4` (PR #131 and PR #69 merged, 2026-07-23)  
 **Stable product direction:** [`ELDORIA_MASTER_PLAN.md`](ELDORIA_MASTER_PLAN.md)  
 **Repository rules:** [`../AGENTS.md`](../AGENTS.md)
 
@@ -57,7 +57,7 @@ PR #122 is merged. The repository now contains:
 - `src/data/wildbloomSpots.ts` — Phaser-free spot source of truth;
 - a full 38-placement farm plan pinned by unit tests.
 
-PR #131, `claude/d3-farm-scatter-wiring` (D3), wires the primitive into the Farm scene against the approved `tile_farm_grass_scatter` family (`tuft_a`, `tuft_b`, `pebble_a`, `flower_a`; `docs/art-pipeline/review/tile_farm_grass_scatter_family/AUDIT.md`): `src/data/farmDecorScatterConfig.ts` composes the primitive with a `tuft_a:tuft_b:pebble_a:flower_a = 2:2:1:1` weighting (tufts combined 4:1 over flowers), and `WorldScene` renders it as Farm-only presentation Decor below every actor/marker/effect, with no collision body, no save-state, and no `farm.json` edit. This is a visible but restrained ground-texture change: direct sprite-pixel inspection of the already-approved art confirms tufts are 74% of the 38 placements (28/38) and are low-contrast dark-olive-green by design against the base grass, so the repetition-reduction effect is real and measurable but reads as subtle rather than dramatic; the pebble/flower accents (the other 26%) are clearly visible restrained accents. That subtlety is a property of the approved sprite art, not the weighting or wiring, and a future retune alone will not change it. Most Farm vegetation, props, structures, canopy, pond detail, and final composition remain incomplete (see "Known risks" below).
+PR #131 (merged), `claude/d3-farm-scatter-wiring` (D3), wires the primitive into the Farm scene against the approved `tile_farm_grass_scatter` family (`tuft_a`, `tuft_b`, `pebble_a`, `flower_a`; `docs/art-pipeline/review/tile_farm_grass_scatter_family/AUDIT.md`): `src/data/farmDecorScatterConfig.ts` composes the primitive with a `tuft_a:tuft_b:pebble_a:flower_a = 2:2:1:1` weighting (tufts combined 4:1 over flowers), and `WorldScene` renders it as Farm-only presentation Decor below every actor/marker/effect, with no collision body, no save-state, and no `farm.json` edit. This is a visible but restrained ground-texture change: direct sprite-pixel inspection of the already-approved art confirms tufts are 74% of the 38 placements (28/38) and are low-contrast dark-olive-green by design against the base grass, so the repetition-reduction effect is real and measurable but reads as subtle rather than dramatic; the pebble/flower accents (the other 26%) are clearly visible restrained accents. That subtlety is a property of the approved sprite art, not the weighting or wiring, and a future retune alone will not change it. Most Farm vegetation, props, structures, canopy, pond detail, and final composition remain incomplete (see "Known risks" below).
 
 ## Visual direction and character status
 
@@ -83,19 +83,28 @@ The immediate goal is to establish the missing visual layers that create the ref
 
 ### Next work
 
-1. **Reproduce and fix the Farm→Village transition failure**
-   - reproduce through normal held movement (not a synthetic teleport) first, and fix only the demonstrated cause;
-   - do not speculatively patch exit/transition logic without a confirmed repro.
+The full source is [issue #132](https://github.com/Galashots/eldoria-v2/issues/132) and its audit record, [`docs/playtests/PLAYTHROUGH_UI_AUDIT_2026-07-23.md`](playtests/PLAYTHROUGH_UI_AUDIT_2026-07-23.md). This section preserves only the accepted order.
 
-2. **Correct the confirmed Sleepy Sprout/world-label layering defect**
-   - a confirmed depth-sorting/layering issue between the Sleepy Sprout interaction and world labels; fix the confirmed defect only.
+1. ~~Reproduce and fix the Farm→Village transition failure~~ — fixed: the transition now works via ordinary held movement for both profiles and both directions (Collision-geometry-only fix; no gameplay/save/transition-logic change).
+
+2. **Persistent transient-message lifecycle plus confirmed Sleepy Sprout/world-label depth repair**
+   - correct the `Old magic is stirring nearby`-class message's lifetime at its source rather than offsetting the overlap;
+   - fix only the demonstrated Sleepy Sprout/world-label depth-sorting defect;
    - Objective ghosting remains investigation-only (not yet confirmed actionable). The unproved STATS badge report is not actionable until reproduced.
 
-3. **D4 — Run the first character perspective trial** — parallel art lane, not gated on items 1–2
+3. **Dialogue/feedback handoff cleanup** — the Mira/learning-feedback layer must not linger visibly once movement and the next objective are already active.
+
+4. **Practice Slime input-reliability investigation** — not yet a confirmed defect; reproduce deterministically before any fix.
+
+5. **D4 — Run the first character perspective trial** — parallel art lane, not gated on items 2–4
    - one neutral Mage identity, four idle directions only; same-sheet versus direction-anchored generation;
    - the evidence harness is merged (PR #127) and ready; this task now awaits the exact candidate-PNG handoff for processing through the merged harness;
    - judged on exact runtime pixels on bright Farm and darker Woods plates;
    - choose size/prompt strategy before commissioning complete animation families.
+
+6. **HUD/touch-control consolidation** — deferred design pass (not a bug-fix item); see the audit for acceptance criteria.
+
+7. **Stats & Mastery / Profile Select production presentation** — deferred until approved D4 identity art/portraits are available; not blocking D4.
 
 ## Known risks and deferred work
 
