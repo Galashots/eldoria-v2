@@ -118,6 +118,51 @@ async function runGoldenTouchJourney(page: Page, profile: { x: number; y: number
   );
 }
 
+/** Restart the live WorldScene the way beginMapTransition() does, then wait
+ *  for the fresh instance to be active (create()/createTouchControls() re-run). */
+async function restartWorldScene(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
+      profileId: string;
+      mapId: string;
+      scene: { restart: (data: { profileId: string; mapId: string; spawnId?: string }) => void };
+    };
+    // Same shape beginMapTransition() passes to scene.restart(); undefined
+    // spawnId resolves to the map's default spawn (resolveSpawn handles it).
+    scene.scene.restart({ profileId: scene.profileId, mapId: scene.mapId });
+  });
+  await page.waitForFunction(() => window.__ELDORIA_GAME__?.scene.isActive('WorldScene'));
+  // Let the restarted scene finish create() (which runs createTouchControls()).
+  await page.waitForTimeout(300);
+}
+
+const pointersTotal = (page: Page): Promise<number> =>
+  page.evaluate(() => window.__ELDORIA_GAME__!.input.pointersTotal);
+
+// Regression guard for the pointer-pool leak: the second touch pointer is
+// configured once, game-wide (gameConfig input.activePointers), NOT via a
+// per-scene addPointer(). Because createTouchControls() re-runs on every scene
+// create() and the InputManager is shared game-wide, a per-create addPointer()
+// would grow pointersTotal on every map transition. Assert it stays fixed.
+test('active touch-pointer count stays fixed across WorldScene restarts (no per-create addPointer leak)', async ({ page }) => {
+  await useE2EHandle(page);
+  await page.goto('/');
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+  await waitForBoot(page);
+  await startProfileByTouch(page, MAGE_PROFILE);
+
+  const initial = await pointersTotal(page);
+  expect(initial, 'two active touch pointers configured for simultaneous move + ACTION').toBe(2);
+
+  await restartWorldScene(page);
+  expect(await pointersTotal(page), 'pointer count must not grow across a scene restart').toBe(initial);
+
+  // A second restart makes any per-create growth unmistakable (old code: 2 -> 3 -> 4).
+  await restartWorldScene(page);
+  expect(await pointersTotal(page), 'pointer count still fixed after a second restart').toBe(initial);
+});
+
 for (const { name, profile } of [
   { name: 'Mage', profile: MAGE_PROFILE },
   { name: 'Ranger', profile: RANGER_PROFILE }

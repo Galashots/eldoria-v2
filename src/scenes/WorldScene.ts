@@ -223,6 +223,11 @@ export class WorldScene extends Phaser.Scene {
     this.targetMarkerVisuals = [];
     this.affordances = undefined;
     this.statsCloseGroup = undefined;
+    // Reset the ACTION affordance state too: a reused instance would otherwise
+    // keep the prior run's value, and updateActionAffordance() early-returns on
+    // an unchanged state -- so the freshly-created button could keep its raw
+    // constructor palette instead of the correct resolved one.
+    this.actionButtonState = undefined;
   }
 
   create(): void {
@@ -1085,12 +1090,13 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private createTouchControls(): void {
-    // Register a second touch pointer so the movement thumb (dynamic joystick,
-    // lower-left) and an ACTION tap (lower-right) can be down at once -- Phaser
-    // tracks a single touch pointer by default, which silently made "walk and
-    // act at the same time" impossible on a tablet.
-    this.input.addPointer(1);
-
+    // The second touch pointer that lets the movement thumb (dynamic joystick,
+    // lower-left) and an ACTION tap (lower-right) be down at once is configured
+    // once, game-wide, via input.activePointers in gameConfig -- NOT here.
+    // createTouchControls() re-runs on every scene create() (a map transition
+    // restarts this scene), and Phaser's InputManager is shared across the
+    // whole game, so calling addPointer() here would grow the pointer pool on
+    // every transition.
     this.createDynamicJoystick();
 
     // Stays clickable on every device (a mouse-accessible alternative to
