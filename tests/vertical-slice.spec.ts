@@ -1123,3 +1123,75 @@ test('interactive Stats & Mastery UI panel toggles open/closed and shows correct
   await holdKey(page, 'Tab', 100);
   await expect.poll(async () => hasCanvasText(page, 'STATS & MASTERY')).toBe(false);
 });
+
+test('gate-arrival flavor line is a transient toast, not a permanent hint-bar override', async ({ page }) => {
+  // TitleScene always skips OpeningScene under window.__ELDORIA_E2E__, so no
+  // existing test ever passes fromOpening: true. Starting WorldScene
+  // directly (the same call OpeningScene.completeOpening() makes) is the
+  // only way to exercise the gate-arrival beat this line belongs to.
+  await boot(page);
+  await page.evaluate(() => {
+    window.__ELDORIA_GAME__?.scene.start('WorldScene', { profileId: 'grade2-mage', fromOpening: true });
+  });
+  await page.waitForFunction(() => window.__ELDORIA_GAME__?.scene.isActive('WorldScene'));
+
+  // showToast()'s text lives inside a Phaser Container, so the non-recursive
+  // canvasTextSeen() rAF collector (direct scene children only) can't see
+  // it — hasCanvasText() recurses into containers and does.
+  await expect.poll(async () => hasCanvasText(page, 'Old magic is stirring nearby.')).toBe(true);
+
+  // The original defect: formatHint() substituted this line for the ambient
+  // idle hint every frame, so it never expired (the base hint returns to the
+  // same idle string constantly during ordinary play). It must behave like
+  // every other toast and be gone well after its own fade completes.
+  await page.waitForTimeout(3000);
+  expect(await hasCanvasText(page, 'Old magic is stirring nearby.')).toBe(false);
+});
+
+test('world target markers/labels render above the fixed hint/objective HUD bars', async ({ page }) => {
+  // Confirmed via playthrough: a Farm target whose label falls behind the
+  // screen-fixed bottom hint bar (depth 21) was cut off and unreadable —
+  // the label must win that overlap, so its depth must clear the HUD bars.
+  await boot(page);
+  await startProfile(page, 240);
+
+  const depths = await page.evaluate(() => {
+    const scene = window.__ELDORIA_GAME__?.scene.getScene('WorldScene') as unknown as {
+      children: {
+        list: Array<{ text?: unknown; depth?: number; active?: boolean; visible?: boolean; alpha?: number }>;
+      };
+    };
+    return scene.children.list
+      // The base WorldScene's own hintText/objectiveText stay `visible: true`
+      // (PolishedWorldScene only zeroes their alpha to replace them
+      // visually) — exclude alpha:0 objects or this matches the invisible
+      // original instead of the actually-rendered presentationHint/Objective.
+      .filter((child) => child.active && child.visible && (child.alpha ?? 1) > 0
+        && typeof child.text === 'string' && child.text.length > 0)
+      .map((child) => ({ text: child.text as string, depth: child.depth ?? 0 }));
+  });
+
+  const hudHint = depths.find((entry) => entry.text.includes('Explore. Learning bonuses are optional.'));
+  const cropPatchLabel = depths.find((entry) => entry.text === 'Crop Patch');
+  expect(hudHint).toBeDefined();
+  expect(cropPatchLabel).toBeDefined();
+  expect(cropPatchLabel!.depth).toBeGreaterThan(hudHint!.depth);
+});
+
+test('prompt-outcome toast fades well before the old ~2.3s lingering window', async ({ page }) => {
+  test.setTimeout(30000);
+  await boot(page);
+  await startProfile(page, 240);
+
+  await openQuestPrompt(page, 'farm', 'CropBonus', 'find-slime', 'Objective updated: find the Practice Slime.');
+  await resetCanvasTextRecorder(page);
+  await clickGame(page, 260, 388);
+
+  // Confirmed by playthrough: this outcome toast used to hold + fade for
+  // ~2.3s total, long enough that a player who immediately moves away sees
+  // it as a leftover panel competing with already-resumed gameplay. It must
+  // clear well inside that old window now.
+  await expect.poll(async () => hasCanvasText(page, 'Objective updated: find the Practice Slime.')).toBe(true);
+  await page.waitForTimeout(1800);
+  expect(await hasCanvasText(page, 'Objective updated: find the Practice Slime.')).toBe(false);
+});

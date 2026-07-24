@@ -453,9 +453,6 @@ export class PolishedWorldScene extends WorldScene {
   }
 
   private formatHint(hint: string): string {
-    if (hint === 'Explore. Learning bonuses are optional.') {
-      return 'Old magic is stirring nearby.';
-    }
     if (hint.startsWith('Action: ')) {
       return `ACTION • ${hint.slice('Action: '.length)}`;
     }
@@ -467,6 +464,12 @@ export class PolishedWorldScene extends WorldScene {
     const mira = targets.find((target) => target.id === 'mira');
 
     this.cameras.main.fadeIn(360, 12, 10, 18);
+    // Was previously a permanent hint-bar substitution (formatHint), so it
+    // never expired: the base hint returns to the same idle string constantly
+    // during ordinary play, making the replacement effectively stick for the
+    // whole session. This flavor line belongs to the gate-arrival beat, so it
+    // fires once here as a real transient toast instead.
+    this.showToast('Old magic is stirring nearby.');
 
     const arrivalRing = this.add.circle(player.x, player.y + sy(2), sx(10), 0x8f63ff, 0.08)
       .setStrokeStyle(3, 0xcdb8ff, 0.95)

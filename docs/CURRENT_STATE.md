@@ -87,12 +87,9 @@ The full source is [issue #132](https://github.com/Galashots/eldoria-v2/issues/1
 
 1. ~~Reproduce and fix the Farm→Village transition failure~~ — fixed: the transition now works via ordinary held movement for both profiles and both directions (Collision-geometry-only fix; no gameplay/save/transition-logic change).
 
-2. **Persistent transient-message lifecycle plus confirmed Sleepy Sprout/world-label depth repair**
-   - correct the `Old magic is stirring nearby`-class message's lifetime at its source rather than offsetting the overlap;
-   - fix only the demonstrated Sleepy Sprout/world-label depth-sorting defect;
-   - Objective ghosting remains investigation-only (not yet confirmed actionable). The unproved STATS badge report is not actionable until reproduced.
+2. ~~Persistent transient-message lifecycle plus confirmed Sleepy Sprout/world-label depth repair~~ — fixed: `Old magic is stirring nearby.` was a permanent `formatHint()` substitution (it never expired because the base hint returns to the same idle string constantly during ordinary play), replaced with a one-shot toast fired once on gate arrival; the confirmed depth conflict was world-space target markers/labels (depth 3) rendering behind the screen-fixed hint/objective HUD bars (depth 21) whenever they overlapped on screen — raised to depth 22. Objective ghosting remains investigation-only (not yet confirmed actionable). The unproved STATS badge report is not actionable until reproduced.
 
-3. **Dialogue/feedback handoff cleanup** — the Mira/learning-feedback layer must not linger visibly once movement and the next objective are already active.
+3. ~~Dialogue/feedback handoff cleanup~~ — fixed: the post-prompt outcome toast held+faded for ~2.3s total, long enough that a player who moved away immediately after answering saw it as a leftover panel competing with already-resumed movement and the next objective; shortened to ~1.4s.
 
 4. **Practice Slime input-reliability investigation** — not yet a confirmed defect; reproduce deterministically before any fix.
 
