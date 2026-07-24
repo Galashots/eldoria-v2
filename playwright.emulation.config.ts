@@ -50,7 +50,10 @@ export default defineConfig({
     },
     {
       name: 'ipad-emulation',
-      testMatch: /ipad-emulation\.spec\.ts$/,
+      // The perf/PWA journey plus the real-touch specs (golden journey and the
+      // Practice Slime touch investigation) all need the iPad viewport + touch
+      // profile, so they share this project.
+      testMatch: /(ipad-emulation|touch-golden-journey|practice-slime-touch)\.spec\.ts$/,
       use: { ...IPAD_PRO_11 }
     }
   ],

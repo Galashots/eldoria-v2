@@ -1,6 +1,6 @@
 # Eldoria-V2 Current State
 
-**Last verified `main`:** `82b7f192e830922d0d1bf03fda833c0108c38ad4` (PR #131 and PR #69 merged, 2026-07-23)  
+**Last verified `main`:** `57d65050d19e1ad632db6df190edb45330e022b4` (PR #133 and PR #136 merged, 2026-07-24)  
 **Stable product direction:** [`ELDORIA_MASTER_PLAN.md`](ELDORIA_MASTER_PLAN.md)  
 **Repository rules:** [`../AGENTS.md`](../AGENTS.md)
 
@@ -16,7 +16,7 @@ This file is the only authority for volatile capability status, the active miles
 - Grade 2 audio-first **Mage** and Grade 5 reader-mode **Ranger Explorer** profiles. Stable IDs remain `grade2-mage` and `grade5-adventurer`.
 - Short skippable Waking Gate action opening for fresh profiles.
 - Three connected maps: **The Farm**, **Wildbloom Woods**, and **Eldoria Village**, with reciprocal gates, entry banners, persistent current map, and validated objective routing.
-- Keyboard and touch movement, dynamic joystick, ACTION button, portrait guidance, Stats & Mastery, global mute, read-aloud, music ducking, dialogue typewriter, and read-aloud blips.
+- Keyboard and touch movement; a dynamic joystick bounded to a lower-left corner zone (not the whole lower-left quadrant); a four-state ACTION button (inactive / available / pressed / disabled-busy); ambient HUD guidance that dims while a modal holds focus; portrait guidance, Stats & Mastery, global mute, read-aloud, music ducking, dialogue typewriter, and read-aloud blips. A second touch pointer is registered so movement and ACTION can be pressed at once.
 - Mira's three errands, Whispering Scarecrow, Sleepy Sprouts, Baker Pell's Berry Order, optional crop and Practice Slime learning bonuses, and post-purpose flavor interactions.
 - Permanent Practice Slime defeat with save-safe quest routing.
 - Wildbloom Sprig discovery loop with three persistent secrets and profile-specific reveal abilities.
@@ -89,9 +89,9 @@ The full source is [issue #132](https://github.com/Galashots/eldoria-v2/issues/1
 
 2. ~~Persistent transient-message lifecycle plus confirmed Sleepy Sprout/world-label depth repair~~ — fixed: `Old magic is stirring nearby.` was a permanent `formatHint()` substitution (it never expired because the base hint returns to the same idle string constantly during ordinary play), replaced with a one-shot toast fired once on gate arrival; the confirmed depth conflict was world-space target markers/labels (depth 3) rendering behind the screen-fixed hint/objective HUD bars (depth 21) whenever they overlapped on screen — raised to depth 22. Objective ghosting remains investigation-only (not yet confirmed actionable). The unproved STATS badge report is not actionable until reproduced.
 
-3. ~~Dialogue/feedback handoff cleanup~~ — fixed: the post-prompt outcome toast held+faded for ~2.3s total, long enough that a player who moved away immediately after answering saw it as a leftover panel competing with already-resumed movement and the next objective; shortened to ~1.4s.
+3. ~~Dialogue/feedback handoff cleanup~~ — fixed: the post-prompt outcome toast held+faded for ~2.3s total, long enough that a player who moved away immediately after answering saw it as a leftover panel competing with already-resumed movement and the next objective. The shortened ~1.4s "quick" timing is scoped (PR #136 amendment) to the two prompt-close hand-offs only, and on the answer path only when the answer was correct: correct-answer and skip outcomes use the quick ~1.4s timing, while a wrong-answer outcome (which carries the prompt's possibly-long Grade 2 hint text) keeps the original ~2.3s default, as does every other toast (flavor, quest/reward, the practice-offer CTA).
 
-4. **Practice Slime input-reliability investigation** — not yet a confirmed defect; reproduce deterministically before any fix.
+4. ~~Practice Slime input-reliability investigation~~ — **investigation complete; not a defect.** Reproduced across all three ordinary input paths named in the audit — keyboard Space, the on-screen ACTION control (real touch tap), and real touch under iPad emulation (`tests-emulation/practice-slime-touch.spec.ts`) — inspecting actual hit-state transitions, not animation. Deliberately spaced strikes land all three hits and complete on every path. The single-slot buffered-strike that drops rapid mash input beyond one buffered slot is intentional anti-mash / anti-hold-to-win design (documented and tested in `tests/practice-slime-encounter.spec.ts`), and matches the reported "animated but didn't advance" symptom. No deterministic ordinary-player input is lost, so combat is unchanged.
 
 5. **D4 — Run the first character perspective trial** — parallel art lane, not gated on items 2–4
    - one neutral Mage identity, four idle directions only; same-sheet versus direction-anchored generation;
@@ -99,7 +99,7 @@ The full source is [issue #132](https://github.com/Galashots/eldoria-v2/issues/1
    - judged on exact runtime pixels on bright Farm and darker Woods plates;
    - choose size/prompt strategy before commissioning complete animation families.
 
-6. **HUD/touch-control consolidation** — deferred design pass (not a bug-fix item); see the audit for acceptance criteria.
+6. ~~HUD/touch-control consolidation~~ — delivered (this PR): the dynamic joystick now activates only from a bounded lower-left corner zone (`src/presentation/joystickZone.ts`, ~323×274 CSS px at 1194×834) instead of the whole lower-left quadrant, and a touch on any fixed control (ACTION/STATS/mute/dialogue/prompt/Stats-CLOSE) no longer engages it; ACTION has four distinct states — inactive, available, pressed, disabled/busy (`src/presentation/actionButtonState.ts`); ambient HUD guidance (header, objective, hint) dims while a modal holds focus while staying present, keeping one visible objective layer and one ambient-hint layer without collapsing the WorldScene-authority/PolishedWorldScene-presentation split; a second touch pointer is registered so movement and ACTION can be pressed together. Proven through real Chromium-emulation touch input (`tests-emulation/touch-golden-journey.spec.ts`, `tests-emulation/support/touch.ts`) plus Phaser-free unit gates; both profiles retain their guidance and Grade 2 keeps READ ALOUD. Physical-iPad and WebKit validation remain outstanding.
 
 7. **Stats & Mastery / Profile Select production presentation** — deferred until approved D4 identity art/portraits are available; not blocking D4.
 
