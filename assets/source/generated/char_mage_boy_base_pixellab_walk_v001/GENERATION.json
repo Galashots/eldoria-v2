@@ -1,0 +1,30 @@
+{
+  "schema": "eldoria-external-generation-provenance/v1",
+  "family": "char_mage_boy_base_pixellab_walk_v001",
+  "target": "char_mage_boy_base",
+  "clip": "walk",
+  "generated": "2026-07-25",
+  "provider": {
+    "name": "PixelLab",
+    "endpoint": "POST /animate-character",
+    "characterId": "8ce440ce-d6d2-412b-83ea-a756e827e0fc",
+    "note": "Animates the ALREADY-ACCEPTED character by id, so identity is preserved by construction rather than re-prompted. This is why the walk frames match the accepted idle without any identity work."
+  },
+  "requests": {
+    "north_west_east": { "mode": "template", "template_animation_id": "walk", "seed": 20260728 },
+    "south": { "mode": "template", "template_animation_id": "walking", "seed": 16180339 }
+  },
+  "whyTwoTemplates": "The 'walk' template systematically flips the head on the SOUTH direction: 1-2 of 6 frames render the back of the head mid-cycle. Two seeds reproduced it. The separate 'walking' template holds the south heading cleanly. north/west/east keep 'walk' because it is clean there and regenerating risks a regression - a 'walking' north was generated and REJECTED for rendering the chest gem on the character's back.",
+  "rejectedIterations": [
+    { "id": "south walk seed 20260728", "outcome": "2 of 6 frames show back of head" },
+    { "id": "south walk seed 31415926", "outcome": "1 of 6 frames still shows back of head" },
+    { "id": "south v3 custom mode", "outcome": "heading correct but faces smeared and tunic silhouette wobbled 15-20px" },
+    { "id": "north walking seed 14142135", "outcome": "chest gem rendered on the BACK in 4 frames; union 18x49 also overflowed the 48px cell" }
+  ],
+  "reproducibility": {
+    "deterministicDownstream": true,
+    "deterministicUpstream": "unverified",
+    "note": "Normalization is deterministic. Generation is a hosted third-party service; seeds are recorded but identical regeneration is not verified. The committed frames are the authority."
+  },
+  "runtimeSheetSha256": "e9e735c98467fcfda5f643a73fcfd2213cf7b38fb20fac6ac89004eb74f395d0"
+}

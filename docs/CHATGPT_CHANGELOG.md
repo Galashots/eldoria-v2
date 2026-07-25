@@ -4,6 +4,16 @@ This file keeps recent, high-value change summaries. Detailed historical entries
 
 Each entry should state the actual author, branch or PR, concise scope, verification, compatibility, and remaining risk. Implementation narratives belong in PR descriptions, commits, and audit records.
 
+## 2026-07-25 — Mage walk clip (PixelLab), 6 frames x 4 directions
+
+- Author/branch: Claude Code, `claude/d4-mage-walk-cycle`, from `main` at `30e4467`. Companion to the accepted idle family (PR #140); animates the **same accepted character id**, so identity is preserved by construction rather than re-prompted.
+- Output: `char_mage_boy_base_pixellab_walk_v001` — 192x192 RGBA, 6 cols x 4 rows of 32x48 (rows front/back/left/right). 24 source frames committed byte-unchanged. **Not runtime-integrated:** stays under `assets/source/generated/`, not in `assets/sprites/`, not loaded by any scene, no Phaser animation registered.
+- **Normalization finding (the transferable part).** An animation clip cannot use the per-frame `trim: alpha` approach the idle sheet uses. Three approaches were measured: per-frame trim plants the feet but wobbles the body up to 2px horizontally (frame widths swing 15->20); one shared rect per direction keeps the body stable but lets the feet float up to 5px, which reads as hopping; **shared X range per direction plus a per-frame rect bottom pinned to that frame's lowest opaque row** gives planted feet AND a stable body. All 24 cells land on contact row 47, 0 semi-alpha, 0 cell bleed, `scale: 1.0` so no resampling.
+- **Two templates, deliberately.** South uses the `walking` template; north/west/east use `walk`. The `walk` template systematically flips the head on south (1-2 of 6 frames render the back of the head, reproduced across two seeds). A v3 custom-mode south held the heading but smeared faces and wobbled the silhouette. A `walking` north was generated and **rejected** for rendering the chest gem on the character's back. All rejected iterations are recorded in `GENERATION.json`.
+- Verification: `npm run check` exit 0; `npm run test:unit` 267/267; `npm run test:visual-targets` pass; `npm run test:asset-pipeline` pass; manifest validates via `validate-asset-sheet`. The perspective-trial harness gates a 128x48 four-direction idle sheet and does not apply to a 6x4 clip, so evidence here is per-cell measurement plus the committed sheet.
+- Compatibility: no runtime, save schema, profile ID, curriculum, quest, map, dependency or workflow change.
+- Remaining risk: frame timing, loop points and animation registration are unaddressed. Head bob is 5px on south, 3px north — inherent to the generated frames' differing heights, correct walk behaviour but worth a look at speed. Verdict HOLD pending the owner's visual verdict.
+
 ## 2026-07-24 — HUD and touch-control consolidation; Practice Slime input investigation
 
 - Author/branch: Claude Code, `claude/hud-touch-consolidation`. Executes the accepted post-D3 queue items 6 (HUD/touch-control consolidation) and 4 (Practice Slime input-reliability investigation) from `docs/playtests/PLAYTHROUGH_UI_AUDIT_2026-07-23.md` / `CURRENT_STATE.md`, built forward from `main` at `57d6505` (PR #136 merged). One coherent input-and-interface PROTOTYPE slice.
