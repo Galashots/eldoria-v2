@@ -50,6 +50,7 @@ import { CURRENT_SAVE_VERSION, SaveSystem, type StarterQuestStep } from '../syst
 import { loadAudioMuted, saveAudioMuted } from '../systems/AudioPreference';
 import { createSpeechSupport } from '../systems/speech';
 import { TEXT_BLIP_COOLDOWN_MS } from '../systems/textBlips';
+import { worldActorDepth } from '../systems/worldDepth';
 import {
   resolveObjectiveGuidance,
   type ObjectiveGuidance
@@ -619,7 +620,10 @@ export class WorldScene extends Phaser.Scene {
         )
           .setOrigin(0.5, 1)
           .setScale(GAME_SCALE)
-          .setDepth(2)
+          // Bottom origin, so the sprite's own y is its ground contact. The
+          // slime never moves, so one sort at creation is enough — the hero
+          // walking past it is what changes, and the hero re-sorts per frame.
+          .setDepth(worldActorDepth(target.y))
           .play(PRACTICE_SLIME_IDLE_ANIMATION);
         // The slime's idle animation is already alive, so it pops on
         // approach but never idle-bobs (two idle systems would fight).

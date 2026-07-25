@@ -15,6 +15,7 @@ import {
   type WildbloomDiscoverySnapshot
 } from '../presentation/WildbloomDiscoveryController';
 import type { FarmQuestOutcome } from '../systems/FarmQuestSystem';
+import { worldActorDepth } from '../systems/worldDepth';
 import { MAP_ENTRY_BANNER_TOTAL_MS, WorldScene } from './WorldScene';
 
 type PolishedSceneInitData = {
@@ -378,7 +379,14 @@ export class PolishedWorldScene extends WorldScene {
     // interaction authority underneath it. Scaling this single Graphics
     // object reproduces every local fill/shape coordinate below at
     // GAME_SCALE without needing each one doubled by hand.
-    const npc = this.add.graphics().setPosition(mira.x, mira.y).setScale(GAME_SCALE).setDepth(3.5);
+    // Sorted into the shared actor band by the ground ellipse she is drawn
+    // standing on (local y 5), not by her anchor point, so the hero passes in
+    // front of her from the south and behind her from the north. She never
+    // moves, so one sort at creation is enough.
+    const npc = this.add.graphics()
+      .setPosition(mira.x, mira.y)
+      .setScale(GAME_SCALE)
+      .setDepth(worldActorDepth(mira.y + sy(5)));
     npc.fillStyle(0x06110d, 0.35);
     npc.fillEllipse(0, 5, 24, 8);
     npc.fillStyle(0x5a2f68, 1);
