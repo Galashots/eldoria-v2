@@ -8,6 +8,12 @@
 // judged: the whole point is which sprite wins a specific overlap, and a
 // full-canvas screenshot buries a 64px overlap in 960x640 of farm.
 //
+// Both passes must be captured against the SAME dev server URL, or the
+// comparison proves nothing about the code change. Set ELDORIA_BASE_URL when
+// vite has fallen back off port 5173 because another worktree already holds
+// it — a silent capture against someone else's server is the one failure
+// mode this evidence cannot tolerate.
+//
 // Usage:
 //   node scripts/capture-world-depth-evidence.mjs before /tmp/world-depth
 //   node scripts/capture-world-depth-evidence.mjs after  /tmp/world-depth
@@ -28,6 +34,7 @@ if (PASS !== 'before' && PASS !== 'after') {
 }
 
 const VIEWPORT = { width: 1194, height: 834 };
+const BASE_URL = process.env.ELDORIA_BASE_URL ?? 'http://127.0.0.1:5173/';
 
 // Mirrors src/gameDimensions.ts GAME_WIDTH/GAME_HEIGHT. Duplicated as plain
 // constants rather than imported: this script runs under plain `node`, not
@@ -49,7 +56,7 @@ async function captureProfile(browser, profile) {
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
 
   await page.addInitScript(() => { window.__ELDORIA_E2E__ = true; });
-  await page.goto('http://127.0.0.1:5173/');
+  await page.goto(BASE_URL);
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   await page.waitForSelector('canvas');

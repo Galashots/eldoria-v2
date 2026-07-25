@@ -80,4 +80,4 @@ export const WORLD_DEPTH_EVIDENCE_PROFILES = [
 /** Crop window around the overlap, in game-logical px. */
 export const CROP = { width: 176, height: 168 };
 /** Nearest-neighbour magnification applied to each cropped cell. */
-export const CELL_ZOOM = 3;
+export const CELL_ZOOM = 2;
