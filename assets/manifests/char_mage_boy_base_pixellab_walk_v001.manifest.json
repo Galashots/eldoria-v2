@@ -1,0 +1,594 @@
+{
+  "version": 1,
+  "id": "char_mage_boy_base_pixellab_walk_v001",
+  "_note": "Walk clip, 6 frames x 4 directions. Each direction shares ONE X range across its six frames so the body never wobbles horizontally, while each frame's rect bottom is pinned to that frame's own lowest opaque row so the feet stay planted on the pivot row. A single shared rect would have preserved up to 5px of generator vertical float (reads as hopping); per-frame alpha trim would have re-centred each frame and wobbled the body up to 2px. scale 1.0: no resampling.",
+  "target": {
+    "outputPath": "../source/generated/char_mage_boy_base_pixellab_walk_v001/normalized_sheet.png",
+    "cellPx": [
+      32,
+      48
+    ],
+    "cols": 6,
+    "rows": 4
+  },
+  "sources": {
+    "south_0": {
+      "path": "../source/generated/char_mage_boy_base_pixellab_walk_v001/south_00.png",
+      "background": {
+        "mode": "alpha"
+      }
+    },
+    "south_1": {
+      "path": "../source/generated/char_mage_boy_base_pixellab_walk_v001/south_01.png",
+      "background": {
+        "mode": "alpha"
+      }
+    },
+    "south_2": {
+      "path": "../source/generated/char_mage_boy_base_pixellab_walk_v001/south_02.png",
+      "background": {
+        "mode": "alpha"
+      }
+    },
+    "south_3": {
+      "path": "../source/generated/char_mage_boy_base_pixellab_walk_v001/south_03.png",
+      "background": {
+        "mode": "alpha"
+      }
+    },
+    "south_4": {
+      "path": "../source/generated/char_mage_boy_base_pixellab_walk_v001/south_04.png",
+      "background": {
+        "mode": "alpha"
+      }
+    },
+    "south_5": {
+      "path": "../source/generated/char_mage_boy_base_pixellab_walk_v001/south_05.png",
+      "background": {
+        "mode": "alpha"
+      }
+    },
+    "north_0": {
+      "path": "../source/generated/char_mage_boy_base_pixellab_walk_v001/north_00.png",
+      "background": {
+        "mode": "alpha"
+      }
+    },
+    "north_1": {
+      "path": "../source/generated/char_mage_boy_base_pixellab_walk_v001/north_01.png",
+      "background": {
+        "mode": "alpha"
+      }
+    },
+    "north_2": {
+      "path": "../source/generated/char_mage_boy_base_pixellab_walk_v001/north_02.png",
+      "background": {
+        "mode": "alpha"
+      }
+    },
+    "north_3": {
+      "path": "../source/generated/char_mage_boy_base_pixellab_walk_v001/north_03.png",
+      "background": {
+        "mode": "alpha"
+      }
+    },
+    "north_4": {
+      "path": "../source/generated/char_mage_boy_base_pixellab_walk_v001/north_04.png",
+      "background": {
+        "mode": "alpha"
+      }
+    },
+    "north_5": {
+      "path": "../source/generated/char_mage_boy_base_pixellab_walk_v001/north_05.png",
+      "background": {
+        "mode": "alpha"
+      }
+    },
+    "west_0": {
+      "path": "../source/generated/char_mage_boy_base_pixellab_walk_v001/west_00.png",
+      "background": {
+        "mode": "alpha"
+      }
+    },
+    "west_1": {
+      "path": "../source/generated/char_mage_boy_base_pixellab_walk_v001/west_01.png",
+      "background": {
+        "mode": "alpha"
+      }
+    },
+    "west_2": {
+      "path": "../source/generated/char_mage_boy_base_pixellab_walk_v001/west_02.png",
+      "background": {
+        "mode": "alpha"
+      }
+    },
+    "west_3": {
+      "path": "../source/generated/char_mage_boy_base_pixellab_walk_v001/west_03.png",
+      "background": {
+        "mode": "alpha"
+      }
+    },
+    "west_4": {
+      "path": "../source/generated/char_mage_boy_base_pixellab_walk_v001/west_04.png",
+      "background": {
+        "mode": "alpha"
+      }
+    },
+    "west_5": {
+      "path": "../source/generated/char_mage_boy_base_pixellab_walk_v001/west_05.png",
+      "background": {
+        "mode": "alpha"
+      }
+    },
+    "east_0": {
+      "path": "../source/generated/char_mage_boy_base_pixellab_walk_v001/east_00.png",
+      "background": {
+        "mode": "alpha"
+      }
+    },
+    "east_1": {
+      "path": "../source/generated/char_mage_boy_base_pixellab_walk_v001/east_01.png",
+      "background": {
+        "mode": "alpha"
+      }
+    },
+    "east_2": {
+      "path": "../source/generated/char_mage_boy_base_pixellab_walk_v001/east_02.png",
+      "background": {
+        "mode": "alpha"
+      }
+    },
+    "east_3": {
+      "path": "../source/generated/char_mage_boy_base_pixellab_walk_v001/east_03.png",
+      "background": {
+        "mode": "alpha"
+      }
+    },
+    "east_4": {
+      "path": "../source/generated/char_mage_boy_base_pixellab_walk_v001/east_04.png",
+      "background": {
+        "mode": "alpha"
+      }
+    },
+    "east_5": {
+      "path": "../source/generated/char_mage_boy_base_pixellab_walk_v001/east_05.png",
+      "background": {
+        "mode": "alpha"
+      }
+    }
+  },
+  "frames": [
+    {
+      "clip": "walk_front",
+      "sourceRef": "south_0",
+      "sourceRect": [
+        16,
+        6,
+        18,
+        48
+      ],
+      "destCell": [
+        0,
+        0
+      ],
+      "trim": "none",
+      "fit": "fixed",
+      "scale": 1,
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "walk_front",
+      "sourceRef": "south_1",
+      "sourceRect": [
+        16,
+        10,
+        18,
+        48
+      ],
+      "destCell": [
+        1,
+        0
+      ],
+      "trim": "none",
+      "fit": "fixed",
+      "scale": 1,
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "walk_front",
+      "sourceRef": "south_2",
+      "sourceRect": [
+        16,
+        8,
+        18,
+        48
+      ],
+      "destCell": [
+        2,
+        0
+      ],
+      "trim": "none",
+      "fit": "fixed",
+      "scale": 1,
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "walk_front",
+      "sourceRef": "south_3",
+      "sourceRect": [
+        16,
+        5,
+        18,
+        48
+      ],
+      "destCell": [
+        3,
+        0
+      ],
+      "trim": "none",
+      "fit": "fixed",
+      "scale": 1,
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "walk_front",
+      "sourceRef": "south_4",
+      "sourceRect": [
+        16,
+        9,
+        18,
+        48
+      ],
+      "destCell": [
+        4,
+        0
+      ],
+      "trim": "none",
+      "fit": "fixed",
+      "scale": 1,
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "walk_front",
+      "sourceRef": "south_5",
+      "sourceRect": [
+        16,
+        7,
+        18,
+        48
+      ],
+      "destCell": [
+        5,
+        0
+      ],
+      "trim": "none",
+      "fit": "fixed",
+      "scale": 1,
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "walk_back",
+      "sourceRef": "north_0",
+      "sourceRect": [
+        17,
+        9,
+        16,
+        48
+      ],
+      "destCell": [
+        0,
+        1
+      ],
+      "trim": "none",
+      "fit": "fixed",
+      "scale": 1,
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "walk_back",
+      "sourceRef": "north_1",
+      "sourceRect": [
+        17,
+        11,
+        16,
+        48
+      ],
+      "destCell": [
+        1,
+        1
+      ],
+      "trim": "none",
+      "fit": "fixed",
+      "scale": 1,
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "walk_back",
+      "sourceRef": "north_2",
+      "sourceRect": [
+        17,
+        11,
+        16,
+        48
+      ],
+      "destCell": [
+        2,
+        1
+      ],
+      "trim": "none",
+      "fit": "fixed",
+      "scale": 1,
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "walk_back",
+      "sourceRef": "north_3",
+      "sourceRect": [
+        17,
+        9,
+        16,
+        48
+      ],
+      "destCell": [
+        3,
+        1
+      ],
+      "trim": "none",
+      "fit": "fixed",
+      "scale": 1,
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "walk_back",
+      "sourceRef": "north_4",
+      "sourceRect": [
+        17,
+        12,
+        16,
+        48
+      ],
+      "destCell": [
+        4,
+        1
+      ],
+      "trim": "none",
+      "fit": "fixed",
+      "scale": 1,
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "walk_back",
+      "sourceRef": "north_5",
+      "sourceRect": [
+        17,
+        10,
+        16,
+        48
+      ],
+      "destCell": [
+        5,
+        1
+      ],
+      "trim": "none",
+      "fit": "fixed",
+      "scale": 1,
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "walk_left",
+      "sourceRef": "west_0",
+      "sourceRect": [
+        15,
+        10,
+        20,
+        48
+      ],
+      "destCell": [
+        0,
+        2
+      ],
+      "trim": "none",
+      "fit": "fixed",
+      "scale": 1,
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "walk_left",
+      "sourceRef": "west_1",
+      "sourceRect": [
+        15,
+        9,
+        20,
+        48
+      ],
+      "destCell": [
+        1,
+        2
+      ],
+      "trim": "none",
+      "fit": "fixed",
+      "scale": 1,
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "walk_left",
+      "sourceRef": "west_2",
+      "sourceRect": [
+        15,
+        9,
+        20,
+        48
+      ],
+      "destCell": [
+        2,
+        2
+      ],
+      "trim": "none",
+      "fit": "fixed",
+      "scale": 1,
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "walk_left",
+      "sourceRef": "west_3",
+      "sourceRect": [
+        15,
+        9,
+        20,
+        48
+      ],
+      "destCell": [
+        3,
+        2
+      ],
+      "trim": "none",
+      "fit": "fixed",
+      "scale": 1,
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "walk_left",
+      "sourceRef": "west_4",
+      "sourceRect": [
+        15,
+        9,
+        20,
+        48
+      ],
+      "destCell": [
+        4,
+        2
+      ],
+      "trim": "none",
+      "fit": "fixed",
+      "scale": 1,
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "walk_left",
+      "sourceRef": "west_5",
+      "sourceRect": [
+        15,
+        9,
+        20,
+        48
+      ],
+      "destCell": [
+        5,
+        2
+      ],
+      "trim": "none",
+      "fit": "fixed",
+      "scale": 1,
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "walk_right",
+      "sourceRef": "east_0",
+      "sourceRect": [
+        15,
+        10,
+        21,
+        48
+      ],
+      "destCell": [
+        0,
+        3
+      ],
+      "trim": "none",
+      "fit": "fixed",
+      "scale": 1,
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "walk_right",
+      "sourceRef": "east_1",
+      "sourceRect": [
+        15,
+        10,
+        21,
+        48
+      ],
+      "destCell": [
+        1,
+        3
+      ],
+      "trim": "none",
+      "fit": "fixed",
+      "scale": 1,
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "walk_right",
+      "sourceRef": "east_2",
+      "sourceRect": [
+        15,
+        10,
+        21,
+        48
+      ],
+      "destCell": [
+        2,
+        3
+      ],
+      "trim": "none",
+      "fit": "fixed",
+      "scale": 1,
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "walk_right",
+      "sourceRef": "east_3",
+      "sourceRect": [
+        15,
+        9,
+        21,
+        48
+      ],
+      "destCell": [
+        3,
+        3
+      ],
+      "trim": "none",
+      "fit": "fixed",
+      "scale": 1,
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "walk_right",
+      "sourceRef": "east_4",
+      "sourceRect": [
+        15,
+        9,
+        21,
+        48
+      ],
+      "destCell": [
+        4,
+        3
+      ],
+      "trim": "none",
+      "fit": "fixed",
+      "scale": 1,
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "walk_right",
+      "sourceRef": "east_5",
+      "sourceRect": [
+        15,
+        9,
+        21,
+        48
+      ],
+      "destCell": [
+        5,
+        3
+      ],
+      "trim": "none",
+      "fit": "fixed",
+      "scale": 1,
+      "anchor": "center_bottom"
+    }
+  ]
+}

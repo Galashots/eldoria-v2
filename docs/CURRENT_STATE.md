@@ -1,6 +1,6 @@
 # Eldoria-V2 Current State
 
-**Last verified `main`:** `57d65050d19e1ad632db6df190edb45330e022b4` (PR #133 and PR #136 merged, 2026-07-24)  
+**Last verified `main`:** `30e4467c9b4717f04f5f560b37cd09b881c08962` (PR #137 merged, 2026-07-24)  
 **Stable product direction:** [`ELDORIA_MASTER_PLAN.md`](ELDORIA_MASTER_PLAN.md)  
 **Repository rules:** [`../AGENTS.md`](../AGENTS.md)
 
@@ -93,13 +93,13 @@ The full source is [issue #132](https://github.com/Galashots/eldoria-v2/issues/1
 
 4. ~~Practice Slime input-reliability investigation~~ — **investigation complete; not a defect.** Reproduced across all three ordinary input paths named in the audit — keyboard Space, the on-screen ACTION control (real touch tap), and real touch under iPad emulation (`tests-emulation/practice-slime-touch.spec.ts`) — inspecting actual hit-state transitions, not animation. Deliberately spaced strikes land all three hits and complete on every path. The single-slot buffered-strike that drops rapid mash input beyond one buffered slot is intentional anti-mash / anti-hold-to-win design (documented and tested in `tests/practice-slime-encounter.spec.ts`), and matches the reported "animated but didn't advance" symptom. No deterministic ordinary-player input is lost, so combat is unchanged.
 
-5. **D4 — Run the first character perspective trial** — parallel art lane, not gated on items 2–4
-   - one neutral Mage identity, four idle directions only; same-sheet versus direction-anchored generation;
-   - the evidence harness is merged (PR #127) and ready; this task now awaits the exact candidate-PNG handoff for processing through the merged harness;
-   - judged on exact runtime pixels on bright Farm and darker Woods plates;
-   - choose size/prompt strategy before commissioning complete animation families.
-
-6. ~~HUD/touch-control consolidation~~ — delivered (this PR): the dynamic joystick now activates only from a bounded lower-left corner zone (`src/presentation/joystickZone.ts`, ~323×274 CSS px at 1194×834) instead of the whole lower-left quadrant, and a touch on any fixed control (ACTION/STATS/mute/dialogue/prompt/Stats-CLOSE) no longer engages it; ACTION has four distinct states — inactive, available, pressed, disabled/busy (`src/presentation/actionButtonState.ts`); ambient HUD guidance (header, objective, hint) dims while a modal holds focus while staying present, keeping one visible objective layer and one ambient-hint layer without collapsing the WorldScene-authority/PolishedWorldScene-presentation split; two active touch pointers are configured (gameConfig `input.activePointers`) so movement and ACTION can be pressed together. Proven through real Chromium-emulation touch input (`tests-emulation/touch-golden-journey.spec.ts`, `tests-emulation/support/touch.ts`) plus Phaser-free unit gates; both profiles retain their guidance and Grade 2 keeps READ ALOUD. Physical-iPad and WebKit validation remain outstanding.
+5. ~~**D4 — First character perspective trial**~~ — **character art solved; awaiting owner visual verdicts**
+   - **Camera doctrine changed:** `CHARACTER_PERSPECTIVE_LOCK_V1.md` is now **v2.0** — the ~35-degree elevated requirement is withdrawn for an eye-level cardinal turnaround (owner-authorized 2026-07-25). That requirement, not the tooling, was the month-long blocker.
+   - **Idle: PR #140** (open, CI green, owner-accepted) — four cardinal directions from one PixelLab call, authored at native runtime resolution, normalized at `scale: 1.0`, all six machine gates pass.
+   - **Walk: open PR** `claude/d4-mage-walk-cycle` — 6 frames x 4 directions, all 24 cells grounded on row 47 with no horizontal wobble, via a shared-X / per-frame-Y rect construction.
+   - Both are source+evidence only; **neither is runtime-integrated** and no Phaser animation is registered yet. Wiring movement to the walk clip is the next gameplay-visible step.
+   - The Foundry route (PR #138) is closed unmerged as superseded.
+6. ~~HUD/touch-control consolidation~~ — delivered (PR #137): the dynamic joystick now activates only from a bounded lower-left corner zone (`src/presentation/joystickZone.ts`, ~323×274 CSS px at 1194×834) instead of the whole lower-left quadrant, and a touch on any fixed control (ACTION/STATS/mute/dialogue/prompt/Stats-CLOSE) no longer engages it; ACTION has four distinct states — inactive, available, pressed, disabled/busy (`src/presentation/actionButtonState.ts`); ambient HUD guidance (header, objective, hint) dims while a modal holds focus while staying present, keeping one visible objective layer and one ambient-hint layer without collapsing the WorldScene-authority/PolishedWorldScene-presentation split; two active touch pointers are configured (gameConfig `input.activePointers`) so movement and ACTION can be pressed together. Proven through real Chromium-emulation touch input (`tests-emulation/touch-golden-journey.spec.ts`, `tests-emulation/support/touch.ts`) plus Phaser-free unit gates; both profiles retain their guidance and Grade 2 keeps READ ALOUD. Physical-iPad and WebKit validation remain outstanding.
 
 7. **Stats & Mastery / Profile Select production presentation** — deferred until approved D4 identity art/portraits are available; not blocking D4.
 
