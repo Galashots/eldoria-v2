@@ -1,0 +1,91 @@
+{
+  "version": 1,
+  "id": "char_mage_boy_base_cardinal_idle_v001",
+  "_note": "Four-direction neutral-idle Mage source set (S/W/N/E anchors, externally accepted 2026-07-23). Source bytes are committed unchanged; every transform below is declared here. Packed in the canonical harness order front(S), back(N), left(W), right(E). Not runtime-integrated: the output stays under assets/source/generated/, not assets/sprites/.",
+  "target": {
+    "outputPath": "../source/generated/char_mage_boy_base_cardinal_idle_v001/normalized_sheet.png",
+    "cellPx": [32, 48],
+    "cols": 4,
+    "rows": 1
+  },
+  "sources": {
+    "south": {
+      "path": "../source/generated/char_mage_boy_base_cardinal_idle_v001/south_source.png",
+      "background": { "mode": "color_key", "color": "#fa03f9", "tolerance": 40, "fringeHueMargin": 20 },
+      "recolor": {
+        "note": "Hair-tone unification, owner-decided 2026-07-23 (accept projection-good sources, remap hue deterministically at normalization so all four directions share one hair tone). Target is the mean of the two verdict-approved anchors' head-region warm medians: south (68,42,25) and west (75,44,21) -> (72,43,23). South is near-identity.",
+        "regionFraction": [0, 0, 1, 0.35],
+        "select": { "rMin": 30, "rMax": 150, "minWarmth": 10 },
+        "gain": [1.059, 1.024, 0.92]
+      }
+    },
+    "north": {
+      "path": "../source/generated/char_mage_boy_base_cardinal_idle_v001/north_source.png",
+      "background": { "mode": "color_key", "color": "#fa03f9", "tolerance": 40, "fringeHueMargin": 20 },
+      "recolor": {
+        "note": "North measured the dullest hair of the four (head-region warm median (55,37,20)); the owner rejected its source hue and accepted the source on condition of this remap.",
+        "regionFraction": [0, 0, 1, 0.35],
+        "select": { "rMin": 30, "rMax": 150, "minWarmth": 10 },
+        "gain": [1.309, 1.162, 1.15]
+      }
+    },
+    "west": {
+      "path": "../source/generated/char_mage_boy_base_cardinal_idle_v001/west_source.png",
+      "background": { "mode": "color_key", "color": "#fa03f9", "tolerance": 40, "fringeHueMargin": 20 },
+      "recolor": {
+        "note": "West head-region warm median (75,44,21); near-identity against the shared target.",
+        "regionFraction": [0, 0, 1, 0.35],
+        "select": { "rMin": 30, "rMax": 150, "minWarmth": 10 },
+        "gain": [0.96, 0.977, 1.095]
+      }
+    },
+    "east": {
+      "path": "../source/generated/char_mage_boy_base_cardinal_idle_v001/east_source.png",
+      "background": { "mode": "color_key", "color": "#fa03f9", "tolerance": 40, "fringeHueMargin": 20 },
+      "recolor": {
+        "note": "East measured the most coppery hair (head-region warm median (92,40,12)); the blue gain lifts the channel the copper cast suppressed.",
+        "regionFraction": [0, 0, 1, 0.35],
+        "select": { "rMin": 30, "rMax": 150, "minWarmth": 10 },
+        "gain": [0.783, 1.075, 1.917]
+      }
+    }
+  },
+  "frames": [
+    {
+      "clip": "idle_neutral_south",
+      "sourceRef": "south",
+      "destCell": [0, 0],
+      "trim": "alpha",
+      "fit": "fixed",
+      "scale": 0.070313,
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "idle_neutral_north",
+      "sourceRef": "north",
+      "destCell": [1, 0],
+      "trim": "alpha",
+      "fit": "fixed",
+      "scale": 0.05604,
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "idle_neutral_west",
+      "sourceRef": "west",
+      "destCell": [2, 0],
+      "trim": "alpha",
+      "fit": "fixed",
+      "scale": 0.054348,
+      "anchor": "center_bottom"
+    },
+    {
+      "clip": "idle_neutral_east",
+      "sourceRef": "east",
+      "destCell": [3, 0],
+      "trim": "alpha",
+      "fit": "fixed",
+      "scale": 0.055012,
+      "anchor": "center_bottom"
+    }
+  ]
+}

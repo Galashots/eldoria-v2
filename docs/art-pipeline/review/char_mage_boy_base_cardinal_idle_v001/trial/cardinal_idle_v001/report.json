@@ -1,0 +1,256 @@
+{
+  "candidate": {
+    "approach": "direction_anchored",
+    "id": "cardinal_idle_v001",
+    "provider": "eldoria_pixel_foundry"
+  },
+  "deterministicRegeneration": {
+    "files_compared": 9,
+    "runs": 2,
+    "written_files_byte_identical": true
+  },
+  "gates": [
+    {
+      "measured": {
+        "emptyDirections": 0,
+        "expected": [
+          128,
+          48
+        ],
+        "heightPx": 48,
+        "widthPx": 128
+      },
+      "name": "geometry",
+      "passed": true
+    },
+    {
+      "measured": {
+        "semiAlphaPixelsByDirection": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "name": "binary_alpha",
+      "passed": true
+    },
+    {
+      "measured": {
+        "bleedByDirection": [
+          false,
+          false,
+          false,
+          false
+        ]
+      },
+      "name": "cell_bleed",
+      "passed": true
+    },
+    {
+      "measured": {
+        "heightsPx": [
+          45,
+          45,
+          45,
+          45
+        ],
+        "spreadPx": 0,
+        "tolerancePx": 1
+      },
+      "name": "apparent_height_parity",
+      "passed": true
+    },
+    {
+      "measured": {
+        "contactRows": [
+          47,
+          47,
+          47,
+          47
+        ],
+        "pivotRow": 47
+      },
+      "name": "pivot_contact",
+      "passed": true
+    },
+    {
+      "measured": {
+        "declared": {
+          "heightRangePx": [
+            44,
+            46
+          ],
+          "maxWidthPx": 26
+        },
+        "heightsPx": [
+          45,
+          45,
+          45,
+          45
+        ],
+        "widthsPx": [
+          24,
+          20,
+          19,
+          19
+        ]
+      },
+      "name": "occupancy_bounds",
+      "passed": true
+    }
+  ],
+  "inputs": [
+    {
+      "path": "assets/source/generated/char_mage_boy_base_cardinal_idle_v001/normalized_sheet.png",
+      "sha256": "e928005dce23e1c84858b583044d98b044c1d083500c16bc70f33b3f00995f6f"
+    },
+    {
+      "path": "docs/art-pipeline/review/tile_farm_grass_base_grass_a/grass_a.review-normalized.png",
+      "sha256": "40655a11051d5afaf61f5972b471c82419fda0f7e31793b3a2976498e6b5fddb"
+    },
+    {
+      "path": "public/assets/tilesets/eldoria-placeholder.png",
+      "sha256": "906338c894fd234ef5ad11f01f05e25b400f95293068773ca9a527688e0324af"
+    }
+  ],
+  "judgmentGates": [
+    {
+      "detail": "Down-facing torso and head read as elevated and foreshortened, not a frontal portrait.",
+      "name": "foreshortened_not_frontal",
+      "status": "open"
+    },
+    {
+      "detail": "Hair/hat, shoulders, and carried equipment show top planes in every facing (target band: 3-5 px top plane on the head at 32x48).",
+      "name": "visible_top_planes",
+      "status": "open"
+    },
+    {
+      "detail": "All four directions share one camera pitch that matches the approved oak master, not an external reference.",
+      "name": "single_camera_pitch",
+      "status": "open"
+    },
+    {
+      "detail": "One upper-left key light across all directions; no mirrored lighting.",
+      "name": "upper_left_key_light",
+      "status": "open"
+    },
+    {
+      "detail": "Friendly Mage identity and face remain readable at exact runtime size.",
+      "name": "identity_readability",
+      "status": "open"
+    },
+    {
+      "detail": "The character reads as standing inside both plates, not pasted onto them.",
+      "name": "embedded_in_environment",
+      "status": "open"
+    }
+  ],
+  "machinePassed": true,
+  "metricsByDirection": {
+    "back": {
+      "boundsPx": [
+        6,
+        3,
+        20,
+        45
+      ],
+      "contactRow": 47,
+      "empty": false,
+      "heightPx": 45,
+      "semiAlphaPixels": 0,
+      "touchesLeftBoundary": false,
+      "touchesRightBoundary": false,
+      "widthPx": 20
+    },
+    "front": {
+      "boundsPx": [
+        4,
+        3,
+        24,
+        45
+      ],
+      "contactRow": 47,
+      "empty": false,
+      "heightPx": 45,
+      "semiAlphaPixels": 0,
+      "touchesLeftBoundary": false,
+      "touchesRightBoundary": false,
+      "widthPx": 24
+    },
+    "left": {
+      "boundsPx": [
+        6,
+        3,
+        19,
+        45
+      ],
+      "contactRow": 47,
+      "empty": false,
+      "heightPx": 45,
+      "semiAlphaPixels": 0,
+      "touchesLeftBoundary": false,
+      "touchesRightBoundary": false,
+      "widthPx": 19
+    },
+    "right": {
+      "boundsPx": [
+        6,
+        3,
+        19,
+        45
+      ],
+      "contactRow": 47,
+      "empty": false,
+      "heightPx": 45,
+      "semiAlphaPixels": 0,
+      "touchesLeftBoundary": false,
+      "touchesRightBoundary": false,
+      "widthPx": 19
+    }
+  },
+  "plates": {
+    "woods_bridge_label": "bridge terrain (current Wildbloom placeholder tiles)"
+  },
+  "previewLayout": {
+    "baselineRow": 79,
+    "pivotOffsetX": 24,
+    "slotWidth": 48
+  },
+  "producer": {
+    "tool": "scripts/compose-perspective-trial-evidence.mjs"
+  },
+  "provenance": {
+    "canonicalTargets": {
+      "path": "C:/Users/Leo/Desktop/eldoria-v2/.claude/worktrees/claude+d4-mage-normalize/docs/visual-targets/hero_actor_targets.json",
+      "sha256": "c40f0f1b324aaf7c332ed55fb2c285b3e18c82ce6b713a64dfcf306dac3ed64f"
+    },
+    "composeScript": {
+      "path": "C:/Users/Leo/Desktop/eldoria-v2/.claude/worktrees/claude+d4-mage-normalize/scripts/compose-perspective-trial-evidence.mjs",
+      "sha256": "df22ddddd557f258f9188f3ca193799bf6d331ce30030b264ac606ca7298cb6a"
+    },
+    "trialManifest": {
+      "path": "assets/manifests/char_mage_boy_base_cardinal_idle_v001.trial.manifest.json",
+      "sha256": "f099839acaa3b9fd39672b6e2a7c9fd8abf4aae1009f3692111ab6212b6e5b56"
+    }
+  },
+  "reportId": "eldoria-perspective-trial-report/v1",
+  "reviewProtocol": "Judgment gates require a reviewer verdict. Before issuing perspective verdicts, the reviewer (AI or human) must consult external reference imagery of the elevated three-quarter idiom and compare against the approved oak master (owner amendment 2026-07-21). Machine gates measure pixels only.",
+  "target": {
+    "cellPx": [
+      32,
+      48
+    ],
+    "directions": [
+      "front",
+      "back",
+      "left",
+      "right"
+    ],
+    "pivotPx": [
+      16,
+      47
+    ]
+  },
+  "trialId": "char_mage_boy_base_cardinal_idle_v001"
+}

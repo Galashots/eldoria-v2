@@ -235,6 +235,88 @@ function applyCleanup(img, cleanup) {
   return { ...img, colorType: 6, data };
 }
 
+/**
+ * Rejects chroma-key FRINGE: the anti-aliased blend ring a keyed source leaves
+ * around the subject, which survives the color-key box and lands in the
+ * runtime cell as stray key-coloured pixels.
+ *
+ * `background.tolerance` is a per-channel box, so a blend halfway between a
+ * magenta key and a navy tunic sits outside it on every channel and stays
+ * opaque. Distance from the key does not separate them either: a dark fringe
+ * blend and a dark subject colour are equidistant from a bright key, so any
+ * radius wide enough to catch the fringe also erodes the subject.
+ *
+ * This tests the key's HUE SIGNATURE instead. The channels above the key's own
+ * mean are its "high" channels; a pixel is fringe when every high channel still
+ * exceeds every low channel by `fringeHueMargin`. A magenta key (#fa03f9) makes
+ * R and B high and G low, so it rejects any magenta-hued pixel at any
+ * brightness while leaving colours that do not share that signature untouched.
+ * Opt-in: absent `fringeHueMargin` leaves the image untouched.
+ */
+function applyKeyFringe(img, bg) {
+  if (!bg || bg.fringeHueMargin === undefined) return img;
+  const key = hex(bg.color);
+  const mean = (key[0] + key[1] + key[2]) / 3;
+  const high = [0, 1, 2].filter((c) => key[c] > mean);
+  const low = [0, 1, 2].filter((c) => key[c] <= mean);
+  if (!high.length || !low.length) return img;
+  const margin = bg.fringeHueMargin;
+  const data = new Uint8Array(img.data);
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i + 3] === 0) continue;
+    let fringe = true;
+    for (const h of high) for (const l of low) if (data[i + h] - data[i + l] < margin) fringe = false;
+    if (fringe) data[i + 3] = 0;
+  }
+  return { ...img, colorType: 6, data };
+}
+
+/**
+ * Applies declared per-channel gains to the selected pixels inside a declared
+ * fraction of the source's alpha bounding box, at source resolution (before
+ * any downscale) so the correction is carried through resampling.
+ *
+ * Used to unify one tone family across separately generated directions of the
+ * same actor: independently generated sources agree on most of the costume but
+ * can drift on a single feature, and a whole-image white balance would disturb
+ * the channels that already agree. Gains are literal manifest values, never
+ * measured at run time, so the transform is fully deterministic and auditable.
+ * Multiplicative (not additive) so relative shading -- highlights vs shadow --
+ * survives. Opt-in: absent `recolor` leaves the image untouched.
+ */
+function applyRecolor(img, recolor) {
+  if (!recolor) return img;
+  const { width: W, height: H } = img;
+  const data = new Uint8Array(img.data);
+  let x0 = W, y0 = H, x1 = -1, y1 = -1;
+  for (let y = 0; y < H; y += 1) for (let x = 0; x < W; x += 1) {
+    if (data[(y * W + x) * 4 + 3] > 0) {
+      if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+    }
+  }
+  if (x1 < x0) return img;
+  const bw = x1 - x0 + 1, bh = y1 - y0 + 1;
+  const [fx, fy, fw, fh] = recolor.regionFraction ?? [0, 0, 1, 1];
+  const rx0 = Math.max(x0, x0 + Math.round(bw * fx));
+  const ry0 = Math.max(y0, y0 + Math.round(bh * fy));
+  const rx1 = Math.min(x1 + 1, x0 + Math.round(bw * (fx + fw)));
+  const ry1 = Math.min(y1 + 1, y0 + Math.round(bh * (fy + fh)));
+  const sel = recolor.select ?? {};
+  const rMin = sel.rMin ?? 0, rMax = sel.rMax ?? 255, minWarmth = sel.minWarmth ?? 0;
+  const [gr, gg, gb] = recolor.gain;
+  const clamp = (v) => (v < 0 ? 0 : v > 255 ? 255 : v);
+  for (let y = ry0; y < ry1; y += 1) for (let x = rx0; x < rx1; x += 1) {
+    const i = (y * W + x) * 4;
+    if (data[i + 3] === 0) continue;
+    const r = data[i], g = data[i + 1], b = data[i + 2];
+    if (r < rMin || r > rMax || r - b < minWarmth) continue;
+    data[i] = clamp(Math.round(r * gr));
+    data[i + 1] = clamp(Math.round(g * gg));
+    data[i + 2] = clamp(Math.round(b * gb));
+  }
+  return { ...img, colorType: 6, data };
+}
+
 function alphaBounds(img, r) {
   let minX = Infinity, minY = Infinity, maxX = -1, maxY = -1;
   for (let y = r.y; y < r.y + r.h; y += 1) for (let x = r.x; x < r.x + r.w; x += 1) {
@@ -315,6 +397,37 @@ export function collectManifestErrors(manifestPath, options = {}) {
     }
     if (s.background && !['alpha', 'color_key', 'edge_flood_color_key'].includes(s.background.mode)) out.push(err(manifestPath, `sources.${s.ref}.background.mode`, 'background.mode must be alpha, color_key, or edge_flood_color_key.'));
     if (s.grid && (!okInt(s.grid.cols) || !okInt(s.grid.rows) || img.width % s.grid.cols !== 0 || img.height % s.grid.rows !== 0)) out.push(err(manifestPath, `sources.${s.ref}.grid`, 'source dimensions must divide evenly by positive grid cols and rows.'));
+    if (s.background?.fringeHueMargin !== undefined) {
+      if (!['color_key', 'edge_flood_color_key'].includes(s.background.mode)) out.push(err(manifestPath, `sources.${s.ref}.background.fringeHueMargin`, 'fringeHueMargin requires a color-key background mode.'));
+      const d = s.background.fringeHueMargin;
+      if (!(Number.isInteger(d) && d >= 0 && d <= 255)) out.push(err(manifestPath, `sources.${s.ref}.background.fringeHueMargin`, 'fringeHueMargin must be an integer from 0 to 255.'));
+    }
+    if (s.recolor !== undefined) {
+      const rc = `sources.${s.ref}.recolor`;
+      if (typeof s.recolor !== 'object' || s.recolor === null || Array.isArray(s.recolor)) out.push(err(manifestPath, rc, 'recolor must be an object.'));
+      else {
+        const g = s.recolor.gain;
+        if (!(Array.isArray(g) && g.length === 3 && g.every((v) => Number.isFinite(v) && v >= 0))) out.push(err(manifestPath, `${rc}.gain`, 'gain must be [r, g, b] non-negative finite numbers.'));
+        if (s.recolor.regionFraction !== undefined) {
+          const f = s.recolor.regionFraction;
+          const ok = Array.isArray(f) && f.length === 4 && f.every((v) => Number.isFinite(v) && v >= 0 && v <= 1) && f[0] + f[2] <= 1 && f[1] + f[3] <= 1 && f[2] > 0 && f[3] > 0;
+          if (!ok) out.push(err(manifestPath, `${rc}.regionFraction`, 'regionFraction must be [x, y, w, h] fractions in 0..1 with positive w/h staying inside the bounding box.'));
+        }
+        if (s.recolor.select !== undefined) {
+          const sl = s.recolor.select;
+          if (typeof sl !== 'object' || sl === null || Array.isArray(sl)) out.push(err(manifestPath, `${rc}.select`, 'select must be an object.'));
+          else {
+            for (const k of ['rMin', 'rMax', 'minWarmth']) {
+              if (sl[k] !== undefined && !(Number.isInteger(sl[k]) && sl[k] >= -255 && sl[k] <= 255)) out.push(err(manifestPath, `${rc}.select.${k}`, `${k} must be an integer from -255 to 255.`));
+            }
+            const unknown = Object.keys(sl).filter((k) => !['rMin', 'rMax', 'minWarmth'].includes(k));
+            if (unknown.length) out.push(err(manifestPath, `${rc}.select`, `unknown select keys: ${unknown.join(', ')}.`));
+          }
+        }
+        const unknown = Object.keys(s.recolor).filter((k) => !['gain', 'regionFraction', 'select', 'note'].includes(k));
+        if (unknown.length) out.push(err(manifestPath, rc, `unknown recolor keys: ${unknown.join(', ')}.`));
+      }
+    }
     if (s.cleanup !== undefined) {
       if (typeof s.cleanup !== 'object' || s.cleanup === null || Array.isArray(s.cleanup)) out.push(err(manifestPath, `sources.${s.ref}.cleanup`, 'cleanup must be an object.'));
       else {
@@ -409,7 +522,12 @@ export function normalizeAssetSheet(manifestPath) {
   const cache = new Map();
   for (const f of m.frames) {
     const s = f.sourceRef ? byRef.get(f.sourceRef) : { ref: f.sourcePath, path: f.sourcePath, background: f.background };
-    if (!cache.has(s.ref)) cache.set(s.ref, applyCleanup(applyBg(readPng(path.resolve(dir, s.path)), s.background), s.cleanup));
+    // Fringe rejection runs with the key still known (right after keying) and
+    // the recolor last, so it only ever touches pixels that survived keying.
+    if (!cache.has(s.ref)) {
+      const keyed = applyKeyFringe(applyBg(readPng(path.resolve(dir, s.path)), s.background), s.background);
+      cache.set(s.ref, applyRecolor(applyCleanup(keyed, s.cleanup), s.recolor));
+    }
     const sourceImage = cache.get(s.ref);
     const sr = sourceRect(sourceImage, s, f);
     const img = applyEdgeFlood(sourceImage, s.background, sr);

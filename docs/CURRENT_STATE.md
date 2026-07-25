@@ -1,6 +1,6 @@
 # Eldoria-V2 Current State
 
-**Last verified `main`:** `57d65050d19e1ad632db6df190edb45330e022b4` (PR #133 and PR #136 merged, 2026-07-24)  
+**Last verified `main`:** `30e4467c9b4717f04f5f560b37cd09b881c08962` (PR #137 merged, 2026-07-24)  
 **Stable product direction:** [`ELDORIA_MASTER_PLAN.md`](ELDORIA_MASTER_PLAN.md)  
 **Repository rules:** [`../AGENTS.md`](../AGENTS.md)
 
@@ -93,9 +93,10 @@ The full source is [issue #132](https://github.com/Galashots/eldoria-v2/issues/1
 
 4. ~~Practice Slime input-reliability investigation~~ — **investigation complete; not a defect.** Reproduced across all three ordinary input paths named in the audit — keyboard Space, the on-screen ACTION control (real touch tap), and real touch under iPad emulation (`tests-emulation/practice-slime-touch.spec.ts`) — inspecting actual hit-state transitions, not animation. Deliberately spaced strikes land all three hits and complete on every path. The single-slot buffered-strike that drops rapid mash input beyond one buffered slot is intentional anti-mash / anti-hold-to-win design (documented and tested in `tests/practice-slime-encounter.spec.ts`), and matches the reported "animated but didn't advance" symptom. No deterministic ordinary-player input is lost, so combat is unchanged.
 
-5. **D4 — Run the first character perspective trial** — parallel art lane, not gated on items 2–4
-   - one neutral Mage identity, four idle directions only; same-sheet versus direction-anchored generation;
-   - the evidence harness is merged (PR #127) and ready; this task now awaits the exact candidate-PNG handoff for processing through the merged harness;
+5. **D4 — First character perspective trial** — parallel art lane, not gated on items 2–4
+   - **Source generation complete.** All four cardinal neutral-idle Mage anchors (S/W/N/E) were generated direction-anchored and independently audited on 2026-07-23; North's acceptance was conditional on fixing its hair hue at normalization.
+   - **Normalization + machine evidence complete** (open PR, `claude/d4-mage-four-direction-normalize`): sources committed byte-unchanged, normalized to a 128×48 four-cell sheet (32×48, pivot [16,47]) through the existing normalizer, then run through the merged PR #127 harness. All six machine gates pass with byte-identical two-run regeneration; evidence and the full transform record are in `docs/art-pipeline/review/char_mage_boy_base_cardinal_idle_v001/`. Not runtime-integrated and not self-approved.
+   - **Now awaiting the owner's visual verdict, then ChatGPT's independent visual audit.** Camera pitch, foreshortening, visible top planes, key-light direction and identity readability are not machine-decidable and remain `status: open`.
    - judged on exact runtime pixels on bright Farm and darker Woods plates;
    - choose size/prompt strategy before commissioning complete animation families.
 

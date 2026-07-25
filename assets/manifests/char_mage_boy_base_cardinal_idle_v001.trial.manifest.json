@@ -1,0 +1,73 @@
+{
+  "version": 1,
+  "id": "char_mage_boy_base_cardinal_idle_v001",
+  "outDir": "docs/art-pipeline/review/char_mage_boy_base_cardinal_idle_v001/trial",
+  "target": {
+    "cellPx": [
+      32,
+      48
+    ],
+    "directions": [
+      "front",
+      "back",
+      "left",
+      "right"
+    ],
+    "pivotPx": [
+      16,
+      47
+    ]
+  },
+  "plates": {
+    "farm_bright": {
+      "mode": "tile",
+      "tilePath": "docs/art-pipeline/review/tile_farm_grass_base_grass_a/grass_a.review-normalized.png",
+      "tilePx": [
+        16,
+        16
+      ]
+    },
+    "woods_bridge": {
+      "mode": "tileset_cells",
+      "tilesetPath": "public/assets/tilesets/eldoria-placeholder.png",
+      "tilePx": [
+        16,
+        16
+      ],
+      "cells": [
+        [
+          0,
+          0
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          2,
+          0
+        ],
+        [
+          3,
+          0
+        ]
+      ]
+    }
+  },
+  "candidates": [
+    {
+      "id": "cardinal_idle_v001",
+      "provider": "eldoria_pixel_foundry",
+      "approach": "direction_anchored",
+      "sheetPath": "assets/source/generated/char_mage_boy_base_cardinal_idle_v001/normalized_sheet.png",
+      "occupancy": {
+        "maxWidthPx": 26,
+        "heightRangePx": [
+          44,
+          46
+        ]
+      }
+    }
+  ],
+  "_note": "outDir is a dedicated subdirectory holding ONLY harness-generated artifacts: the deterministic-regeneration gate compares outDir against a fresh tree, so any hand-written file inside it (e.g. AUDIT.md) would fail the gate on re-run."
+}
