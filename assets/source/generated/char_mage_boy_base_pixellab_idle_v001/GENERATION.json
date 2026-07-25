@@ -1,0 +1,49 @@
+{
+  "schema": "eldoria-external-generation-provenance/v1",
+  "family": "char_mage_boy_base_pixellab_idle_v001",
+  "target": "char_mage_boy_base",
+  "generated": "2026-07-25",
+  "provider": {
+    "name": "PixelLab",
+    "apiBase": "https://api.pixellab.ai/v2",
+    "endpoint": "POST /create-character-with-4-directions",
+    "auth": "Bearer token held only in a local, uncommitted config.env; never stored in this repo"
+  },
+  "request": {
+    "description": "young boy mage hero, brown tousled hair, bright blue tunic, teal collar and cuff trim, a small bright green diamond gem centred on the chest, brown leather belt, dark navy trousers, brown boots, empty hands, no staff, no weapon, no cape, no hood, full body neutral idle standing",
+    "image_size": { "width": 32, "height": 48 },
+    "view": "high top-down",
+    "outline": "single color black outline",
+    "shading": "basic shading",
+    "detail": "low detail",
+    "template_id": "mannequin",
+    "force_colors": false,
+    "text_guidance_scale": 8,
+    "seed": 20260727
+  },
+  "response": {
+    "returnedCanvasPx": [48, 68],
+    "note": "image_size is a hint, not a contract: the service returned ~1.42x the requested canvas. The FIGURE height tracks the requested height, which is the lever that matters - it landed at 44-45px, the runtime content height, so normalization runs at scale 1.0 with no resampling."
+  },
+  "reproducibility": {
+    "deterministicDownstream": true,
+    "deterministicUpstream": "unverified",
+    "note": "Normalization and evidence composition are deterministic and byte-verified by the harness. The generation itself is a hosted third-party service; the same seed and parameters are recorded here but identical regeneration is NOT verified. The committed source PNGs are the authority."
+  },
+  "sources": {
+    "south_source.png": "f84b835119c2c4cedc47d5a69ad5db16e8598edc780b7036f3d8395f12de2c6d",
+    "north_source.png": "a2ae0543c49425f5511e9d3f74a84bbe294777c824627f8cf5968e233707b383",
+    "west_source.png": "fa8d347fa99684c45c97e8c38b59d37001199395c37775e786b4eff69562fb7a",
+    "east_source.png": "5e1d4193eb0d632c6d31510f5842af4bcfefd937b0dbde75dea8763376e31838"
+  },
+  "licensing": {
+    "outputs": "PixelLab terms grant the account owner ownership of generated outputs with commercial rights",
+    "note": "Recorded from vendor terms during the 2026-07-24 research pass; re-confirm before commercial release."
+  },
+  "rejectedIterations": [
+    { "id": "v001", "request": "48x48", "figurePx": [20, "49-52"], "outcome": "good craft, but a 0.87-0.92x non-integer downscale broke 1px outlines" },
+    { "id": "v002", "request": "32x48 + force_colors + cartoon proportions", "figurePx": [15, "40-43"], "outcome": "regression: lanky, rough face, whole tunic went teal; force_colors constrains palette but not garment assignment" },
+    { "id": "v003", "request": "64x96", "figurePx": [30, "91-94"], "outcome": "beautiful at 8x, but a clean 0.5x halving merged the eyes into one dark mass - detail authored above target resolution does not survive reduction" },
+    { "id": "v004", "request": "32x48, defaults", "figurePx": [17, "44-45"], "outcome": "ADOPTED: authored at native runtime resolution, scale 1.0, no resampling" }
+  ]
+}

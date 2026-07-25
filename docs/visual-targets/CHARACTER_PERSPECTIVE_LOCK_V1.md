@@ -1,10 +1,51 @@
-# Character Perspective Lock v1.1
+# Character Perspective Lock v2.0
 
 **Status:** Binding visual target for new production character, NPC, creature, equipment, and armor work  
 **Original owner decision:** 2026-07-21  
 **Cardinal-heading clarification:** 2026-07-23  
+**Camera-convention change (v2.0):** 2026-07-25 — owner-authorized  
 **Runtime integration status:** Not started  
 **Current milestone status:** [`../CURRENT_STATE.md`](../CURRENT_STATE.md)
+
+---
+
+## 0. Camera convention change (v2.0) — READ FIRST
+
+**The ~35-degree elevated camera requirement is withdrawn.** The binding camera convention
+is now an **eye-level cardinal turnaround**: four cardinal headings of one identity, viewed
+from a fixed camera at or near eye level, with no required downward pitch, foreshortening,
+or visible top surfaces.
+
+**Owner authorization:** Leo, 2026-07-25, in session. Art direction and target geometry are
+owner-gated surfaces; this is the recorded delegation for the change.
+
+**Why.** The elevated requirement was well-specified and repeatedly unmet. Across roughly a
+month it consumed multi-provider generation cycles, a camera blockout, three Foundry batches,
+an owner-exemplar conditioning round, a Blender render pipeline, and a normalization-stage hue
+remap — and produced **no approved character art**. The requirement, not the tooling, was the
+binding constraint: it also implied an art bill (four facings x idle/walk/cast/hurt x every
+actor) that a solo developer cannot pay.
+
+Withdrawing it makes character art tractable in a single generation call at native runtime
+resolution, and unblocks animation families for every actor. A camera-pitch mismatch between
+a flat actor and an angled environment is a stylistic choice players of this game's audience
+do not remark on; an unfinished game is one they do.
+
+**What still binds, unchanged:**
+
+- strict cardinal headings — South/front, West/left, North/back, East/right, exactly 90 degrees
+  apart, never diagonal (section 2);
+- one identity, one apparent scale, one lighting direction, one grounding model across all four
+  directions (sections 3 and 4);
+- 32x48 canvas, 16x16 footprint, pivot [16,47], contact row 47 (section 4);
+- identity rules per family (section 5);
+- equipment/armor sequencing (section 6);
+- the trial protocol and required evidence (sections 8 and 9).
+
+**Superseded language.** Sections 1, 7 and 9 are updated below. Elsewhere in this document the
+phrases *elevated*, *elevated camera*, *top surfaces*, and *foreshortened* are **retained for
+historical rationale only and are no longer acceptance criteria**. Where such prose conflicts
+with this section, this section governs.
 
 This document establishes the camera projection and sprite-family rules required to align Eldoria's actors with the owner-approved painterly landscape reference.
 
@@ -17,23 +58,29 @@ Those two axes must never be conflated.
 
 ---
 
-## 1. Target projection
+## 1. Target projection (v2.0)
 
-Eldoria uses one **fixed elevated orthographic 2.5D camera** for environments and standing actors.
+Eldoria uses one **fixed orthographic camera at or near eye level** for standing actors. The
+environment keeps its own painterly slightly-overhead read; the actor is **not** required to
+match that pitch.
 
-The camera looks downward at approximately **35 degrees relative to an eye-level horizontal view**. That number is a practical description, not a machine-verifiable substitute for the owner-approved visual exemplars. When the number and an approved exemplar appear to differ, the approved exemplar governs the visual read.
+Actors are authored as a **cardinal turnaround**: the actor rotates on the world ground plane
+beneath a stationary camera. Downward pitch, vertical foreshortening and visible top surfaces
+are **permitted but not required, and never acceptance criteria**.
 
-The result should feel like a character standing inside a slightly overhead fantasy world — not:
+Still excluded:
 
-- an eye-level portrait or platform-game elevation;
 - a true top-down token;
 - a true isometric diamond projection;
 - a perspective or lens change between directions;
 - four unrelated camera angles assigned to four movement directions.
 
-All directions preserve one camera position, one downward pitch, one orthographic scale language, one lighting direction, and one grounding model. The actor rotates beneath that stationary camera.
+All directions must preserve **one camera position, one scale language, one lighting direction,
+and one grounding model**. That cross-direction consistency — not pitch — is the real
+requirement, and it is what the machine gates and the visual audit check.
 
-Do not use the unqualified phrase **three-quarter side view** for four-direction actor headings. It previously conflated vertical camera elevation with a 45-degree horizontal actor turn.
+Do not use the unqualified phrase **three-quarter side view** for four-direction actor headings.
+It conflates vertical camera elevation with a 45-degree horizontal actor turn.
 
 ---
 
@@ -269,12 +316,16 @@ Equipment variants inherit the exact base geometry. They must not rely on runtim
 A production prompt or brief must state:
 
 - the exact runtime cell and source-sheet geometry;
-- one fixed elevated orthographic camera, approximately 35 degrees downward relative to eye level;
+- one fixed orthographic camera at or near eye level, identical for all four headings (v2.0);
 - strict South, West, North, and East actor headings beneath the stationary camera;
-- South and North are direct cardinal front/rear headings, not eye-level elevations;
+- South and North are direct cardinal front/rear headings;
 - West and East are exact 90-degree cardinal rotations, not Southwest/Southeast diagonal turns;
-- visible top surfaces and vertical foreshortening appropriate to every heading;
 - one upper-left key light;
+- **author at native runtime resolution.** Detail drawn at a larger canvas does not survive
+  reduction to a 32x48 cell — measured: a 92x136 source halved cleanly to 46px merged the eyes
+  into a single dark mass, while a source authored at ~44-45px tall needed no resampling and
+  stayed crisp. Request the generator's canvas so the figure lands at the runtime height and
+  normalize at `scale: 1.0`;
 - one stable body scale and bottom-centre pivot;
 - no text, labels, frames, UI, checkerboard, scenery, or ground shadow;
 - no effects outside cells unless the target specification explicitly includes a VFX layer;
@@ -285,7 +336,7 @@ A production prompt or brief must state:
 
 For West/East prompts, prefer this construction:
 
-> Rotate the actor exactly 90 degrees around its vertical axis beneath the same stationary elevated camera. Its forward axis points exactly West/East with no South or North component. Preserve visible top surfaces from the elevated camera; do not rotate the actor diagonally toward the viewer.
+> Rotate the actor exactly 90 degrees around its vertical axis beneath the same stationary camera. Its forward axis points exactly West/East with no South or North component. Do not rotate the actor diagonally toward the viewer.
 
 Do not use the phrase “three-quarter side view” for a four-direction West/East prompt.
 
@@ -338,12 +389,12 @@ Before a base character family is approved:
 
 ### Camera and heading acceptance questions
 
-- Do all four directions share one stationary elevated camera and apparent scale?
-- Does South point exactly down while still showing crown/shoulder top surfaces and vertical foreshortening?
+- Do all four directions share one stationary camera and apparent scale? (v2.0: pitch is not judged; consistency is.)
+- Does South point exactly down?
 - Does West point exactly left with no Southwest or Northwest yaw?
-- Does North point exactly up while showing top/rear surfaces under the same camera?
+- Does North point exactly up?
 - Does East point exactly right with no Southeast or Northeast yaw?
-- Are West/East elevated cardinal profiles rather than eye-level side elevations?
+- Is it recognisably the same character, costume, proportions and palette in all four cells?
 - Do feet, contact point, and shadows agree with the environment's ground plane?
 - Does equipment remain on the same body, side, and scale?
 - Does the character feel embedded in the landscape rather than pasted onto it?

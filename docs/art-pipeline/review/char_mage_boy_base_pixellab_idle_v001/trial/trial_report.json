@@ -1,0 +1,33 @@
+{
+  "candidates": [
+    {
+      "approach": "same_sheet",
+      "failedGates": [],
+      "id": "pixellab_idle_v001",
+      "machinePassed": true
+    }
+  ],
+  "deterministicRegeneration": {
+    "files_compared": 9,
+    "runs": 2,
+    "written_files_byte_identical": true
+  },
+  "machinePassed": true,
+  "provenance": {
+    "canonicalTargets": {
+      "path": "C:/Users/Leo/Desktop/eldoria-v2/.claude/worktrees/claude+pixellab-mage/docs/visual-targets/hero_actor_targets.json",
+      "sha256": "c40f0f1b324aaf7c332ed55fb2c285b3e18c82ce6b713a64dfcf306dac3ed64f"
+    },
+    "composeScript": {
+      "path": "C:/Users/Leo/Desktop/eldoria-v2/.claude/worktrees/claude+pixellab-mage/scripts/compose-perspective-trial-evidence.mjs",
+      "sha256": "df22ddddd557f258f9188f3ca193799bf6d331ce30030b264ac606ca7298cb6a"
+    },
+    "trialManifest": {
+      "path": "assets/manifests/char_mage_boy_base_pixellab_idle_v001.trial.manifest.json",
+      "sha256": "786e54f8d14dc74f3c4bce8bbff513947681334ed0a5d44ec9351bbda0b538bf"
+    }
+  },
+  "reportId": "eldoria-perspective-trial-report/v1",
+  "reviewProtocol": "Judgment gates require a reviewer verdict. Before issuing perspective verdicts, the reviewer (AI or human) must consult external reference imagery of the elevated three-quarter idiom and compare against the approved oak master (owner amendment 2026-07-21). Machine gates measure pixels only.",
+  "trialId": "char_mage_boy_base_pixellab_idle_v001"
+}
