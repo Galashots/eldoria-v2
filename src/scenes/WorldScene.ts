@@ -55,7 +55,6 @@ import {
   BAKER_PELL_SHOP,
   VILLAGE_SHOP_BLOCKER_NAME,
   VILLAGE_SHOP_OBJECT_PREFIX,
-  VILLAGE_SHOP_SORTS_AS_ACTOR,
   VILLAGE_SHOP_TEXTURE_KEY,
   buildVillageShopPlan
 } from '../data/villageShopBuilding';
@@ -552,7 +551,7 @@ export class WorldScene extends Phaser.Scene {
     }
 
     const plan = buildVillageShopPlan(BAKER_PELL_SHOP, worldTilePx);
-    const depth = VILLAGE_SHOP_SORTS_AS_ACTOR ? worldActorDepth(plan.groundY) : 0;
+    const depth = worldActorDepth(plan.groundY);
     for (const placement of plan.placements) {
       this.add
         .image(placement.x, placement.y, VILLAGE_SHOP_TEXTURE_KEY, placement.frame)

@@ -4,8 +4,14 @@ Durable evidence for `claude/village-shop-structure`: the nine approved
 shop-facade runtime masters composed into Baker Pell's shop, the Village's first
 structure.
 
-**Verdict: `HOLD` — `named_next_gate: owner (Leo) visual verdict + the
-render-layer decision below.` Claude does not self-approve art or composition.**
+**Verdict: `HOLD` — `named_next_gate: owner (Leo) visual verdict.`** Claude does
+not self-approve art or composition.
+
+**The render-layer question this sheet was built to answer is settled.** Owner
+decision (Leo, 2026-07-26, in session): structures are actors, not terrain —
+every building and tall prop Y-sorts against the hero, generalized beyond this
+shop and recorded in `docs/VISUAL_ASSET_CONTRACT.md` under "Buildings and
+props". Row 3 below is retained as the record of the rejected alternative.
 
 ## The sheet
 
@@ -21,11 +27,12 @@ other pixel, no blending) to keep one reviewable file a sane size.
 | **row 3** `…--as-terrain-layer` | identical framing, structure depth forced to 0 — **the hero draws over the roof** | same |
 | **row 4** `blocked-by-the-front-wall` | hero walked north into the solid rows and stopped short | same |
 
-**Rows 2 and 3 are the decision.** They are the same frame with one number
-changed. Row 2 is this composition. Row 3 is what
-`renderLayer: "terrain"` renders — the hero standing on top of the thatch. That
-is not a mock-up: the two differ by exactly the structure's depth value, so
-forcing it to 0 in the live scene produces what the alternative actually draws.
+**Rows 2 and 3 were the decision, and row 2 won.** They are the same frame with
+one number changed. Row 2 is what ships. Row 3 is what `renderLayer: "terrain"`
+renders — the hero standing on top of the thatch — and is kept as the record of
+what was rejected. Row 3 is not a mock-up: the two differ by exactly the
+structure's depth value, so forcing it to 0 in the live scene produces what the
+alternative actually draws.
 
 ## Measured, from the live scene at capture time
 
@@ -64,6 +71,23 @@ door in his column, so the shopkeeper stands in front of his own door. A unit
 test asserts that relationship, that the footprint is clear of the map's own
 Collision layer, and that no Objects entry is buried under it — against the
 committed map, not by assumption.
+
+## Found while applying the decision: the roof family has no declared target
+
+`docs/visual-targets/farm_village_tile_targets.json` declares
+`tile_village_shop_wall` and `tile_village_shop_door` — and **not**
+`tile_village_shop_roof`, even though the roof family has three approved runtime
+masters, a manifest, and a PASS verdict in
+[`village_top_gaps/AUDIT.md`](../../art-pipeline/review/village_top_gaps/AUDIT.md).
+It was produced and approved without a target entry, and the validator did not
+notice because it checks the targets that exist rather than that every approved
+family has one.
+
+So the `renderLayer: actors_body` correction could only be applied to the two
+families that have targets. **I have not invented a roof target**: canvas,
+footprint, pivot and especially `collision.solid` for a roof piece are
+target-geometry decisions, and a roof is not solid on its own the way a wall is.
+This needs an owner call, and it is the one loose thread left by the decision.
 
 ## Observations for the reviewer
 

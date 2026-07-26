@@ -24,16 +24,16 @@
 // building whose sprite exactly covers its collision footprint can never
 // occlude anything.
 //
-// ## Open decision for the owner
+// ## Structures are actors, not terrain
 //
-// `docs/visual-targets/farm_village_tile_targets.json` declares these three
-// families with `renderLayer: "terrain"`, which assumes they become tiles on a
-// terrain layer beneath every actor. This composition instead sorts the whole
-// structure into the actor band at its own ground line, because a
-// terrain-layer building cannot occlude the hero. The target contract is NOT
-// edited here — that is an owner call, and it is the first thing to accept or
-// reject about this PR. Rejecting it is a one-constant change
-// (`VILLAGE_SHOP_SORTS_AS_ACTOR`).
+// Owner decision (Leo, 2026-07-26, in session), generalized beyond this
+// structure and recorded in `docs/VISUAL_ASSET_CONTRACT.md` under "Buildings
+// and props": every building and tall prop Y-sorts against the hero by its
+// ground contact. The shop wall and door targets were corrected from
+// `renderLayer: "terrain"` to `actors_body` to match — the value tall
+// vegetation and props in this repo have always declared. There is no toggle:
+// a structure that draws beneath every actor cannot occlude the hero, which is
+// the only reason to compose one this way.
 
 /** Phaser texture key for the packed 9-cell runtime spritesheet. */
 export const VILLAGE_SHOP_TEXTURE_KEY = 'village-shop';
@@ -57,13 +57,6 @@ export const VILLAGE_SHOP_CELL_ORDER = [
 ] as const;
 
 export type VillageShopCell = (typeof VILLAGE_SHOP_CELL_ORDER)[number];
-
-/**
- * When false the structure renders beneath every actor, as
- * `renderLayer: "terrain"` in the target contract implies. When true it sorts
- * into the actor band at its ground line so the hero can walk behind the roof.
- */
-export const VILLAGE_SHOP_SORTS_AS_ACTOR = true;
 
 /**
  * Display-list name prefix for the structure's cell images, and the name of its

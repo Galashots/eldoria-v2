@@ -4,7 +4,6 @@ import { describe, expect, it } from 'vitest';
 import {
   BAKER_PELL_SHOP,
   VILLAGE_SHOP_CELL_ORDER,
-  VILLAGE_SHOP_SORTS_AS_ACTOR,
   buildVillageShopPlan,
   type VillageShopDefinition
 } from '../../src/data/villageShopBuilding';
@@ -188,12 +187,43 @@ describe('placement against the real committed Village map', () => {
     expect(pellWorldY).toBeGreaterThan(plan.groundY);
   });
 
-  it('sorts inside the actor band when configured to sort as an actor', () => {
+  it('sorts inside the actor band', () => {
     const map = villageMap();
     const plan = buildVillageShopPlan(BAKER_PELL_SHOP, map.tilewidth * GAME_SCALE);
-    expect(VILLAGE_SHOP_SORTS_AS_ACTOR).toBe(true);
     const depth = worldActorDepth(plan.groundY);
     expect(depth).toBeGreaterThan(WORLD_ACTOR_DEPTH_MIN);
     expect(depth).toBeLessThan(WORLD_ACTOR_DEPTH_MAX);
+  });
+});
+
+describe('the target contract for structures', () => {
+  type TargetDoc = { targets: { id: string; renderLayer: string }[] };
+
+  function targetDoc(file: string): TargetDoc {
+    return JSON.parse(
+      readFileSync(join(process.cwd(), 'docs', 'visual-targets', file), 'utf-8')
+    ) as TargetDoc;
+  }
+
+  it('declares every shop family as actors_body, never terrain', () => {
+    // Owner decision (Leo, 2026-07-26): structures are actors, not terrain —
+    // see docs/VISUAL_ASSET_CONTRACT.md "Buildings and props". A family that
+    // drifted back to terrain would draw beneath the hero and silently stop
+    // occluding, with the composition and every other test still passing.
+    const shopTargets = targetDoc('farm_village_tile_targets.json').targets
+      .filter((target) => target.id.startsWith('tile_village_shop_'));
+    expect(shopTargets.length).toBeGreaterThan(0);
+    for (const target of shopTargets) {
+      expect(target.renderLayer, `${target.id} render layer`).toBe('actors_body');
+    }
+  });
+
+  it('agrees with the tall-object families that already used actors_body', () => {
+    // The decision generalized an existing convention rather than inventing
+    // one; if those families ever move off actors_body the contract has split.
+    for (const file of ['farm_vegetation_targets.json', 'farm_props_targets.json']) {
+      const tall = targetDoc(file).targets.filter((target) => target.renderLayer === 'actors_body');
+      expect(tall.length, `${file} tall-object families`).toBeGreaterThan(0);
+    }
   });
 });
