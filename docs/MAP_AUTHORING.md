@@ -8,6 +8,14 @@ Durable rules live in [`AGENTS.md`](../AGENTS.md); volatile status lives in [`do
 
 `WorldScene` is map-agnostic. It reads everything map-specific from the registry in [`src/data/maps.ts`](../src/data/maps.ts) — the tilemap cache key, JSON path, display name, tileset wiring, music key, named spawns, collision GIDs, and validated objective-routing hints. Exit geometry is **not** in the registry: exits remain `type: "exit"` objects on each map's own Tiled Objects layer, so a map file stays the single source of truth for its own gates. `PreloadScene` loads every registered map's JSON in a loop. Adding a map is therefore: a Tiled JSON + a registry entry (+ optionally new art through the asset pipeline).
 
+**Structures are not map layers.** A building or tall prop is composed in code from
+approved art — see [`src/data/villageShopBuilding.ts`](../src/data/villageShopBuilding.ts) for
+the worked pattern — and rendered by `WorldScene` with its own static collision body. It
+never becomes a Tiled tileset, a gid, or a map JSON edit. This is because a structure has
+to Y-sort against the hero by its ground contact (owner decision 2026-07-26,
+[`VISUAL_ASSET_CONTRACT.md`](VISUAL_ASSET_CONTRACT.md) "Buildings and props"), and a tile
+layer cannot: it draws at a fixed depth beneath every actor.
+
 ## Checklist for a new map
 
 1. Author `public/maps/<map-id>.json` following the layer/object conventions below.
@@ -28,8 +36,8 @@ The map must be 32px tiles. World pixels = map pixels × `GAME_SCALE` (2). A 20�
 | Layer | Type | Purpose |
 | --- | --- | --- |
 | `Ground` | tile layer | Terrain. Drawn from every registered tileset. |
-| `Decor` | tile layer | Non-colliding overlays (walk-behind trees, signposts). |
-| `Collision` | tile layer | Impassable tiles. Rendered invisible at runtime; only the GIDs listed in the registry's `collisionGids` actually block. |
+| `Decor` | tile layer | Non-colliding ground overlays (paths, scatter, flat detail). **Not walk-behind:** this layer draws beneath every actor, so nothing on it can occlude the hero. |
+| `Collision` | tile layer | Impassable tiles. Rendered invisible at runtime; only the GIDs listed in the registry's `collisionGids` actually block. Not the only source of impassability — a runtime structure (below) installs its own static body. |
 | `Objects` | object group | Spawn point, interactables, and exits. |
 
 Layer names are matched exactly. A missing optional layer is tolerated; a missing `Ground` layer produces an empty map.
@@ -124,4 +132,4 @@ The current map persists in the pre-existing `lastArea` save field; the saved pl
 
 ## Worked example
 
-`public/maps/wildbloom-woods.json` (20×14) is the reference implementation: dense collidable tree border with a two-tile gate gap, interior clumps shaping a clearing, a dirt path to the gate, walk-behind `Decor` trees, two quest-free interactables (`whispering-flower` pure flavor, `mossy-stone` opt-in practice), and a `GateToFarm` exit paired with the farm's `GateToWoods`.
+`public/maps/wildbloom-woods.json` (20×14) is the reference implementation: dense collidable tree border with a two-tile gate gap, interior clumps shaping a clearing, a dirt path to the gate, flat `Decor` tree detail (drawn beneath the hero, not walk-behind — see the layer table), two quest-free interactables (`whispering-flower` pure flavor, `mossy-stone` opt-in practice), and a `GateToFarm` exit paired with the farm's `GateToWoods`.
