@@ -5,14 +5,15 @@
 //
 //   1. the structure reads as a building the hero stands in front of, is
 //      blocked by, and can be hidden behind;
-//   2. what it would look like as a terrain-layer structure instead — the open
-//      target-contract question (see src/data/villageShopBuilding.ts).
+//   2. what it would have looked like as a terrain-layer structure instead —
+//      the alternative the owner rejected on 2026-07-26 when settling that
+//      structures are actors, not terrain (docs/VISUAL_ASSET_CONTRACT.md,
+//      "Buildings and props"). Kept as the record of the rejected option.
 //
 // The terrain-layer frame is produced by forcing the structure's cell depth to
 // 0 in the live scene and re-shooting the identical framing. That is not a
 // mock-up: `renderLayer: "terrain"` differs from this composition by exactly
-// that one depth value (VILLAGE_SHOP_SORTS_AS_ACTOR), so the frame is what the
-// alternative actually renders.
+// that one depth value, so the frame is what the alternative actually renders.
 //
 // Usage:
 //   ELDORIA_BASE_URL=http://127.0.0.1:5201/ node scripts/capture-village-shop-evidence.mjs /tmp/village-shop

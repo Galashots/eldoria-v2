@@ -1,10 +1,12 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   BAKER_PELL_SHOP,
   VILLAGE_SHOP_CELL_ORDER,
   buildVillageShopPlan,
+  overlapsSolid,
+  pushClearOfSolid,
   type VillageShopDefinition
 } from '../../src/data/villageShopBuilding';
 import { GAME_SCALE } from '../../src/gameDimensions';
@@ -122,6 +124,55 @@ describe('buildVillageShopPlan', () => {
   });
 });
 
+describe('clearing a body that already overlaps the solid block', () => {
+  const plan = buildVillageShopPlan(BAKER_PELL_SHOP, WORLD_TILE_PX);
+  const solidCentre = {
+    left: plan.solid.x + plan.solid.width / 2 - 18,
+    right: plan.solid.x + plan.solid.width / 2 + 18,
+    top: plan.solid.y + plan.solid.height / 2 - 18,
+    bottom: plan.solid.y + plan.solid.height / 2 + 18
+  };
+
+  it('detects a body sitting inside the solid block', () => {
+    expect(overlapsSolid(plan, solidCentre)).toBe(true);
+  });
+
+  it('ignores a body clear of the solid block on every side', () => {
+    const { x, y, width, height } = plan.solid;
+    expect(overlapsSolid(plan, { left: x - 80, right: x - 10, top: y, bottom: y + 10 })).toBe(false);
+    expect(overlapsSolid(plan, { left: x + width + 10, right: x + width + 80, top: y, bottom: y + 10 })).toBe(false);
+    expect(overlapsSolid(plan, { left: x, right: x + 10, top: y - 80, bottom: y - 10 })).toBe(false);
+    expect(overlapsSolid(plan, { left: x, right: x + 10, top: y + height + 10, bottom: y + height + 80 })).toBe(false);
+  });
+
+  it('ignores the overhang, which is walkable', () => {
+    // A hero standing behind the roof is legitimately inside the structure's
+    // sprite. Pushing them out would break the occlusion this composition
+    // exists for.
+    const overhang = plan.overhang!;
+    expect(overlapsSolid(plan, {
+      left: overhang.x + 10,
+      right: overhang.x + 46,
+      top: overhang.y + 10,
+      bottom: overhang.y + 46
+    })).toBe(false);
+  });
+
+  it('pushes an overlapping body down until it clears the solid block', () => {
+    const push = pushClearOfSolid(plan, solidCentre, 8);
+    expect(push).toBeGreaterThan(0);
+    const moved = { ...solidCentre, top: solidCentre.top + push, bottom: solidCentre.bottom + push };
+    expect(overlapsSolid(plan, moved)).toBe(false);
+    // Down-map, i.e. to the front of the structure where its door is.
+    expect(moved.top).toBe(plan.solid.y + plan.solid.height + 8);
+  });
+
+  it('leaves a body that already clears the block exactly where it is', () => {
+    const clear = { left: 0, right: 36, top: 0, bottom: 36 };
+    expect(pushClearOfSolid(plan, clear)).toBe(0);
+  });
+});
+
 describe('placement against the real committed Village map', () => {
   it('fits entirely inside the map bounds', () => {
     const map = villageMap();
@@ -197,12 +248,32 @@ describe('placement against the real committed Village map', () => {
 });
 
 describe('the target contract for structures', () => {
-  type TargetDoc = { targets: { id: string; renderLayer: string }[] };
+  type Target = { id: string; renderLayer?: string };
+  type TargetDoc = { targets?: Target[] };
 
-  function targetDoc(file: string): TargetDoc {
-    return JSON.parse(
-      readFileSync(join(process.cwd(), 'docs', 'visual-targets', file), 'utf-8')
-    ) as TargetDoc;
+  const TARGETS_DIR = join(process.cwd(), 'docs', 'visual-targets');
+
+  /**
+   * Every target across every document in the directory.
+   *
+   * Deliberately directory-wide rather than per-file: `tile_village_shop_roof`
+   * lives in its own `village_shop_roof_target.json` rather than alongside the
+   * wall and door in `farm_village_tile_targets.json`, and a gate scoped to one
+   * file missed it — which is exactly how the roof kept declaring `terrain`
+   * after the other two were corrected. The validator reads the whole directory
+   * (scripts/validate-visual-targets.mjs); so does this.
+   */
+  function allTargets(): Target[] {
+    return readdirSync(TARGETS_DIR)
+      .filter((file) => file.endsWith('.json'))
+      .flatMap((file) => {
+        const doc = JSON.parse(readFileSync(join(TARGETS_DIR, file), 'utf-8')) as TargetDoc;
+        return (doc.targets ?? []).map((target) => ({ ...target, id: target.id }));
+      });
+  }
+
+  function targetDoc(file: string): { targets: Target[] } {
+    return JSON.parse(readFileSync(join(TARGETS_DIR, file), 'utf-8')) as { targets: Target[] };
   }
 
   it('declares every shop family as actors_body, never terrain', () => {
@@ -210,11 +281,26 @@ describe('the target contract for structures', () => {
     // see docs/VISUAL_ASSET_CONTRACT.md "Buildings and props". A family that
     // drifted back to terrain would draw beneath the hero and silently stop
     // occluding, with the composition and every other test still passing.
-    const shopTargets = targetDoc('farm_village_tile_targets.json').targets
-      .filter((target) => target.id.startsWith('tile_village_shop_'));
-    expect(shopTargets.length).toBeGreaterThan(0);
+    const shopTargets = allTargets().filter((target) => target.id?.startsWith('tile_village_shop_'));
+    expect(shopTargets.map((target) => target.id).sort()).toEqual([
+      'tile_village_shop_door',
+      'tile_village_shop_roof',
+      'tile_village_shop_wall'
+    ]);
     for (const target of shopTargets) {
       expect(target.renderLayer, `${target.id} render layer`).toBe('actors_body');
+    }
+  });
+
+  it('finds a declared target for every family the runtime sheet packs', () => {
+    // The roof family was produced, approved and packed while its target sat in
+    // a file nobody looked in. Assert the coverage rather than assuming it.
+    const declared = new Set(allTargets().map((target) => target.id));
+    const packedFamilies = new Set(
+      VILLAGE_SHOP_CELL_ORDER.map((cell) => `tile_village_shop_${cell.split('_')[0]}`)
+    );
+    for (const family of packedFamilies) {
+      expect(declared.has(family), `${family} has no declared target in docs/visual-targets`).toBe(true);
     }
   });
 

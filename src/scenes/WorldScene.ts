@@ -56,7 +56,8 @@ import {
   VILLAGE_SHOP_BLOCKER_NAME,
   VILLAGE_SHOP_OBJECT_PREFIX,
   VILLAGE_SHOP_TEXTURE_KEY,
-  buildVillageShopPlan
+  buildVillageShopPlan,
+  pushClearOfSolid
 } from '../data/villageShopBuilding';
 import {
   resolveObjectiveGuidance,
@@ -575,6 +576,36 @@ export class WorldScene extends Phaser.Scene {
       .setVisible(false);
     this.physics.add.existing(blocker, true);
     this.physics.add.collider(this.player, blocker);
+
+    // Save compatibility: this structure is new, so a save written before it
+    // existed can restore the hero onto ground it now occupies. An Arcade
+    // static body only blocks a body *moving into* it — it never ejects one
+    // that already overlaps — so without this the hero would simply stand
+    // inside the building. Resolved once here, at create, rather than per
+    // frame: nothing else can put the hero inside a solid block afterwards.
+    const body = this.player.body;
+    if (body) {
+      // Derived from the sprite plus the body's configured size/offset rather
+      // than read from body.left/top/right/bottom: Arcade recomputes those
+      // during its own step, so at create() time they do not yet reflect the
+      // position just restored from the save, and the overlap test silently
+      // saw a body at the origin.
+      const left = this.player.x - this.player.displayWidth * this.player.originX + body.offset.x;
+      const top = this.player.y - this.player.displayHeight * this.player.originY + body.offset.y;
+      const push = pushClearOfSolid(plan, {
+        left,
+        right: left + body.width,
+        top,
+        bottom: top + body.height
+      });
+      if (push !== 0) {
+        // Position only. heroPresentation does not exist yet at this point in
+        // create() — it is constructed further down and will read the corrected
+        // position when it does, so there is nothing here to re-sync.
+        this.player.setPosition(this.player.x, this.player.y + push);
+        this.player.setVelocity(0, 0);
+      }
+    }
   }
 
   private makeTargets(objects: Phaser.Types.Tilemaps.TiledObject[]): InteractionTarget[] {

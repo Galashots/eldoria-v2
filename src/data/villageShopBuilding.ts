@@ -119,6 +119,37 @@ export type VillageShopPlan = {
   overhang: { x: number; y: number; width: number; height: number } | null;
 };
 
+export type BodyRect = { left: number; right: number; top: number; bottom: number };
+
+/**
+ * Whether a physics body overlaps a structure's solid block.
+ *
+ * Needed because Arcade Physics static bodies only block a body *moving into*
+ * them — they do not eject a body that already overlaps. A save written before
+ * a structure existed can restore the hero onto ground the structure now
+ * occupies, and the hero would then stand inside the building.
+ */
+export function overlapsSolid(plan: VillageShopPlan, body: BodyRect): boolean {
+  return body.right > plan.solid.x
+    && body.left < plan.solid.x + plan.solid.width
+    && body.bottom > plan.solid.y
+    && body.top < plan.solid.y + plan.solid.height;
+}
+
+/**
+ * How far down to move a body so it clears a structure's solid block, or 0 when
+ * it already does.
+ *
+ * Down-map rather than any nearest edge, deliberately: the front of a structure
+ * is where its door is and where the hero is meant to stand, so this puts a
+ * displaced hero exactly where they would have walked to anyway. `margin`
+ * leaves a visible gap instead of resting flush against the wall.
+ */
+export function pushClearOfSolid(plan: VillageShopPlan, body: BodyRect, margin = 8): number {
+  if (!overlapsSolid(plan, body)) return 0;
+  return plan.solid.y + plan.solid.height + margin - body.top;
+}
+
 function validate(definition: VillageShopDefinition): { cols: number; rows: number } {
   const rowCount = definition.rows.length;
   if (rowCount === 0) throw new Error('villageShopBuilding: definition has no rows');

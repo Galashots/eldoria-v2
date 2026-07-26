@@ -72,22 +72,39 @@ test asserts that relationship, that the footprint is clear of the map's own
 Collision layer, and that no Objects entry is buried under it — against the
 committed map, not by assumption.
 
-## Found while applying the decision: the roof family has no declared target
+## Correction: the roof family *does* have a target
 
-`docs/visual-targets/farm_village_tile_targets.json` declares
-`tile_village_shop_wall` and `tile_village_shop_door` — and **not**
-`tile_village_shop_roof`, even though the roof family has three approved runtime
-masters, a manifest, and a PASS verdict in
-[`village_top_gaps/AUDIT.md`](../../art-pipeline/review/village_top_gaps/AUDIT.md).
-It was produced and approved without a target entry, and the validator did not
-notice because it checks the targets that exist rather than that every approved
-family has one.
+An earlier version of this note claimed `tile_village_shop_roof` had no declared
+target. That was wrong. It is declared in its own
+[`docs/visual-targets/village_shop_roof_target.json`](../../visual-targets/village_shop_roof_target.json)
+rather than alongside the wall and door in `farm_village_tile_targets.json`, and
+I had only looked in the latter. The validator reads every JSON in that
+directory, so it was never invisible — only unlooked-for. All three families now
+declare `actors_body`.
 
-So the `renderLayer: actors_body` correction could only be applied to the two
-families that have targets. **I have not invented a roof target**: canvas,
-footprint, pivot and especially `collision.solid` for a roof piece are
-target-geometry decisions, and a roof is not solid on its own the way a wall is.
-This needs an owner call, and it is the one loose thread left by the decision.
+The unit gate that was supposed to hold the decision in place had the same blind
+spot: it scanned one file. It now scans the whole target directory and asserts a
+declared target exists for every family the runtime sheet packs.
+
+**The real open question is narrower.** The roof target declares
+`collision.solid: true`. The shipped composition deliberately makes only the
+bottom two rows solid, so the roof overhangs walkable ground and the hero can
+pass behind it — a roof solid on its own would remove the overhang and with it
+the occlusion this composition exists for. Reconciling the per-tile declaration
+with the composition is an owner call, recorded in the target's own notes.
+
+## Save compatibility, found by self-audit
+
+The structure is new, so a save written before it existed can restore the hero
+onto ground it now occupies — that patch of Village grass was ordinary walkable
+ground. Reproduced: the hero restored at world (640, 256), dead centre of the
+solid block, and stayed there on both profiles. An Arcade static body only
+blocks a body *moving into* it; it never ejects one that already overlaps.
+
+Fixed by moving an overlapping body down-map clear of the block once at scene
+create — down-map deliberately, because that is the door side and where the hero
+was heading anyway. Two browser regressions restore a version-2 save inside the
+footprint and assert the hero ends up outside it and can still walk.
 
 ## Observations for the reviewer
 

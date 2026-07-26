@@ -141,4 +141,51 @@ for (const profile of PROFILES) {
     expect(Math.abs(behind.x - behindX)).toBeLessThan(8);
     expect(Math.abs(behind.y - behindY)).toBeLessThan(8);
   });
+
+  test(`${profile.label}: a pre-existing save standing where the shop now is stays playable`, async ({ page }) => {
+    // Save compatibility, which is a product invariant. This structure is new,
+    // so a save written before it existed can restore the hero *inside* its
+    // footprint — that patch of Village grass was ordinary walkable ground. The
+    // hero must end up outside the solid block and still be able to move, never
+    // wedged inside a static body.
+    const insideX = PLAN.solid.x + PLAN.solid.width / 2;
+    const insideY = PLAN.solid.y + PLAN.solid.height / 2;
+
+    await page.goto('/');
+    await page.evaluate(([id, x, y]) => {
+      localStorage.clear();
+      localStorage.setItem(`eldoria_v2_opening_seen_${id}`, 'true');
+      localStorage.setItem(`eldoria_v2_save_${id}`, JSON.stringify({
+        version: 2,
+        profileId: id,
+        gold: 0,
+        lastArea: 'eldoria-village',
+        player: { x, y }
+      }));
+    }, [profile.profileId, insideX, insideY] as [string, number, number]);
+    await page.reload();
+    await expect(page.locator(CANVAS)).toBeVisible();
+    await page.waitForFunction(() => window.__ELDORIA_GAME__?.scene.isActive('TitleScene'));
+    await clickGame(page, profile.clickAt[0], profile.clickAt[1]);
+    await page.waitForFunction(() => window.__ELDORIA_GAME__?.scene.isActive('WorldScene'));
+
+    // Give arcade physics a few frames to resolve the overlap.
+    await page.waitForTimeout(1200);
+    const settled = await heroState(page);
+
+    const insideSolid = settled.x > PLAN.solid.x
+      && settled.x < PLAN.solid.x + PLAN.solid.width
+      && settled.bodyTop < PLAN.solid.y + PLAN.solid.height
+      && settled.bodyTop > PLAN.solid.y - 64;
+    expect(
+      insideSolid,
+      `hero settled at (${settled.x}, ${settled.y}) with body top ${settled.bodyTop}, still inside the solid block`
+    ).toBe(false);
+
+    // And is not merely outside but actually mobile.
+    await page.keyboard.down('ArrowDown');
+    await expect.poll(async () => (await heroState(page)).y, { timeout: 15000 })
+      .toBeGreaterThan(settled.y + 24);
+    await page.keyboard.up('ArrowDown');
+  });
 }
