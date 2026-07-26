@@ -52,6 +52,14 @@ import { createSpeechSupport } from '../systems/speech';
 import { TEXT_BLIP_COOLDOWN_MS } from '../systems/textBlips';
 import { worldActorDepth } from '../systems/worldDepth';
 import {
+  BAKER_PELL_SHOP,
+  VILLAGE_SHOP_BLOCKER_NAME,
+  VILLAGE_SHOP_OBJECT_PREFIX,
+  VILLAGE_SHOP_SORTS_AS_ACTOR,
+  VILLAGE_SHOP_TEXTURE_KEY,
+  buildVillageShopPlan
+} from '../data/villageShopBuilding';
+import {
   resolveObjectiveGuidance,
   type ObjectiveGuidance
 } from '../systems/objectiveGuidance';
@@ -302,6 +310,13 @@ export class WorldScene extends Phaser.Scene {
       this.physics.add.collider(this.player, collisionLayer);
     }
 
+    // After the player exists, so the structure can install its own collider.
+    if (this.mapId === 'eldoria-village') {
+      // Phaser's Tilemap exposes tileWidth (camelCase); the raw Tiled JSON the
+      // Farm scatter reads uses tilewidth. Mixing them up yields NaN.
+      this.renderVillageShop(map.tileWidth * GAME_SCALE);
+    }
+
     if (saved) {
       this.gold = saved.gold;
       this.inventory = { ...(saved.inventory ?? {}) };
@@ -514,6 +529,53 @@ export class WorldScene extends Phaser.Scene {
         .setOrigin(0, 0)
         .setScale(GAME_SCALE);
     }
+  }
+
+  /**
+   * Eldoria Village's shop structure: the nine approved shop-facade runtime
+   * masters composed per src/data/villageShopBuilding.ts.
+   *
+   * The whole building shares one depth, taken from its ground contact (the
+   * bottom edge of its last row) in the shared actor band — so a hero standing
+   * down-map of it draws in front, and a hero walking along the far side is
+   * hidden by the overhanging roof. Its cells never overlap each other, so the
+   * shared depth resolves by insertion order with nothing to resolve.
+   *
+   * Collision covers only the solid rows, not the overhang; that is what makes
+   * walking behind the roof possible in the first place.
+   */
+  private renderVillageShop(worldTilePx: number): void {
+    if (!this.textures.exists(VILLAGE_SHOP_TEXTURE_KEY)) {
+      throw new Error(
+        `WorldScene: missing preloaded texture '${VILLAGE_SHOP_TEXTURE_KEY}' for the Village shop structure`
+      );
+    }
+
+    const plan = buildVillageShopPlan(BAKER_PELL_SHOP, worldTilePx);
+    const depth = VILLAGE_SHOP_SORTS_AS_ACTOR ? worldActorDepth(plan.groundY) : 0;
+    for (const placement of plan.placements) {
+      this.add
+        .image(placement.x, placement.y, VILLAGE_SHOP_TEXTURE_KEY, placement.frame)
+        .setName(`${VILLAGE_SHOP_OBJECT_PREFIX}${placement.cell}`)
+        .setOrigin(0, 0)
+        .setScale(GAME_SCALE)
+        .setDepth(depth);
+    }
+
+    // One invisible static body for the whole solid block rather than one per
+    // tile: the footprint is a single rectangle, and a lone body cannot catch
+    // the player in a seam between two adjacent bodies.
+    const blocker = this.add
+      .rectangle(
+        plan.solid.x + plan.solid.width / 2,
+        plan.solid.y + plan.solid.height / 2,
+        plan.solid.width,
+        plan.solid.height
+      )
+      .setName(VILLAGE_SHOP_BLOCKER_NAME)
+      .setVisible(false);
+    this.physics.add.existing(blocker, true);
+    this.physics.add.collider(this.player, blocker);
   }
 
   private makeTargets(objects: Phaser.Types.Tilemaps.TiledObject[]): InteractionTarget[] {

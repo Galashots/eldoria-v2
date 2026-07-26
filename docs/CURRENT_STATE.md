@@ -104,6 +104,8 @@ The full source is [issue #132](https://github.com/Galashots/eldoria-v2/issues/1
 
 7. **Stats & Mastery / Profile Select production presentation** — deferred until approved D4 identity art/portraits are available; not blocking D4.
 
+9. **Eldoria Village's first structure** — on `claude/village-shop-structure` (stacked on the y-sort branch), `HOLD` for the owner's visual verdict. The nine approved `tile_village_shop_*` runtime masters had never been loaded by the game; they now compose Baker Pell's shop, sorted into the actor band with only its bottom two rows solid so the roof overhangs walkable ground and the hero can be hidden behind it. **Open owner decision:** the target contract declares these families `renderLayer: "terrain"`, which cannot occlude the hero; the contract is not edited, and the evidence sheet shows the same frame under both choices. Evidence: [`docs/playtests/2026-07-25-village-shop/`](playtests/2026-07-25-village-shop/).
+
 8. **World-actor depth sorting (y-sort)** — delivered on `claude/world-depth-ysort`, owner-requested 2026-07-25 outside the audit queue. The hero, the Practice Slime, and Mira sat at hardcoded depths (3, 2, 3.5), an order that was right from one side and wrong from the other; they now share a feet-sorted band (`src/systems/worldDepth.ts`). Prerequisite for any occluding prop the hero should be able to walk behind — the maps currently have none, so today's visible payoff is limited to those three actors. Evidence: [`docs/playtests/2026-07-25-world-depth/`](playtests/2026-07-25-world-depth/).
 
 ## Known risks and deferred work
