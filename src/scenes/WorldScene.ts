@@ -52,6 +52,14 @@ import { createSpeechSupport } from '../systems/speech';
 import { TEXT_BLIP_COOLDOWN_MS } from '../systems/textBlips';
 import { worldActorDepth } from '../systems/worldDepth';
 import {
+  BAKER_PELL_SHOP,
+  VILLAGE_SHOP_BLOCKER_NAME,
+  VILLAGE_SHOP_OBJECT_PREFIX,
+  VILLAGE_SHOP_TEXTURE_KEY,
+  buildVillageShopPlan,
+  pushClearOfSolid
+} from '../data/villageShopBuilding';
+import {
   resolveObjectiveGuidance,
   type ObjectiveGuidance
 } from '../systems/objectiveGuidance';
@@ -302,6 +310,13 @@ export class WorldScene extends Phaser.Scene {
       this.physics.add.collider(this.player, collisionLayer);
     }
 
+    // After the player exists, so the structure can install its own collider.
+    if (this.mapId === 'eldoria-village') {
+      // Phaser's Tilemap exposes tileWidth (camelCase); the raw Tiled JSON the
+      // Farm scatter reads uses tilewidth. Mixing them up yields NaN.
+      this.renderVillageShop(map.tileWidth * GAME_SCALE);
+    }
+
     if (saved) {
       this.gold = saved.gold;
       this.inventory = { ...(saved.inventory ?? {}) };
@@ -513,6 +528,83 @@ export class WorldScene extends Phaser.Scene {
         .image(placement.x * worldTilePx, placement.y * worldTilePx, FARM_SCATTER_TEXTURE_KEY, frame)
         .setOrigin(0, 0)
         .setScale(GAME_SCALE);
+    }
+  }
+
+  /**
+   * Eldoria Village's shop structure: the nine approved shop-facade runtime
+   * masters composed per src/data/villageShopBuilding.ts.
+   *
+   * The whole building shares one depth, taken from its ground contact (the
+   * bottom edge of its last row) in the shared actor band — so a hero standing
+   * down-map of it draws in front, and a hero walking along the far side is
+   * hidden by the overhanging roof. Its cells never overlap each other, so the
+   * shared depth resolves by insertion order with nothing to resolve.
+   *
+   * Collision covers only the solid rows, not the overhang; that is what makes
+   * walking behind the roof possible in the first place.
+   */
+  private renderVillageShop(worldTilePx: number): void {
+    if (!this.textures.exists(VILLAGE_SHOP_TEXTURE_KEY)) {
+      throw new Error(
+        `WorldScene: missing preloaded texture '${VILLAGE_SHOP_TEXTURE_KEY}' for the Village shop structure`
+      );
+    }
+
+    const plan = buildVillageShopPlan(BAKER_PELL_SHOP, worldTilePx);
+    const depth = worldActorDepth(plan.groundY);
+    for (const placement of plan.placements) {
+      this.add
+        .image(placement.x, placement.y, VILLAGE_SHOP_TEXTURE_KEY, placement.frame)
+        .setName(`${VILLAGE_SHOP_OBJECT_PREFIX}${placement.cell}`)
+        .setOrigin(0, 0)
+        .setScale(GAME_SCALE)
+        .setDepth(depth);
+    }
+
+    // One invisible static body for the whole solid block rather than one per
+    // tile: the footprint is a single rectangle, and a lone body cannot catch
+    // the player in a seam between two adjacent bodies.
+    const blocker = this.add
+      .rectangle(
+        plan.solid.x + plan.solid.width / 2,
+        plan.solid.y + plan.solid.height / 2,
+        plan.solid.width,
+        plan.solid.height
+      )
+      .setName(VILLAGE_SHOP_BLOCKER_NAME)
+      .setVisible(false);
+    this.physics.add.existing(blocker, true);
+    this.physics.add.collider(this.player, blocker);
+
+    // Save compatibility: this structure is new, so a save written before it
+    // existed can restore the hero onto ground it now occupies. An Arcade
+    // static body only blocks a body *moving into* it — it never ejects one
+    // that already overlaps — so without this the hero would simply stand
+    // inside the building. Resolved once here, at create, rather than per
+    // frame: nothing else can put the hero inside a solid block afterwards.
+    const body = this.player.body;
+    if (body) {
+      // Derived from the sprite plus the body's configured size/offset rather
+      // than read from body.left/top/right/bottom: Arcade recomputes those
+      // during its own step, so at create() time they do not yet reflect the
+      // position just restored from the save, and the overlap test silently
+      // saw a body at the origin.
+      const left = this.player.x - this.player.displayWidth * this.player.originX + body.offset.x;
+      const top = this.player.y - this.player.displayHeight * this.player.originY + body.offset.y;
+      const push = pushClearOfSolid(plan, {
+        left,
+        right: left + body.width,
+        top,
+        bottom: top + body.height
+      });
+      if (push !== 0) {
+        // Position only. heroPresentation does not exist yet at this point in
+        // create() — it is constructed further down and will read the corrected
+        // position when it does, so there is nothing here to re-sync.
+        this.player.setPosition(this.player.x, this.player.y + push);
+        this.player.setVelocity(0, 0);
+      }
     }
   }
 

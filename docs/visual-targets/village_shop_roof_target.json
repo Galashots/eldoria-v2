@@ -5,7 +5,10 @@
     "id": "tiles_village_shop_roof",
     "displayName": "Village Shop Roof Targets",
     "status": "target_only",
-    "tileSizePx": [16, 16],
+    "tileSizePx": [
+      16,
+      16
+    ],
     "atlasFamily": "environment_farm"
   },
   "targets": [
@@ -14,23 +17,56 @@
       "displayName": "Village Shop Thatch Roof",
       "status": "target_only",
       "category": "tile",
-      "canvasPx": [16, 16],
-      "footprintPx": [16, 16],
-      "pivotPx": [8, 15],
+      "canvasPx": [
+        16,
+        16
+      ],
+      "footprintPx": [
+        16,
+        16
+      ],
+      "pivotPx": [
+        8,
+        15
+      ],
       "ppu": 16,
       "view": "top_down",
       "directions": [],
-      "paletteFamilies": ["wood_leather", "forest"],
+      "paletteFamilies": [
+        "wood_leather",
+        "forest"
+      ],
       "lightDirection": "upper_left",
-      "renderLayer": "terrain",
-      "variants": ["thatch_base", "thatch_moss", "ridge"],
-      "collision": { "solid": true, "body": [0, 0, 16, 16], "hurtbox": null, "hitboxes": [], "interaction": null },
+      "renderLayer": "actors_body",
+      "variants": [
+        "thatch_base",
+        "thatch_moss",
+        "ridge"
+      ],
+      "collision": {
+        "solid": true,
+        "body": [
+          0,
+          0,
+          16,
+          16
+        ],
+        "hurtbox": null,
+        "hitboxes": [],
+        "interaction": null
+      },
       "interactionKind": null,
       "runtimeExport": "png",
       "preferredSource": "aseprite",
       "atlasFamily": "environment_farm",
       "visualRule": "Warm modular thatch roof cells for the Eldoria Village shop. Base and moss variants must repeat without hard seams; ridge is a deliberate feature cell. All variants share the farm environment's upper-left light and weathered wood material language.",
-      "notes": ["Specification only; no art is included by this target document.", "No runtime behavior is added.", "Source/review approval does not authorize map or Phaser integration."]
+      "notes": [
+        "Specification only; no art is included by this target document.",
+        "No runtime behavior is added.",
+        "Source/review approval does not authorize map or Phaser integration.",
+        "renderLayer is actors_body, not terrain: a structure must Y-sort against the hero by its ground contact so the hero can pass behind it. Owner decision (Leo, 2026-07-26, in session): every building and tall prop is an actor, never terrain. Applied here alongside tile_village_shop_wall and tile_village_shop_door in farm_village_tile_targets.json; this family lives in its own file, which is why it was missed on the first pass.",
+        "collision.solid true is a per-tile target declaration and is NOT what the shipped Village composition does: src/data/villageShopBuilding.ts makes only the structure's bottom two rows solid, so the roof rows overhang walkable ground and the hero can pass behind them. A roof that were solid on its own would remove the overhang and with it the occlusion. Reconciling this declaration with the composition is an open owner question."
+      ]
     }
   ]
 }

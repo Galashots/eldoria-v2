@@ -18,7 +18,11 @@
  *   0          tile layers (Ground / Decor) and the Farm decor scatter
  *   1          ground shadows and the screen-fixed vignette
  *   1.5        ambient dust motes — above shadows, beneath every actor
- *   [2, 3.5]   ACTORS, sorted by ground-contact y  ← this module
+ *   [2, 3.5]   ACTORS, sorted by ground-contact y  ← this module. The hero,
+ *              world NPCs and creatures, and structures: a building Y-sorts
+ *              here too, by the ground line of its own footprint, so the hero
+ *              can pass behind it (owner decision 2026-07-26, recorded in
+ *              docs/VISUAL_ASSET_CONTRACT.md under "Buildings and props").
  *   4+         quest glows, marker glyphs, affordance rings, the objective
  *              chevron, and every interaction VFX (crop-bonus burst 6, slime
  *              strike bursts 8) — meant to read over everything

@@ -202,6 +202,8 @@ Declare when relevant:
 - Ground tall visuals on a declared lower footprint.
 - Mark entrances and interaction points clearly.
 - Use variable-size targets rather than forcing detail into an undersized cell.
+- **Structures are actors, not terrain** (owner decision, Leo, 2026-07-26, in session, generalized from the Village shop composition): every building and tall prop declares `renderLayer: actors_body` and Y-sorts against the hero and NPCs by its ground contact — never `terrain`, which draws beneath every actor and therefore cannot occlude anything. This was already the declared convention for tall vegetation and props (`farm_vegetation_targets.json`, `farm_props_targets.json`); the decision settles it as the rule for structures too, and the Village shop families were corrected from `terrain` to match.
+- A structure's solid footprint covers only the rows it actually occupies on the ground. Art above that footprint overhangs walkable ground, so a hero up-map of the structure passes behind it. A structure whose sprite exactly covers its collision footprint can never occlude the hero, which is the whole point of `actors_body`.
 
 ### UI
 

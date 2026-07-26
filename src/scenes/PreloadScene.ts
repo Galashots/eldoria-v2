@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { MAP_REGISTRY } from '../data/maps';
 import { FARM_SCATTER_TEXTURE_KEY } from '../data/farmDecorScatterConfig';
+import { VILLAGE_SHOP_TEXTURE_KEY } from '../data/villageShopBuilding';
 import grade2MageCastSheetUrl from '../../assets/sprites/char_mage_boy_base_cast_v001.png?url';
 import grade2MageHurtSheetUrl from '../../assets/sprites/char_mage_boy_base_hurt_v001.png?url';
 import grade2MageIdleSheetUrl from '../../assets/sprites/char_mage_boy_base_idle_v001.png?url';
@@ -22,6 +23,15 @@ export class PreloadScene extends Phaser.Scene {
     // 32px grid). See scripts/compose-farm-scatter-tileset.mjs and
     // src/data/farmDecorScatterConfig.ts.
     this.load.spritesheet(FARM_SCATTER_TEXTURE_KEY, 'assets/tilesets/tile_farm_grass_scatter.png', {
+      frameWidth: 32,
+      frameHeight: 32
+    });
+    // Approved Eldoria Village shop-facade families (wall stone_base/wood_trim/
+    // window_lit, door closed/highlighted/open_optional, roof thatch_base/
+    // thatch_moss/ridge — packed row-major in that order, 2x upscaled onto the
+    // map's 32px grid). See scripts/compose-village-shop-tileset.mjs and
+    // src/data/villageShopBuilding.ts.
+    this.load.spritesheet(VILLAGE_SHOP_TEXTURE_KEY, 'assets/tilesets/tile_village_shop.png', {
       frameWidth: 32,
       frameHeight: 32
     });

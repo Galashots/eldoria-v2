@@ -349,7 +349,7 @@
         "wood_leather"
       ],
       "lightDirection": "upper_left",
-      "renderLayer": "terrain",
+      "renderLayer": "actors_body",
       "variants": [
         "stone_base",
         "wood_trim",
@@ -375,7 +375,8 @@
       "notes": [
         "Specification only; no art is included.",
         "No runtime behavior is added.",
-        "Production palette resolved to the locked farm environment metal/wood swatches before source approval; this does not add runtime behavior."
+        "Production palette resolved to the locked farm environment metal/wood swatches before source approval; this does not add runtime behavior.",
+        "renderLayer is actors_body, not terrain: a structure must Y-sort against the hero by its ground contact so the hero can pass behind it, which terrain (beneath every actor) cannot do. Owner decision (Leo, 2026-07-26, in session): every building and tall prop is an actor, never terrain. This matches the long-standing convention in farm_vegetation_targets.json and farm_props_targets.json, whose notes deferred the Y-sort implementation; that implementation now exists in src/systems/worldDepth.ts."
       ]
     },
     {
@@ -403,7 +404,7 @@
         "metal"
       ],
       "lightDirection": "upper_left",
-      "renderLayer": "terrain",
+      "renderLayer": "actors_body",
       "variants": [
         "closed",
         "highlighted",
@@ -434,7 +435,8 @@
       "notes": [
         "Specification only; no art is included.",
         "No runtime behavior is added.",
-        "Production palette resolved to the locked farm environment metal/wood swatches before source approval; this does not add runtime behavior."
+        "Production palette resolved to the locked farm environment metal/wood swatches before source approval; this does not add runtime behavior.",
+        "renderLayer is actors_body, not terrain: a structure must Y-sort against the hero by its ground contact so the hero can pass behind it, which terrain (beneath every actor) cannot do. Owner decision (Leo, 2026-07-26, in session): every building and tall prop is an actor, never terrain. This matches the long-standing convention in farm_vegetation_targets.json and farm_props_targets.json, whose notes deferred the Y-sort implementation; that implementation now exists in src/systems/worldDepth.ts."
       ]
     },
     {

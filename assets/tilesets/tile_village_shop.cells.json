@@ -1,0 +1,14 @@
+{
+  "cellPx": 32,
+  "cellOrder": [
+    "wall_stone_base",
+    "wall_wood_trim",
+    "wall_window_lit",
+    "door_closed",
+    "door_highlighted",
+    "door_open_optional",
+    "roof_thatch_base",
+    "roof_thatch_moss",
+    "roof_ridge"
+  ]
+}

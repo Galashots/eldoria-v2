@@ -1,6 +1,6 @@
 # Eldoria-V2 Current State
 
-**Last verified `main`:** `57d65050d19e1ad632db6df190edb45330e022b4` (PR #133 and PR #136 merged, 2026-07-24)  
+**Last verified `main`:** `30e4467c9b4717f04f5f560b37cd09b881c08962` (PR #137 merged, 2026-07-25)  
 **Stable product direction:** [`ELDORIA_MASTER_PLAN.md`](ELDORIA_MASTER_PLAN.md)  
 **Repository rules:** [`../AGENTS.md`](../AGENTS.md)
 
@@ -104,7 +104,9 @@ The full source is [issue #132](https://github.com/Galashots/eldoria-v2/issues/1
 
 7. **Stats & Mastery / Profile Select production presentation** — deferred until approved D4 identity art/portraits are available; not blocking D4.
 
-8. **World-actor depth sorting (y-sort)** — delivered on `claude/world-depth-ysort`, owner-requested 2026-07-25 outside the audit queue. The hero, the Practice Slime, and Mira sat at hardcoded depths (3, 2, 3.5), an order that was right from one side and wrong from the other; they now share a feet-sorted band (`src/systems/worldDepth.ts`). Prerequisite for any occluding prop the hero should be able to walk behind — the maps currently have none, so today's visible payoff is limited to those three actors. Evidence: [`docs/playtests/2026-07-25-world-depth/`](playtests/2026-07-25-world-depth/).
+9. **Eldoria Village's first structure** — on `claude/village-shop-structure` (stacked on the y-sort branch), `HOLD` for the owner's visual verdict. The nine approved `tile_village_shop_*` runtime masters had never been loaded by the game; they now compose Baker Pell's shop, sorted into the actor band with only its bottom two rows solid so the roof overhangs walkable ground and the hero can be hidden behind it. **Owner decision, 2026-07-26 (Leo, in session): structures are actors, not terrain** — every building and tall prop Y-sorts against the hero, recorded in [`VISUAL_ASSET_CONTRACT.md`](VISUAL_ASSET_CONTRACT.md) "Buildings and props" and applied by correcting the shop wall/door targets from `terrain` to `actors_body` (the value tall vegetation and props already used). **Correction to an earlier claim in this file:** I first reported that `tile_village_shop_roof` had no declared target. It does — in its own `docs/visual-targets/village_shop_roof_target.json`, not alongside the wall and door — and I had not looked for a per-family target file. All three families are now `actors_body`. **The real loose thread** is that the roof target declares `collision.solid: true`, while the shipped composition deliberately makes only the bottom two rows solid so the roof can overhang and occlude; reconciling that declaration with the composition is an owner question. Evidence: [`docs/playtests/2026-07-25-village-shop/`](playtests/2026-07-25-village-shop/).
+
+8. **World-actor depth sorting (y-sort)** — delivered on `claude/world-depth-ysort`, owner-requested 2026-07-25 outside the audit queue. The hero, the Practice Slime, and Mira sat at hardcoded depths (3, 2, 3.5), an order that was right from one side and wrong from the other; they now share a feet-sorted band (`src/systems/worldDepth.ts`). Prerequisite for any occluding structure the hero should be able to walk behind; the Village shop (item 9) is the first one, landed on the stacked branch. Evidence: [`docs/playtests/2026-07-25-world-depth/`](playtests/2026-07-25-world-depth/).
 
 ## Known risks and deferred work
 
@@ -141,3 +143,32 @@ Not yet certified on a physical iPad after the latest world, PWA, dialogue, and 
 - child comprehension, remembered goals, voluntary continuation, and return interest.
 
 Browser automation and emulation remain regression evidence, not physical-device or child validation.
+
+## Known documentation debt (found by audit, 2026-07-26)
+
+A sweep after the Y-sort and structures-are-actors work found roughly forty statements
+across the planning documents that the code has outgrown. The actively misleading ones
+were corrected: `MAP_AUTHORING.md` told authors to put walk-behind trees on a `Decor`
+layer (which draws beneath every actor and cannot occlude anything — exactly the pattern
+the owner rejected), and two target documents asserted that no Y-sort implementation
+existed. The rest is recorded here rather than fixed, because most of it is not a
+documentation problem:
+
+- **The target schema cannot express an integrated asset.** `scripts/validate-visual-targets.mjs`
+  *requires* every target to declare `status: "target_only"` and to carry a note reading
+  "Specification only" or "No runtime behavior". Three families — `tile_village_shop_wall`,
+  `_door`, `_roof` — are now runtime-integrated with live collision, so their own metadata
+  contradicts reality and **cannot be corrected without changing the validator's contract**,
+  which is an owner-gated decision. `docs/README.md` already defines a
+  `RUNTIME-INTEGRATED ASSET` verdict the machine schema has no way to record.
+- **The validator does not check `renderLayer` against the visual contract.** That is how
+  `tile_village_shop_roof` kept declaring `terrain` after the owner ruled structures are
+  actors. A unit gate in `tests/unit/villageShopBuilding.test.ts` now covers the shop
+  families specifically; a general rule would belong in the validator.
+- Several roadmap documents still sequence Village production art behind Farm completion
+  (`ELDORIA_MASTER_PLAN.md` §11 step 6, `beautification/ELDORIA_BEAUTIFICATION_EXECUTION_PLAN.md`
+  Phase F), which the shop shipped ahead of. The master plan also has no place for renderer
+  capabilities such as depth sorting — its depth vocabulary describes authored art strata only.
+- `docs/AUDIT_AND_GAME_PLAN_2026-07.md` and `docs/art-pipeline/VILLAGE_ART_GAP_ASSESSMENT_2026-07-19.md`
+  describe farm/village tile art as spec-only, which stopped being true when the terrain
+  proof, the grass scatter, and now the shop were integrated.

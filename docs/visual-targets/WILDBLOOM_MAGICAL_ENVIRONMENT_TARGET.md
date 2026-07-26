@@ -39,7 +39,7 @@ Accordingly, the target's `paletteFamilies` contains exactly `forest` and `metal
 - [ ] Indicator state reads as quiet/dormant; revealed state reads as a permanent landmark.
 - [ ] Uses consistent upper-left lighting.
 - [ ] Remains readable and low-noise at 1x and 3x.
-- [ ] No baked ground shadow (Section 8a) — this is a dynamic, Y-sorted world object; shadow stays engine-drawn at integration time.
+- [ ] No baked ground shadow (Section 8a) — this is a dynamic, Y-sorted world object; shadow stays engine-drawn at integration time (the Y-sort itself now exists — `src/systems/worldDepth.ts`).
 - [ ] Adds no unrelated runtime, save, quest, curriculum, or mastery changes; `WildbloomDiscoveryController.ts` remains gameplay authority.
 
 The machine-readable source is [`wildbloom_magical_environment_target.json`](wildbloom_magical_environment_target.json).
