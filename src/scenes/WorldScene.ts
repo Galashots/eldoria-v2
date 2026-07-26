@@ -50,6 +50,7 @@ import { CURRENT_SAVE_VERSION, SaveSystem, type StarterQuestStep } from '../syst
 import { loadAudioMuted, saveAudioMuted } from '../systems/AudioPreference';
 import { createSpeechSupport } from '../systems/speech';
 import { TEXT_BLIP_COOLDOWN_MS } from '../systems/textBlips';
+import { worldActorDepth } from '../systems/worldDepth';
 import {
   resolveObjectiveGuidance,
   type ObjectiveGuidance
@@ -619,7 +620,16 @@ export class WorldScene extends Phaser.Scene {
         )
           .setOrigin(0.5, 1)
           .setScale(GAME_SCALE)
-          .setDepth(2)
+          // Bottom origin, so the sprite's own y is its ground contact, and
+          // that contact never changes: the strike reaction
+          // (PracticeSlimeEncounterController.playSlimeReaction) tweens the
+          // slime up and sideways but yoyos back to exactly this position, and
+          // a mid-hop slime is airborne — re-sorting it while it is off the
+          // ground would briefly order it as though it stood further up the
+          // map. So one sort at creation is right, not merely sufficient. The
+          // hero walking past it is what changes, and the hero re-sorts every
+          // frame.
+          .setDepth(worldActorDepth(target.y))
           .play(PRACTICE_SLIME_IDLE_ANIMATION);
         // The slime's idle animation is already alive, so it pops on
         // approach but never idle-bobs (two idle systems would fight).
@@ -727,11 +737,18 @@ export class WorldScene extends Phaser.Scene {
     // literal doubled by hand: the pulse is located by name via
     // scene.children.getByName in tests/vertical-slice.spec.ts, which only
     // searches the scene's own direct display list, not nested containers.
+    //
+    // Depth 6, with every other interaction VFX (affordance rings, the slime
+    // strike bursts at 8, the Wildbloom reveals) rather than the old 3: that 3
+    // was chosen when the hero was also pinned at 3, and now that the hero
+    // sorts through [2, 3.5] by ground contact (src/systems/worldDepth.ts) a
+    // fixed 3 would put this burst above or below the hero depending on where
+    // on the map the crop happens to sit. Above, always, like its siblings.
     const centerY = target.y - sy(12);
     const pulse = this.add.circle(target.x, centerY, sx(8), 0x8fd14f, 0.08)
       .setName(CROP_BONUS_FEEDBACK_NAME)
       .setStrokeStyle(2, 0xd7ff8f, 0.95)
-      .setDepth(3);
+      .setDepth(6);
 
     for (let index = 0; index < 4; index += 1) {
       const direction = index % 2 === 0 ? -1 : 1;
@@ -742,7 +759,7 @@ export class WorldScene extends Phaser.Scene {
         sx(3),
         index < 2 ? 0x8fd14f : 0xffd666,
         0.95
-      ).setDepth(3).setAngle(direction * 22);
+      ).setDepth(6).setAngle(direction * 22);
 
       this.tweens.add({
         targets: leaf,

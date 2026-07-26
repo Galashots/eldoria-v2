@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { GAME_SCALE, sscale, sy } from '../gameDimensions';
+import { WORLD_ACTOR_DEPTH_EPSILON, spriteGroundY, worldActorDepth } from '../systems/worldDepth';
 import type { ProfileId } from '../data/profiles';
 
 export type HeroFacing = 'front' | 'back' | 'left' | 'right';
@@ -135,7 +136,9 @@ export class HeroPresentationController {
     // collision and regression helpers retain their existing seam. The role
     // identity is supplied by presentation-only accents around that sprite.
     if (this.isRanger()) {
-      this.physicsSprite.setVisible(true).setDepth(3).setFrame(0);
+      this.physicsSprite.setVisible(true).setFrame(0);
+      // createRangerAccents() ends in syncPosition(), which sorts the base
+      // sprite and both accent layers into the actor band.
       this.createRangerAccents();
       return;
     }
@@ -153,8 +156,9 @@ export class HeroPresentationController {
     )
       .setOrigin(0.5, 1)
       .setScale(GAME_SCALE)
-      .setDepth(3)
       .play(this.config.clips.idle.animations.front);
+
+    this.syncDepth();
   }
 
   syncPosition(): void {
@@ -165,6 +169,28 @@ export class HeroPresentationController {
     this.sprite?.setPosition(x, y);
     this.rangerBackAccents?.setPosition(x, y);
     this.rangerFrontAccents?.setPosition(x, y);
+    this.syncDepth();
+  }
+
+  /**
+   * Re-sorts the hero into the shared feet-based actor band (see
+   * src/systems/worldDepth.ts) so it draws behind actors standing further
+   * down the map and in front of those standing further up. Driven from
+   * syncPosition(), i.e. every frame, because the hero is the one actor whose
+   * ground-contact y actually moves.
+   *
+   * The physics sprite's own displayed bottom is the reference for both
+   * profiles: the Ranger renders as that sprite directly, and the Mage's
+   * bottom-origin sprite is offset to land on exactly the same line.
+   */
+  private syncDepth(): void {
+    const depth = worldActorDepth(spriteGroundY(this.physicsSprite));
+    this.sprite?.setDepth(depth);
+    if (this.isRanger()) {
+      this.physicsSprite.setDepth(depth);
+      this.rangerBackAccents?.setDepth(depth - WORLD_ACTOR_DEPTH_EPSILON);
+      this.rangerFrontAccents?.setDepth(depth + WORLD_ACTOR_DEPTH_EPSILON);
+    }
   }
 
   setMovement(facing: HeroFacing, moving: boolean): void {
@@ -344,8 +370,10 @@ export class HeroPresentationController {
     // Every drawn offset in redrawRangerAccents() stays in the original
     // local design space; scaling these two Graphics objects themselves
     // reproduces the accents at GAME_SCALE without touching that geometry.
-    this.rangerBackAccents = this.scene.add.graphics().setDepth(2.9).setScale(GAME_SCALE);
-    this.rangerFrontAccents = this.scene.add.graphics().setDepth(3.1).setScale(GAME_SCALE);
+    // Depths come from syncDepth(), which keeps both layers a fraction of a
+    // pixel either side of the base sprite's own y-sorted depth.
+    this.rangerBackAccents = this.scene.add.graphics().setScale(GAME_SCALE);
+    this.rangerFrontAccents = this.scene.add.graphics().setScale(GAME_SCALE);
     this.syncPosition();
     this.redrawRangerAccents();
   }
