@@ -16,10 +16,19 @@
  * Depth bands either side of the actor range are unchanged:
  *
  *   0          tile layers (Ground / Decor) and the Farm decor scatter
- *   1          ground shadows — always beneath every actor
+ *   1          ground shadows and the screen-fixed vignette
+ *   1.5        ambient dust motes — above shadows, beneath every actor
  *   [2, 3.5]   ACTORS, sorted by ground-contact y  ← this module
  *   4+         quest glows, marker glyphs, affordance rings, the objective
- *              chevron — floating indicators meant to read over everything
+ *              chevron, and every interaction VFX (crop-bonus burst 6, slime
+ *              strike bursts 8) — meant to read over everything
+ *
+ * The band holds actors and nothing else, deliberately: anything else parked
+ * inside it would layer above or below a given actor depending on where on the
+ * map that actor happened to be standing, which is an accident, not a design.
+ * Two objects were evicted when the band was introduced — the ambient motes
+ * (2 → 1.5) and the crop-bonus burst (3 → 6) — both of which had been given
+ * their old values back when the hero was itself pinned at a fixed 3.
  *
  * One world pixel is 0.001 of depth, so the band spans 1500 world px. Every
  * registered map is comfortably inside that (the tallest, the Farm, is

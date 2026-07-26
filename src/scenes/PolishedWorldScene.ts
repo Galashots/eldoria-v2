@@ -18,6 +18,14 @@ import type { FarmQuestOutcome } from '../systems/FarmQuestSystem';
 import { worldActorDepth } from '../systems/worldDepth';
 import { MAP_ENTRY_BANNER_TOTAL_MS, WorldScene } from './WorldScene';
 
+/**
+ * Display-list name for Mira's world-space silhouette. Named so the depth
+ * regression suite can locate the actual rendered object rather than inferring
+ * her layer from the target list — she is a bare Graphics with no other
+ * distinguishing handle.
+ */
+export const MIRA_SILHOUETTE_NAME = 'mira-silhouette';
+
 type PolishedSceneInitData = {
   profileId?: ProfileId;
   fromOpening?: boolean;
@@ -320,9 +328,14 @@ export class PolishedWorldScene extends WorldScene {
     for (let index = 0; index < 14; index += 1) {
       const x = sx(26) + ((index * sx(89)) % (GAME_WIDTH - sx(52)));
       const y = sy(76) + ((index * sy(53)) % (GAME_HEIGHT - sy(112)));
+      // 1.5, not 2: these screen-fixed ambient motes belong above the vignette
+      // and ground shadows but beneath every actor, and 2 is the floor of the
+      // feet-sorted actor band (src/systems/worldDepth.ts) — an actor standing
+      // at the very top of a map would tie with them and lose on display-list
+      // order, since these are created after the hero.
       const mote = this.add.circle(x, y, index % 4 === 0 ? sx(2) : sx(1), index % 3 === 0 ? 0xffe39a : 0xd7ffb8, 0.18)
         .setScrollFactor(0)
-        .setDepth(2);
+        .setDepth(1.5);
       this.tweens.add({
         targets: mote,
         y: y - sy(8) - (index % 4) * sy(2),
@@ -384,6 +397,7 @@ export class PolishedWorldScene extends WorldScene {
     // front of her from the south and behind her from the north. She never
     // moves, so one sort at creation is enough.
     const npc = this.add.graphics()
+      .setName(MIRA_SILHOUETTE_NAME)
       .setPosition(mira.x, mira.y)
       .setScale(GAME_SCALE)
       .setDepth(worldActorDepth(mira.y + sy(5)));

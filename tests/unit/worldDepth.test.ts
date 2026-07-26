@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
@@ -107,6 +107,59 @@ describe('spriteGroundY', () => {
     const physicsGround = spriteGroundY({ y: physicsY, displayHeight: 32 * GAME_SCALE, originY: 0.5 });
     const mageGround = spriteGroundY({ y: physicsY + sy(16), displayHeight: 48 * GAME_SCALE, originY: 1 });
     expect(mageGround).toBe(physicsGround);
+  });
+});
+
+describe('band purity', () => {
+  // Scenes that render their own self-contained composition with no y-sorted
+  // world actors, so their local depth values are unrelated to this band.
+  const NON_WORLD_SCENES = new Set(['OpeningScene.ts', 'TitleScene.ts', 'PreloadScene.ts']);
+
+  function worldSourceFiles(): string[] {
+    const files: string[] = [];
+    for (const dir of ['src/scenes', 'src/presentation']) {
+      const abs = join(process.cwd(), dir);
+      for (const entry of readdirSync(abs)) {
+        if (!entry.endsWith('.ts') || NON_WORLD_SCENES.has(entry)) continue;
+        files.push(join(dir, entry));
+      }
+    }
+    return files;
+  }
+
+  it('finds the world source files it is meant to be guarding', () => {
+    const files = worldSourceFiles();
+    expect(files.some((f) => f.endsWith('WorldScene.ts'))).toBe(true);
+    expect(files.some((f) => f.endsWith('PolishedWorldScene.ts'))).toBe(true);
+    expect(files.length).toBeGreaterThan(5);
+  });
+
+  it('has no hardcoded depth literal parked inside the actor band', () => {
+    // A literal inside [2, 3.5] layers above or below a given actor depending
+    // on where on the map that actor is standing — an accident, not a design.
+    // Anything that must sit under every actor goes below 2; anything that
+    // must read over them goes at 4 or above.
+    const offenders: string[] = [];
+    for (const file of worldSourceFiles()) {
+      const source = readFileSync(join(process.cwd(), file), 'utf-8');
+      const lines = source.split(/\r?\n/);
+      lines.forEach((line, index) => {
+        for (const match of line.matchAll(/setDepth\(\s*(\d+(?:\.\d+)?)\s*\)/g)) {
+          const depth = Number(match[1]);
+          if (depth >= WORLD_ACTOR_DEPTH_MIN && depth <= WORLD_ACTOR_DEPTH_MAX) {
+            offenders.push(`${file}:${index + 1} setDepth(${match[1]})`);
+          }
+        }
+      });
+    }
+
+    expect(
+      offenders,
+      'These render at a fixed depth inside the feet-sorted actor band '
+        + `[${WORLD_ACTOR_DEPTH_MIN}, ${WORLD_ACTOR_DEPTH_MAX}]. Either sort them with `
+        + 'worldActorDepth() because they are actors, or move them below 2 / at-or-above 4:\n'
+        + offenders.join('\n')
+    ).toEqual([]);
   });
 });
 
