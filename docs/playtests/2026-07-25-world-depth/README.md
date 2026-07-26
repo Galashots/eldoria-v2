@@ -68,6 +68,19 @@ node scripts/build-world-depth-contact-sheet.mjs /tmp/world-depth docs/playtests
 The sheet builder fails loudly on a missing/stray capture or on a before/after
 pair whose pixel dimensions differ, rather than assembling a misaligned sheet.
 
+## Automated gates that replace re-capturing this by hand
+
+This sheet is a one-time before/after record. The ongoing guard is
+`tests/world-depth-sorting.spec.ts`, which reads depths off the live display
+list of the running game for both profiles and asserts the same two orderings
+this sheet photographs, plus exact agreement with `worldActorDepth()` across a
+five-position sweep and one arrow-key walk. It was confirmed red on all seven
+tests with the three wiring call sites reverted to their old fixed depths.
+
+`tests/unit/worldDepth.test.ts` additionally scans `src/scenes` and
+`src/presentation` for any `setDepth()` literal inside `[2, 3.5]`, so nothing
+new can be parked inside the actor band.
+
 ## What this evidence does not cover
 
 Browser emulation is regression evidence only — it is not physical-iPad or
