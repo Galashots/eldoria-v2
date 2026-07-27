@@ -27,6 +27,37 @@ async function waitForServiceWorker(page: Page): Promise<void> {
   });
 }
 
+type SwObserverWindow = Window & { __swControllerChanged?: boolean };
+
+/**
+ * Reload the page and wait until a NEW service worker has taken control of it.
+ *
+ * A plain "some worker controls the page" check (waitForServiceWorker) is not
+ * enough right after an unregister(): the just-unregistered worker can still
+ * transiently control the reloaded document, so that check passes before the
+ * replacement worker has run its `activate` handler — and the old-build cache
+ * cleanup lives inside that handler. We instead wait for the `controllerchange`
+ * that fires when the new worker calls `clients.claim()` at the very end of
+ * activate, i.e. only after its cache cleanup has completed. The observer is
+ * installed as an init script so it is attached at document-start, before
+ * main.ts registers the worker on `load`, and can never miss the event.
+ */
+async function reloadAndWaitForNewController(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    (window as SwObserverWindow).__swControllerChanged = false;
+    navigator.serviceWorker?.addEventListener('controllerchange', () => {
+      (window as SwObserverWindow).__swControllerChanged = true;
+    });
+  });
+  await page.reload();
+  await waitForBoot(page);
+  await page.waitForFunction(
+    () =>
+      navigator.serviceWorker.controller !== null &&
+      (window as SwObserverWindow).__swControllerChanged === true
+  );
+}
+
 async function startProfile(page: Page, y: number): Promise<void> {
   await clickGame(page, 480, y);
   await page.waitForFunction(() => window.__ELDORIA_GAME__?.scene.isActive('WorldScene'));
@@ -156,14 +187,15 @@ test('activate cleanup deletes a previous build cache while keeping the current 
   expect(await page.evaluate(() => caches.keys())).toContain(staleName);
 
   // Force a fresh activation: unregister, then reload so main.ts re-registers a
-  // new worker whose activate handler runs the old-cache cleanup.
+  // new worker whose activate handler runs the old-cache cleanup. Wait for that
+  // NEW worker to take control (not merely for "a worker controls the page",
+  // which the just-unregistered worker can still transiently satisfy before the
+  // replacement has cleaned up) so the assertion below is race-free.
   await page.evaluate(async () => {
     const registration = await navigator.serviceWorker.getRegistration();
     await registration?.unregister();
   });
-  await page.reload();
-  await waitForBoot(page);
-  await waitForServiceWorker(page);
+  await reloadAndWaitForNewController(page);
 
   const finalNames = await page.evaluate(() =>
     caches.keys().then((names) => names.filter((name) => name.startsWith('eldoria-v2-precache-')))
