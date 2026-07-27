@@ -10,3 +10,6 @@ test-results/
 
 # Local owner-approval marker for protected-path hook (never committed)
 .owner-approval
+
+# Superpowers session plan artifacts (local scratch, never committed)
+docs/superpowers/

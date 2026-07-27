@@ -4,6 +4,14 @@ This file keeps recent, high-value change summaries. Detailed historical entries
 
 Each entry should state the actual author, branch or PR, concise scope, verification, compatibility, and remaining risk. Implementation narratives belong in PR descriptions, commits, and audit records.
 
+## 2026-07-27 — Status pin refresh post-#137; ignore superpowers plan artifacts
+
+- Author/branch: Claude Code, `claude/status-refresh-post-137`.
+- Scope: documentation/hygiene only. `docs/CURRENT_STATE.md` "Last verified `main`" pin advanced from `57d6505` (PR #136 merge) to `30e4467` (PR #137 merge) — #137's own branch could not reference its unborn merge SHA, so the pin legitimately lagged one PR on `main`; the rest of the file was already current (queue items 4 and 6 struck through by #137). `.gitignore` now ignores `docs/superpowers/` (local Superpowers session plan artifacts; none were ever tracked). No status-content, capability, milestone, risk, runtime, map, save, curriculum, asset, or workflow change.
+- Verification: documentation-only; pin cross-checked against `git log` (`main` head = `30e4467`, PR #137 merge). No code paths touched.
+- Compatibility: none affected.
+- Remaining risk: none.
+
 ## 2026-07-24 — HUD and touch-control consolidation; Practice Slime input investigation
 
 - Author/branch: Claude Code, `claude/hud-touch-consolidation`. Executes the accepted post-D3 queue items 6 (HUD/touch-control consolidation) and 4 (Practice Slime input-reliability investigation) from `docs/playtests/PLAYTHROUGH_UI_AUDIT_2026-07-23.md` / `CURRENT_STATE.md`, built forward from `main` at `57d6505` (PR #136 merged). One coherent input-and-interface PROTOTYPE slice.
