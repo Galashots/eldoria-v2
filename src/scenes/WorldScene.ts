@@ -30,6 +30,7 @@ import { HUD_CONTROL_SIZES } from '../presentation/hudControls';
 import { isInJoystickZone } from '../presentation/joystickZone';
 import { ACTION_BUTTON_PALETTE, resolveActionButtonState, type ActionButtonState } from '../presentation/actionButtonState';
 import { drawMarkerGlyph } from '../presentation/markerGlyphs';
+import { CastSparkController } from '../presentation/CastSparkController';
 import {
   drawRoundedButton,
   drawRoundedPanelBackground,
@@ -51,6 +52,7 @@ import { loadAudioMuted, saveAudioMuted } from '../systems/AudioPreference';
 import { createSpeechSupport } from '../systems/speech';
 import { TEXT_BLIP_COOLDOWN_MS } from '../systems/textBlips';
 import { worldActorDepth } from '../systems/worldDepth';
+import type { CastCandidate } from '../systems/castTargeting';
 import {
   BAKER_PELL_SHOP,
   VILLAGE_SHOP_BLOCKER_NAME,
@@ -138,6 +140,7 @@ export class WorldScene extends Phaser.Scene {
   // updateActionAffordance() call in createTouchControls() always applies a
   // palette instead of no-op'ing against a coincidentally-matching default.
   private actionButtonState: ActionButtonState | undefined;
+  private castSpark: CastSparkController | undefined;
   private targets: InteractionTarget[] = [];
   private profileId: ProfileId = 'grade5-adventurer';
   // Multi-map state (see data/maps.ts). mapId is authoritative for the
@@ -237,6 +240,8 @@ export class WorldScene extends Phaser.Scene {
     // an unchanged state -- so the freshly-created button could keep its raw
     // constructor palette instead of the correct resolved one.
     this.actionButtonState = undefined;
+    // Rebuilt in create() against the new map's targets and hero.
+    this.castSpark = undefined;
   }
 
   create(): void {
@@ -346,6 +351,18 @@ export class WorldScene extends Phaser.Scene {
 
     this.heroPresentation = new HeroPresentationController(this, this.player, this.profileId);
     this.heroPresentation.create();
+
+    // The ranged cast: what ACTION does when nothing is within arm's reach.
+    // Reads `targets` lazily rather than capturing the array, because the
+    // Practice Slime is spliced out of it on defeat.
+    this.castSpark = new CastSparkController({
+      scene: this,
+      profileId: this.profileId,
+      player: this.player,
+      candidates: (): readonly CastCandidate[] => this.targets,
+      onHit: (targetId) => this.resolveCastHitOnTarget(targetId),
+      playSfx: (key, volume) => this.playSfx(key, volume)
+    });
 
     // Passed into createHud() rather than read back from `this.sound.mute`
     // there: Phaser's WebAudio `mute` getter reflects a GainNode value that
@@ -1365,7 +1382,34 @@ export class WorldScene extends Phaser.Scene {
       return;
     }
     if (this.heroPresentation.isHurtPlaying()) return;
-    if (!this.tryInteract()) this.heroPresentation.playAction(this.busy);
+
+    // tryInteract() is always called, never gated on nearestTarget():
+    // PolishedWorldScene wraps it to check the Wildbloom secrets first, and
+    // those spots are not interaction targets at all. An earlier version of
+    // this method skipped the call when no target was near and silently broke
+    // every Wildbloom reveal — caught by the smoke suite, not by types.
+    if (this.tryInteract()) return;
+
+    // Nothing was interacted with. This used to play the cast animation in
+    // silence and do nothing else, which is what made ACTION feel inert across
+    // most of the map. Now the hero actually casts.
+    this.heroPresentation.playAction(this.busy);
+    if (!this.busy) this.castSpark?.fire(this.heroPresentation.currentFacing(), this.time.now);
+  }
+
+  /**
+   * Runs when a cast projectile lands on a castable target. Reuses the very
+   * same interaction handler that walking up and pressing ACTION would run, so
+   * a ranged hit and a close hit are the same event as far as quests, rewards
+   * and saves are concerned — the cast only changes the reach.
+   */
+  private resolveCastHitOnTarget(targetId: string): void {
+    if (this.busy) return;
+    const target = this.targets.find((candidate) => candidate.id === targetId);
+    if (!target) return;
+    const handler = this.interactionHandlers[target.id];
+    if (!handler) return;
+    handler(target);
   }
 
   // Interaction registry: maps a target's stable InteractionId to its handler.
@@ -1398,10 +1442,10 @@ export class WorldScene extends Phaser.Scene {
     if (this.busy) return false;
 
     const target = this.nearestTarget();
-    if (!target) {
-      this.showToast('Nothing to use here yet.');
-      return false;
-    }
+    // No toast on an empty press any more: handleActionInput() falls through to
+    // a cast, which is itself the feedback. "Nothing to use here yet." fired on
+    // every single cast and read as an error message for a working action.
+    if (!target) return false;
 
     const handler = this.interactionHandlers[target.id];
     if (!handler) {
