@@ -1,6 +1,6 @@
 # Eldoria-V2 Current State
 
-**Last verified `main`:** `57d65050d19e1ad632db6df190edb45330e022b4` (PR #133 and PR #136 merged, 2026-07-24)  
+**Last verified `main`:** `30e4467c9b4717f04f5f560b37cd09b881c08962` (PR #137 merged, 2026-07-24)  
 **Stable product direction:** [`ELDORIA_MASTER_PLAN.md`](ELDORIA_MASTER_PLAN.md)  
 **Repository rules:** [`../AGENTS.md`](../AGENTS.md)
 
