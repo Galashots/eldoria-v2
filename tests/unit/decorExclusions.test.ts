@@ -22,21 +22,24 @@ function derive() {
 describe('deriveDecorEligibility breakdown (vs independent Kimi audit)', () => {
   it('finds exactly the 126 collision cells, keyed on registry gids', () => {
     const { breakdown } = derive();
-    // Was 127 (independent Kimi audit, issue #120) before the Farm<->Village
-    // held-movement fix opened '0,11' (see below) — one fewer collision cell.
-    expect(breakdown.collision.length).toBe(126);
+    // Was 127 (independent Kimi audit, issue #120), then 126 after the
+    // Farm<->Village held-movement fix opened '0,11', now 125 after the
+    // Farm<->Woods held-movement fix opened '29,11' (see below) — one fewer
+    // collision cell each time.
+    expect(breakdown.collision.length).toBe(125);
     expect(breakdown.collision).toContain('0,0'); // fence corner
     // Gate mouths are walkable gaps in the fence, NOT collision cells:
     for (const gate of ['0,9', '0,10', '29,9', '29,10']) {
       expect(breakdown.collision).not.toContain(gate);
     }
-    // '0,11' (just south of the west gate) and '29,11' (east gate) were
-    // opened/not opened respectively by this fix — see the PR body for the
-    // full root-cause evidence. Only the reported Farm<->Village gate pair
-    // is in scope, so the symmetric Woods-side gate at column 29 is
-    // untouched and remains a collision cell.
+    // '0,11' (just south of the west/Village gate) and '29,11' (just south of
+    // the east/Woods gate) are both opened cells — each was the solid tile the
+    // player's low-anchored body clipped when walking through its 2-tile gate
+    // mouth. '0,11' was opened by the Farm<->Village fix (#133); '29,11' by the
+    // Farm<->Woods fix (this change). See the PR body for full root-cause
+    // evidence. Neither remains a collision cell.
     expect(breakdown.collision).not.toContain('0,11');
-    expect(breakdown.collision).toContain('29,11');
+    expect(breakdown.collision).not.toContain('29,11');
   });
 
   it('covers all six authored Decor-layer cells', () => {

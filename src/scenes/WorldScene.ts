@@ -581,8 +581,24 @@ export class WorldScene extends Phaser.Scene {
   private checkExitTrigger(): void {
     if (this.transitioning || this.busy) return;
 
+    // Trigger on the physics body overlapping the exit zone, not just the
+    // anchor point. The player's Arcade body sits ~16 px below its y-anchor
+    // and its horizontal offset is asymmetric, so at a gate whose zone is
+    // flush with the world boundary, world-bounds collision can stop the
+    // *anchor* a few px short of the zone even though the body is fully
+    // inside the gate mouth — a real "can't leave through this gate" defect
+    // for held movement (Farm<->Woods, and the same class #133 patched
+    // per-gate on Farm<->Village). The anchor-contains check is kept so every
+    // crossing that already worked keeps its exact prior trigger point.
+    const body = this.player.body as Phaser.Physics.Arcade.Body | null;
+    const bodyRect = body
+      ? new Phaser.Geom.Rectangle(body.x, body.y, body.width, body.height)
+      : null;
+
     for (const exit of this.exits) {
-      if (!exit.rect.contains(this.player.x, this.player.y)) continue;
+      const anchorInside = exit.rect.contains(this.player.x, this.player.y);
+      const bodyInside = bodyRect !== null && Phaser.Geom.Rectangle.Overlaps(exit.rect, bodyRect);
+      if (!anchorInside && !bodyInside) continue;
       this.beginMapTransition(exit);
       return;
     }
