@@ -362,6 +362,15 @@ export class HeroPresentationController {
     this.setAnimation(facingFromVector(velocityX, velocityY), 'walk');
   }
 
+  /**
+   * The direction the hero is currently facing. Exposed for the ranged cast,
+   * which has to travel the way the hero is looking — the scene drives facing
+   * through setMovement() but never had a reason to read it back before.
+   */
+  currentFacing(): HeroFacing {
+    return this.facing;
+  }
+
   private isRanger(): boolean {
     return this.config?.profileId === RANGER_PROFILE_ID;
   }

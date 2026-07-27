@@ -1,0 +1,16 @@
+[
+  {
+    "profile": "mage",
+    "standoffPx": 150,
+    "facing": "right",
+    "hits": 0,
+    "hitsAfter": 1
+  },
+  {
+    "profile": "ranger",
+    "standoffPx": 150,
+    "facing": "right",
+    "hits": 0,
+    "hitsAfter": 1
+  }
+]
