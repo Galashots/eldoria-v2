@@ -4,6 +4,15 @@ This file keeps recent, high-value change summaries. Detailed historical entries
 
 Each entry should state the actual author, branch or PR, concise scope, verification, compatibility, and remaining risk. Implementation narratives belong in PR descriptions, commits, and audit records.
 
+## 2026-07-29 — Creative Bible reconciliation and content roadmap draft
+
+- Author/branch/PR: ChatGPT (Creative Director), `chatgpt/creative-bible-reconciliation`, draft PR #148.
+- Scope: documentation-only reconciliation of the proposed Story, Lore & Quest framework with current continuity and repository rules. Adds a recommended Rootsong/Heartroot/Accord Keepers myth, preserves the Waking Gate/Mira/Baker Pell/Wildbloom foundations, reframes Squishy Dumplings as deterministic friendship quests, defines a Chapter I-first four-chapter campaign, and records quest/content/asset handoff contracts.
+- Files: `docs/creative/ELDORIA_CREATIVE_BIBLE_DRAFT.md`, `docs/creative/QUEST_AND_CONTENT_ROADMAP_DRAFT.md`, and `docs/README.md`.
+- Verification: continuity review against `AGENTS.md`, `ELDORIA_MASTER_PLAN.md`, `CURRENT_STATE.md`, `CURRICULUM_QUESTION_ENGINE.md`, `WILDBLOOM_DISCOVERY_LOOP_2026-07.md`, and the supplied design/pedagogy reports. Exact-head repository CI pending.
+- Compatibility: no runtime, save schema, profile ID, quest ID, map, asset, workflow, dependency, or deployment change.
+- Remaining risk: proposed canon names, hero relationship/names, Dumpling count, and Mira/Pell service boundaries require owner review; independent codebase-feasibility review remains required before merge.
+
 ## 2026-07-24 — HUD and touch-control consolidation; Practice Slime input investigation
 
 - Author/branch: Claude Code, `claude/hud-touch-consolidation`. Executes the accepted post-D3 queue items 6 (HUD/touch-control consolidation) and 4 (Practice Slime input-reliability investigation) from `docs/playtests/PLAYTHROUGH_UI_AUDIT_2026-07-23.md` / `CURRENT_STATE.md`, built forward from `main` at `57d6505` (PR #136 merged). One coherent input-and-interface PROTOTYPE slice.
