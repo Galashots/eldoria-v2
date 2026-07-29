@@ -229,6 +229,28 @@ The first production pass needs only one proposed bridge episode plus the first 
 
 **Explicit exclusions:** No gacha animation, sealed product, duplicate, rarity color, pity counter, premium currency, or real-time wait.
 
+### Recommended first companion — Tuck
+
+**Working identity:** **Tuck, the Hearthsprig Dumpling**
+
+Tuck is a small oat-cream dumpling with one herb-green folded “ear” and a warm amber steam curl. The final palette and geometry must come from an approved visual target; these details describe the recognition idea, not production pixels.
+
+Tuck is earnest, shy around loud celebration, and unable to resist arranging loose ingredients into tidy groups of three. Their invitation naturally joins all three starting zones:
+
+- grain or flour from Farm work;
+- a fragrant herb from Wildbloom Woods;
+- a safe warm place provided through Baker Pell in the Village.
+
+**Buddy Trick — Kindle Sense:** If the player pauses near an active quest clue, Tuck releases three warm motes toward the nearest relevant interactable. It improves clarity but does not solve the task, change rewards, or become required.
+
+Why Tuck should be first:
+
+- the name is short, audible, and easy for an early reader;
+- the silhouette can remain readable at companion scale;
+- the three-part invitation teaches the Farm/Woods/Village relationship;
+- the guidance trick supports both children without becoming a power obligation;
+- the home animation gives the Farm immediate warmth after the quest.
+
 ## 7. Dialogue production template
 
 Each episode should ship a small script packet:
