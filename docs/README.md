@@ -84,6 +84,8 @@ Use these terms precisely:
 - [`ATTENTION_FIRST_OPENING_PLAN_2026-07.md`](ATTENTION_FIRST_OPENING_PLAN_2026-07.md) — implemented historical record for the first-minute fantasy hook.
 - [`WILDBLOOM_DISCOVERY_LOOP_2026-07.md`](WILDBLOOM_DISCOVERY_LOOP_2026-07.md) — implemented historical record for the optional Sprig discovery loop.
 - [`CURRICULUM_QUESTION_ENGINE.md`](CURRICULUM_QUESTION_ENGINE.md) — current curriculum-question architecture, bonus-only learning rules, and future opportunities.
+- [`creative/ELDORIA_CREATIVE_BIBLE_DRAFT.md`](creative/ELDORIA_CREATIVE_BIBLE_DRAFT.md) — Creative Director reconciliation of existing continuity, proposed Rootsong lore, campaign structure, hero expression, and deterministic Squishy Dumpling direction; review draft, not yet stable authority.
+- [`creative/QUEST_AND_CONTENT_ROADMAP_DRAFT.md`](creative/QUEST_AND_CONTENT_ROADMAP_DRAFT.md) — proposed Chapter I quest spine, quest-authoring contract, funded asset priorities, and cross-agent handoff; review draft, not an implementation claim.
 - Current quest, curriculum, save, mastery, and interaction behavior must be confirmed in code/tests and summarized in `CURRENT_STATE.md`.
 
 ## Playtesting and device validation
